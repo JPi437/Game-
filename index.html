@@ -359,8 +359,8 @@ function stepChars(){const now=Date.now();
   const dx=tx-f.x,dy=ty-f.y;f.x+=dx*.1;f.y+=dy*.1;
   if(fight){const ex=fight.x-f.x,ey=fight.y-f.y;f.dir=Math.abs(ex)>Math.abs(ey)?(ex>0?3:1):(ey>0?2:0);
    if(!f.nx)f.nx=now+400+i*300;
-   if(now>=f.nx&&Math.hypot(dx,dy)<12){const k=chars.find(c=>c.id===id),d=dmgOf(k);f.nx=now+1000/(1+asOf(k));fight.hp-=d;fight.lh=now;fx.push({x:fight.x+4,y:fight.y-4,t:now,s:'-'+d,c:'#fff'});
-    if(fight.hp<=0){giveDrop(fight,now);fight.dead=true;questKill(fight);bossDrop(fight,now);fight.back=now+10000;fight=null;Object.values(fpos).forEach(q=>q.nx=0)}}
+   if(now>=f.nx&&Math.hypot(dx,dy)<12){const k=chars.find(c=>c.id===id),d=dmgOf(k);f.nx=now+1000/(1+asOf(k));dealDmg(fight,d);fight.lh=now;fx.push({x:fight.x+4,y:fight.y-4,t:now,s:'-'+d,c:'#fff'});
+    if(fight.hp<=0&&!window.MPshared){giveDrop(fight,now);fight.dead=true;questKill(fight);bossDrop(fight,now);fight.back=now+10000;fight=null;Object.values(fpos).forEach(q=>q.nx=0)}}
   }else{f.dir=P.dir;f.nx=0}})}
 function drawActors(f){const now=Date.now(),L=[];
  L.push([P.y,()=>{if(mounted)horse();player2(f)}]);L.push([NPC.y,()=>drawNpc(f)]);L.push([GY*T+14,()=>gate(Math.round(GX*T-cam.x),Math.round(GY*T-cam.y),f)]);
@@ -486,8 +486,9 @@ mountBtn.addEventListener('pointerdown',()=>{mtHeld=false;clearTimeout(mtT);mtT=
 mountBtn.addEventListener('click',()=>{if(mtHeld){mtHeld=false;return}if(lock)return;renderMt();$('mtM').style.display='flex';lock=true;jr()});
 $('mtClose').onclick=()=>{$('mtM').style.display='none';lock=false};
 const clickDmg=()=>Math.max(1,Math.floor(equipped.reduce((a,id)=>{const k=chars.find(c=>c.id===id);return a+(k?dmgOf(k):0)},0)/10));
-function punch(){if(!fight||lock)return;const e=fight,now=Date.now(),cd=clickDmg();e.hp-=cd;e.lh=now;fx.push({x:e.x+4+ri(-4,4),y:e.y-4,t:now,s:'-'+cd,c:'#ffeb3b'});
- if(e.hp<=0){giveDrop(e,now);e.dead=true;questKill(e);bossDrop(e,now);e.back=now+10000;fight=null;Object.values(fpos).forEach(q=>q.nx=0)}}
+function dealDmg(e,d){e.hp=Math.max(0,e.hp-d);if(window.MPhit)window.MPhit(e,d)}
+function punch(){if(!fight||lock)return;const e=fight,now=Date.now(),cd=clickDmg();dealDmg(e,cd);e.lh=now;fx.push({x:e.x+4+ri(-4,4),y:e.y-4,t:now,s:'-'+cd,c:'#ffeb3b'});
+ if(e.hp<=0&&!window.MPshared){giveDrop(e,now);e.dead=true;questKill(e);bossDrop(e,now);e.back=now+10000;fight=null;Object.values(fpos).forEach(q=>q.nx=0)}}
 setInterval(()=>{if(ups.auto)punch()},500);
 $('punchBtn').addEventListener('pointerdown',ev=>{ev.preventDefault();punch()});
 function bossDrop(e,now){if(e.t!==2)return;const n=ri(1,3);ess+=n;save();updHud();fx.push({x:e.x-4,y:e.y-24,t:now,s:'+'+n+' essência 🔮',c:'#80d8ff'})}
@@ -699,5 +700,254 @@ function openDet(id){const k=chars.find(c=>c.id===id);if(!k)return;curId=id;
  $('popM').style.display='flex'}
 const pct_=x=>Math.round(x*100);
 </script>
+<style>
+#chatBtn{position:fixed;top:calc(10px + env(safe-area-inset-top,0px));right:calc(314px + env(safe-area-inset-right,0px))}
+#chFeed{position:fixed;left:calc(12px + env(safe-area-inset-left,0px));top:calc(84px + env(safe-area-inset-top,0px));z-index:3;pointer-events:none;max-width:42vw;font-size:12px}
+#chFeed div{background:#000a;color:#fff;border-radius:8px;padding:2px 8px;margin-bottom:3px;transition:opacity .6s;text-shadow:0 1px 2px #000;word-wrap:break-word}
+#chFeed b{color:#ffd23f}
+#chM .box{max-width:480px;text-align:left}
+#chLog{height:38vh;overflow-y:auto;background:#0008;border-radius:8px;padding:6px 8px;font-size:13px;margin:6px 0;line-height:1.35}
+#chLog .ln{margin:2px 0;word-wrap:break-word}
+#chLog .nm{color:#ffd23f;font-weight:bold}
+#chLog .me .nm{color:#80d8ff}
+#chLog .mut{opacity:.4}
+#chLog .sys{color:#aaa;font-style:italic}
+.chRow{display:flex;gap:6px;align-items:center}
+#chIn,#nkIn{flex:1;min-width:0;background:#111;color:#fff;border:2px solid #555;border-radius:8px;padding:8px;font-size:15px;font-family:inherit;user-select:text;-webkit-user-select:text;touch-action:auto}
+#chSt{font-size:12px;opacity:.9;text-align:center}
+#startM{z-index:25;background:radial-gradient(ellipse at 50% 30%,#2b3a6e 0,#141629 70%);display:flex}
+#startM .box{max-width:400px;text-align:center;background:linear-gradient(#262c4b,#181b30);padding:16px 18px}
+#stTitle{font-size:30px;font-weight:900;color:#ffd23f;letter-spacing:2px;text-shadow:0 3px 0 #b8860b,0 6px 0 #000,0 0 18px #ffd23f88;margin:2px 0 2px}
+#stSub{font-size:12px;opacity:.75;margin-bottom:12px}
+.stTabs{display:flex;gap:6px;margin-bottom:10px}
+.stTab{flex:1;padding:8px;font-family:inherit;font-weight:bold;font-size:14px;border-radius:10px;border:2px solid #ffffff55;background:#ffffff10;color:#fff}
+.stTab.on{background:#ffd23f;color:#222;border-color:#ffd23f}
+#startM input{display:block;width:100%;margin:6px 0;background:#0e1020;color:#fff;border:2px solid #555;border-radius:10px;padding:10px;font-size:15px;font-family:inherit;user-select:text;-webkit-user-select:text;touch-action:auto}
+#startM input:focus{border-color:#ffd23f;outline:none}
+#stGo{width:100%;margin-top:8px;font-size:17px;padding:11px;background:linear-gradient(#43b047,#2e7d32)}
+#stOff{margin-top:10px;background:none;border:none;color:#9fb3ff;text-decoration:underline;font-family:inherit;font-size:13px;box-shadow:none}
+#stMsg{min-height:18px;font-size:13px;margin-top:8px;color:#ffb74d}
+#stHint{font-size:11px;opacity:.6;margin-top:4px}
+#stShow{font-size:12px;opacity:.8;text-align:left;display:flex;gap:6px;align-items:center;margin:2px 2px 0}
+#stShow input{display:inline;width:auto;margin:0}
+</style>
+<div class="modal" id="startM"><div class="box"><div id="stTitle">MUNDO PIXEL</div><div id="stSub">Colecione lutadores, explore e jogue com amigos</div>
+<div class="stTabs"><button class="stTab on" id="tbIn">Entrar</button><button class="stTab" id="tbNew">Criar conta</button></div>
+<input id="stNick" maxlength="14" placeholder="Nickname" autocomplete="username" autocapitalize="off" spellcheck="false">
+<input id="stPass" type="password" maxlength="40" placeholder="Senha" autocomplete="current-password">
+<input id="stPass2" type="password" maxlength="40" placeholder="Repita a senha" autocomplete="new-password" style="display:none">
+<label id="stShow"><input type="checkbox" id="stShowCb"> mostrar senha</label>
+<div id="stHint" style="display:none">Nickname: 3 a 14 letras, números ou _ (é o nome que aparece no jogo). Senha: mínimo 6 caracteres. Anote sua senha, ela não pode ser recuperada.</div>
+<button class="btn" id="stGo">Entrar</button><div id="stMsg"></div>
+<button class="btn" id="stOff">Jogar offline (sem multiplayer)</button></div></div>
+<button class="btn ic" id="chatBtn" data-l="Chat">💬</button>
+<div id="chFeed"></div>
+<div class="modal" id="chM"><div class="box"><h2 style="text-align:center">💬 Chat</h2><div id="chSt"></div><div id="chLog"></div>
+<div class="chRow"><input id="chIn" maxlength="120" placeholder="Escreva uma mensagem..." autocomplete="off"><button class="btn" id="chSend" style="background:#2e7d32">Enviar</button></div>
+<div class="chRow" style="margin-top:8px;font-size:12px"><span id="acTxt"></span><button class="btn" id="acBtn" style="padding:4px 10px;font-size:12px;background:#37474f"></button></div>
+<div style="font-size:10px;opacity:.6;margin-top:6px">Toque no nome de alguém para silenciar ou voltar a ouvir. Seja gentil 🙂</div>
+<div style="text-align:center"><button class="btn" id="chClose" style="background:#555;margin-top:6px">Fechar</button></div></div></div>
+<script>
+// ===== MULTIPLAYER (Firebase): lobby + chat =====
+(function(){
+const CFG={apiKey:"AIzaSyBkiEns3WBFSpKmPaTV6LoxIpeLm93k7XE",authDomain:"mundo-pixel-453cd.firebaseapp.com",databaseURL:"https://mundo-pixel-453cd-default-rtdb.firebaseio.com",projectId:"mundo-pixel-453cd",storageBucket:"mundo-pixel-453cd.firebasestorage.app",messagingSenderId:"282176711468",appId:"1:282176711468:web:b02d84806729a75703da89"};
+const SDK='https://www.gstatic.com/firebasejs/10.12.2/firebase-',LIBS=['app','auth','database'];
+const MP={uid:null,db:null,conn:false,err:'',w:-1,me:null,others:{},chat:[],bub:{},muted:{},off:0,last:'',lastT:0,lastMsg:0,hidden:false,refs:[]};
+window.MP=MP;
+try{MP.muted=JSON.parse(localStorage.getItem('mp_mute')||'{}')||{}}catch(e){}
+const cleanNick=t=>String(t||'').replace(/[^A-Za-zÀ-ÿ0-9_ ]/g,'').replace(/\s+/g,' ').trim().slice(0,14);
+MP.nick='';MP.offline=false;MP.ready=false;
+const DOM='@mundopixel.game',NICK_RE=/^[A-Za-z0-9_]{3,14}$/;
+const BAD=['porra','caralho','merda','puta','puto','fdp','viado','buceta','cu','arrombado','arrombada','desgraça','desgraca','cacete','foda','fuder','foder','fodase','pqp','vsf','vtnc','tnc','otario','otário','idiota','imbecil','retardado','corno','piranha','vagabunda','vagabundo','bosta','xoxota','pau no cu','filho da puta'];
+const badRe=new RegExp('(^|[^a-zà-ÿ0-9])('+BAD.map(w=>w.replace(/ /g,'\\s+')).join('|')+')(?=$|[^a-zà-ÿ0-9])','gi');
+const clean=t=>t.replace(badRe,(m,a,w)=>a+'*'.repeat(w.length));
+const nowS=()=>Date.now()+MP.off, stale=r=>!r.t||nowS()-r.t>90000;
+const wk=()=>'w'+(world|0);
+
+// ---- carregar o Firebase (se não tiver internet, o jogo segue normal) ----
+let li=0;
+function load(){if(li>=LIBS.length)return start();const s=document.createElement('script');s.src=SDK+LIBS[li]+'-compat.js';s.async=true;
+ s.onload=()=>{li++;load()};s.onerror=()=>{s.remove();MP.err='sem internet';stat();stMsg('Sem internet: dá para jogar offline e entrar depois.');setTimeout(load,30000)};document.head.appendChild(s)}
+function start(){try{
+ if(!firebase.apps.length)firebase.initializeApp(CFG);
+ MP.db=firebase.database();
+ MP.db.ref('.info/serverTimeOffset').on('value',s=>{MP.off=s.val()||0});
+ MP.db.ref('.info/connected').on('value',s=>{MP.conn=!!s.val();if(MP.conn){MP.err='';if(MP.uid&&!MP.hidden)join(true)}stat()});
+ MP.ready=true;stMsg('');stBusy(false);
+ firebase.auth().onAuthStateChanged(u=>{
+  if(u&&u.isAnonymous){firebase.auth().signOut();return}
+  if(u){MP.uid=u.uid;MP.nick=u.displayName||(u.email||'').split('@')[0];try{localStorage.setItem('mp_lastnick',MP.nick)}catch(e){}
+   MP.offline=false;hideStart();if(!MP.hidden)join(true);cloudSync();if(typeof toast==='function')toast('Bem-vindo, '+MP.nick+'!')}
+  else{leave();MP.uid=null;MP.w=-1;stat();if(!MP.offline)showStart()}});
+}catch(e){MP.err=String(e&&e.message||e);stat()}}
+
+// ---- entrar na sala do mundo atual ----
+function leave(){shStop();MP.refs.forEach(r=>r.off());MP.refs=[];if(MP.me){MP.me.onDisconnect().cancel();MP.me.remove().catch(()=>{})}MP.me=null;MP.others={};MP.bub={}}
+function join(force){if(!MP.db||!MP.uid||MP.offline)return;if(!force&&MP.w===(world|0))return;
+ leave();MP.w=world|0;const w=wk();
+ const pr=MP.db.ref('players/'+w);
+ pr.on('child_added',upsert);pr.on('child_changed',upsert);pr.on('child_removed',s=>{delete MP.others[s.key];stat()});
+ const cr=MP.db.ref('chat/'+w).limitToLast(30);MP.chat=[];renderLog();cr.on('child_added',onMsg);
+ MP.refs=[pr,cr];
+ MP.me=MP.db.ref('players/'+w+'/'+MP.uid);MP.me.onDisconnect().remove();MP.last='';send(true);shStart(w);stat()}
+function payload(){const k=equipped.map(id=>chars.find(c=>c.id===id)).filter(Boolean).slice(0,4).map(c=>[c.rar,c.sh?1:0,String(c.name).slice(0,12)]);
+ return {n:MP.nick,x:Math.round(P.x),y:Math.round(P.y),d:P.dir|0,m:mounted?(mountEq==='vassoura'?2:1):0,k:JSON.stringify(k),f:fight?EN.indexOf(fight):-1}}
+function send(force){if(!MP.me||!MP.conn||MP.hidden)return;const p=payload(),key=JSON.stringify(p),t=Date.now();
+ if(!force&&key===MP.last&&t-MP.lastT<20000)return;MP.last=key;MP.lastT=t;p.t=firebase.database.ServerValue.TIMESTAMP;
+ MP.me.set(p).catch(e=>{MP.err=e.code||'erro';stat()})}
+function upsert(s){const v=s.val();if(!v||s.key===MP.uid)return;let r=MP.others[s.key];
+ if(!r)r=MP.others[s.key]={x:+v.x||0,y:+v.y||0,fp:[],st:0};
+ r.tx=+v.x||0;r.ty=+v.y||0;r.d=[0,1,2,3].includes(v.d)?v.d:2;r.m=v.m===1||v.m===2?v.m:0;r.n=cleanNick(v.n)||'?';r.t=v.t;r.f=Number.isInteger(v.f)?v.f:-1;
+ let k=[];try{k=JSON.parse(v.k||'[]')}catch(e){}
+ r.k=(Array.isArray(k)?k:[]).slice(0,4).filter(c=>Array.isArray(c)&&c[0]>=0&&c[0]<=4).map(c=>[c[0]|0,c[1]?1:0,String(c[2]||'').slice(0,12)]);stat()}
+setInterval(()=>{if(MP.uid&&!MP.hidden){if(MP.w!==(world|0))join(true);else send(false)}},150);
+document.addEventListener('visibilitychange',()=>{if(!MP.db)return;
+ if(document.hidden){MP.hidden=true;if(MP.me)MP.me.remove().catch(()=>{});const off=()=>{if(document.hidden)MP.db.goOffline()};Promise.race([upload(false),new Promise(r=>setTimeout(r,2500))]).then(off,off)}
+ else{MP.hidden=false;MP.db.goOnline();if(MP.uid)join(true)}});
+
+// ---- desenhar os outros jogadores ----
+function drawRemotes(f){for(const id in MP.others){const r=MP.others[id];if(stale(r))continue;
+ const dx=r.tx-r.x,dy=r.ty-r.y,dist=Math.hypot(dx,dy);
+ if(dist>160){r.x=r.tx;r.y=r.ty}else{r.x+=dx*.25;r.y+=dy*.25}
+ r.mv=dist>.6;if(r.mv)r.st++;
+ if(r.x-cam.x<-48||r.x-cam.x>VW+48||r.y-cam.y<-48||r.y-cam.y>VH+48)continue;
+ const fe=r.f>=0&&EN[r.f]&&!EN[r.f].dead?EN[r.f]:null,nk=r.k.length,tm=Date.now();
+ r.k.forEach((c,i)=>{const q=r.fp[i]||(r.fp[i]={x:r.x,y:r.y,dir:2}),o=OFF[i]||[0,0];let tx=r.x+o[0],ty=r.y+o[1];
+  if(fe){const a=i*6.2832/nk+tm/1200;tx=fe.x+Math.cos(a)*fe.orb;ty=fe.y+Math.sin(a)*fe.orb}
+  q.x+=(tx-q.x)*.1;q.y+=(ty-q.y)*.1;q.dir=fe?(Math.abs(fe.x-q.x)>Math.abs(fe.y-q.y)?(fe.x>q.x?3:1):(fe.y>q.y?2:0)):r.d;
+  const x=Math.round(q.x-cam.x)+2,y=Math.round(q.y-cam.y);
+  if(c[2]==='Luffy'&&c[0]===0&&LOK())luffyAt(q,x,y);else{g.fillStyle='#0006';g.fillRect(x+1,y+12,10,2);spr(g,x,y+((f>>3)%2?-1:0),c[0],f,q.dir,c[1])}});
+ const sv=[P.x,P.y,P.dir,P.moving,P.step],sm=mounted,se=mountEq;
+ P.x=r.x;P.y=r.y;P.dir=r.d;P.moving=r.mv;P.step=r.st;mounted=!!r.m;mountEq=r.m===2?'vassoura':'cavalo';
+ try{if(mounted)horse();player2(f)}finally{[P.x,P.y,P.dir,P.moving,P.step]=sv;mounted=sm;mountEq=se}}}
+function tag(x,y,t,c){g.font='bold 7px monospace';g.textAlign='center';g.textBaseline='bottom';g.fillStyle='#000';
+ for(const[a,b]of[[-1,0],[1,0],[0,-1],[0,1]])g.fillText(t,x+a,y+b);g.fillStyle=c;g.fillText(t,x,y);g.textAlign='left';g.textBaseline='top'}
+function bubble(x,y,txt){const words=txt.split(' '),lines=[];let cur='';
+ for(const w of words){const t=cur?cur+' '+w:w;if(t.length>22&&cur){lines.push(cur);cur=w}else cur=t}if(cur)lines.push(cur);
+ const L=lines.slice(0,3).map(l=>l.length>24?l.slice(0,23)+'…':l);if(lines.length>3)L[2]=L[2].slice(0,21)+'…';
+ g.font='7px monospace';const w=Math.max(...L.map(l=>g.measureText(l).width))+8,h=L.length*8+4,bx=Math.round(x-w/2),by=y-h-4;
+ g.fillStyle='#222';g.fillRect(bx-1,by-1,w+2,h+2);g.fillStyle='#fff';g.fillRect(bx,by,w,h);g.fillRect(x-2,by+h,4,3);
+ g.fillStyle='#222';g.textBaseline='top';g.textAlign='left';L.forEach((l,i)=>g.fillText(l,bx+4,by+2+i*8))}
+function drawTags(){const now=Date.now(),list=[];
+ for(const id in MP.others){const r=MP.others[id];if(!stale(r))list.push([id,r.x,r.y,r.m,r.n,'#fff'])}
+ if(MP.me)list.push([MP.uid,P.x,P.y,mounted,MP.nick,'#80d8ff']);
+ list.forEach(([id,x,y,m,n,c])=>{const sx=Math.round(x-cam.x)+8,sy=Math.round(y-cam.y)-(m?8:3);if(sx<-60||sx>VW+60||sy<-40||sy>VH+40)return;
+  tag(sx,sy,n,c);const b=MP.bub[id];if(b&&now-b.t<5000&&!MP.muted[id])bubble(sx,sy-8,b.m)})}
+const _da=drawActors;
+drawActors=function(f){if(MP.me)drawRemotes(f);_da(f);if(MP.me)drawTags(f)};
+
+// ---- chat ----
+function onMsg(s){const v=s.val();if(!v||typeof v.m!=='string')return;
+ const m={id:s.key,u:String(v.u||''),n:cleanNick(v.n)||'?',m:clean(String(v.m).slice(0,120)),t:+v.t||0};
+ MP.chat.push(m);if(MP.chat.length>60)MP.chat.shift();
+ const fresh=nowS()-m.t<15000;
+ if(fresh&&!MP.muted[m.u]){MP.bub[m.u]={m:m.m,t:Date.now()};feed(m)}
+ if($('chM').style.display==='flex')renderLog(true)}
+function line(m){const d=document.createElement('div');d.className='ln'+(m.u===MP.uid?' me':'')+(MP.muted[m.u]?' mut':'');
+ const n=document.createElement('span');n.className='nm';n.textContent=m.n+': ';
+ if(m.u!==MP.uid)n.onclick=()=>{if(MP.muted[m.u])delete MP.muted[m.u];else MP.muted[m.u]=1;try{localStorage.setItem('mp_mute',JSON.stringify(MP.muted))}catch(e){}
+  sys(m.n+(MP.muted[m.u]?' foi silenciado 🔇':' voltou a ser ouvido 🔊'));renderLog(true)};
+ const t=document.createElement('span');t.textContent=MP.muted[m.u]?'(silenciado)':m.m;d.append(n,t);return d}
+let sysMsgs=[];
+function sys(t){sysMsgs.push({sys:t,i:MP.chat.length});if(sysMsgs.length>5)sysMsgs.shift();renderLog(true)}
+function renderLog(keep){const L=$('chLog');if(!L)return;L.textContent='';
+ if(!MP.chat.length){const e=document.createElement('div');e.className='sys';e.textContent='Nenhuma mensagem ainda. Diga oi! 👋';L.append(e)}
+ MP.chat.forEach((m,i)=>{L.append(line(m));sysMsgs.filter(s=>s.i===i+1).forEach(s=>{const e=document.createElement('div');e.className='sys';e.textContent=s.sys;L.append(e)})});
+ sysMsgs.filter(s=>s.i===0||s.i>MP.chat.length).forEach(s=>{const e=document.createElement('div');e.className='sys';e.textContent=s.sys;L.append(e)});
+ L.scrollTop=L.scrollHeight}
+function feed(m){const F=$('chFeed'),d=document.createElement('div'),b=document.createElement('b');b.textContent=m.n+': ';d.append(b,document.createTextNode(m.m));F.append(d);
+ while(F.children.length>3)F.firstChild.remove();setTimeout(()=>{d.style.opacity='0';setTimeout(()=>d.remove(),700)},8000)}
+function sendChat(){const inp=$('chIn');let m=inp.value.replace(/\s+/g,' ').trim().slice(0,120);if(!m)return;
+ if(MP.offline||!MP.uid){sys('Entre na sua conta para usar o chat.');return}
+ if(!MP.me||!MP.conn){sys('Sem conexão agora. Tente de novo em instantes.');return}
+ if(Date.now()-MP.lastMsg<2500){sys('Espere um pouquinho para mandar outra mensagem.');return}
+ MP.lastMsg=Date.now();m=clean(m);const w=wk(),key=MP.db.ref('chat/'+w).push().key,TS=firebase.database.ServerValue.TIMESTAMP,up={};
+ up['chat/'+w+'/'+key]={u:MP.uid,n:MP.nick,m:m,t:TS};up['lastMsg/'+MP.uid]=TS;
+ MP.db.ref().update(up).catch(e=>sys('Mensagem não enviada ('+(e.code||'erro')+')'));inp.value=''}
+function count(){let n=MP.me?1:0;for(const id in MP.others)if(!stale(MP.others[id]))n++;return n}
+function stat(){const n=count(),b=$('chatBtn');b.setAttribute('data-l',MP.conn&&MP.me?'Chat ('+n+')':'Chat');
+ const s=$('chSt');if(!s)return;if(MP.offline||!MP.uid){s.textContent='⚪ Entre na sua conta para ver e conversar com outros jogadores';return}s.textContent=MP.conn&&MP.me?`🟢 Online · ${n} jogador${n>1?'es':''} no ${world?'Halloween':'Mundo 1'}`:(MP.err?'🔴 Offline ('+MP.err+') · tentando de novo...':'🟡 Conectando...')}
+setInterval(stat,3000);
+$('chatBtn').onclick=()=>{if(lock)return;acUi();stat();renderLog();$('chM').style.display='flex';lock=true;jr()};
+$('chClose').onclick=()=>{$('chIn').blur();$('chM').style.display='none';lock=false};
+{const b=document.createElement('button');b.className='btn xb';b.textContent='✕';b.onclick=()=>$('chClose').click();const bx=$('chM').querySelector('.box');bx.insertBefore(b,bx.firstChild)}
+$('chSend').onclick=sendChat;
+$('chIn').addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Enter')sendChat()});
+$('chIn').addEventListener('keyup',e=>e.stopPropagation());
+
+// ===== SAVE NA NUVEM (ligado à conta) =====
+const SV={lastUp:'',ok:0,busy:false};
+const LS={get:k=>{try{return localStorage.getItem(k)}catch(e){return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}},del:k=>{try{localStorage.removeItem(k)}catch(e){}}};
+function svKey(){const d=saveData();delete d.t;delete d.px;delete d.py;return JSON.stringify(d)}
+function reloadWith(str){window.__noSave=1;const prev=LS.get('mp');if(prev)LS.set('mp_prev',prev);
+ if(str){LS.set('mp',str);LS.set('mp_bak',str)}else{LS.del('mp');LS.del('mp_bak')}setTimeout(()=>location.reload(),700)}
+async function cloudSync(){if(!MP.uid||MP.offline||SV.busy||!MP.db)return;SV.busy=true;const uid=MP.uid;
+ try{const snap=await MP.db.ref('saves/'+uid).once('value');if(uid!==MP.uid)return;const c=snap.val(),own=LS.get('mp_owner')||'';
+  let cd=null;if(c&&typeof c.d==='string'){try{cd=JSON.parse(c.d)}catch(e){}}
+  if(cd&&Array.isArray(cd.chars)&&cd.chars.length){
+   if(own!==uid){LS.set('mp_owner',uid);LS.set('mp_synced',String(c.t||0));toast('☁️ Carregando seu progresso da conta...');reloadWith(c.d);return}
+   if((c.t||0)>(+LS.get('mp_synced')||0)+1000){LS.set('mp_synced',String(c.t||0));toast('☁️ Progresso mais novo encontrado em outro aparelho...');reloadWith(c.d);return}
+  }else if(own&&own!==uid){LS.set('mp_owner',uid);LS.set('mp_synced','0');toast('Conta nova: começando um jogo novo!');reloadWith(null);return}
+  LS.set('mp_owner',uid);await upload(true);
+ }catch(e){}finally{SV.busy=false}}
+async function upload(force){if(!MP.uid||MP.offline||!MP.conn||!MP.db)return;if(LS.get('mp_owner')!==MP.uid)return;
+ const k=svKey();if(!force&&k===SV.lastUp)return;SV.lastUp=k;
+ try{await MP.db.ref('saves/'+MP.uid).set({d:JSON.stringify(saveData()),t:firebase.database.ServerValue.TIMESTAMP});
+  const t=(await MP.db.ref('saves/'+MP.uid+'/t').once('value')).val();if(t)LS.set('mp_synced',String(t));SV.ok=Date.now()}catch(e){SV.lastUp=''}}
+setInterval(()=>upload(false),30000);
+
+// ===== INIMIGOS COMPARTILHADOS =====
+const SH={pend:{},hit:{},death:{},rew:{},last:{},ref:null};
+window.MPshared=false;
+window.MPhit=(e,d)=>{if(!window.MPshared)return;const i=EN.indexOf(e);if(i>=0)SH.pend[i]=(SH.pend[i]||0)+d};
+function shStart(w){shStop();SH.ref=MP.db.ref('enemies/'+w);SH.ref.on('child_added',shSync);SH.ref.on('child_changed',shSync);window.MPshared=true}
+function shStop(){if(SH.ref)SH.ref.off();SH.ref=null;window.MPshared=false;SH.pend={};SH.hit={};SH.death={};SH.rew={};SH.last={}}
+function shSync(s){const i=+s.key,e=EN[i],v=s.val();if(!e||!v)return;const ns=nowS(),dead=v.b&&ns<v.b;
+ if(dead){SH.death[i]=v.e;if(!e.dead){e.dead=true;e.hp=0;e.back=Date.now()+(v.b-ns);if(fight===e){fight=null;Object.values(fpos).forEach(q=>q.nx=0)}}tryRew(i)}
+ else if(!e.dead){if(v.b)e.hp=e.max;else{const hp=Math.max(0,Math.min(e.max,v.hp-(SH.pend[i]||0)));if(SH.last[i]!=null&&v.hp<SH.last[i]&&fight!==e)e.lh=Date.now();e.hp=hp}}
+ SH.last[i]=v.b?e.max:v.hp}
+function tryRew(i){if(SH.death[i]==null||SH.hit[i]==null||SH.hit[i]!==SH.death[i]-1||SH.rew[i]===SH.death[i])return;
+ SH.rew[i]=SH.death[i];const e=EN[i],now=Date.now();giveDrop(e,now);questKill(e);bossDrop(e,now)}
+setInterval(()=>{if(!window.MPshared||!MP.conn||!SH.ref)return;
+ for(const k in SH.pend){const i=+k,d=SH.pend[k],e=EN[i];delete SH.pend[k];if(!e||!(d>0))continue;let ap=null;
+  SH.ref.child(k).transaction(v=>{ap=null;const ns=nowS();v=v&&typeof v==='object'?{hp:+v.hp||0,e:+v.e||0,b:+v.b||0}:{hp:e.max,e:0,b:0};
+   if(v.b&&ns>=v.b){v.hp=e.max;v.b=0}if(v.b)return;ap=v.e;v.hp=Math.max(0,Math.round(v.hp-d));if(v.hp<=0){v.b=Math.round(ns+10000);v.e++}return v},
+   (err,ok)=>{if(!err&&ok&&ap!=null){SH.hit[i]=Math.max(SH.hit[i]==null?-1:SH.hit[i],ap);tryRew(i)}},false)}},400);
+// ---- tela inicial: entrar / criar conta ----
+let mode='in';const stM=$('startM');
+function stMsg(t,ok){const m=$('stMsg');m.textContent=t;m.style.color=ok?'#7CFC9A':'#ffb74d'}
+function stBusy(b){$('stGo').classList.toggle('dis',b||!MP.ready);$('stGo').textContent=!MP.ready?'Conectando...':b?'Aguarde...':(mode==='in'?'Entrar':'Criar conta')}
+function setMode(m){mode=m;$('tbIn').classList.toggle('on',m==='in');$('tbNew').classList.toggle('on',m==='new');$('stPass2').style.display=m==='new'?'block':'none';
+ $('stHint').style.display=m==='new'?'block':'none';$('stPass').autocomplete=m==='new'?'new-password':'current-password';stMsg('');stBusy(false)}
+function showStart(){stM.style.display='flex';lock=true;jr();try{$('stNick').value=$('stNick').value||localStorage.getItem('mp_lastnick')||''}catch(e){}stBusy(false)}
+function hideStart(){if(stM.style.display!=='none'){stM.style.display='none';lock=false}}
+const ERR={'auth/email-already-in-use':'Esse nickname já está em uso. Escolha outro.','auth/invalid-credential':'Nickname ou senha incorretos.','auth/wrong-password':'Nickname ou senha incorretos.',
+ 'auth/user-not-found':'Nickname ou senha incorretos.','auth/invalid-login-credentials':'Nickname ou senha incorretos.','auth/weak-password':'Senha fraca: use pelo menos 6 caracteres.',
+ 'auth/too-many-requests':'Muitas tentativas. Espere um pouco e tente de novo.','auth/network-request-failed':'Sem conexão com a internet.',
+ 'auth/operation-not-allowed':'Login por senha ainda não foi ativado no Firebase.','auth/invalid-email':'Nickname inválido.'};
+async function go(){if(!MP.ready||$('stGo').classList.contains('dis'))return;
+ const nick=$('stNick').value.trim(),pw=$('stPass').value;
+ if(!NICK_RE.test(nick)){stMsg('Nickname: 3 a 14 letras, números ou _ (sem espaço nem acento).');return}
+ if(clean(' '+nick.replace(/_/g,' ')+' ')!==' '+nick.replace(/_/g,' ')+' '){stMsg('Escolha um nickname sem palavrão 🙂');return}
+ if(pw.length<6){stMsg('A senha precisa ter pelo menos 6 caracteres.');return}
+ if(mode==='new'&&pw!==$('stPass2').value){stMsg('As senhas não são iguais.');return}
+ const email=nick.toLowerCase()+DOM;stBusy(true);stMsg('');
+ try{if(mode==='new'){const c=await firebase.auth().createUserWithEmailAndPassword(email,pw);await c.user.updateProfile({displayName:nick});
+   MP.nick=nick;if(MP.me)send(true);stMsg('Conta criada!',true)}
+  else await firebase.auth().signInWithEmailAndPassword(email,pw);
+  $('stPass').value='';$('stPass2').value=''}
+ catch(e){stMsg(ERR[e.code]||('Erro: '+(e.code||e.message||e)))}stBusy(false)}
+$('tbIn').onclick=()=>setMode('in');$('tbNew').onclick=()=>setMode('new');$('stGo').onclick=go;
+['stNick','stPass','stPass2'].forEach(id=>{$(id).addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Enter')go()});$(id).addEventListener('keyup',e=>e.stopPropagation())});
+$('stShowCb').onchange=e=>{const t=e.target.checked?'text':'password';$('stPass').type=t;$('stPass2').type=t};
+$('stOff').onclick=()=>{MP.offline=true;leave();hideStart();stat()};
+function acUi(){const on=MP.uid&&!MP.offline;$('acTxt').innerHTML='';const b=document.createElement('b');b.textContent=on?MP.nick:'offline';
+ $('acTxt').append(on?'Conta: ':'Você está jogando ',b,on&&SV.ok?' · ☁️ salvo '+new Date(SV.ok).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})+' ':' ');$('acBtn').textContent=on?'🚪 Sair da conta':'🔑 Entrar'}
+$('acBtn').onclick=()=>{$('chM').style.display='none';lock=false;if(MP.uid&&!MP.offline){const fin=()=>{leave();MP.uid=null;MP.w=-1;firebase.auth().signOut()};Promise.race([upload(true),new Promise(r=>setTimeout(r,3000))]).then(fin,fin)}else{MP.offline=false;showStart()}};
+showStart();
+stat();load();
+})();
+</script>
+
 <script>if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));</script>
 </body></html>
