@@ -1991,7 +1991,7 @@ let mnOpen=false;
 function mnSet(o){if(o===mnOpen)return;mnOpen=o;D.body.classList.toggle('mnOpen',o);if(o){mnUi();const cb=$('chatBtn'),l=$('mi_chat').querySelector('span');l.textContent=cb?cb.getAttribute('data-l')||'Chat':'Chat'}bp(o?660:440,.06,'triangle',.06)}
 tg.onclick=()=>{mnSet(!mnOpen)};bk.onclick=()=>{};
 // (o botão voltar fecha só as janelas; o menu fecha no próprio botão)
-function mnUi(){const n=claimable(),d=$('mnDot'),md=$('mi_mis').querySelector('.dot');d.textContent=n;d.classList.toggle('on',n>0);md.textContent=n;md.classList.toggle('on',n>0);
+window.mnUi=()=>mnUi();function mnUi(){const n=claimable(),d=$('mnDot'),md=$('mi_mis').querySelector('.dot');d.textContent=n;d.classList.toggle('on',n>0);md.textContent=n;md.classList.toggle('on',n>0);
  const mu=$('mi_mus');mu.classList.toggle('off',!MUS.on);mu.querySelector('b').textContent=MUS.on?'🎵':'🔇';mu.querySelector('span').textContent=MUS.on?'Música: ON':'Música: OFF'}
 const qm=$('qMt');qm.onclick=()=>{mtToggle()};
 function qmUi(){const ok=!!MT[mountEq]&&mounts.includes(mountEq),d=ok?'flex':'none';if(qm.style.display!==d)qm.style.display=d;const tx=mounted?'🐎':'🐴';if(qm.textContent!==tx)qm.textContent=tx;qm.classList.toggle('on',!!mounted)}
@@ -3610,6 +3610,76 @@ const mt=$c('mnT');if(mt)mt.appendChild(mi);
 window.openCfg=open})();
 // inimigos (e o boss do Mundo 1) voltam com vida cheia se ninguém bater neles por um tempo
 setInterval(()=>{try{const t=Date.now();EN.forEach(e=>{if(e.dead||e.wb||e.hp>=e.max||fight===e)return;if(t-(e.lh||0)>(e.dm?120000:60000)){e.hp=e.max;e.dh=e.max}})}catch(x){}},2000);
+</script>
+<script>
+// ===================== HUD novo: barras de ícones compactas nas laterais (sem nomes), que se ajustam à tela =====================
+(function(){
+const $h=id=>document.getElementById(id);
+const DL=['fig','inv','shop','map','mis','ach'],DR=['chat','mus','mount','save','cfg','adm'];
+const BG={fig:['#ef5350','#8e0000'],inv:['#ffa726','#8a4b00'],shop:['#66bb6a','#1b5e20'],map:['#26c6da','#005662'],mis:['#ffca28','#8d6e00'],ach:['#ffd54f','#9a6a00'],
+ chat:['#42a5f5','#0b3c78'],mus:['#ab47bc','#3d0f52'],mount:['#a1887f','#3e2723'],save:['#5c6bc0','#141c5c'],cfg:['#90a4ae','#263238'],adm:['#fff176','#9e7c00']};
+const css=document.createElement('style');css.textContent=`
+#mnTg,#mnBk{display:none!important}
+.dk{position:fixed;z-index:11;display:grid;grid-auto-flow:column;gap:6px;transition:top .2s}
+#dkL{left:calc(10px + env(safe-area-inset-left,0px))}
+#dkR{right:calc(10px + env(safe-area-inset-right,0px));top:calc(8px + env(safe-area-inset-top,0px));direction:rtl}
+.dk .mi{opacity:1!important;pointer-events:auto!important;transform:none!important;position:relative;width:var(--ds);height:var(--ds);direction:ltr;transition:none}
+.dk .mi span{display:none!important}
+.dk .mi b{width:var(--ds)!important;height:var(--ds)!important;flex:0 0 var(--ds)!important;border-radius:30%!important;border:2px solid #ffffffd9!important;font-size:calc(var(--ds)*.5)!important;transform:none!important;transition:transform .12s!important;
+ background:radial-gradient(circle at 30% 20%,#ffffff66,transparent 46%),linear-gradient(160deg,var(--c1,#4f587e),var(--c2,#141731))!important;box-shadow:0 3px 0 #000a,0 3px 10px #0008,inset 0 -3px 0 #0004!important}
+.dk .mi:active b{transform:scale(.86)!important}
+.dk .mi .dot{top:-6px!important;right:-6px!important;left:auto!important;min-width:17px;height:17px;font-size:10px;line-height:13px;padding:0 3px}
+.dk .mi.off b{filter:grayscale(1) brightness(.85)}
+.dk.dkC .mi{display:none!important}
+.dkT{position:fixed;z-index:11;width:20px;height:38px;padding:0;border:2px solid #ffffff9a;background:#000b;color:#fff;font:900 15px/1 monospace;border-radius:8px;box-shadow:0 2px 0 #0008}
+.dkT.dt::after{content:'';position:absolute;top:-4px;right:-4px;width:9px;height:9px;border-radius:50%;background:#ff1744;border:2px solid #fff}
+body.dkHide .dk,body.dkHide .dkT{display:none!important}
+#chFeed{left:var(--chL,12px)!important}
+body.mdOpen .modal{padding-left:calc(var(--dkW,0px) + 14px)!important;padding-right:calc(var(--dkW,0px) + 14px)!important}
+@media (hover:hover){.dk .mi:hover b{filter:brightness(1.15)}}`;
+document.head.appendChild(css);
+const dl=document.createElement('div');dl.id='dkL';dl.className='dk';const dr=document.createElement('div');dr.id='dkR';dr.className='dk';
+const tl=document.createElement('button');tl.className='dkT';tl.id='dkTL';tl.setAttribute('aria-label','Esconder ícones');
+const tr=document.createElement('button');tr.className='dkT';tr.id='dkTR';tr.setAttribute('aria-label','Esconder ícones');
+document.body.append(dl,dr,tl,tr);
+let C={L:0,R:0};try{C=Object.assign(C,JSON.parse(localStorage.getItem('mp_dk')||'{}'))}catch(e){}
+const svC=()=>{try{localStorage.setItem('mp_dk',JSON.stringify(C))}catch(e){}};
+tl.onclick=e=>{e.stopPropagation();C.L=C.L?0:1;svC();lay(true)};tr.onclick=e=>{e.stopPropagation();C.R=C.R?0:1;svC();lay(true)};
+function own(){[[dl,DL],[dr,DR]].forEach(([d,ids])=>{const els=ids.map(id=>$h('mi_'+id)).filter(Boolean);
+ if(els.some((el,i)=>el.parentElement!==d||d.children[i]!==el))els.forEach(el=>{d.appendChild(el);const id=el.id.slice(3),c=BG[id],b=el.querySelector('b'),sp=el.querySelector('span');
+  if(b&&c){b.style.setProperty('--c1',c[0]);b.style.setProperty('--c2',c[1])}const nm=sp?sp.textContent.trim():id;el.title=nm;el.setAttribute('aria-label',nm)})})}
+let last='';
+function vis(id){const e=$h(id);if(!e)return null;const cs=getComputedStyle(e);if(cs.display==='none'||cs.visibility==='hidden'||+cs.opacity===0)return null;const r=e.getBoundingClientRect();return r.width?r:null}
+function lay(force){try{own();
+ const H=innerHeight,W=innerWidth,B=document.body,md=B.classList.contains('mdOpen');
+ const sm=$h('startM'),hide=(sm&&sm.style.display==='flex')||!!vis('rot');B.classList.toggle('dkHide',hide);if(hide)return;
+ const ds=Math.max(32,Math.min(46,Math.round(Math.min(H*.11,W*.06)))),gap=6,step=ds+gap;
+ // esquerda: embaixo do dinheiro/missão, sem chegar no joystick
+ let top=10;if(!md){const h=vis('hud'),q=vis('quest');top=(h?h.bottom:40)+8;if(q&&$h('quest').textContent.trim())top=Math.max(top,q.bottom+8)}
+ const qm=vis('qMt'),botL=md?10:(qm?H-qm.top+8:Math.max(158,H-(vis('joy')||{top:H-150}).top+10));
+ const nL=[...dl.children].filter(e=>getComputedStyle(e).display!=='none').length||1;
+ const rL=Math.max(1,Math.min(nL,Math.floor((H-top-botL+gap)/step)));
+ // direita: de cima até os botões de ação (Lutar, Falar, Roletar...)
+ let botR=md?10:60;if(!md)['fightBtn','recallBtn','spinBtn','gateBtn','talkBtn','pasBtn','rkBtn','mountBtn'].forEach(id=>{const r=vis(id);if(r&&r.left>W*.5)botR=Math.max(botR,H-r.top+8)});
+ const nR=[...dr.children].filter(e=>getComputedStyle(e).display!=='none').length||1;
+ const rR=Math.max(1,Math.min(nR,Math.floor((H-10-botR+gap)/step)));
+ const key=[ds,top,rL,rR,C.L,C.R,md,W,H].join(',');
+ if(force||key!==last){last=key;
+  dl.style.setProperty('--ds',ds+'px');dr.style.setProperty('--ds',ds+'px');dl.style.top=top+'px';
+  dl.style.gridTemplateRows=`repeat(${rL},${ds}px)`;dr.style.gridTemplateRows=`repeat(${rR},${ds}px)`;
+  dl.classList.toggle('dkC',!!C.L);dr.classList.toggle('dkC',!!C.R)}
+ const a=dl.getBoundingClientRect(),b=dr.getBoundingClientRect(),aw=C.L?0:a.width,bw=C.R?0:b.width;
+ tl.style.top=(top+Math.max(0,(C.L?0:a.height)-38)/2)+'px';tl.style.left=(10+aw+(C.L?0:5))+'px';tl.textContent=C.L?'›':'‹';
+ const rt=b.top||8;tr.style.top=(rt+Math.max(0,(C.R?0:b.height)-38)/2)+'px';tr.style.right=(10+bw+(C.R?0:5))+'px';tr.style.left='auto';tr.textContent=C.R?'‹':'›';
+ tl.classList.toggle('dt',!!C.L&&!!dl.querySelector('.dot.on'));tr.classList.toggle('dt',!!C.R&&!!dr.querySelector('.dot.on'));
+ B.style.setProperty('--dkW',Math.max(aw,bw)+30+'px');B.style.setProperty('--chL',(C.L?40:aw+44)+'px');
+ // bolinhas: missões, chat não lido e ícone da música
+ try{window.mnUi&&window.mnUi()}catch(e){}
+ const cb=$h('chatBtn'),ch=$h('mi_chat');if(cb&&ch){const m=(cb.getAttribute('data-l')||'').match(/\((\d+)\)/),d=ch.querySelector('.dot');if(d){const n=m?m[1]:'';if(d.textContent!==n)d.textContent=n;d.classList.toggle('on',!!m)}}
+}catch(e){}}
+window.dkLay=lay;
+addEventListener('resize',()=>lay(true));setInterval(lay,350);setTimeout(()=>lay(true),50);
+})();
 </script>
 <script>
 // ===================== lutadores nunca na frente do jogador =====================
