@@ -172,10 +172,10 @@ body.shake{animation:mShake .12s 8}
 <button class="btn" id="invClose" style="display:none">Fechar</button></div></div>
 <div class="modal" id="popM"><div class="pop"><div class="pbox pmain" id="popMain"></div><div class="pbox ppas" id="popPas" style="display:none"></div></div></div>
 <div class="modal" id="detM" style="z-index:6"><div class="box" style="max-width:340px"><div class="row"><canvas class="sp big" id="detC" width="12" height="12"></canvas><div id="detT" style="text-align:left;font-size:14px;line-height:1.5"></div></div><div id="detMsg" style="font-size:12px;color:#ffb74d;min-height:16px;margin:6px 0"></div><div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center"><button class="btn" id="eqBtn"></button><button class="btn" id="feedBtn" style="background:#2e7d32">🍖 Alimentar</button><button class="btn" id="sellBtn" style="background:#b8860b"></button><button class="btn" id="detClose" style="background:#555">Voltar</button></div></div></div>
-<div class="modal" id="spinM"><div class="box" style="max-width:360px"><h2 id="spinT">⭐ Roleta da Estrela</h2>
-<div class="mach"><div id="reels" class="reels"></div></div><div id="slotName" style="font-size:13px;min-height:36px;line-height:1.5">Boa sorte!</div>
-<div id="pity" style="font-size:12px;color:#ffd23f;margin:6px 0 0"></div><div class="chance" id="spinCh">Comum 60% · Raro 28% · Épico 9,5% · Lendário 2,4% · Mítico 0,1%<br>✦ Shiny (mutação em qualquer raridade, aura arco-íris) 0,5%</div>
-<div id="modes" style="margin-bottom:8px"></div><button class="btn" id="go">Girar</button> <button class="btn" id="autoGo" style="background:#6a1b9a;display:none">▶ Auto</button> <button class="btn" id="cfgBtn" style="background:#37474f">⚙️ Auto vender/alimentar</button><div id="cfgP" style="display:none;margin:8px 0"></div> <button class="btn" id="spinClose" style="background:#555">Sair</button></div></div>
+<div class="modal" id="spinM"><div class="box rbx"><h2 id="spinT">⭐ Roleta da Estrela</h2>
+<div id="pity"></div><div class="chance" id="spinCh"></div><div id="slotName" class="rmsg">Boa sorte!</div>
+<div class="rbt"><div id="modes"></div><button class="btn" id="go">Girar</button><button class="btn" id="autoGo" style="background:#6a1b9a;display:none">▶ Auto</button><button class="btn" id="cfgBtn" style="background:#37474f" title="Auto vender/alimentar">⚙️ Auto vender</button><button class="btn" id="spinClose" style="background:#555">Sair</button></div>
+<div id="cfgP" style="display:none;margin:6px 0"></div><div id="reels" style="display:none"></div></div></div>
 <div class="modal" id="feedM" style="z-index:7"><div class="box"><h2>🍖 Alimentar</h2><div style="font-size:11px;opacity:.7;margin-bottom:6px">Toque para selecionar os personagens que serão sacrificados</div><div id="feedList" style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:10px"></div><button class="btn" id="feedGo">Alimentar</button> <button class="btn" id="feedBack" style="background:#555">Voltar</button></div></div>
 <div class="modal" id="pasM"><div class="box" style="max-width:440px"><h2>🔮 Totem de Passivas</h2>
 <div id="pasEss" style="color:#80d8ff"></div>
@@ -198,7 +198,7 @@ body.shake{animation:mShake .12s 8}
 
 <script>
 const RAR=['Comum','Raro','Épico','Lendário','Mítico'],COL=['#9e9e9e','#2f6fe4','#8e44ad','#ffd23f',null];
-const CH=[60,28,9.5,2.4,0.1];
+const CH=[60.07,28,9.5,2.4,0.03];
 const NAMES=[['Naruto','Goku','Luffy'],['Gon','Killua','Asta','Itadori'],['Baki','Jotaro','Ichigo'],['Kaneki','Meliodas'],['Guts']];const HNAMES=[['Chara','Shaco','Sally'],['Ghostface','Chucky','Jason'],['Bendy','Baldi','Nemesis'],['Jeff the Killer','Sonic.exe','Slender Man'],['Springtrap','Herobrine']];
 const pickN=r=>{const N=(typeof world!=='undefined'&&world===1)?HNAMES:NAMES;return N[r][Math.floor(Math.random()*N[r].length)]};
 const DMG=[[5,10],[12,20],[25,40],[50,80],[100,150]],HP=[[30,50],[60,90],[120,180],[250,400],[600,900]];
@@ -211,7 +211,7 @@ let lastSave=0;const save=()=>{if(window.__noSave)return;try{localStorage.setIte
 let QS=[qs,qs1],world=0;
 if(isNew){const k={id:nid++,rar:0,name:pickN(0),lvl:1,xp:0,spd:ri(1,10)};chars.push(k);equipped.push(k.id);save()}
 function roll(){pity++;let r=Math.random()*100,k=0;for(;k<4;k++){if((r-=CH[k])<0)break}
- if(pity>=1000)k=4;if(k===4)pity=0;
+ if(pity>=5000)k=4;if(k===4)pity=0;
  return {id:nid++,rar:k,sh:Math.random()<.005?1:0,name:pickN(k),lvl:1,xp:0,spd:ri(1,10)}}
 const D1=[10,20,40,70,100],D10=[150,300,500,750,1000],SELL=[1,1,2,5,10],XPV=[15,40,100,250,600];
 const PAS={l1:{n:'Ligeirinho 1',r:0,as:.10},b1:{n:'Bruto 1',r:0,dm:.15},
@@ -772,7 +772,7 @@ function uiFight(){uiNpc();let e=null;if(!fight&&!lock)e=EN.find(q=>!q.dead&&Mat
 fightBtn.onclick=()=>{if(!equipped.length||!fightBtn._e)return;fight=fightBtn._e;Object.values(fpos).forEach(q=>q.nx=0)};
 function spinUi(){if(spinN>1&&!ups['x'+spinN])spinN=1;try{window.chUi&&window.chUi()}catch(e){}
  const m=[1];for(let i=2;i<=5;i++)if(ups['x'+i])m.push(i);
- $('pity').textContent='🌟 Piedade Mítica: '+pity+'/1000 · Slots '+chars.length+'/'+cap();
+ $('pity').innerHTML=`<div class="pyT"><b>🌈 Piedade Mítica</b><span>[${Math.min(pity,5000).toLocaleString('pt-BR')}/5K]</span><em class="pyS">Slots ${chars.length}/${cap()}</em></div><div class="pyB"><i style="width:${Math.min(100,pity/50).toFixed(2)}%"></i></div>`;
  $('modes').innerHTML=m.length>1?m.map(n=>`<button class="btn md" data-n="${n}" style="padding:6px 12px;margin:0 3px;${n===spinN?'background:#e0a800;color:#222':'background:#555'}">${n}x</button>`).join(''):'';
  $('modes').querySelectorAll('.md').forEach(b=>b.onclick=()=>{if(spinning)return;spinN=+b.dataset.n;spinUi()});
  const c=(world===1?40:10)*spinN;$('go').classList.toggle('dis',have()<c);$('go').textContent='Girar '+spinN+'x ('+c+(world===1?'🎃':'🪙')+')';
@@ -1057,13 +1057,85 @@ function doSpin(){if(spinning)return;ac();const n=spinN,cost=(world===1?40:10)*n
  if(chars.length+n>cap()&&!hasFilter()){autoOn=false;spinUi();sm('Inventário cheio! Venda personagens ou compre slots.');return}
  pay(cost);updHud();spinning=true;spinUi();sm('Girando...');
  const ws=Array.from({length:n},roll);
- reels($('reels'),ws,()=>{const r=ri(0,4);return {rar:r,name:pickN(r)}},showChar,()=>{
+ starReveal(ws,()=>{
   chars.push(...ws);autoProc(ws);save();updHud();spinning=false;spinUi();
-  sm(ws.map(x=>`<b>${x.name}</b> ${badge(x)}${x._a==='v'?' 💰':x._a==='f'?' 🍖':''}`).join('<br>'));
-  const top=Math.max(...ws.map(x=>x.sh?Math.max(x.rar,3):x.rar));sWin(top);const my=ws.filter(x=>x.rar===4);if(my.length)mythFx(my.map(x=>x.name).join(', '));
+  sm(ws.map(x=>`<b>${x.name}</b> ${badge(x)}${x._a==='v'?' 💰':x._a==='f'?' 🍖':''}`).join(' · '));
+  const my=ws.filter(x=>x.rar===4);if(my.length)mythFx(my.map(x=>x.name).join(', '));
   if(autoOn)setTimeout(()=>{if(autoOn&&$('spinM').style.display==='flex')doSpin()},my.length?3700:1000)})}
 $('go').onclick=doSpin;
 $('autoGo').onclick=()=>{autoOn=!autoOn;spinUi();if(autoOn)doSpin()};
+
+// ===================== estrela da roleta: aparece, brilha, se mexe, explode e mostra quem veio =====================
+const SFC=['#e8eaf0','#40c4ff','#d500f9','#ff9100','#ff4fd8'],SFN=['Comum','Raro','Épico','Lendário','Mítico'];
+{const css=document.createElement('style');css.textContent=`
+#spinM .rbx{max-width:620px;width:100%;padding:8px 10px 10px}
+#spinM h2{font-size:16px;margin:0 0 3px}
+#spinM #pity{margin:2px 2px 2px!important}
+#spinM .pyT{font-size:12px;margin-bottom:2px;align-items:center}#spinM .pyT em{margin-left:10px;font-style:normal;font-size:10px;opacity:.7}
+#spinM .pyB{height:10px}
+#spinM .scg{grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:5px;padding:5px;margin:4px 0 3px}
+#spinM .scd{padding:2px 1px 1px;border-radius:7px}#spinM .scd canvas{width:34px;height:34px}
+#spinM .scr{font-size:9px}#spinM .scn{font-size:8px}#spinM .scp{font-size:10px}#spinM .scp s{font-size:8px}
+#spinM .scx,#spinM .scb{font-size:10px!important;display:inline}#spinM .scb{margin-left:8px}
+#spinM .rmsg{font-size:12px;min-height:16px;line-height:1.35;margin:3px 0 5px}
+#spinM .rbt{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;align-items:center}
+#spinM .rbt .btn{padding:6px 11px;font-size:13px;margin:0}#spinM #spinClose{display:none}#spinM #go{background:linear-gradient(#ffd54f,#ff8f00);color:#2a1600;font-weight:900}
+#spinM #modes{display:flex;gap:3px}#spinM #modes .btn{padding:5px 9px!important;margin:0!important;font-size:12px}
+#starFx{position:fixed;inset:0;z-index:31;background:radial-gradient(circle at 50% 45%,#1d1648d9,#000000f0);display:flex;align-items:center;justify-content:center;touch-action:none;animation:sfIn .2s;user-select:none;-webkit-user-select:none}
+#starFx canvas.sfc{position:absolute;inset:0;width:100%;height:100%}
+#starFx .sfR{position:relative;display:flex;gap:10px;flex-wrap:wrap;justify-content:center;max-width:94vw;margin-top:4vh}
+.sfC{width:104px;padding:6px 4px 8px;border-radius:12px;border:3px solid var(--c);background:linear-gradient(#2d2d3a,#121218);text-align:center;color:#fff;box-shadow:0 0 22px var(--c),inset 0 0 14px #000;animation:sfPop .5s cubic-bezier(.2,1.6,.4,1) both}
+.sfC canvas{width:84px;height:84px;image-rendering:pixelated;display:block;margin:0 auto}
+.sfC b{display:block;font-size:13px;margin-top:3px;text-shadow:0 1px 2px #000}.sfC span{font-size:11px;font-weight:900;color:var(--c)}
+.sfC.r4{animation:sfPop .5s cubic-bezier(.2,1.6,.4,1) both,scM 1.4s linear infinite}
+.sfC .nw{display:block;font-size:10px;color:#ffeb3b;font-weight:900;text-shadow:0 0 6px #ff9800}
+.sfSk{position:absolute;bottom:12px;left:0;right:0;text-align:center;font-size:11px;color:#ffffff8c}
+@keyframes sfIn{from{opacity:0}}@keyframes sfPop{from{transform:scale(0) rotate(-14deg);opacity:0}}@keyframes sfOut{to{opacity:0}}`;document.head.appendChild(css)}
+function sfRGBA(h,a){const n=parseInt(h.slice(1),16);return 'rgba('+(n>>16&255)+','+(n>>8&255)+','+(n&255)+','+a+')'}
+function starReveal(ws,done){
+ const fast=!!autoOn,T1=fast?700:1600,RV=fast?850:1500,top=Math.max(...ws.map(w=>w.rar)),shy=ws.some(w=>w.sh);
+ const o=document.createElement('div');o.id='starFx';const cv=document.createElement('canvas');cv.className='sfc';o.appendChild(cv);
+ const row=document.createElement('div');row.className='sfR';o.appendChild(row);const sk=document.createElement('div');sk.className='sfSk';sk.textContent='toque para pular';o.appendChild(sk);
+ document.body.appendChild(o);
+ const dpr=Math.min(2,window.devicePixelRatio||1),x=cv.getContext('2d');let W=innerWidth,H=innerHeight;cv.width=W*dpr;cv.height=H*dpr;x.setTransform(dpr,0,0,dpr,0,0);
+ const t0=performance.now();let tb=0,ended=false;const P=[],SP=[];
+ const colAt=(e,k)=>top===4||shy&&k?`hsl(${(e/4+k*40)%360},100%,62%)`:SFC[top];
+ for(let i=0;i<9;i++)SP.push({a:i*.698,r:1.5+Math.random()*.6,s:.0015+Math.random()*.0015});
+ try{for(let i=0;i<7;i++)bp(520+i*95,.09,'triangle',.035,i*(T1/7000));bp(140,T1/1000,'sine',.04,0,420)}catch(e){}
+ function star(cx,cy,R,rot){x.beginPath();for(let i=0;i<10;i++){const r=i%2?R*.44:R,a=rot+i*Math.PI/5-Math.PI/2;x.lineTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r)}x.closePath()}
+ function boom(){if(tb)return;tb=performance.now();sk.textContent='toque para continuar';
+  const cx=W/2,cy=H*.45,n=top===4?150:top>=2?100:70;
+  for(let i=0;i<n;i++){const a=Math.random()*6.283,v=2+Math.random()*(top>=3?9:6);P.push({x:cx,y:cy,vx:Math.cos(a)*v,vy:Math.sin(a)*v-1,l:500+Math.random()*700,c:Math.random()<.35?'#ffffff':colAt(Math.random()*1440,i%9),s:1.5+Math.random()*3.5,st:Math.random()<.3})}
+  try{sWin(Math.max(...ws.map(w=>w.sh?Math.max(w.rar,3):w.rar)))}catch(e){}try{bp(90,.35,'sawtooth',.05,0,40)}catch(e){}
+  ws.forEach((w,i)=>{const c=document.createElement('div');c.className='sfC r'+w.rar;c.style.setProperty('--c',w.sh?'#80deea':SFC[w.rar]);c.style.animationDelay=(i*.09)+'s';
+   c.innerHTML=`<canvas></canvas><b>${w.sh?'✦ ':''}${w.name}</b><span>${SFN[w.rar]}${w.sh?' · Shiny':''}</span>`;row.appendChild(c);try{drawSp(c.querySelector('canvas'),w.rar,2,w.sh,w.name)}catch(e){}})}
+ function end(){if(ended)return;ended=true;o.style.animation='sfOut .22s forwards';setTimeout(()=>{o.remove();try{done()}catch(e){console.error(e)}},210)}
+ o.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();if(!tb)boom();else if(performance.now()-tb>250)end()});
+ function fr(now){if(ended)return;const e=Math.max(0,now-t0);x.clearRect(0,0,W,H);const cx=W/2,cy=H*.45,M=Math.min(W,H);
+  if(!tb){
+   const k=Math.min(1,e/420),pop=k<1?1-Math.pow(1-k,3):1,ch=Math.max(0,(e-T1*.55)/(T1*.45)),grow=1+ch*.3;
+   const wob=Math.min(1,e/600),sx=cx+Math.sin(e/150)*11*wob+(ch>.6?(Math.random()-.5)*8*ch:0),sy=cy+Math.cos(e/190)*8*wob-Math.sin(e/380)*6*wob+(ch>.6?(Math.random()-.5)*8*ch:0);
+   const R=M*.13*pop*grow*(1+.05*Math.sin(e/85)),c=ch>0?colAt(e,0):'#fff2b0',rot=e/700+Math.sin(e/260)*.25;
+   // raios de luz girando atrás
+   x.save();x.translate(sx,sy);x.rotate(e/900);const rl=R*(3.4+ch*1.6);for(let i=0;i<14;i++){x.rotate(6.2832/14);const g2=x.createLinearGradient(0,0,0,-rl);g2.addColorStop(0,sfRGBA('#ffffff',.38*pop));g2.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=g2;x.beginPath();x.moveTo(-R*.12,0);x.lineTo(0,-rl);x.lineTo(R*.12,0);x.fill()}x.restore();
+   // brilho
+   const gl=x.createRadialGradient(sx,sy,0,sx,sy,R*2.6);gl.addColorStop(0,ch>0&&top===4?'rgba(255,255,255,.75)':ch>0?sfRGBA(SFC[top],.7):'rgba(255,236,150,.6)');gl.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=gl;x.fillRect(sx-R*2.6,sy-R*2.6,R*5.2,R*5.2);
+   // estrela
+   x.save();x.shadowColor=c;x.shadowBlur=30;const sg=x.createRadialGradient(sx-R*.2,sy-R*.25,R*.05,sx,sy,R);sg.addColorStop(0,'#ffffff');sg.addColorStop(.45,ch>0?c:'#ffe873');sg.addColorStop(1,ch>0?c:'#ffb300');x.fillStyle=sg;star(sx,sy,R,rot);x.fill();
+   x.lineWidth=3;x.strokeStyle='#ffffffcc';star(sx,sy,R,rot);x.stroke();x.restore();
+   // faíscas girando em volta
+   SP.forEach((p,i)=>{p.a+=p.s*16;const px=sx+Math.cos(p.a)*R*p.r,py=sy+Math.sin(p.a)*R*p.r*.75,ss=2+Math.sin(e/90+i)*1.5;x.fillStyle=ch>0?colAt(e,i):'#fff6cc';x.save();x.translate(px,py);x.rotate(e/200);x.fillRect(-ss/2,-ss*2,ss,ss*4);x.fillRect(-ss*2,-ss/2,ss*4,ss);x.restore()});
+   if(e>=T1)boom()}
+  else{const b=Math.max(0,now-tb);
+   if(b<260){x.fillStyle='rgba(255,255,255,'+(1-b/260)+')';x.fillRect(0,0,W,H)}
+   x.save();x.translate(cx,cy);x.rotate(now/1500);const rl=M*.9;for(let i=0;i<16;i++){x.rotate(6.2832/16);x.fillStyle=sfRGBA(top===4?'#ffffff':SFC[top],.10*Math.min(1,b/300));x.beginPath();x.moveTo(-M*.03,0);x.lineTo(0,-rl);x.lineTo(M*.03,0);x.fill()}x.restore();
+   if(b<700){x.strokeStyle=top===4?`hsl(${now/3%360},100%,65%)`:SFC[top];x.lineWidth=Math.max(1,10*(1-b/700));x.globalAlpha=1-b/700;x.beginPath();x.arc(cx,cy,b*1.1,0,6.2832);x.stroke();x.globalAlpha=1}
+   for(let i=P.length-1;i>=0;i--){const p=P[i],q=b/p.l;if(q>=1){P.splice(i,1);continue}p.x+=p.vx;p.y+=p.vy;p.vx*=.97;p.vy=p.vy*.97+.05;x.globalAlpha=1-q;x.fillStyle=p.c;
+    if(p.st){x.save();x.translate(p.x,p.y);x.rotate(b/120);star(0,0,p.s*1.6,0);x.fill();x.restore()}else x.fillRect(p.x-p.s/2,p.y-p.s/2,p.s,p.s)}x.globalAlpha=1;
+   if(b>=RV+ws.length*90)end()}
+  requestAnimationFrame(fr)}
+ requestAnimationFrame(fr)}
+
 // --- passivas
 let pcur=null,ptar=null,prolling=false,pauto=false;
 const pasBtn=$('pasBtn'),pm=t=>$('pasMsg').textContent=t;
@@ -1783,19 +1855,44 @@ giveDrop=function(e,t){let c;const mm=bm('m');if(world===1){c=Math.max(1,Math.ro
  save();updHud();fx.push({x:e.x-4,y:e.y-12,t,s:'+'+c+(world===1?' 🎃':' moedas'),c:world===1?'#ff9800':'#ffd23f'});coinBurst(e,c,world===1)};
 bossDrop=function(e,t){if(e.t!==2)return;let n=ri(1,3)*bm('d');n=Math.floor(n)+(Math.random()<n%1?1:0);ess+=n;save();updHud();fx.push({x:e.x-4,y:e.y-24,t,s:'+'+n+' essência 🔮',c:'#80d8ff'})};
 roll=function(){pity++;const Lk=bm('s'),ch=CH.map((c,i)=>i?c*Lk:0);ch[0]=Math.max(0,100-ch[1]-ch[2]-ch[3]-ch[4]);
- let r=Math.random()*100,k=0;for(;k<4;k++){if((r-=ch[k])<0)break}if(pity>=1000)k=4;if(k===4)pity=0;
+ let r=Math.random()*100,k=0;for(;k<4;k++){if((r-=ch[k])<0)break}if(pity>=5000)k=4;if(k===4)pity=0;
  const o={id:nid++,rar:k,sh:Math.random()<.005*Lk?1:0,name:pickN(k),lvl:1,xp:0,spd:ri(1,10)};try{window.chUi&&window.chUi()}catch(e){}
- st.rolls++;prog('roll',1);if(k===4){st.myth++;prog('myth',1)}if(k===3)st.leg++;if(o.sh)st.shiny++;return o};
+ st.rolls++;prog('roll',1);if(k===4){st.myth++;prog('myth',1)}if(k===3)st.leg++;if(o.sh)st.shiny++;try{if(!GOT[o.name]){GOT[o.name]=1;GOTv++}}catch(e){}return o};
 // chances de verdade de cada jogador: a poção multiplica Raro/Épico/Lendário/Mítico e o Comum fica com o resto
+
+const GOT={};let GOTv=0;try{const g0=JSON.parse(localStorage.getItem('mp')||'{}').got;if(g0&&typeof g0==='object')for(const k in g0)GOT[k]=1}catch(e){}
+try{chars.forEach(c=>GOT[c.name]=1)}catch(e){}
+{const _xs=window.XS;window.XS=()=>Object.assign(_xs(),{got:GOT})}
+{const css=document.createElement('style');css.textContent=`
+#pity{margin:8px 2px 4px!important;color:#fff!important}
+.pyT{display:flex;justify-content:center;gap:6px;font-size:13px;margin-bottom:3px}.pyT b{background:linear-gradient(90deg,#ff5252,#ffd740,#69f0ae,#40c4ff,#e040fb);-webkit-background-clip:text;background-clip:text;color:transparent}
+.pyB{height:12px;border:2px solid #fff;border-radius:7px;background:#111;overflow:hidden;box-shadow:0 0 8px #e040fb66}
+.pyB i{display:block;height:100%;background:linear-gradient(90deg,#ff1744,#ff9100,#ffea00,#00e676,#00b0ff,#d500f9,#ff1744);background-size:200% 100%;animation:pyR 2.5s linear infinite;border-radius:5px}
+@keyframes pyR{to{background-position:200% 0}}
+.pyS{font-size:10px;opacity:.7;margin-top:2px}
+.scg{display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:6px;padding:6px;background:#0008;border:2px solid #000;border-radius:10px;margin:6px 0}
+.scd{position:relative;background:linear-gradient(#34343f,#17171d);border:2px solid var(--c);border-radius:8px;padding:3px 2px 2px;text-align:center;box-shadow:inset 0 0 10px #0009}
+.scd.r4{background:linear-gradient(#3d2d45,#17171d)}.scd.r4:not(.no){animation:scM 2s linear infinite}
+@keyframes scM{0%{border-color:#ff5252}25%{border-color:#ffd740}50%{border-color:#69f0ae}75%{border-color:#40c4ff}100%{border-color:#ff5252}}
+.scr{color:var(--c);font-weight:900;font-size:10px;text-shadow:0 1px 0 #000}
+.scd canvas{width:42px;height:42px;image-rendering:pixelated;display:block;margin:1px auto}
+.scd.no canvas{filter:brightness(0) drop-shadow(0 0 1px #777);opacity:.75}
+.scn{font-size:9px;line-height:1.1;min-height:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.scd.no .scn{opacity:.5}
+.scp{font-size:11px;font-weight:900}.scp s{opacity:.5;font-weight:normal;font-size:9px;display:block}`;document.head.appendChild(css)}
 const chOdds=()=>{const Lk=bm('s'),ch=CH.map((c,i)=>i?c*Lk:0);ch[0]=Math.max(0,100-ch[1]-ch[2]-ch[3]-ch[4]);return{Lk,ch,sh:.5*Lk}};
-window.chUi=function(){const el=document.getElementById('spinCh');if(!el)return;const{Lk,ch,sh}=chOdds(),RN=['Comum','Raro','Épico','Lendário','Mítico'],RC=['#bdbdbd','#4fc3f7','#ce93d8','#ffb74d','#ff5bd6'];
- const f=v=>(+v.toFixed(3)).toLocaleString('pt-BR',{maximumFractionDigits:3})+'%',N=world===1?HNAMES:NAMES;
- let h='';ch.forEach((v,i)=>{const b=i?CH[i]:CH[0],up=Lk>1&&Math.abs(v-b)>1e-9;
-  h+=`<div style="display:flex;justify-content:space-between;gap:6px;text-align:left"><b style="color:${RC[i]}">${RN[i]}</b><span style="opacity:.75;flex:1;font-size:10px;padding-top:2px">${N[i].join(', ')}</span><span style="white-space:nowrap">${up?`<s style="opacity:.55">${f(b)}</s> → <b style="color:${v>b?'#69f0ae':'#ff8a80'}">${f(v)}</b>`:f(v)}</span></div>`});
- h+=`<div style="margin-top:3px">✦ Shiny (aura arco-íris) ${Lk>1?`<s style="opacity:.55">0,5%</s> → <b style="color:#69f0ae">${f(sh)}</b>`:'0,5%'}</div>`;
+let chKey='';
+window.chUi=function(){const el=document.getElementById('spinCh');if(!el)return;const{Lk,ch,sh}=chOdds(),RN=['Comum','Raro','Épico','Lendário','Mítico'],RC=['#cfd8dc','#40c4ff','#d500f9','#ff9100','#ff4fd8'];
+ const N=world===1?HNAMES:NAMES,f=v=>(+v.toFixed(4)).toLocaleString('pt-BR',{maximumFractionDigits:4})+'%';
  let bf='';for(const id in buffs)if(buffs[id]>0&&IT[id]&&IT[id].k==='s'&&IT[id].m===Lk){bf=`🍀 ${IT[id].n} ativa (${String(Lk).replace('.',',')}x) · acaba em ${ft(buffs[id])}`;break}
- h+=bf?`<div style="margin-top:4px;color:#69f0ae;font-weight:bold">${bf}</div>`:`<div style="margin-top:4px;opacity:.6;font-size:10px">Use uma 🍀 Poção de Sorte para aumentar as chances</div>`;
- if(el.innerHTML!==h)el.innerHTML=h;const tt=document.getElementById('spinT');if(tt){const x=world===1?'🎃 Roleta do Halloween':'⭐ Roleta da Estrela';if(tt.textContent!==x)tt.textContent=x}};
+ const key=world+'|'+Lk+'|'+GOTv+'|'+Object.keys(GOT).length;
+ if(key!==chKey){chKey=key;let h='<div class="scg">';
+  N.forEach((ns,r)=>ns.forEach(n=>{const own=!!GOT[n],p=ch[r]/ns.length,b=CH[r]/ns.length,up=Lk>1&&Math.abs(p-b)>1e-9;
+   h+=`<div class="scd r${r}${own?'':' no'}" style="--c:${RC[r]}" title="${own?n:'???'}"><div class="scr">${RN[r]}</div><canvas data-n="${n}" data-r="${r}"></canvas><div class="scn">${own?n:'???'}</div><div class="scp" style="${up?'color:'+(p>b?'#69f0ae':'#ff8a80'):''}">${up?`<s>${f(b)}</s>`:''}${f(p)}</div></div>`}));
+  h+='</div><div class="scx" style="font-size:11px">✦ Shiny (aura arco-íris) '+(Lk>1?`<s style="opacity:.55">0,5%</s> → <b style="color:#69f0ae">${f(sh)}</b>`:'0,5%')+'</div><div class="scb" style="margin-top:3px;font-size:11px"></div>';
+  el.innerHTML=h;el.style.textAlign='center';el.querySelectorAll('canvas[data-n]').forEach(c=>{try{drawSp(c,+c.dataset.r,2,0,c.dataset.n)}catch(e){}})}
+ const sb=el.querySelector('.scb');if(sb){const x=bf?`<span style="color:#69f0ae;font-weight:bold">${bf}</span>`:'<span style="opacity:.6">Use uma 🍀 Poção de Sorte para aumentar as chances</span>';if(sb.innerHTML!==x)sb.innerHTML=x}
+ try{const pb=document.querySelector('#pity .pyB i'),pt=document.querySelector('#pity .pyT span');if(pb)pb.style.width=Math.min(100,pity/50).toFixed(2)+'%';if(pt)pt.textContent='['+Math.min(pity,5000).toLocaleString('pt-BR')+'/5K]'}catch(e){}
+ const tt=document.getElementById('spinT');if(tt){const x=world===1?'🎃 Roleta do Halloween':'⭐ Roleta da Estrela';if(tt.textContent!==x)tt.textContent=x}};
 setInterval(()=>{try{const m=document.getElementById('spinM');if(m&&m.style.display==='flex')chUi()}catch(e){}},500);
 
 updHud=function(){$('hud').textContent='🪙 '+nf(coins)+(world===1?'  🎃 '+nf(pk):'')+'  🔮 '+ess};
