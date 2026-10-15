@@ -3177,7 +3177,7 @@ function join(force){if(!MP.db||!MP.uid||MP.offline||MP.kicked)return;if(!force&
  MP.refs=[pr,cr];
  MP.me=MP.db.ref('players/'+w+'/'+MP.uid);MP.me.onDisconnect().remove();{const me=MP.me,cb=me.on('value',s=>{if(!s.exists()&&MP.me===me&&!MP.hidden&&MP.conn&&!MP.kicked){MP.last='';setTimeout(()=>send(true),300)}},()=>{});MP.refs.push({off:()=>me.off('value',cb)})}MP.last='';send(true);if(w==='w0'||w==='w1')shStart(w);else shStop();stat()}
 function payload(){const k=equipped.map(id=>chars.find(c=>c.id===id)).filter(Boolean).slice(0,4).map(c=>[c.rar,c.sh?1:0,String(c.name).slice(0,12)]);
- return {n:MP.nick,x:Math.round(P.x),y:Math.round(P.y),d:P.dir|0,m:mounted?(mountEq==='vassoura'?2:1):0,k:JSON.stringify(k),f:fight?EN.indexOf(fight):-1,s:window.V6S?V6S():0}}
+ return {n:MP.nick,x:Math.round(P.x),y:Math.round(P.y),d:P.dir|0,m:mounted?(mountEq==='vassoura'?2:1):0,k:JSON.stringify(window.LOOKX?k.concat([['L',LOOKX.code()]]):k),f:fight?EN.indexOf(fight):-1,s:window.V6S?V6S():0}}
 function send(force){if(!MP.me||!MP.conn||MP.hidden||MP.kicked)return;if(window.ADM&&(ADM.noOnline()||ADM.banLock))return;const p=payload(),key=JSON.stringify(p),t=Date.now();
  if(!force&&key===MP.last&&t-MP.lastT<20000)return;MP.last=key;MP.lastT=t;p.t=firebase.database.ServerValue.TIMESTAMP;
  MP.me.set(p).catch(e=>{MP.err=e.code||'erro';stat()})}
@@ -3185,6 +3185,7 @@ function upsert(s){const v=s.val();if(!v||s.key===MP.uid)return;let r=MP.others[
  if(!r)r=MP.others[s.key]={x:+v.x||0,y:+v.y||0,fp:[],st:0};
  r.tx=+v.x||0;r.ty=+v.y||0;r.d=[0,1,2,3].includes(v.d)?v.d:2;r.m=v.m===1||v.m===2?v.m:0;r.n=cleanNick(v.n)||'?';r.t=v.t;r.f=Number.isInteger(v.f)?v.f:-1;r.s=(+v.s|0)&15;
  let k=[];try{k=JSON.parse(v.k||'[]')}catch(e){}
+ if(Array.isArray(k)&&typeof LKE!=='undefined'){const lk=k.find(c=>Array.isArray(c)&&c[0]==='L');if(lk){const o=LKE.unpack(String(lk[1]||''));if(o)r.lk=o}}r.__id=s.key;
  r.k=(Array.isArray(k)?k:[]).slice(0,4).filter(c=>Array.isArray(c)&&c[0]>=0&&c[0]<=4).map(c=>[c[0]|0,c[1]?1:0,String(c[2]||'').slice(0,12)]);stat()}
 setInterval(()=>{if(MP.uid&&!MP.hidden){if(MP.w!==(world|0))join(true);else send(false)}},150);
 document.addEventListener('visibilitychange',()=>{if(!MP.db)return;
@@ -3796,7 +3797,12 @@ function spec(row,col){const d=row===0?'f':row===1?'b':'s';
   const w=WALKF[k];return {d,by:w[4],lL:w[0],lR:w[1],aL:d==='b'?w[3]:w[2],aR:d==='b'?w[2]:w[3]}}
  if(col<=13)return {d:'f',eyes:col===12?'lookL':'lookR',hy:0};
  const sl=col>=16,ex=col&1;return {d:'f',sit:1,hy:(sl?1:0)+ex,aL:ex,aR:ex,eyes:sl?'closed':'open'}}
-return {FW,FH,PX,PY,NCOL,SKIN,HAIRC,EYEC,CLOTH,HAIR,STY,DEF,norm,hex,mix,body,spec,frame,build,one,key:l=>JSON.stringify(norm(l))};
+// visual em 13 letras (vai junto com a posição do jogador, então todo mundo recebe)
+const PK=[['g','g'],['s',null],['h','h'],['hc',null],['e',null],['t','t'],['tc',null],['b','b'],['bc',null],['f','f'],['fc',null],['c','c'],['cc',null]];
+function pack(look){const L=norm(look);return PK.map(([k,cat])=>{const v=cat?STY[cat].findIndex(a=>a[0]===L[k]):L[k];return Math.max(0,v).toString(36)}).join('')}
+function unpack(str){const o={};if(typeof str!=='string'||str.length!==PK.length)return null;
+ PK.forEach(([k,cat],i)=>{const v=parseInt(str[i],36);if(isNaN(v))return;if(cat){const it=STY[cat][v];if(it)o[k]=it[0]}else o[k]=v});return norm(o)}
+return {pack,unpack,FW,FH,PX,PY,NCOL,SKIN,HAIRC,EYEC,CLOTH,HAIR,STY,DEF,norm,hex,mix,body,spec,frame,build,one,key:l=>JSON.stringify(norm(l))};
 })();
 // ---- estado do visual, animações no mapa, sincronização e tela de criação ----
 (function(){
@@ -3870,12 +3876,13 @@ X.draw=function(g,who,x,fy){const LI=X.img(who);if(!LI)return false;const s=X.po
  if(s.z)zzz(g,x+12,fy-7,Date.now()+stOf(who).seed);return true};
 // ---- online: publico o meu visual e leio o dos outros (nó looks/<uid>) ----
 let pubLast='';
+X.code=()=>E.pack(X.cur);
 X.pub=force=>{if(!MP||!MP.uid||MP.offline||!MP.db)return;const s=E.key(X.cur);if(!force&&s===pubLast)return;pubLast=s;MP.db.ref('looks/'+MP.uid).set(s).catch(()=>{pubLast=''})};
 setInterval(()=>{if(!MP||!MP.db)return;const ids=MP.others||{};
- for(const id in ids)if(!X.subs[id]){const ref=MP.db.ref('looks/'+id),cb=s=>{const v=s.val();let o=null;if(typeof v==='string'&&v.length<400){try{o=E.norm(JSON.parse(v))}catch(e){}}X.remote[id]=o;const r=MP.others[id];if(r)r.lk=o};
+ for(const id in ids)if(!X.subs[id]){const ref=MP.db.ref('looks/'+id),cb=s=>{const v=s.val();let o=null;if(typeof v==='string'&&v.length<400){try{o=E.norm(JSON.parse(v))}catch(e){}}X.remote[id]=o;const r=MP.others[id];if(r&&o)r.lk=o};
   ref.on('value',cb,()=>{});X.subs[id]={ref,cb}}
  for(const id in X.subs)if(!ids[id]){const s=X.subs[id];try{s.ref.off('value',s.cb)}catch(e){}delete X.subs[id];delete X.remote[id]}
- for(const id in ids){const r=ids[id];if(!r)continue;r.__id=id;if(r.lk===undefined&&X.remote[id]!==undefined)r.lk=X.remote[id]}
+ for(const id in ids){const r=ids[id];if(!r)continue;r.__id=id;if(!r.lk&&X.remote[id])r.lk=X.remote[id]}
  X.pub(false)},2000);
 // chamado depois que o save da nuvem foi conferido: se a conta acabou de ser criada, abre a criação
 X.ready=uid=>{X.pub(true);const nk=String(MP.nick||'').toLowerCase();if(nk&&LSg('look_new')===nk&&$('lkM').style.display!=='flex')open(true)};
