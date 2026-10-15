@@ -2551,7 +2551,7 @@ function join(force){if(!MP.db||!MP.uid||MP.offline)return;if(!force&&MP.w===(wo
  MP.me=MP.db.ref('players/'+w+'/'+MP.uid);MP.me.onDisconnect().remove();MP.last='';send(true);if(w==='w0'||w==='w1')shStart(w);else shStop();stat()}
 function payload(){const k=equipped.map(id=>chars.find(c=>c.id===id)).filter(Boolean).slice(0,4).map(c=>[c.rar,c.sh?1:0,String(c.name).slice(0,12)]);
  return {n:MP.nick,x:Math.round(P.x),y:Math.round(P.y),d:P.dir|0,m:mounted?(mountEq==='vassoura'?2:1):0,k:JSON.stringify(k),f:fight?EN.indexOf(fight):-1,s:window.V6S?V6S():0}}
-function send(force){if(!MP.me||!MP.conn||MP.hidden)return;const p=payload(),key=JSON.stringify(p),t=Date.now();
+function send(force){if(!MP.me||!MP.conn||MP.hidden)return;if(window.ADM&&(ADM.noOnline()||ADM.banLock))return;const p=payload(),key=JSON.stringify(p),t=Date.now();
  if(!force&&key===MP.last&&t-MP.lastT<20000)return;MP.last=key;MP.lastT=t;p.t=firebase.database.ServerValue.TIMESTAMP;
  MP.me.set(p).catch(e=>{MP.err=e.code||'erro';stat()})}
 function upsert(s){const v=s.val();if(!v||s.key===MP.uid)return;let r=MP.others[s.key];
@@ -2574,8 +2574,8 @@ function bubble(x,y,txt){const words=txt.split(' '),lines=[];let cur='';
  g.fillStyle='#222';g.fillRect(bx-1,by-1,w+2,h+2);g.fillStyle='#fff';g.fillRect(bx,by,w,h);g.fillRect(x-2,by+h,4,3);
  g.fillStyle='#222';g.textBaseline='top';g.textAlign='left';L.forEach((l,i)=>g.fillText(l,bx+4,by+2+i*8))}
 function drawTags(){const now=Date.now(),list=[];
- for(const id in MP.others){const r=MP.others[id];if(!stale(r))list.push([id,r.x,r.y,r.m,r.n,'#fff'])}
- if(MP.me)list.push([MP.uid,P.x,P.y,mounted,MP.nick,'#80d8ff']);
+ for(const id in MP.others){const r=MP.others[id];if(!stale(r))list.push([id,r.x,r.y,r.m,id===window.ADMUID?'👑 '+r.n:r.n,id===window.ADMUID?'#ffd23f':'#fff'])}
+ if(MP.me)list.push([MP.uid,P.x,P.y,mounted,MP.uid===window.ADMUID?'👑 '+MP.nick:MP.nick,MP.uid===window.ADMUID?'#ffd23f':'#80d8ff']);
  list.forEach(([id,x,y,m,n,c])=>{const sx=Math.round(x-cam.x)+8,sy=Math.round(y-cam.y)-(m?8:3);if(sx<-60||sx>VW+60||sy<-40||sy>VH+40)return;
   tag(sx,sy,n,c);const b=MP.bub[id];if(b&&now-b.t<5000&&!MP.muted[id])bubble(sx,sy-8,b.m)})}
 const _da=drawActors;
@@ -2589,7 +2589,7 @@ function onMsg(s){const v=s.val();if(!v||typeof v.m!=='string')return;
  if(fresh&&!MP.muted[m.u]){MP.bub[m.u]={m:m.m,t:Date.now()};feed(m)}
  if($('chM').style.display==='flex')renderLog(true)}
 function line(m){const d=document.createElement('div');d.className='ln'+(m.u===MP.uid?' me':'')+(MP.muted[m.u]?' mut':'');
- const n=document.createElement('span');n.className='nm';n.textContent=m.n+': ';
+ const n=document.createElement('span');n.className='nm';const adm=window.ADMUID&&m.u===window.ADMUID;n.textContent=(adm?'👑 ':'')+m.n+': ';if(adm)n.style.color='#ffd23f';
  if(m.u!==MP.uid)n.onclick=()=>{if(MP.muted[m.u])delete MP.muted[m.u];else MP.muted[m.u]=1;try{localStorage.setItem('mp_mute',JSON.stringify(MP.muted))}catch(e){}
   sys(m.n+(MP.muted[m.u]?' foi silenciado 🔇':' voltou a ser ouvido 🔊'));renderLog(true)};
  const t=document.createElement('span');t.textContent=MP.muted[m.u]?'(silenciado)':m.m;d.append(n,t);return d}
@@ -2605,6 +2605,7 @@ function feed(m){const F=$('chFeed'),d=document.createElement('div'),b=document.
 function sendChat(){const inp=$('chIn');let m=inp.value.replace(/\s+/g,' ').trim().slice(0,120);if(!m)return;
  if(MP.offline||!MP.uid){sys('Entre na sua conta para usar o chat.');return}
  if(!MP.me||!MP.conn){sys('Sem conexão agora. Tente de novo em instantes.');return}
+ if(window.ADM&&ADM.muted()){sys('🔇 Você foi silenciado pelo ADM e não pode mandar mensagens agora.');return}
  if(Date.now()-MP.lastMsg<2500){sys('Espere um pouquinho para mandar outra mensagem.');return}
  MP.lastMsg=Date.now();m=clean(m);const w=wk(),key=MP.db.ref('chat/'+w).push().key,TS=firebase.database.ServerValue.TIMESTAMP,up={};
  up['chat/'+w+'/'+key]={u:MP.uid,n:MP.nick,m:m,t:TS};up['lastMsg/'+MP.uid]=TS;
@@ -2728,6 +2729,225 @@ function acUi(){const on=MP.uid&&!MP.offline;$('acTxt').innerHTML='';const b=doc
 $('acBtn').onclick=()=>{$('chM').style.display='none';lock=false;if(MP.uid&&!MP.offline){const fin=()=>{leave();MP.uid=null;MP.w=-1;firebase.auth().signOut()};Promise.race([upload(true),new Promise(r=>setTimeout(r,3000))]).then(fin,fin)}else{MP.offline=false;showStart()}};
 showStart();
 stat();load();
+})();
+</script>
+<script>
+// ===================== PAINEL DO ADM (só a conta JPi437) =====================
+// A segurança de verdade fica nas regras do Firebase (database.rules.json): mesmo que alguém
+// abra este painel mexendo no código, o servidor recusa banir, presentear ou editar outras contas.
+(function(){
+const ADMIN_EMAIL='jpi437@mundopixel.game';
+const MP=window.MP,D=document;if(!MP)return;
+const A={uid:null,ban:null,restr:{},refs:[],inbox:false,since:0,banLock:false};window.ADM=A;
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const LSg=k=>{try{return localStorage.getItem(k)}catch(e){return null}},LSs=(k,v)=>{try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(e){}};
+const user=()=>{try{return window.firebase&&firebase.apps.length?firebase.auth().currentUser:null}catch(e){return null}};
+const isAdm=()=>{const u=user();return !!u&&!!MP.uid&&!MP.offline&&(u.email||'').toLowerCase()===ADMIN_EMAIL};
+const now=()=>Date.now()+(MP.off||0),TS=()=>firebase.database.ServerValue.TIMESTAMP,db=()=>MP.db;
+A.isAdm=isAdm;A.muted=()=>(+A.restr.chat||0)>now();A.noOnline=()=>(+A.restr.online||0)>now();
+const ALLN=[...new Set(['Luffy'].concat(NAMES.flat()))];
+const CUR={coins:['🪙','moedas'],ess:['🔮','essência'],pk:['🎃','abóboras']};
+const DUR=[['1h','1 hora',36e5],['1d','1 dia',864e5],['7d','7 dias',6048e5],['30d','30 dias',2592e6],['perm','Permanente',0]];
+const PERM=9e15,untilOf=k=>{const d=DUR.find(x=>x[0]===k);return !d||!d[2]?PERM:now()+d[2]};
+const when=u=>u>=PERM/2?'permanente':'até '+new Date(u).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+const desc=c=>`${c.sh?'✦ ':''}${c.name} (${RAR[c.rar]||'?'}, Nv${c.lvl})`;
+const cleanNick=t=>String(t||'').replace(/[^A-Za-z0-9_]/g,'').slice(0,14)||'?';
+
+// ---------- campos de personagem ----------
+function cleanFields(f){const o={};if(!f||typeof f!=='object')return o;
+ if(typeof f.name==='string'&&f.name.trim())o.name=f.name.trim().slice(0,14);
+ if(f.rar!=null){const r=Math.round(+f.rar);if(r>=0&&r<=4)o.rar=r}
+ if(f.lvl!=null){const l=Math.round(+f.lvl);if(l>=1)o.lvl=Math.min(9999,l)}
+ if(f.spd!=null){const s=Math.round(+f.spd);if(s>=1)o.spd=Math.min(999,s)}
+ if(f.sh!=null)o.sh=f.sh?1:0;
+ if(f.pas!=null)o.pas=PAS[f.pas]?f.pas:'';
+ if(f.xp!=null)o.xp=Math.max(0,Math.round(+f.xp)||0);return o}
+function mkChar(f){const o=Object.assign({rar:0,sh:0,name:'Naruto',lvl:1,xp:0,spd:5},cleanFields(f));if(!o.pas)delete o.pas;return o}
+function setFields(c,f){Object.assign(c,cleanFields(f));if(!c.pas)delete c.pas}
+
+// ---------- estilo ----------
+const st=D.createElement('style');st.textContent=`
+#admM .box,#admPop .box{max-width:460px;width:100%;max-height:88vh;overflow:auto}
+#admM h2,#admPop h2{text-align:center;margin:2px 0 8px}
+.admTabs{display:flex;gap:6px;margin-bottom:8px}.admTabs button{flex:1;font:inherit;font-weight:900;font-size:13px;padding:8px 4px;border-radius:10px;border:2px solid #ffffff66;background:#1c2240;color:#fff}
+.admTabs button.on{background:#ffd23f;color:#3a2600;border-color:#fff}
+.admRow{display:flex;align-items:center;gap:8px;padding:8px;border-radius:10px;background:#ffffff12;margin:5px 0}
+.admRow .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:bold}
+.admRow small{opacity:.7;font-weight:normal}
+.admS{font-size:12px;opacity:.75;margin:10px 0 4px;text-transform:uppercase;letter-spacing:.5px;font-weight:900}
+.admF{display:grid;grid-template-columns:1fr 1fr;gap:6px}.admF label{font-size:11px;opacity:.8;display:flex;flex-direction:column;gap:2px}
+.admF input,.admF select,.admIn{font:inherit;font-size:14px;padding:7px;border-radius:8px;border:2px solid #ffffff55;background:#0d1024;color:#fff;width:100%;box-sizing:border-box}
+.admF .ck{flex-direction:row;align-items:center;gap:6px;font-size:13px;opacity:1}
+.admF .ck input{width:auto;margin:0}
+.admB{font:inherit;font-weight:900;font-size:13px;padding:8px 10px;border-radius:10px;border:2px solid #fff;color:#fff;background:#3b5dc9;margin:3px 2px}
+.admB.red{background:#c62828}.admB.grn{background:#2e7d32}.admB.gld{background:#b8860b}.admB.gry{background:#455a64}.admB.sm{font-size:12px;padding:5px 8px}
+.admB.arm{animation:admPulse .6s infinite alternate}@keyframes admPulse{to{background:#ff1744}}
+.admTag{display:inline-block;font-size:11px;padding:1px 6px;border-radius:6px;background:#c62828;margin-left:4px}.admTag.y{background:#b8860b}.admTag.g{background:#2e7d32}
+.admMsg{min-height:18px;font-size:13px;text-align:center;margin:6px 0;color:#7CFC9A}
+#banM{position:fixed;inset:0;z-index:50;background:#0a0006f2;display:none;align-items:center;justify-content:center;text-align:center;padding:20px;color:#fff}
+#banM .bx{max-width:380px}#banM h1{font-size:26px;margin:0 0 10px;color:#ff5252}
+#mi_adm b{background:radial-gradient(circle at 35% 28%,#ffe36b,#b8860b 70%,#5e3b00)}
+`;D.head.appendChild(st);
+
+// ---------- janelas ----------
+const M=D.createElement('div');M.className='modal';M.id='admM';
+M.innerHTML='<div class="box"><button class="btn xb" id="admX">✕</button><h2>🛡️ Painel do ADM</h2><div class="admTabs"><button data-t="pl" class="on">👤 Jogadores</button><button data-t="ch">🧬 Personagens</button><button data-t="me">💰 Meu jogo</button></div><div id="admBody"></div></div>';
+D.body.appendChild(M);
+const PP=D.createElement('div');PP.className='modal';PP.id='admPop';PP.style.zIndex=40;
+PP.innerHTML='<div class="box" style="text-align:center"><h2 id="apT"></h2><div id="apB"></div><button class="btn" id="apOk" style="margin-top:10px">OK</button></div>';D.body.appendChild(PP);
+const BM=D.createElement('div');BM.id='banM';BM.innerHTML='<div class="bx"><h1>🚫 Você foi banido</h1><div id="banTx"></div><button class="btn" id="banOut" style="margin-top:16px;background:#455a64">🚪 Sair da conta</button></div>';D.body.appendChild(BM);
+const $a=id=>D.getElementById(id),body=()=>$a('admBody');
+let tab='pl',view=null;
+function openAdm(){if(!isAdm()){toast('Só a conta ADM pode abrir isso');return}M.style.display='flex';lock=true;try{jr()}catch(e){}render()}
+function closeAdm(){M.style.display='none';lock=false}
+$a('admX').onclick=closeAdm;
+M.querySelectorAll('.admTabs button').forEach(b=>b.onclick=()=>{tab=b.dataset.t;view=null;M.querySelectorAll('.admTabs button').forEach(x=>x.classList.toggle('on',x===b));render()});
+{const _ct=closeTop;closeTop=function(){if(PP.style.display==='flex'){$a('apOk').click();return true}if(M.style.display==='flex'){if(view){view=null;render()}else closeAdm();return true}return _ct()}}
+// botão no menu (só aparece para o ADM)
+const mi=D.createElement('button');mi.className='mi';mi.id='mi_adm';mi.style.display='none';mi.innerHTML='<b>🛡️</b><span>ADM</span><i class="dot"></i>';
+mi.onclick=e=>{e.stopPropagation();const bk=$a('mnBk');if(bk)bk.click();else try{mnSet(false)}catch(x){}setTimeout(openAdm,50)};
+const mt=$a('mnT');if(mt)mt.appendChild(mi);
+// confirmação com dois toques (sem confirm(), que pode não funcionar no app)
+function twoTap(btn,fn){btn.onclick=()=>{if(btn.classList.contains('arm')){btn.classList.remove('arm');fn();return}
+ const t=btn.textContent;btn.classList.add('arm');btn.textContent='Toque de novo para confirmar';setTimeout(()=>{if(btn.classList.contains('arm')){btn.classList.remove('arm');btn.textContent=t}},2500)}}
+function msg(t,bad){const m=$a('admMsgL');if(m){m.textContent=t;m.style.color=bad?'#ffb74d':'#7CFC9A'}}
+const fail=e=>msg('Erro: '+(e&&(e.code||e.message)||e)+(String(e&&e.code||'').includes('PERMISSION')?' · confira as regras do Firebase':''),true);
+
+// ---------- editor de personagem ----------
+function editor(c,id){c=c||{};const p=id||'ae';
+ return `<div class="admF">
+ <label>Personagem<select id="${p}_n">${ALLN.map(n=>`<option${n===c.name?' selected':''}>${esc(n)}</option>`).join('')}<option value="__c"${c.name&&!ALLN.includes(c.name)?' selected':''}>✏️ Outro nome...</option></select></label>
+ <label>Nome personalizado<input id="${p}_cn" maxlength="14" value="${c.name&&!ALLN.includes(c.name)?esc(c.name):''}" placeholder="(opcional)"></label>
+ <label>Raridade<select id="${p}_r">${RAR.map((r,i)=>`<option value="${i}"${i===(c.rar|0)?' selected':''}>${r}</option>`).join('')}</select></label>
+ <label>Nível<input id="${p}_l" type="number" min="1" max="9999" value="${c.lvl||1}"></label>
+ <label>Velocidade<input id="${p}_s" type="number" min="1" max="999" value="${c.spd||5}"></label>
+ <label>Passiva<select id="${p}_p"><option value="">Sem passiva</option>${PL.map(k=>`<option value="${k}"${k===c.pas?' selected':''}>${esc(PAS[k].n)}</option>`).join('')}</select></label>
+ <label class="ck"><input id="${p}_sh" type="checkbox"${c.sh?' checked':''}> ✦ Shiny</label></div>`}
+function readEd(id){const p=id||'ae',v=x=>$a(p+'_'+x);let n=v('n').value;if(n==='__c'||v('cn').value.trim())n=v('cn').value.trim()||'Lutador';
+ return cleanFields({name:n,rar:v('r').value,lvl:v('l').value,spd:v('s').value,pas:v('p').value,sh:v('sh').checked})}
+
+// ---------- abas ----------
+function render(){const B=body();if(!B)return;if(view)return view();if(tab==='pl')return tabPlayers();if(tab==='ch')return tabChars();tabMe()}
+function tabChars(){const list=chars.slice().sort((a,b)=>b.rar-a.rar||b.lvl-a.lvl);
+ body().innerHTML=`<div class="admS">Criar personagem no seu inventário</div>${editor({rar:4,lvl:10,spd:5})}
+ <div style="text-align:center"><button class="admB grn" id="acNew">➕ Criar</button></div><div class="admMsg" id="admMsgL"></div>
+ <div class="admS">Seus personagens (${list.length}) · toque para editar</div>
+ ${list.map(c=>`<div class="admRow"><span class="nm" style="color:${COL[c.rar]||'#f0f'}">${esc(desc(c))}${equipped.includes(c.id)?' <small>· equipado</small>':''}</span><button class="admB sm" data-e="${c.id}">✏️ Editar</button></div>`).join('')||'<div class="admRow">Nenhum personagem.</div>'}`;
+ $a('acNew').onclick=()=>{const c=mkChar(readEd());c.id=nid++;chars.push(c);save();msg('Criado: '+desc(c));setTimeout(render,700)};
+ body().querySelectorAll('[data-e]').forEach(b=>b.onclick=()=>{const c=chars.find(x=>x.id===+b.dataset.e);if(c){view=()=>editMine(c);render()}})}
+function editMine(c){body().innerHTML=`<button class="admB gry sm" id="aBack">← Voltar</button><div class="admS">Editando ${esc(desc(c))}</div>${editor(c)}
+ <div style="text-align:center"><button class="admB grn" id="aSave">💾 Salvar</button><button class="admB red" id="aDel">🗑️ Apagar</button></div><div class="admMsg" id="admMsgL"></div>`;
+ $a('aBack').onclick=()=>{view=null;render()};
+ $a('aSave').onclick=()=>{setFields(c,readEd());save();msg('Salvo: '+desc(c))};
+ twoTap($a('aDel'),()=>{const i=chars.indexOf(c);if(i>=0)chars.splice(i,1);equipped=equipped.filter(id=>id!==c.id);save();view=null;render()})}
+function tabMe(){body().innerHTML=`<div class="admS">Suas moedas</div>${Object.keys(CUR).map(k=>`<div class="admRow"><span class="nm">${CUR[k][0]} ${CUR[k][1]}</span><input class="admIn" style="width:130px" type="number" min="0" id="am_${k}" value="${Math.floor(window[k]!==undefined?0:0)}"></div>`).join('')}
+ <div style="text-align:center"><button class="admB grn" id="amSet">💾 Definir valores</button></div><div class="admMsg" id="admMsgL"></div>`;
+ $a('am_coins').value=Math.floor(coins);$a('am_ess').value=Math.floor(ess);$a('am_pk').value=Math.floor(pk);
+ $a('amSet').onclick=()=>{coins=Math.max(0,Math.round(+$a('am_coins').value||0));ess=Math.max(0,Math.round(+$a('am_ess').value||0));pk=Math.max(0,Math.round(+$a('am_pk').value||0));try{updHud()}catch(e){}save();msg('Pronto!')}}
+
+// ---------- jogadores ----------
+let plCache=null,plQ='';
+async function loadPlayers(){const out={};
+ for(const id in MP.others){const r=MP.others[id];if(MP.live(r))out[id]={uid:id,n:r.n,on:1,t:+r.t||0}}
+ const [pf,bn,rs]=await Promise.all([db().ref('profiles').orderByChild('t').limitToLast(300).once('value'),db().ref('banned').once('value'),db().ref('restr').once('value')]);
+ pf.forEach(c=>{const v=c.val()||{};const o=out[c.key]||(out[c.key]={uid:c.key,t:0});o.n=o.n||cleanNick(v.n);o.t=Math.max(o.t,+v.t||0)});
+ const bv=bn.val()||{},rv=rs.val()||{};
+ for(const id in bv){const o=out[id]||(out[id]={uid:id,n:cleanNick(bv[id].n),t:0});o.ban=bv[id]}
+ for(const id in rv){if(out[id])out[id].restr=rv[id]}
+ delete out[MP.uid];plCache=Object.values(out).sort((a,b)=>(b.on|0)-(a.on|0)||b.t-a.t)}
+async function tabPlayers(){body().innerHTML=`<div style="display:flex;gap:6px"><input class="admIn" id="apQ" placeholder="Buscar nickname..." value="${esc(plQ)}"><button class="admB sm" id="apR">🔄</button></div><div class="admMsg" id="admMsgL"></div><div id="apL">Carregando...</div>`;
+ const q=$a('apQ');q.addEventListener('keydown',e=>e.stopPropagation());q.addEventListener('keyup',e=>e.stopPropagation());q.oninput=()=>{plQ=q.value;list()};
+ $a('apR').onclick=()=>{plCache=null;tabPlayers()};
+ function list(){const L=$a('apL');if(!L||!plCache)return;const s=plQ.trim().toLowerCase(),ar=plCache.filter(p=>!s||String(p.n).toLowerCase().includes(s)).slice(0,120);
+  L.innerHTML=ar.map(p=>{const b=p.ban&&+p.ban.u>now(),c=p.restr&&+p.restr.chat>now(),o=p.restr&&+p.restr.online>now();
+   return `<div class="admRow" data-u="${esc(p.uid)}" style="cursor:pointer"><span class="nm">${p.on?'🟢':'⚪'} ${esc(p.n)}${b?'<span class="admTag">BANIDO</span>':''}${c?'<span class="admTag y">MUDO</span>':''}${o?'<span class="admTag y">SEM ONLINE</span>':''}</span><small>›</small></div>`}).join('')||'<div class="admRow">Ninguém encontrado.</div>';
+  L.querySelectorAll('[data-u]').forEach(r=>r.onclick=()=>{const p=plCache.find(x=>x.uid===r.dataset.u);view=()=>player(p);render()})}
+ if(!plCache){try{await loadPlayers()}catch(e){$a('apL').textContent='';fail(e);return}}list()}
+function selDur(id){return `<select class="admIn" id="${id}" style="width:auto">${DUR.map(d=>`<option value="${d[0]}"${d[0]==='1d'?' selected':''}>${d[1]}</option>`).join('')}</select>`}
+async function player(p){const uid=p.uid;
+ body().innerHTML=`<button class="admB gry sm" id="aBack">← Voltar</button><h3 style="margin:6px 0 0">${p.on?'🟢':'⚪'} ${esc(p.n)}</h3><small style="opacity:.5">${esc(uid)}</small><div class="admMsg" id="admMsgL">Carregando...</div><div id="apD"></div>`;
+ $a('aBack').onclick=()=>{view=null;render()};
+ let ban=null,rs={};try{const[a,b]=await Promise.all([db().ref('banned/'+uid).once('value'),db().ref('restr/'+uid).once('value')]);ban=a.val();rs=b.val()||{}}catch(e){fail(e);return}
+ if(!$a('apD'))return;msg('');const bOn=ban&&+ban.u>now(),cOn=+rs.chat>now(),oOn=+rs.online>now();
+ $a('apD').innerHTML=`
+ <div class="admS">🚫 Banimento</div>
+ ${bOn?`<div class="admRow"><span class="nm">Banido ${when(+ban.u)}${ban.r?'<br><small>Motivo: '+esc(ban.r)+'</small>':''}</span><button class="admB grn sm" id="aUnban">✅ Desbanir</button></div>`
+ :`<div class="admRow" style="flex-wrap:wrap">${selDur('aBd')}<input class="admIn" id="aBr" maxlength="80" placeholder="Motivo (aparece para ele)" style="flex:1;min-width:120px"><button class="admB red" id="aBan">🚫 Banir</button></div>`}
+ <div class="admS">⛔ Restrições</div>
+ <div class="admRow"><span class="nm">🔇 Chat ${cOn?'<span class="admTag y">silenciado '+when(+rs.chat)+'</span>':''}</span>${cOn?'<button class="admB grn sm" id="aCh0">Liberar</button>':selDur('aChd')+'<button class="admB gld sm" id="aCh1">Silenciar</button>'}</div>
+ <div class="admRow"><span class="nm">🌐 Online ${oOn?'<span class="admTag y">bloqueado '+when(+rs.online)+'</span>':''}<br><small>Some do lobby, não bate em boss/inimigos compartilhados</small></span>${oOn?'<button class="admB grn sm" id="aOn0">Liberar</button>':selDur('aOnd')+'<button class="admB gld sm" id="aOn1">Bloquear</button>'}</div>
+ <div class="admS">🎁 Presentear</div>
+ <div class="admRow" style="flex-wrap:wrap"><input class="admIn" id="aGv" type="number" value="1000" style="width:110px"><select class="admIn" id="aGk" style="width:auto">${Object.keys(CUR).map(k=>`<option value="${k}">${CUR[k][0]} ${CUR[k][1]}</option>`).join('')}</select><button class="admB grn" id="aGift">Enviar</button></div>
+ <div style="text-align:center"><button class="admB gld" id="aGc">🧬 Dar um personagem</button><button class="admB" id="aPc">📋 Ver/editar personagens dele</button></div>
+ <div class="admS">📢 Mensagem</div>
+ <div class="admRow"><input class="admIn" id="aM" maxlength="160" placeholder="Mensagem que vai aparecer para ele"><button class="admB sm" id="aMs">Enviar</button></div>
+ <div class="admMsg" style="font-size:11px;opacity:.6">Presentes e mudanças chegam na hora se ele estiver jogando, ou quando ele entrar de novo.</div>`;
+ const keep=()=>{const m=$a('aM');return m?m.value.trim().slice(0,160):''};
+ const inbox=(o,ok)=>db().ref('inbox/'+uid).push(Object.assign(o,{t:TS()})).then(()=>msg(ok)).catch(fail);
+ const reload=()=>{plCache=null;setTimeout(()=>{if(view)player(p)},600)};
+ if(bOn)twoTap($a('aUnban'),()=>db().ref('banned/'+uid).remove().then(()=>{msg('Desbanido');reload()}).catch(fail));
+ else twoTap($a('aBan'),()=>{const u=untilOf($a('aBd').value),up={};up['banned/'+uid]={u,r:$a('aBr').value.trim().slice(0,80),n:p.n,by:MP.nick,t:TS()};
+  ['w0','w1','w2'].forEach(w=>up['players/'+w+'/'+uid]=null);db().ref().update(up).then(()=>{msg('Banido '+when(u));reload()}).catch(fail)});
+ const restr=(k,on,sel)=>{const r=db().ref('restr/'+uid+'/'+k);(on?r.set(untilOf($a(sel).value)):r.remove()).then(()=>{msg('Pronto!');reload()}).catch(fail)};
+ if(cOn)$a('aCh0').onclick=()=>restr('chat',0);else $a('aCh1').onclick=()=>restr('chat',1,'aChd');
+ if(oOn)$a('aOn0').onclick=()=>restr('online',0);else $a('aOn1').onclick=()=>{restr('online',1,'aOnd');const up={};['w0','w1','w2'].forEach(w=>up['players/'+w+'/'+uid]=null);db().ref().update(up).catch(()=>{})};
+ $a('aGift').onclick=()=>{const k=$a('aGk').value,v=Math.round(+$a('aGv').value||0);if(!v){msg('Coloque uma quantidade',true);return}inbox({k,v,m:keep()},`Enviado: ${v} ${CUR[k][0]} para ${p.n}`)};
+ $a('aMs').onclick=()=>{const m=keep();if(!m){msg('Escreva a mensagem',true);return}inbox({k:'msg',m},'Mensagem enviada');$a('aM').value=''};
+ $a('aGc').onclick=()=>{view=()=>giftChar(p);render()};
+ $a('aPc').onclick=()=>{view=()=>theirChars(p);render()}}
+function giftChar(p){body().innerHTML=`<button class="admB gry sm" id="aBack">← Voltar</button><div class="admS">Dar personagem para ${esc(p.n)}</div>${editor({rar:4,lvl:1,spd:5})}
+ <input class="admIn" id="aGm" maxlength="160" placeholder="Mensagem (opcional)" style="margin-top:6px"><div style="text-align:center"><button class="admB grn" id="aSend">🎁 Enviar presente</button></div><div class="admMsg" id="admMsgL"></div>`;
+ $a('aBack').onclick=()=>{view=()=>player(p);render()};
+ $a('aSend').onclick=()=>{const c=mkChar(readEd());db().ref('inbox/'+p.uid).push({k:'char',c,m:$a('aGm').value.trim().slice(0,160),t:TS()}).then(()=>msg('Enviado: '+desc(c))).catch(fail)}}
+async function theirChars(p){body().innerHTML=`<button class="admB gry sm" id="aBack">← Voltar</button><div class="admS">Personagens de ${esc(p.n)}</div><div class="admMsg" id="admMsgL">Carregando o save...</div><div id="aL"></div>`;
+ $a('aBack').onclick=()=>{view=()=>player(p);render()};
+ let cs=[],eq=[],t=0;try{const v=(await db().ref('saves/'+p.uid).once('value')).val();if(v&&typeof v.d==='string'){const d=JSON.parse(v.d);cs=Array.isArray(d.chars)?d.chars:[];eq=d.equipped||[];t=+v.t||0}}catch(e){fail(e);return}
+ if(!$a('aL'))return;msg(t?'Save de '+new Date(t).toLocaleString('pt-BR'):'Esse jogador não tem save na nuvem.',!t);
+ cs.sort((a,b)=>b.rar-a.rar||b.lvl-a.lvl);
+ $a('aL').innerHTML=cs.map(c=>`<div class="admRow"><span class="nm" style="color:${COL[c.rar]||'#f0f'}">${esc(desc(c))}${eq.includes(c.id)?' <small>· equipado</small>':''}</span><button class="admB sm" data-e="${+c.id}">✏️</button></div>`).join('');
+ $a('aL').querySelectorAll('[data-e]').forEach(b=>b.onclick=()=>{const c=cs.find(x=>x.id===+b.dataset.e);if(c){view=()=>editTheirs(p,c);render()}})}
+function editTheirs(p,c){body().innerHTML=`<button class="admB gry sm" id="aBack">← Voltar</button><div class="admS">${esc(p.n)} · ${esc(desc(c))}</div>${editor(c)}
+ <input class="admIn" id="aGm" maxlength="160" placeholder="Mensagem (opcional)" style="margin-top:6px">
+ <div style="text-align:center"><button class="admB grn" id="aSave">💾 Aplicar mudança</button><button class="admB red" id="aDel">🗑️ Apagar dele</button></div><div class="admMsg" id="admMsgL"></div>`;
+ $a('aBack').onclick=()=>{view=()=>theirChars(p);render()};
+ const m=()=>$a('aGm').value.trim().slice(0,160);
+ $a('aSave').onclick=()=>{const f=readEd();db().ref('inbox/'+p.uid).push({k:'edit',id:c.id,f,m:m(),t:TS()}).then(()=>{Object.assign(c,f);msg('Mudança enviada: '+desc(c))}).catch(fail)};
+ twoTap($a('aDel'),()=>db().ref('inbox/'+p.uid).push({k:'del',id:c.id,m:m(),t:TS()}).then(()=>msg('Remoção enviada')).catch(fail))}
+
+// ---------- lado do jogador: presentes, mudanças, banimento ----------
+const popQ=[];
+function pop(t,b,m){popQ.push([t,b,m]);if(PP.style.display!=='flex')nextPop()}
+function nextPop(){const x=popQ.shift();if(!x){PP.style.display='none';if(!A.banLock&&M.style.display!=='flex')lock=false;return}
+ $a('apT').textContent=x[0];$a('apB').innerHTML=(x[1]?`<div style="font-size:16px;font-weight:bold">${esc(x[1])}</div>`:'')+(x[2]?`<div style="margin-top:8px;padding:8px;border-radius:8px;background:#ffffff14">💬 ${esc(x[2])}</div>`:'');
+ PP.style.display='flex';lock=true;try{jr()}catch(e){}try{bp(880,.08,'triangle',.06)}catch(e){}}
+$a('apOk').onclick=nextPop;
+function applyOp(v){const k=v.k,m=typeof v.m==='string'?v.m.slice(0,160):'';
+ if(CUR[k]){const n=Math.round(+v.v||0);if(!n)return;if(k==='coins')coins=Math.max(0,coins+n);else if(k==='ess')ess=Math.max(0,ess+n);else pk=Math.max(0,pk+n);try{updHud()}catch(e){}
+  pop(n>0?'🎁 Presente do ADM':'🛠️ O ADM ajustou seu saldo',(n>0?'+':'')+n.toLocaleString('pt-BR')+' '+CUR[k][0]+' '+CUR[k][1],m)}
+ else if(k==='char'){const c=mkChar(v.c);c.id=nid++;chars.push(c);pop('🎁 Presente do ADM','Você ganhou '+desc(c)+'!',m)}
+ else if(k==='edit'){const c=chars.find(x=>x.id===+v.id);if(c){setFields(c,v.f);pop('🛠️ O ADM modificou um lutador',desc(c),m)}}
+ else if(k==='del'){const i=chars.findIndex(x=>x.id===+v.id);if(i>=0){const c=chars.splice(i,1)[0];equipped=equipped.filter(id=>id!==c.id);pop('🛠️ O ADM removeu um lutador',desc(c),m)}}
+ else if(k==='msg'&&m)pop('📢 Mensagem do ADM','',m)}
+function onInbox(s){const v=s.val();if(v&&typeof v==='object'){try{applyOp(v)}catch(e){}try{save()}catch(e){}}s.ref.remove().catch(()=>{})}
+function banState(){let b=A.ban&&+A.ban.u>now()?A.ban:null;if(!b){try{const L=JSON.parse(LSg('mp_ban')||'null');if(L&&+L.u>Date.now())b=L}catch(e){}}return isAdm()?null:b}
+function banUi(){const b=banState(),on=!!b;
+ if(on){$a('banTx').innerHTML=`<div>Banimento ${esc(when(+b.u))}.</div>${b.r?'<div style="margin-top:8px">Motivo: '+esc(b.r)+'</div>':''}<div style="margin-top:12px;opacity:.7;font-size:13px">Se acha que foi um engano, fale com o ADM.</div>`;$a('banOut').style.display=MP.uid?'inline-block':'none'}
+ if(on!==A.banLock){A.banLock=on;BM.style.display=on?'flex':'none';lock=on;if(on)try{jr()}catch(e){}}}
+$a('banOut').onclick=()=>{try{firebase.auth().signOut()}catch(e){}};
+function unwatch(){A.refs.forEach(r=>{try{r.off()}catch(e){}});A.refs=[];A.ban=null;A.restr={};A.inbox=false}
+function watch(uid){
+ const b=db().ref('banned/'+uid);b.on('value',s=>{const v=s.val();A.ban=v&&+v.u>now()?v:null;
+  if(A.ban)LSs('mp_ban',JSON.stringify({uid,u:+v.u,r:String(v.r||'').slice(0,80)}));else{try{const L=JSON.parse(LSg('mp_ban')||'null');if(L&&L.uid===uid)LSs('mp_ban',null)}catch(e){}}banUi()},()=>{});
+ const r=db().ref('restr/'+uid);r.on('value',s=>{A.restr=s.val()||{}},()=>{});
+ const c=db().ref('cfg/admin');c.on('value',s=>{window.ADMUID=s.val()||null},()=>{});
+ A.refs.push(b,r,c);if(isAdm())db().ref('cfg/admin').set(uid).catch(()=>{})}
+setInterval(()=>{const uid=MP.uid&&!MP.offline&&MP.db?MP.uid:null;
+ if(uid!==A.uid){unwatch();A.uid=uid;A.since=Date.now();if(uid)watch(uid)}
+ // presentes só depois que o save da conta já foi carregado (para não se perderem num recarregamento)
+ if(uid&&!A.inbox&&Date.now()-A.since>6000&&LSg('mp_owner')===uid&&!window.__noSave){A.inbox=true;const ib=db().ref('inbox/'+uid);ib.on('child_added',onInbox,()=>{});A.refs.push(ib)}
+ const show=isAdm()?'':'none';if(mi.style.display!==show)mi.style.display=show;
+ banUi()},1000);
+banUi();
 })();
 </script>
 
