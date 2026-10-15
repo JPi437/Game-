@@ -4103,7 +4103,14 @@ function editMine(c){body().innerHTML=`<button class="admB gry sm" id="aBack">�
  $a('aSave').onclick=()=>{setFields(c,readEd());save();msg('Salvo: '+desc(c))};
  twoTap($a('aDel'),()=>{const i=chars.indexOf(c);if(i>=0)chars.splice(i,1);equipped=equipped.filter(id=>id!==c.id);save();view=null;render()})}
 function tabMe(){body().innerHTML=`<div class="admS">Suas moedas</div>${Object.keys(CUR).map(k=>`<div class="admRow"><span class="nm">${CUR[k][0]} ${CUR[k][1]}</span><input class="admIn" style="width:130px" type="number" min="0" id="am_${k}" value="${Math.floor(window[k]!==undefined?0:0)}"></div>`).join('')}
- <div style="text-align:center"><button class="admB grn" id="amSet">💾 Definir valores</button></div><div class="admMsg" id="admMsgL"></div>`;
+ <div style="text-align:center"><button class="admB grn" id="amSet">💾 Definir valores</button></div>
+ <div class="admS">🐉 Boss Mundial</div><div class="admRow"><span class="nm" id="awbSt">...</span></div>
+ <div style="text-align:center"><button class="admB grn" id="awbGo">🐉 Invocar boss agora (vida cheia)</button></div><div class="admMsg" id="admMsgL"></div>`;
+ // situação do boss mundial do dia
+ const wbSt=()=>{const e=$a('awbSt');if(!e)return;const W=window.WB,v=W&&W.srv;e.textContent=!W||!W.key?'Sem conexão com o boss agora':(v&&v.k?'☠️ Derrotado hoje':'❤️ Vivo · '+Math.max(0,Math.round(v&&typeof v.hp==='number'?v.hp:W.max)).toLocaleString('pt-BR')+' de vida')};wbSt();
+ $a('awbGo').onclick=async()=>{const W=window.WB;if(!W||!W.key||!db()){msg('Sem conexão com o boss agora. Entre online e tente de novo.',1);return}
+  try{await db().ref('wboss/'+W.key).set({hp:W.max,t:TS()});msg('🐉 Boss Mundial invocado com vida cheia!');if(window.V6&&V6.banner)V6.banner('⚡ O BOSS MUNDIAL NASCEU! ⚡<small>Invocado pelo ADM · 🗺️ Mapas → Boss Mundial</small>','spawn');setTimeout(wbSt,800)}
+  catch(e){msg('Não deu para invocar: '+(e.code||e.message||e),1)}};
  $a('am_coins').value=Math.floor(coins);$a('am_ess').value=Math.floor(ess);$a('am_pk').value=Math.floor(pk);
  $a('amSet').onclick=()=>{coins=Math.max(0,Math.round(+$a('am_coins').value||0));ess=Math.max(0,Math.round(+$a('am_ess').value||0));pk=Math.max(0,Math.round(+$a('am_pk').value||0));try{updHud()}catch(e){}save();msg('Pronto!')}}
 
