@@ -1346,7 +1346,7 @@ try{if(SV){
  if(SV.ach&&typeof SV.ach==='object')for(const k in SV.ach)if(SV.ach[k])ach[k]=num(SV.ach[k])||1;
  const m=SV.ms,ar=a=>Array.isArray(a)&&a.length===3?a.map(num):[0,0,0];
  if(m&&typeof m==='object')ms={d:num(m.d),w:num(m.w),dp:ar(m.dp),dc:ar(m.dc),wp:ar(m.wp),wc:ar(m.wc)};
- if(SV.wbc&&typeof SV.wbc==='object')for(const k in SV.wbc)if(/^c\d+$/.test(k))wbc[k]=1}}catch(e){}
+ if(SV.wbc&&typeof SV.wbc==='object')for(const k in SV.wbc)if(/^c\d+(r\d+)?$/.test(k))wbc[k]=1}}catch(e){}
 if(!st.leg&&chars.some(k=>k.rar===3))st.leg=1;if(!st.myth&&chars.some(k=>k.rar===4))st.myth=1;if(!st.shiny&&chars.some(k=>k.sh))st.shiny=1;if(ups.gate)st.hw=1;if(!ups.gate&&(st.hw||pk>0))ups.gate=1;
 window.XS=()=>({items,buffs,st,ach,ms,wbc});
 const bm=k=>{let m=1;for(const id in buffs)if(buffs[id]>0&&IT[id]&&IT[id].k===k)m=Math.max(m,IT[id].m);return m};
@@ -1858,7 +1858,7 @@ async function rkLoad(){const L=$('rkL'),I=$('rkInfo');rkT=Date.now();
 D.querySelectorAll('#rkM .tb[data-c]').forEach(b=>b.onclick=()=>{rkC=+b.dataset.c;$('rkL').innerHTML='';rkLoad()});
 D.querySelectorAll('#rkM .tb[data-o]').forEach(b=>b.onclick=()=>{rkO=b.dataset.o;$('rkL').innerHTML='';rkLoad()});
 $('wbRk').onclick=()=>{if(!lock)openRank()};$('rkBtn').onclick=()=>{if(!lock)openRank()};
-function wbReward(key,place){if(wbc[key])return false;wbc[key]=1;const ks=Object.keys(wbc).sort((a,b)=>+a.slice(1)-+b.slice(1));while(ks.length>6)delete wbc[ks.shift()];
+function wbReward(key,place){if(wbc[key])return false;wbc[key]=1;const ks=Object.keys(wbc).sort((a,b)=>parseInt(a.slice(1))-parseInt(b.slice(1))||(a<b?-1:1));while(ks.length>6)delete wbc[ks.shift()];
  const rw={c:2500,e:3},bon=[null,{c:5000,e:5},{c:3000,e:3},{c:2000,e:2}][place]||null;let s=grant(rw);if(bon)s+=' + bônus Top '+place+': '+grant(bon);
  const pid=['f1','s1','d1','m1'][ri(0,3)];addItem(pid,1);s+=' + '+IT[pid].n;
  st.wb++;prog('wb',1);prog('boss',1);st.boss++;achCheck();save();banner('🎁 Recompensa do Boss Mundial!<small>'+s+'</small>','dead');return true}
@@ -1966,7 +1966,7 @@ window.V6F=function(f){const t=Date.now();let dt=t-lastF;lastF=t;if(dt<0||dt>100
 
 // ===================== ligações finais =====================
 [['itM','itClose'],['shM','shClose'],['msM','msClose'],['acM','acClose'],['pfM','pfClose'],['rkM','rkClose']].forEach(([m,c])=>xbtn(m,c));
-window.V6={wbReward,wbClaimed:k=>!!wbc[k],banner,showProfile,profile:myProfile,teamDps,wbCyc,fk,nf,openRank,qToast};
+window.V6={IT,IORD,addItem,itemCount:id=>items[id]||0,wbReward,wbClaimed:k=>!!wbc[k],banner,showProfile,profile:myProfile,teamDps,wbCyc,fk,nf,openRank,qToast};
 bfUi(true);mnUi();updHud();setTimeout(()=>{achOk=true;achCheck()},2500);
 
 // ===================== Mundo 1 v7: floresta ampliada, montanhas, árvore gigante, ruínas e a Torre do Demônio (gerado igual para todos) =====================
@@ -3095,29 +3095,41 @@ setInterval(()=>{if(!window.MPshared||!MP.conn||!SH.ref)return;
    if(v.b&&ns>=v.b){v.hp=e.max;v.b=0}if(v.b)return;if(!v.t||ns-v.t>IDL(e))v.hp=e.max;v.t=Math.round(ns);ap=v.e;v.hp=Math.max(0,Math.round(v.hp-d));if(v.hp<=0){v.b=Math.round(ns+(e.rsp||10000));v.e++}return v},
    (err,ok)=>{if(err)e.noSync=1;if(!err&&ok&&ap!=null){SH.hit[i]=Math.max(SH.hit[i]==null?-1:SH.hit[i],ap);tryRew(i)}},false)}},400);
 // ===== BOSS MUNDIAL (Arena do Vulcão): vida compartilhada, regenera 5.000/s, renasce todo dia às 19:00 (Brasília) =====
-const WBX={ref:null,key:'',shownDead:'',greet:false},WBM=1000000;
+const WBX={ref:null,key:'',shownDead:'',greet:false,sp:undefined},WBM=1000000;
+const wbRid=(k,v)=>k+(v&&v.sp?'r'+v.sp:'');
 const cycNow=()=>Math.floor((nowS()-22*36e5)/864e5);
 function wbStop(){if(WBX.ref)WBX.ref.off();WBX.ref=null;WBX.key='';if(window.WB){WB.srv=null;WB.ready=false;WB.pend=0;WB.my=0}}
 function wbWatch(){if(!MP.db||!MP.uid||MP.offline||!window.WB)return;const k='c'+cycNow();if(k===WBX.key&&WBX.ref)return;
- const prev=WBX.key;if(WBX.ref)WBX.ref.off();WBX.key=k;WB.srv=null;WB.ready=false;WB.key=k;WB.my=0;WB.pend=0;
+ const prev=WBX.key;if(WBX.ref)WBX.ref.off();WBX.key=k;WBX.sp=undefined;WB.srv=null;WB.ready=false;WB.key=k;WB.my=0;WB.pend=0;
  WBX.ref=MP.db.ref('wboss/'+k);WBX.ref.on('value',s=>{if(WBX.key!==k)return;WB.srv=s.val();WB.ready=true;wbVal(k,WB.srv)},()=>{});
  MP.db.ref('wbrank/'+k+'/'+MP.uid+'/d').once('value').then(s=>{if(WBX.key===k)WB.my=Math.max(WB.my,+s.val()||0)}).catch(()=>{});
  if(prev&&prev!==k&&window.V6)V6.banner('🔥 O BOSS MUNDIAL NASCEU! 🔥<small>Ignarok apareceu na Arena do Vulcão · 🗺️ Mapas → Boss Mundial</small>','spawn');
  if(!prev)wbCheckOld(+k.slice(1)-1)}
-function wbVal(k,v){if(!window.V6)return;
- if(v&&v.k){if(WBX.shownDead!==k){WBX.shownDead=k;if(nowS()-v.k<180000)V6.banner('☠️ O BOSS MUNDIAL FOI DERROTADO!<small>Golpe final de '+(cleanNick(v.kb)||'?')+' · ele volta amanhã às 19:00</small>','dead')}wbClaim(k)}
+function wbVal(k,v){if(!window.V6)return;const rid=wbRid(k,v),sp=v&&v.sp||0;
+ if(WBX.sp!==sp){const was=WBX.sp;WBX.sp=sp;
+  if(was!==undefined&&sp){WB.my=0;if(!(v&&v.k))V6.banner('🔥 O ADM INVOCOU O BOSS MUNDIAL! 🔥<small>Ignarok voltou com vida cheia · 🗺️ Mapas → Boss Mundial</small>','spawn')}
+  else if(was===undefined&&sp&&!(v&&v.k)&&nowS()-sp<180000)V6.banner('🔥 O ADM INVOCOU O BOSS MUNDIAL! 🔥<small>Ignarok voltou com vida cheia · 🗺️ Mapas → Boss Mundial</small>','spawn')}
+ if(v&&v.k){if(WBX.shownDead!==rid){WBX.shownDead=rid;if(nowS()-v.k<180000)V6.banner('☠️ O BOSS MUNDIAL FOI DERROTADO!<small>Golpe final de '+(cleanNick(v.kb)||'?')+' · ele volta amanhã às 19:00</small>','dead')}wbClaim(k,rid)}
  else if(!WBX.greet){WBX.greet=true;if(world!==2)setTimeout(()=>V6.qToast('🌋 O Boss Mundial está vivo! Vá em 🗺️ Mapas → Boss Mundial'),4000)}}
-async function wbClaim(k){if(!MP.uid||!window.V6||V6.wbClaimed(k))return;
+async function wbClaim(k,rid){rid=rid||k;if(!MP.uid||!window.V6||V6.wbClaimed(rid))return;
  try{const me=(await MP.db.ref('wbrank/'+k+'/'+MP.uid).once('value')).val();if(!me||!(me.d>0))return;
-  const top=await MP.rank(k,'d',3);V6.wbReward(k,top.findIndex(r=>r.uid===MP.uid)+1)}catch(e){}}
-async function wbCheckOld(c){const k='c'+c;if(!MP.uid||!window.V6||V6.wbClaimed(k))return;try{const v=(await MP.db.ref('wboss/'+k).once('value')).val();if(v&&v.k)wbClaim(k)}catch(e){}}
+  const top=await MP.rank(k,'d',3);V6.wbReward(rid,top.findIndex(r=>r.uid===MP.uid)+1)}catch(e){}}
+async function wbCheckOld(c){const k='c'+c;if(!MP.uid||!window.V6)return;try{const v=(await MP.db.ref('wboss/'+k).once('value')).val();if(v&&v.k)wbClaim(k,wbRid(k,v))}catch(e){}}
 function wbFlush(){if(!WBX.ref||!MP.conn||!MP.uid||MP.offline||!window.WB)return;const d=Math.round(WB.pend);if(d<=0)return;
  WB.pend=0;WB.fl+=d;const k=WBX.key,TS=firebase.database.ServerValue.TIMESTAMP,nick=MP.nick;
  WBX.ref.transaction(v=>{const ns=nowS();if(v&&v.k)return;let hp=WBM;if(v&&typeof v.hp==='number')hp=Math.min(WBM,v.hp+Math.max(0,ns-(+v.t||ns))*5);
-   hp=Math.max(0,Math.round(hp-d));const o={hp,t:TS};if(hp<=0){o.k=TS;o.kb=nick}return o},
+   hp=Math.max(0,Math.round(hp-d));const o={hp,t:TS};if(v&&v.sp)o.sp=v.sp;if(hp<=0){o.k=TS;o.kb=nick}return o},
   (err,ok)=>{WB.fl=Math.max(0,WB.fl-d);if(err||!ok||k!==WBX.key)return;
    MP.db.ref('wbrank/'+k+'/'+MP.uid).update({n:nick,d:firebase.database.ServerValue.increment(d),p:window.V6?V6.teamDps():0,t:TS}).catch(()=>{})},false)}
 setInterval(()=>{wbWatch();wbFlush()},1000);
+MP.wbAdm={max:WBM,key:()=>WBX.key||('c'+cycNow()),
+ state:()=>{const s=window.WB&&WB.srv,t=nowS();let hp=WBM;if(s&&typeof s.hp==='number')hp=Math.min(WBM,s.hp+Math.max(0,t-(+s.t||t))*5);
+  return {ready:!!(window.WB&&WB.ready),dead:!!(s&&s.k),hp:s&&s.k?0:Math.round(hp),kb:s&&s.kb?cleanNick(s.kb):''}},
+ kill:function(){const k=this.key(),TS=firebase.database.ServerValue.TIMESTAMP,nick=MP.nick;
+  return new Promise((ok,no)=>MP.db.ref('wboss/'+k).transaction(v=>{const o={hp:0,t:TS,k:TS,kb:nick};if(v&&v.sp)o.sp=v.sp;return o},(e,c)=>e?no(e):ok(c),false))},
+ spawn:async function(){const k=this.key(),TS=firebase.database.ServerValue.TIMESTAMP;
+  await MP.db.ref('wboss/'+k).set({hp:WBM,t:TS,sp:TS});
+  try{await MP.db.ref('wbrank/'+k).remove();return true}catch(e){return false}}};
 MP.rank=async function(k,by,n){const s=await MP.db.ref('wbrank/'+k).orderByChild(by==='p'?'p':'d').limitToLast(n||50).once('value'),a=[];
  s.forEach(c=>{const v=c.val()||{};a.push({uid:c.key,n:cleanNick(v.n)||'?',d:+v.d||0,p:+v.p||0})});return a.sort((x,y)=>by==='p'?y.p-x.p:y.d-x.d)};
 
@@ -3204,7 +3216,7 @@ function setFields(c,f){Object.assign(c,cleanFields(f));if(!c.pas)delete c.pas}
 const st=D.createElement('style');st.textContent=`
 #admM .box,#admPop .box{max-width:460px;width:100%;max-height:88vh;overflow:auto}
 #admM h2,#admPop h2{text-align:center;margin:2px 0 8px}
-.admTabs{display:flex;gap:6px;margin-bottom:8px}.admTabs button{flex:1;font:inherit;font-weight:900;font-size:13px;padding:8px 4px;border-radius:10px;border:2px solid #ffffff66;background:#1c2240;color:#fff}
+.admTabs{display:flex;gap:6px;margin-bottom:8px}.admTabs button{flex:1;font:inherit;font-weight:900;font-size:12px;padding:8px 3px;border-radius:10px;border:2px solid #ffffff66;background:#1c2240;color:#fff}
 .admTabs button.on{background:#ffd23f;color:#3a2600;border-color:#fff}
 .admRow{display:flex;align-items:center;gap:8px;padding:8px;border-radius:10px;background:#ffffff12;margin:5px 0}
 .admRow .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:bold}
@@ -3226,7 +3238,7 @@ const st=D.createElement('style');st.textContent=`
 
 // ---------- janelas ----------
 const M=D.createElement('div');M.className='modal';M.id='admM';
-M.innerHTML='<div class="box"><button class="btn xb" id="admX">✕</button><h2>🛡️ Painel do ADM</h2><div class="admTabs"><button data-t="pl" class="on">👤 Jogadores</button><button data-t="ch">🧬 Personagens</button><button data-t="me">💰 Meu jogo</button></div><div id="admBody"></div></div>';
+M.innerHTML='<div class="box"><button class="btn xb" id="admX">✕</button><h2>🛡️ Painel do ADM</h2><div class="admTabs"><button data-t="pl" class="on">👤 Jogadores</button><button data-t="ch">🧬 Personagens</button><button data-t="me">💰 Meu jogo</button><button data-t="wb">🌋 Boss</button></div><div id="admBody"></div></div>';
 D.body.appendChild(M);
 const PP=D.createElement('div');PP.className='modal';PP.id='admPop';PP.style.zIndex=40;
 PP.innerHTML='<div class="box" style="text-align:center"><h2 id="apT"></h2><div id="apB"></div><button class="btn" id="apOk" style="margin-top:10px">OK</button></div>';D.body.appendChild(PP);
@@ -3234,7 +3246,7 @@ const BM=D.createElement('div');BM.id='banM';BM.innerHTML='<div class="bx"><h1>�
 const $a=id=>D.getElementById(id),body=()=>$a('admBody');
 let tab='pl',view=null;
 function openAdm(){if(!isAdm()){toast('Só a conta ADM pode abrir isso');return}M.style.display='flex';lock=true;try{jr()}catch(e){}render()}
-function closeAdm(){M.style.display='none';lock=false}
+function closeAdm(){M.style.display='none';lock=false;clearInterval(wbT)}
 $a('admX').onclick=closeAdm;
 M.querySelectorAll('.admTabs button').forEach(b=>b.onclick=()=>{tab=b.dataset.t;view=null;M.querySelectorAll('.admTabs button').forEach(x=>x.classList.toggle('on',x===b));render()});
 {const _ct=closeTop;closeTop=function(){if(PP.style.display==='flex'){$a('apOk').click();return true}if(M.style.display==='flex'){if(view){view=null;render()}else closeAdm();return true}return _ct()}}
@@ -3261,8 +3273,28 @@ function editor(c,id){c=c||{};const p=id||'ae';
 function readEd(id){const p=id||'ae',v=x=>$a(p+'_'+x);let n=v('n').value;if(n==='__c'||v('cn').value.trim())n=v('cn').value.trim()||'Lutador';
  return cleanFields({name:n,rar:v('r').value,lvl:v('l').value,spd:v('s').value,pas:v('p').value,sh:v('sh').checked})}
 
+// ---------- itens ----------
+const IT=()=>window.V6&&V6.IT||{},IORD=()=>window.V6&&V6.IORD||Object.keys(IT());
+function itemRows(p,them){return IORD().filter(id=>IT()[id]).map(id=>{const it=IT()[id];return `<div class="admRow"><span class="nm" style="color:${it.c}">${it.e} ${esc(it.n)}${them?'':` <small id="${p}_c_${id}">x${V6.itemCount(id)}</small>`}</span><input class="admIn" type="number" min="1" max="999" value="1" id="${p}_q_${id}" style="width:64px"><button class="admB grn sm" data-i="${id}">${them?'🎁 Enviar':'➕ Pegar'}</button></div>`}).join('')||'<div class="admRow">Nenhum item encontrado.</div>'}
+function bindItems(p,fn){body().querySelectorAll('[data-i]').forEach(b=>{const id=b.dataset.i;if(!b.closest('.admRow').querySelector('#'+p+'_q_'+id))return;
+ b.onclick=()=>{const n=Math.max(1,Math.min(999,Math.round(+$a(p+'_q_'+id).value||1)));fn(id,n)}})}
+// ---------- boss mundial ----------
+let wbT=null;
+function wbPanel(){const W=$a('aWb');if(!W)return;clearInterval(wbT);const B=MP.wbAdm;
+ if(!B){W.innerHTML='<div class="admRow">Boss indisponível nesta versão.</div>';return}
+ const draw=()=>{if(!$a('aWb')){clearInterval(wbT);return}const s=B.state();
+  const tx=!s.ready?'⏳ Conectando...':s.dead?'☠️ Morto'+(s.kb?' · golpe final de '+esc(s.kb):''):'🔥 Vivo · '+s.hp.toLocaleString('pt-BR')+' / '+B.max.toLocaleString('pt-BR');
+  const t=$a('aWbS');if(t)t.innerHTML=tx;const k=$a('aWbK');if(k)k.disabled=!s.ready||s.dead};
+ W.innerHTML=`<div class="admRow"><span class="nm" id="aWbS"></span></div>
+ <div style="text-align:center"><button class="admB gld" id="aWbP">🔥 Spawnar (vida cheia)</button><button class="admB red" id="aWbK">☠️ Matar agora</button></div>
+ <div class="admMsg" style="font-size:11px;opacity:.6">Spawnar: o boss volta com vida cheia e o rank de dano de hoje recomeça. Matar: quem já causou dano ganha a recompensa normal.</div>`;
+ draw();wbT=setInterval(draw,1000);
+ twoTap($a('aWbP'),()=>B.spawn().then(r=>msg(r?'Boss spawnado! 🔥':'Boss spawnado, mas não consegui zerar o rank (regras do Firebase)',!r)).catch(fail));
+ twoTap($a('aWbK'),()=>B.kill().then(()=>msg('Boss derrotado ☠️')).catch(fail))}
+
 // ---------- abas ----------
-function render(){const B=body();if(!B)return;if(view)return view();if(tab==='pl')return tabPlayers();if(tab==='ch')return tabChars();tabMe()}
+function render(){const B=body();if(!B)return;if(view)return view();if(tab==='pl')return tabPlayers();if(tab==='ch')return tabChars();if(tab==='wb')return tabBoss();tabMe()}
+function tabBoss(){body().innerHTML=`<div class="admS">🌋 Boss mundial (Ignarok)</div><div id="aWb"></div><div class="admMsg" id="admMsgL"></div>`;wbPanel()}
 function tabChars(){const list=chars.slice().sort((a,b)=>b.rar-a.rar||b.lvl-a.lvl);
  body().innerHTML=`<div class="admS">Criar personagem no seu inventário</div>${editor({rar:4,lvl:10,spd:5})}
  <div style="text-align:center"><button class="admB grn" id="acNew">➕ Criar</button></div><div class="admMsg" id="admMsgL"></div>
@@ -3276,7 +3308,9 @@ function editMine(c){body().innerHTML=`<button class="admB gry sm" id="aBack">�
  $a('aSave').onclick=()=>{setFields(c,readEd());save();msg('Salvo: '+desc(c))};
  twoTap($a('aDel'),()=>{const i=chars.indexOf(c);if(i>=0)chars.splice(i,1);equipped=equipped.filter(id=>id!==c.id);save();view=null;render()})}
 function tabMe(){body().innerHTML=`<div class="admS">Suas moedas</div>${Object.keys(CUR).map(k=>`<div class="admRow"><span class="nm">${CUR[k][0]} ${CUR[k][1]}</span><input class="admIn" style="width:130px" type="number" min="0" id="am_${k}" value="${Math.floor(window[k]!==undefined?0:0)}"></div>`).join('')}
- <div style="text-align:center"><button class="admB grn" id="amSet">💾 Definir valores</button></div><div class="admMsg" id="admMsgL"></div>`;
+ <div style="text-align:center"><button class="admB grn" id="amSet">💾 Definir valores</button></div><div class="admMsg" id="admMsgL"></div>
+ <div class="admS">🧪 Pegar itens</div>${itemRows('ai')}`;
+ bindItems('ai',(id,n)=>{V6.addItem(id,n);msg('+'+n+' '+IT()[id].e+' '+IT()[id].n+' no seu inventário');setTimeout(()=>{const c=$a('ai_c_'+id);if(c)c.textContent='x'+V6.itemCount(id)},50)});
  $a('am_coins').value=Math.floor(coins);$a('am_ess').value=Math.floor(ess);$a('am_pk').value=Math.floor(pk);
  $a('amSet').onclick=()=>{coins=Math.max(0,Math.round(+$a('am_coins').value||0));ess=Math.max(0,Math.round(+$a('am_ess').value||0));pk=Math.max(0,Math.round(+$a('am_pk').value||0));try{updHud()}catch(e){}save();msg('Pronto!')}}
 
@@ -3313,7 +3347,7 @@ async function player(p){const uid=p.uid;
  <div class="admRow"><span class="nm">🌐 Online ${oOn?'<span class="admTag y">bloqueado '+when(+rs.online)+'</span>':''}<br><small>Some do lobby, não bate em boss/inimigos compartilhados</small></span>${oOn?'<button class="admB grn sm" id="aOn0">Liberar</button>':selDur('aOnd')+'<button class="admB gld sm" id="aOn1">Bloquear</button>'}</div>
  <div class="admS">🎁 Presentear</div>
  <div class="admRow" style="flex-wrap:wrap"><input class="admIn" id="aGv" type="number" value="1000" style="width:110px"><select class="admIn" id="aGk" style="width:auto">${Object.keys(CUR).map(k=>`<option value="${k}">${CUR[k][0]} ${CUR[k][1]}</option>`).join('')}</select><button class="admB grn" id="aGift">Enviar</button></div>
- <div style="text-align:center"><button class="admB gld" id="aGc">🧬 Dar um personagem</button><button class="admB" id="aPc">📋 Ver/editar personagens dele</button></div>
+ <div style="text-align:center"><button class="admB gld" id="aGc">🧬 Dar um personagem</button><button class="admB" id="aGi">🧪 Dar itens</button><button class="admB" id="aPc">📋 Ver/editar personagens dele</button></div>
  <div class="admS">📢 Mensagem</div>
  <div class="admRow"><input class="admIn" id="aM" maxlength="160" placeholder="Mensagem que vai aparecer para ele"><button class="admB sm" id="aMs">Enviar</button></div>
  <div class="admMsg" style="font-size:11px;opacity:.6">Presentes e mudanças chegam na hora se ele estiver jogando, ou quando ele entrar de novo.</div>`;
@@ -3329,7 +3363,12 @@ async function player(p){const uid=p.uid;
  $a('aGift').onclick=()=>{const k=$a('aGk').value,v=Math.round(+$a('aGv').value||0);if(!v){msg('Coloque uma quantidade',true);return}inbox({k,v,m:keep()},`Enviado: ${v} ${CUR[k][0]} para ${p.n}`)};
  $a('aMs').onclick=()=>{const m=keep();if(!m){msg('Escreva a mensagem',true);return}inbox({k:'msg',m},'Mensagem enviada');$a('aM').value=''};
  $a('aGc').onclick=()=>{view=()=>giftChar(p);render()};
+ $a('aGi').onclick=()=>{view=()=>giftItem(p);render()};
  $a('aPc').onclick=()=>{view=()=>theirChars(p);render()}}
+function giftItem(p){body().innerHTML=`<button class="admB gry sm" id="aBack">← Voltar</button><div class="admS">Dar itens para ${esc(p.n)}</div>
+ <input class="admIn" id="aGm" maxlength="160" placeholder="Mensagem (opcional)" style="margin-bottom:4px">${itemRows('gi',1)}<div class="admMsg" id="admMsgL"></div>`;
+ $a('aBack').onclick=()=>{view=()=>player(p);render()};
+ bindItems('gi',(id,n)=>db().ref('inbox/'+p.uid).push({k:'item',id,n,m:$a('aGm').value.trim().slice(0,160),t:TS()}).then(()=>msg('Enviado: '+n+'x '+IT()[id].e+' '+IT()[id].n+' para '+p.n)).catch(fail))}
 function giftChar(p){body().innerHTML=`<button class="admB gry sm" id="aBack">← Voltar</button><div class="admS">Dar personagem para ${esc(p.n)}</div>${editor({rar:4,lvl:1,spd:5})}
  <input class="admIn" id="aGm" maxlength="160" placeholder="Mensagem (opcional)" style="margin-top:6px"><div style="text-align:center"><button class="admB grn" id="aSend">🎁 Enviar presente</button></div><div class="admMsg" id="admMsgL"></div>`;
  $a('aBack').onclick=()=>{view=()=>player(p);render()};
@@ -3362,6 +3401,7 @@ function applyOp(v){const k=v.k,m=typeof v.m==='string'?v.m.slice(0,160):'';
  else if(k==='char'){const c=mkChar(v.c);c.id=nid++;chars.push(c);pop('🎁 Presente do ADM','Você ganhou '+desc(c)+'!',m)}
  else if(k==='edit'){const c=chars.find(x=>x.id===+v.id);if(c){setFields(c,v.f);pop('🛠️ O ADM modificou um lutador',desc(c),m)}}
  else if(k==='del'){const i=chars.findIndex(x=>x.id===+v.id);if(i>=0){const c=chars.splice(i,1)[0];equipped=equipped.filter(id=>id!==c.id);pop('🛠️ O ADM removeu um lutador',desc(c),m)}}
+ else if(k==='item'){const it=IT()[v.id],n=Math.max(1,Math.min(999,Math.round(+v.n||1)));if(it&&window.V6){V6.addItem(v.id,n);pop('🎁 Presente do ADM','+'+n+'x '+it.e+' '+it.n+' (está no inventário 🎒)',m)}}
  else if(k==='msg'&&m)pop('📢 Mensagem do ADM','',m)}
 function onInbox(s){const v=s.val();if(v&&typeof v==='object'){try{applyOp(v)}catch(e){}try{save()}catch(e){}}s.ref.remove().catch(()=>{})}
 function banState(){let b=A.ban&&+A.ban.u>now()?A.ban:null;if(!b){try{const L=JSON.parse(LSg('mp_ban')||'null');if(L&&+L.u>Date.now())b=L}catch(e){}}return isAdm()?null:b}
