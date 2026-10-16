@@ -500,7 +500,8 @@ function tile(t,x,y,tx,ty,f){const h=hash(tx,ty);if(!world&&BGOK)return;if(world
  if(t===2){R('#d9b878',x,y,T,T);if(h%4===0)R('#c4a060',x+h%12,y+(h>>3)%12,2,2)}
  if(t===3){R('#3b78d8',x,y,T,T);R('#7db4f5',x+((f>>4)+tx*3)%12,y+4+(ty%3)*3,4,1)}
  if(t===1){R('#2e7d32',x+1,y+1,14,11);R('#1b5e20',x+1,y+9,14,3);R('#43a047',x+4,y+3,4,3);R('#6d4c41',x+6,y+12,4,4)}}
-function statue(x,y,f){R('#777',x+1,y+11,14,5);R('#999',x+1,y+11,14,2);R('#555',x+1,y+14,14,2);
+function statue(x,y,f){if(window.STAR_ST)return;   // a estátua nova (js/12-star-statue.js) é desenhada na lista de profundidade, junto dos personagens
+ R('#777',x+1,y+11,14,5);R('#999',x+1,y+11,14,2);R('#555',x+1,y+14,14,2);
  const c=world?((f>>4)%2?'#ff9800':'#e65100'):((f>>4)%2?'#fff176':'#ffd23f');R(c,x+7,y+1,2,3);R(c,x+4,y+4,8,3);R(c,x+2,y+5,12,2);R(c,x+4,y+7,8,2);R(c,x+3,y+9,3,2);R(c,x+10,y+9,3,2);R('#b8860b',x+7,y+7,2,2)}
 function player(f){const x=Math.round(P.x-cam.x),y=Math.round(P.y-cam.y)+(P.moving&&((P.step>>2)%2)?-1:0);
  R('#0006',x+3,y+14,10,2);R('#3b5dc9',x+3,y+8,10,6);R('#222',x+3,y+14,4,2);R('#222',x+9,y+14,4,2);
@@ -1953,7 +1954,7 @@ function worldFx(f){return;g.fillStyle='#ff3d000f';g.fillRect(0,0,VW,VH);
 
 // ===================== desenho geral (com profundidade) =====================
 drawActors=function(f){const t=Date.now(),L=[],SF=[];
- L.push([P.y,()=>{if(mounted)horse();player2(f)}]);
+ L.push([P.y,()=>{if(mounted)horse();player2(f)}]);if(window.STAR_ST)STAR_ST.push(L,t);
  if(world!==2)L.push([NPC.y,()=>drawNpc(f)]);
  L.push([GY*T+14,()=>gate(Math.round(GX*T-cam.x),Math.round(GY*T-cam.y),f)]);
  pushTrees(L);if(world===2){L.push([BY*T+12,()=>drawBoard(f)]);iceActors(L,f)}
@@ -3257,7 +3258,7 @@ drawActors=function(f){if(world!==0)return _daV6(f);if(!MAPOK){loadScreen();retu
  doorTick();leavesTick(t);const cz=dzTick(t,f);musMod(cz);
  L.push([P.y,sh(P.x+8,P.y+14,()=>{if(mounted)horse();player2(f)})]);
  if(!room){L.push([NPC.y,sh(NPC.x+8,NPC.y+14,()=>drawNpc(f))]);L.push([GY*T+14,()=>gate(Math.round(GX*T-cam.x),Math.round(GY*T-cam.y),f)])}
- pushDepsW0(L);pushRemotesW0(L,f,t,SF);
+ pushDepsW0(L);pushRemotesW0(L,f,t,SF);if(window.STAR_ST)STAR_ST.push(L,t);
  equipped.forEach(id=>{const q=fpos[id],k=chars.find(c=>c.id===id);if(!q||!k)return;L.push([window.fyK?fyK(q):q.y,sh(q.x+8,q.y+12,()=>drawFighterL(k,q,f,t))]);if(q.sk&&fight)SF.push({q,e:fight,S:skOf(k),t0:q.sk.t0})});
  EN.forEach(e=>{if(e.dm){if(room)L.push([RMS_.feet.y-2,()=>demonDraw(e,t,f)]);return}if(e.dead)return;const x=e.x-cam.x,y=e.y-cam.y;if(x<-50||x>VW+50||y<-50||y>VH+50)return;L.push([e.y,sh(e.x+8,e.y+14,()=>drawEnemy(e,t,f))])});
  for(let i=DY.length-1;i>=0;i--){const d=DY[i];if(t-d.t0>1000){DY.splice(i,1);continue}L.push([d.y,sh(d.x+8,d.y+14,()=>drawDying(d,t))])}
@@ -4545,7 +4546,7 @@ window.dkLay=lay;
 #spinBtn.dis{filter:grayscale(.6)}#spinBtn.dis.fbOn{opacity:.8}
 #spinBtn.fbOn:active,#pasBtn.fbOn:active,#talkBtn.fbOn:active,#gateBtn.fbOn:active,#rkBtn.fbOn:active{scale:.9}
 `;document.head.appendChild(c3)}
-const FB=[['spinBtn','⭐ Roletar',()=>[SX*T+8,SY*T-10]],['pasBtn','🔮 Passiva',()=>[TOX*T+8,TOY*T-14]],['talkBtn','💬 Conversar',()=>[NPC.x+8,NPC.y-14]],
+const FB=[['spinBtn','⭐ Roletar',()=>[SX*T+8,SY*T-(window.STAR_ST?STAR_ST.topY:10)]],['pasBtn','🔮 Passiva',()=>[TOX*T+8,TOY*T-14]],['talkBtn','💬 Conversar',()=>[NPC.x+8,NPC.y-14]],
  ['gateBtn',null,()=>[GX*T+8,GY*T-22]],['rkBtn',null,()=>[11*T+8,19*T-38]]];
 // chamado no fim de cada desenho do jogo (render em 01-game.js): posiciona os botões flutuantes; só mexe no DOM quando algo mudou
 const FBE=[],FBS={},FBB=[0,-1,-2,-3,-4,-3,-2,-1];let IW=innerWidth,IH=innerHeight;addEventListener('resize',()=>{IW=innerWidth;IH=innerHeight});   // ler innerWidth a cada quadro força o navegador a recalcular o layout
@@ -4696,6 +4697,309 @@ function tapHit(e){
 {let tipT=0;setInterval(()=>{try{if(fight&&!lock&&Date.now()-tipT>600000){tipT=Date.now();let n=+(localStorage.getItem('mp_taptip')||0);if(n<3){localStorage.setItem('mp_taptip',String(n+1));toast('👊 Toque em qualquer lugar da tela para bater')}}}catch(x){}},700)}
 // menu aberto continua aberto com uma janela por cima (os ícones ficam visíveis, só os nomes somem para dar espaço)
 setInterval(()=>{try{const o=[...document.querySelectorAll('.modal')].some(m=>m.style.display==='flex');document.body.classList.toggle('mdOpen',o)}catch(e){}},150);
+</script>
+<script>
+// ===================== Estátua da estrela (roleta): estrela 3D girando, brilhando, com pedestal rúnico =====================
+// Tudo é gerado por código (nenhuma imagem a mais no arquivo):
+//  - a estrela é um sólido de 22 faces (aro + chanfro + tampa, frente e verso) desenhado por um mini rasterizador 3D com z-buffer,
+//    em 32 ângulos de giro, com 3x de supersampling e paleta de 8 tons de ouro (pixel art nítido, sem serrilhado borrado);
+//  - o pedestal é pixel art pré-desenhado; o círculo de runas, o feixe, o halo, os raios, o brilho que "varre" a estrela e as
+//    faíscas são desenhados a cada quadro com poucas operações (custo medido: bem abaixo de 0,3 ms por quadro);
+//  - perto da estátua ela gira mais rápido e brilha mais (convida a apertar o botão de roleta);
+//  - o mundo 1 (Halloween) usa a mesma estátua em laranja/roxo.
+// A estátua entra na lista de profundidade dos personagens (STAR_ST.push), então dá para passar ATRÁS dela.
+(function () {
+  'use strict';
+  const D = document, TAU = Math.PI * 2;
+
+  // ---------- paletas ----------
+  const PALS = {
+    gold: {
+      ramp: ['#2b1704', '#5a3507', '#8f5a0b', '#c98a12', '#f5b81d', '#ffd84a', '#fff09a', '#ffffff'],
+      olD: '#26130a', olL: '#7a4a0c',
+      glow: [255, 208, 80], rune: '#ffe27a', rune2: '#fffbe0',
+      st: ['#1d2140', '#2b3258', '#3d4778', '#546194', '#7685b6', '#a4b2dc'],
+      gem: '#3fd0ff', gem2: '#d6f8ff', emb: '#ffd23f', embD: '#8f5a0b'
+    },
+    hal: {
+      ramp: ['#1d0710', '#4a0f12', '#7d1c0a', '#b8360a', '#ff6a00', '#ff9a1f', '#ffd27a', '#fff4d6'],
+      olD: '#1a0508', olL: '#8a2a08',
+      glow: [255, 130, 40], rune: '#ff9a3c', rune2: '#ffe6bd',
+      st: ['#150d1f', '#241733', '#3a2452', '#52346f', '#74508f', '#9a76b6'],
+      gem: '#c46bff', gem2: '#f1d3ff', emb: '#ff9a1f', embD: '#7d1c0a'
+    }
+  };
+
+  // ---------- util ----------
+  const hex = h => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
+  const mk = (w, h) => { const c = D.createElement('canvas'); c.width = w; c.height = h; return c; };
+
+  // ---------- estrela 3D ----------
+  const N = 32, FW = 30, FH = 30, SS = 3, CX = FW / 2, CY = FH / 2 + .5;
+  // geometria (em pixels do jogo)
+  const RO = 10.4, RI = 4.5, RCO = 5.0, RCI = 2.1, Z0 = 1.4, Z1 = 4.4;
+  const sp = (k, ro, ri, z) => { const a = -Math.PI / 2 + k * Math.PI / 5, r = k % 2 ? ri : ro; return [Math.cos(a) * r, Math.sin(a) * r, z]; };
+  const TRIS = (() => { // [a,b,c] em coordenadas do modelo; a normal aponta para fora
+    const T3 = [], cen = [0, 0, 0];
+    const add = (a, b, c) => {
+      const u = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], v = [c[0] - a[0], c[1] - a[1], c[2] - a[2]];
+      let n = [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]];
+      const m = [(a[0] + b[0] + c[0]) / 3, (a[1] + b[1] + c[1]) / 3, (a[2] + b[2] + c[2]) / 3];
+      if (n[0] * m[0] + n[1] * m[1] + n[2] * m[2] < 0) n = [-n[0], -n[1], -n[2]];
+      const l = Math.hypot(n[0], n[1], n[2]) || 1;
+      T3.push({ p: [a, b, c], n: [n[0] / l, n[1] / l, n[2] / l] });
+    };
+    for (const sg of [1, -1]) {
+      for (let k = 0; k < 10; k++) {
+        const k2 = (k + 1) % 10;
+        const o1 = sp(k, RO, RI, sg * Z0), o2 = sp(k2, RO, RI, sg * Z0), c1 = sp(k, RCO, RCI, sg * Z1), c2 = sp(k2, RCO, RCI, sg * Z1);
+        add(o1, o2, c2); add(o1, c2, c1);                       // chanfro
+        add([0, 0, sg * Z1], c1, c2);                           // tampa
+      }
+    }
+    for (let k = 0; k < 10; k++) {                              // parede (espessura do aro)
+      const k2 = (k + 1) % 10, a1 = sp(k, RO, RI, Z0), a2 = sp(k2, RO, RI, Z0), b1 = sp(k, RO, RI, -Z0), b2 = sp(k2, RO, RI, -Z0);
+      add(a1, b1, b2); add(a1, b2, a2);
+    }
+    return T3;
+  })();
+
+  function renderStar(pal, ang) {
+    const W = FW * SS, H = FH * SS, zb = new Float32Array(W * H).fill(-1e9), cb = new Int8Array(W * H).fill(-1);
+    const ca = Math.cos(ang), sa = Math.sin(ang), tl = -0.16, ct = Math.cos(tl), st = Math.sin(tl);
+    const rot = p => { // gira em Y e inclina um pouco em X
+      const x = p[0] * ca + p[2] * sa, z0 = -p[0] * sa + p[2] * ca, y = p[1] * ct - z0 * st, z = p[1] * st + z0 * ct;
+      return [x, y, z];
+    };
+    const rn = n => rot(n);
+    const Lx = -0.5, Ly = -0.72, Lz = 0.48, ll = Math.hypot(Lx, Ly, Lz), L = [Lx / ll, Ly / ll, Lz / ll];
+    const Hh = [L[0], L[1], L[2] + 1], hl = Math.hypot(Hh[0], Hh[1], Hh[2]), HV = [Hh[0] / hl, Hh[1] / hl, Hh[2] / hl];
+    const nr = pal.ramp.length;
+    for (const tri of TRIS) {
+      const n = rn(tri.n); if (n[2] <= 0.02) continue;          // de costas
+      const lam = Math.max(0, n[0] * L[0] + n[1] * L[1] + n[2] * L[2]);
+      const spc = Math.pow(Math.max(0, n[0] * HV[0] + n[1] * HV[1] + n[2] * HV[2]), 28);
+      const fill = Math.max(0, n[0] * .62 + n[1] * .5 + n[2] * .35) * .12;
+      let s = .2 + .6 * lam + .85 * spc + fill; s = Math.max(0, Math.min(.999, s));
+      const ci = Math.min(nr - 1, Math.floor(s * nr));
+      const P = tri.p.map(rot), X = P.map(q => (CX + q[0]) * SS), Y = P.map(q => (CY + q[1]) * SS), Z = P.map(q => q[2]);
+      const minx = Math.max(0, Math.floor(Math.min(X[0], X[1], X[2]))), maxx = Math.min(W - 1, Math.ceil(Math.max(X[0], X[1], X[2])));
+      const miny = Math.max(0, Math.floor(Math.min(Y[0], Y[1], Y[2]))), maxy = Math.min(H - 1, Math.ceil(Math.max(Y[0], Y[1], Y[2])));
+      const den = (Y[1] - Y[2]) * (X[0] - X[2]) + (X[2] - X[1]) * (Y[0] - Y[2]); if (Math.abs(den) < 1e-9) continue;
+      for (let y = miny; y <= maxy; y++) for (let x = minx; x <= maxx; x++) {
+        const px = x + .5, py = y + .5;
+        const l1 = ((Y[1] - Y[2]) * (px - X[2]) + (X[2] - X[1]) * (py - Y[2])) / den, l2 = ((Y[2] - Y[0]) * (px - X[2]) + (X[0] - X[2]) * (py - Y[2])) / den, l3 = 1 - l1 - l2;
+        if (l1 < -1e-6 || l2 < -1e-6 || l3 < -1e-6) continue;
+        const z = l1 * Z[0] + l2 * Z[1] + l3 * Z[2], i = y * W + x;
+        if (z > zb[i]) { zb[i] = z; cb[i] = ci; }
+      }
+    }
+    // 3x3 -> 1 pixel: cor mais frequente (estável durante o giro)
+    const cols = pal.ramp.map(hex), out = new Int16Array(FW * FH).fill(-1);
+    for (let y = 0; y < FH; y++) for (let x = 0; x < FW; x++) {
+      const cnt = new Uint8Array(nr); let tot = 0;
+      for (let dy = 0; dy < SS; dy++) for (let dx = 0; dx < SS; dx++) { const c = cb[(y * SS + dy) * W + x * SS + dx]; if (c >= 0) { cnt[c]++; tot++; } }
+      if (tot * 2 < SS * SS) continue;
+      let b = 0; for (let c = 0; c < nr; c++) if (cnt[c] >= cnt[b]) b = c;
+      out[y * FW + x] = b;
+    }
+    // desenha + contorno "selout" (claro em cima/esquerda, escuro embaixo/direita)
+    const cv = mk(FW, FH), cx = cv.getContext('2d'), id = cx.createImageData(FW, FH), d = id.data;
+    const oD = hex(pal.olD), oL = hex(pal.olL);
+    const put = (x, y, c) => { const i = (y * FW + x) * 4; d[i] = c[0]; d[i + 1] = c[1]; d[i + 2] = c[2]; d[i + 3] = 255; };
+    for (let y = 0; y < FH; y++) for (let x = 0; x < FW; x++) {
+      const v = out[y * FW + x];
+      if (v >= 0) { put(x, y, cols[v]); continue; }
+      const f = (xx, yy) => xx >= 0 && yy >= 0 && xx < FW && yy < FH && out[yy * FW + xx] >= 0;
+      const below = f(x, y + 1), right = f(x + 1, y), above = f(x, y - 1), left = f(x - 1, y);
+      if (below || right) put(x, y, oL);                          // contorno de cima/esquerda (luz batendo)
+      else if (above || left) put(x, y, oD);
+    }
+    cx.putImageData(id, 0, 0);
+    // versão "clarão" (para o brilho que varre a estrela)
+    const fl = mk(FW, FH), fx = fl.getContext('2d'), fd = fx.createImageData(FW, FH);
+    for (let i = 0; i < d.length; i += 4) {
+      if (!d[i + 3]) continue;
+      const isOl = (d[i] === oD[0] && d[i + 1] === oD[1] && d[i + 2] === oD[2]) || (d[i] === oL[0] && d[i + 1] === oL[1] && d[i + 2] === oL[2]);
+      const k = isOl ? .35 : .82;
+      fd.data[i] = d[i] + (255 - d[i]) * k; fd.data[i + 1] = d[i + 1] + (255 - d[i + 1]) * k; fd.data[i + 2] = d[i + 2] + (255 - d[i + 2]) * k; fd.data[i + 3] = 255;
+    }
+    fx.putImageData(fd, 0, 0);
+    return { a: cv, f: fl };
+  }
+
+  // ---------- pedestal (22 x 17), pixel art: altar com taça rúnica no topo, coluna com gema e degraus ----------
+  const PW = 22, PH = 17;
+  function renderPed(pal) {
+    const cv = mk(PW, PH), x = cv.getContext('2d'), S = pal.st;
+    const r = (px, py, w, h, c) => { x.fillStyle = c; x.fillRect(px, py, w, h); };
+    const row = (y, x1, x2, cs) => { const w = x2 - x1 + 1; for (let i = 0; i < w; i++) r(x1 + i, y, 1, 1, cs[Math.min(cs.length - 1, Math.floor(i * cs.length / w))]); };
+    // taça do topo (aro claro + miolo escuro onde ficam as runas)
+    row(1, 4, 17, [S[5], S[5], S[4]]);
+    row(2, 2, 19, [S[5], S[4], S[4], S[3]]); row(3, 2, 19, [S[4], S[4], S[3], S[3]]);
+    r(5, 2, 12, 1, S[1]); r(4, 3, 14, 1, S[0]); r(6, 1, 10, 1, S[2]);
+    row(4, 3, 18, [S[4], S[3], S[3], S[2]]);
+    // faixa dourada sob a taça + parte inferior da taça (afunila)
+    row(5, 3, 18, [pal.emb, pal.emb, pal.emb]); r(3, 5, 16, 1, pal.emb); r(3, 6, 16, 1, pal.embD);
+    row(6, 4, 17, [S[3], S[3], S[2], S[2], S[1]]); r(3, 6, 1, 1, pal.embD); r(18, 6, 1, 1, pal.embD);
+    row(7, 6, 15, [S[3], S[2], S[2], S[1]]);
+    // coluna com caneluras e gema no centro
+    for (let y = 8; y <= 11; y++) row(y, 7, 14, [S[4], S[3], S[3], S[2], S[2], S[1], S[1], S[1]]);
+    r(9, 8, 1, 4, S[2]); r(12, 8, 1, 4, S[1]);
+    r(10, 8, 2, 4, S[2]); r(10, 8, 1, 4, S[3]);
+    r(10, 8, 2, 1, pal.gem2); r(9, 9, 4, 2, pal.gem); r(10, 11, 2, 1, pal.gem); r(10, 9, 1, 1, pal.gem2); r(9, 9, 1, 1, pal.gem2);
+    // degrau do meio
+    row(12, 4, 17, [S[5], S[4], S[4], S[3], S[3]]); row(13, 4, 17, [S[3], S[3], S[2], S[2], S[1]]);
+    // base larga
+    row(14, 1, 20, [S[5], S[4], S[4], S[4], S[3], S[3]]); row(15, 1, 20, [S[3], S[3], S[3], S[2], S[2], S[1]]); row(16, 1, 20, [S[2], S[2], S[1], S[1], S[1], S[0]]);
+    r(1, 14, 1, 1, pal.emb); r(20, 14, 1, 1, pal.embD); r(10, 14, 2, 1, pal.emb);
+    // musgo (mesmo verde do resto do mapa)
+    const mo = [[2, 16], [3, 16], [3, 15], [4, 16], [18, 16], [17, 16], [19, 15], [19, 16], [5, 13], [16, 13]];
+    for (const [mx, my] of mo) r(mx, my, 1, 1, (mx + my) % 2 ? '#4a9e3a' : '#5fb94a');
+    // contorno automático
+    const id = x.getImageData(0, 0, PW, PH), d = id.data, oc = hex(S[0]);
+    const op = (xx, yy) => xx >= 0 && yy >= 0 && xx < PW && yy < PH && d[(yy * PW + xx) * 4 + 3] > 0;
+    const o = x.createImageData(PW, PH); o.data.set(d);
+    for (let yy = 0; yy < PH; yy++) for (let xx = 0; xx < PW; xx++) {
+      if (op(xx, yy)) continue;
+      if (op(xx + 1, yy) || op(xx - 1, yy) || op(xx, yy + 1) || op(xx, yy - 1)) { const i = (yy * PW + xx) * 4; o.data[i] = oc[0]; o.data[i + 1] = oc[1]; o.data[i + 2] = oc[2]; o.data[i + 3] = 255; }
+    }
+    x.putImageData(o, 0, 0);
+    return cv;
+  }
+
+  // ---------- brilhos pré-renderizados ----------
+  function radial(w, h, rgb, a0, stops) {
+    const c = mk(w, h), x = c.getContext('2d'); x.save(); x.translate(w / 2, h / 2); x.scale(1, h / w);
+    const g = x.createRadialGradient(0, 0, 0, 0, 0, w / 2);
+    for (const [p, a] of stops) g.addColorStop(p, `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${a * a0})`);
+    x.fillStyle = g; x.fillRect(-w / 2, -w / 2, w, w); x.restore(); return c;
+  }
+  // raios: 24 quadros prontos cobrem 60° (o desenho se repete a cada 60°), então girar custa só um drawImage por quadro
+  const RAYF = 24, RAYS = 76;
+  function raysFrames(rgb) {
+    const out = [];
+    for (let f = 0; f < RAYF; f++) {
+      const c = mk(RAYS, RAYS), x = c.getContext('2d'), th = f / RAYF * (Math.PI / 3);
+      x.translate(RAYS / 2, RAYS / 2);
+      for (const [dir, off, a0] of [[1, 0, .34], [-1, Math.PI / 12, .22]]) {
+        for (let i = 0; i < 12; i++) {
+          x.save(); x.rotate(dir * th + off + i * TAU / 12);
+          const g = x.createLinearGradient(0, 0, 0, -RAYS / 2);
+          g.addColorStop(0, `rgba(${rgb.join(',')},${a0})`); g.addColorStop(.7, `rgba(${rgb.join(',')},${a0 * .22})`); g.addColorStop(1, `rgba(${rgb.join(',')},0)`);
+          const L = i % 2 ? RAYS / 2 - 8 : RAYS / 2;
+          x.fillStyle = g; x.beginPath(); x.moveTo(-.9, 0); x.lineTo(.9, 0); x.lineTo(i % 2 ? 3 : 4.4, -L); x.lineTo(i % 2 ? -3 : -4.4, -L); x.closePath(); x.fill(); x.restore();
+        }
+      }
+      out.push(c);
+    }
+    return out;
+  }
+  function beamSprite(rgb) {
+    const c = mk(14, 22), x = c.getContext('2d'), g = x.createLinearGradient(0, 22, 0, 0);
+    g.addColorStop(0, `rgba(${rgb.join(',')},.55)`); g.addColorStop(1, `rgba(${rgb.join(',')},0)`);
+    x.fillStyle = g; x.beginPath(); x.moveTo(3, 22); x.lineTo(11, 22); x.lineTo(9, 0); x.lineTo(5, 0); x.closePath(); x.fill(); return c;
+  }
+
+  // ---------- montagem (em fatias, para não travar a abertura do jogo) ----------
+  const PK = {};
+  function initPal(name) {
+    const pal = PALS[name];
+    PK[name] = {
+      pal, frames: new Array(N), ped: renderPed(pal), halo: radial(78, 78, pal.glow, 1, [[0, .62], [.28, .34], [.6, .1], [1, 0]]),
+      floor: radial(64, 26, pal.glow, 1, [[0, .6], [.5, .24], [1, 0]]), rays: raysFrames(pal.glow), beam: beamSprite(pal.glow), built: 0
+    };
+  }
+  initPal('gold'); initPal('hal');
+  function buildSome(name, n) {
+    const k = PK[name]; let i = 0;
+    while (i < n && k.built < N) { k.frames[k.built] = renderStar(k.pal, k.built / N * TAU); k.built++; i++; }
+    return k.built >= N;
+  }
+  let startedAt = 0;
+  function pump() {
+    const a = buildSome('gold', 2), b = a ? buildSome('hal', 2) : false;
+    if (!(a && b)) setTimeout(pump, 16);
+  }
+  const boot = () => { startedAt = Date.now(); setTimeout(pump, 350); };
+  if (D.readyState === 'complete') boot(); else addEventListener('load', boot);
+
+  // ---------- desenho ----------
+  const ST = { ang: 0, last: 0, boost: 0 };
+  const lerp = (a, b, t) => a + (b - a) * t;
+  function draw(x0, y0, t) {
+    const k = PK[(typeof world !== 'undefined' && world === 1) ? 'hal' : 'gold'], pal = k.pal;
+    const dt = ST.last ? Math.min(100, Math.max(0, t - ST.last)) : 16; ST.last = t;
+    const nearNow = typeof near !== 'undefined' && near;
+    ST.boost += ((nearNow ? 1 : 0) - ST.boost) * Math.min(1, dt / 260);
+    ST.ang = (ST.ang + dt / 1000 * lerp(.27, .6, ST.boost)) % 1;
+    const gc = g.globalCompositeOperation, ga = g.globalAlpha, sm = g.imageSmoothingEnabled;
+    const pulse = .5 + .5 * Math.sin(t / 430), slow = .5 + .5 * Math.sin(t / 1300 + 1), B = ST.boost, K = pal === PALS.gold ? .78 : 1;   // K: o dia é claro, o brilho precisa ser mais fraco
+    const cx = x0 + PW / 2, bob = Math.round(Math.sin(t / 560) * 1.6), scy = y0 - 14 + bob;   // centro da estrela
+    // brilho no chão
+    g.globalCompositeOperation = 'lighter'; g.globalAlpha = (.34 + .16 * pulse + .22 * B) * K;
+    g.drawImage(k.floor, Math.round(cx - 32), Math.round(y0 + 3));
+    g.globalCompositeOperation = 'source-over'; g.globalAlpha = 1;
+    // pedestal
+    g.drawImage(k.ped, x0, y0);
+    // sombra da estrela no topo do pedestal (encolhe quando ela sobe)
+    const sw = 8 - Math.max(0, -bob), sh = Math.max(1, 2 - (bob < -1 ? 1 : 0));
+    g.globalAlpha = .38; g.fillStyle = '#000'; g.fillRect(Math.round(cx - sw / 2), y0 + 3, sw, sh); g.globalAlpha = 1;
+    // círculo de runas girando no topo (8 pontos numa elipse; um deles brilha mais, passando em volta)
+    const ra = t / 900, lead = Math.floor((t / 160) % 8);
+    for (let i = 0; i < 8; i++) {
+      const a = ra + i * TAU / 8, rx = Math.round(cx + Math.cos(a) * 6.4 - .5), ry = Math.round(y0 + 3 + Math.sin(a) * 1.3);
+      const hot = (i === lead) || (i === (lead + 7) % 8);
+      g.fillStyle = hot ? pal.rune2 : pal.rune; g.globalAlpha = hot ? 1 : .5 + .2 * pulse; g.fillRect(rx, ry, 1, 1);
+    }
+    g.globalAlpha = 1;
+    // feixe de luz subindo do pedestal até a estrela + halo + raios (aditivos)
+    g.globalCompositeOperation = 'lighter';
+    g.globalAlpha = (.35 + .2 * pulse + .25 * B) * K; g.drawImage(k.beam, Math.round(cx - 7), Math.round(y0 - 20));
+    g.globalAlpha = (.7 + .3 * slow + .35 * B) * K; g.drawImage(k.rays[Math.floor(t / 36) % RAYF], Math.round(cx) - RAYS / 2, scy - RAYS / 2);
+    g.globalAlpha = (.62 + .22 * pulse + .22 * B) * K; g.drawImage(k.halo, Math.round(cx - 39), scy - 39);
+    g.globalCompositeOperation = 'source-over'; g.globalAlpha = 1;
+    // a estrela (se os quadros ainda não ficaram prontos, só o brilho aparece por um instante)
+    const fi = Math.floor(ST.ang * N) % N, fr = k.frames[fi];
+    if (fr) {
+      const sx = Math.round(cx - FW / 2), sy = Math.round(scy - FH / 2);
+      g.drawImage(fr.a, sx, sy);
+      // brilho que varre a estrela da esquerda para a direita a cada ~3,2 s
+      const cyc = (t % 3200) / 3200, sweep = cyc < .13 ? cyc / .13 : -1;
+      if (sweep >= 0) {
+        const px = Math.round(lerp(-14, 12, sweep));
+        g.save(); g.beginPath(); g.rect(Math.round(cx) + px, sy, 5, FH); g.clip(); g.drawImage(fr.f, sx, sy); g.restore();
+        if (sweep > .35 && sweep < .75) { // pequeno clarão em cruz no meio do brilho
+          const a = 1 - Math.abs(sweep - .55) / .2, fx = Math.round(cx) + px + 2, fy = scy - 2; g.globalAlpha = Math.max(0, a);
+          g.fillStyle = '#fff'; g.fillRect(fx - 4, fy, 9, 1); g.fillRect(fx, fy - 4, 1, 9); g.fillStyle = pal.rune2; g.fillRect(fx - 1, fy - 1, 3, 3); g.globalAlpha = 1;
+        }
+      }
+    }
+    // faíscas subindo e piscando em volta
+    for (let i = 0; i < 7; i++) {
+      const p = ((t / (1900 + i * 140)) + i * .143) % 1, fxp = Math.round(cx + Math.sin(i * 2.399 + t / 1100) * (9 + (i % 3) * 3)), fyp = Math.round(y0 - 1 - p * 38);
+      const a = Math.sin(p * Math.PI), tw = ((t / 90 + i * 5) | 0) % 5 ? 1 : .4;
+      g.globalAlpha = Math.max(0, a * tw); g.fillStyle = i % 2 ? pal.rune2 : pal.rune;
+      if (i % 3 === 0) { g.fillRect(fxp - 1, fyp, 3, 1); g.fillRect(fxp, fyp - 1, 1, 3); } else g.fillRect(fxp, fyp, 1, 1);
+    }
+    g.globalAlpha = ga; g.globalCompositeOperation = gc;
+  }
+
+  // ---------- integração ----------
+  window.STAR_ST = {
+    // põe a estátua na lista de profundidade (L) dos personagens; chamada por drawActors (mundos 0 e 1)
+    push(L, t) {
+      if (typeof world === 'undefined' || (world !== 0 && world !== 1) || !map || !map[SY] || map[SY][SX] !== 4) return;
+      const x0 = Math.round(SX * T - cam.x) - 3, y0 = Math.round(SY * T - cam.y) - 1;
+      if (x0 < -70 || x0 > VW + 70 || y0 < -60 || y0 > VH + 40) return;
+      L.push([SY * T + 2, () => draw(x0, y0, t)]);
+    },
+    // altura (em pixels do jogo) até onde subir o botão "Roletar"
+    topY: 38,
+    _build: (name) => { while (!buildSome(name, 8)); return PK[name]; },   // só para testes
+    _draw: draw, _ST: ST, N, FW, FH, PW, PH
+  };
+})();
 </script>
 <script>
 if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
