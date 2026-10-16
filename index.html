@@ -4737,7 +4737,7 @@ setInterval(()=>{try{const o=[...document.querySelectorAll('.modal')].some(m=>m.
   // ---------- estrela 3D ----------
   const N = 32, FW = 30, FH = 30, SS = 3, CX = FW / 2, CY = FH / 2 + .5;
   // geometria (em pixels do jogo)
-  const RO = 10.4, RI = 4.5, RCO = 5.0, RCI = 2.1, Z0 = 1.4, Z1 = 4.4;
+  const RO = 11, RI = 3.4, RCO = 4.3, RCI = 1.6, Z0 = 1.1, Z1 = 3.6;   // pontas finas e esbeltas
   const sp = (k, ro, ri, z) => { const a = -Math.PI / 2 + k * Math.PI / 5, r = k % 2 ? ri : ro; return [Math.cos(a) * r, Math.sin(a) * r, z]; };
   const TRIS = (() => { // [a,b,c] em coordenadas do modelo; a normal aponta para fora
     const T3 = [], cen = [0, 0, 0];
