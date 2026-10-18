@@ -3652,13 +3652,15 @@ const WBX={ref:null,key:'',shownDead:'',greet:false},WBM=5000000;
 const cycNow=()=>Math.floor((nowS()-22*36e5)/864e5);
 function wbStop(){if(WBX.ref)WBX.ref.off();WBX.ref=null;WBX.key='';if(window.WB){WB.srv=null;WB.ready=false;WB.pend=0;WB.my=0}}
 function wbWatch(){if(!MP.db||!MP.uid||MP.offline||!window.WB)return;const k='c'+cycNow();if(k===WBX.key&&WBX.ref)return;
- const prev=WBX.key;if(WBX.ref)WBX.ref.off();WBX.key=k;WB.srv=null;WB.ready=false;WB.key=k;WB.my=0;WB.pend=0;
+ const prev=WBX.key;if(WBX.ref)WBX.ref.off();WBX.key=k;WBX.wasDead='';WB.srv=null;WB.ready=false;WB.key=k;WB.my=0;WB.pend=0;
  WBX.ref=MP.db.ref('wboss/'+k);WBX.ref.on('value',s=>{if(WBX.key!==k)return;WB.srv=s.val();WB.ready=true;wbVal(k,WB.srv)},()=>{});
  MP.db.ref('wbrank/'+k+'/'+MP.uid+'/d').once('value').then(s=>{if(WBX.key===k)WB.my=Math.max(WB.my,+s.val()||0)}).catch(()=>{});
  if(prev&&prev!==k&&window.V6)V6.banner('O BOSS MUNDIAL NASCEU!<small>Veldora despertou na Caverna de Gelo · Mapas → Boss Mundial</small>','spawn');
  if(!prev)wbCheckOld(+k.slice(1)-1)}
 function wbVal(k,v){if(!window.V6)return;
- if(v&&v.k){if(WBX.shownDead!==k){WBX.shownDead=k;if(nowS()-v.k<180000)V6.banner('O BOSS MUNDIAL FOI DERROTADO!<small>Golpe final de '+(cleanNick(v.kb)||'?')+' · ele volta amanhã às 19:00</small>','dead')}wbClaim(k)}
+ if(v&&v.k){WBX.wasDead=k;if(WBX.shownDead!==k){WBX.shownDead=k;if(nowS()-v.k<180000)V6.banner('O BOSS MUNDIAL FOI DERROTADO!<small>Golpe final de '+(cleanNick(v.kb)||'?')+' · ele volta amanhã às 19:00</small>','dead')}wbClaim(k)}
+ else if(WBX.wasDead===k){WBX.wasDead='';WBX.shownDead='';WBX.greet=true;   // estava derrotado e voltou no mesmo dia: o ADM o invocou (painel do ADM → Boss)
+  V6.banner('O BOSS MUNDIAL FOI INVOCADO!<small>O ADM acordou o Veldora na Caverna de Gelo · Mapas → Boss Mundial</small>','spawn')}
  else if(!WBX.greet){WBX.greet=true;if(world!==2)setTimeout(()=>V6.qToast('O Boss Mundial está vivo! Vá em Mapas → Boss Mundial'),4000)}}
 // O prêmio do boss só pode ser retirado UMA vez por conta e por boss: o servidor guarda a marca em claims/<uid>/<boss>
 // (as regras proíbem criar a mesma marca de novo). Assim, importar um save antigo não dá o prêmio duas vezes.
@@ -4436,7 +4438,7 @@ const st=D.createElement('style');st.textContent=`
 
 // ---------- janelas ----------
 const M=D.createElement('div');M.className='modal';M.id='admM';
-M.innerHTML='<div class="box"><button class="btn xb" id="admX">✕</button><h2>Painel do ADM</h2><div class="admTabs"><button data-t="pl" class="on">Jogadores</button><button data-t="ch">Personagens</button><button data-t="me">Meu jogo</button></div><div id="admBody"></div></div>';
+M.innerHTML='<div class="box"><button class="btn xb" id="admX">✕</button><h2>Painel do ADM</h2><div class="admTabs"><button data-t="pl" class="on">Jogadores</button><button data-t="ch">Personagens</button><button data-t="me">Meu jogo</button><button data-t="bo">Boss</button></div><div id="admBody"></div></div>';
 D.body.appendChild(M);
 const PP=D.createElement('div');PP.className='modal';PP.id='admPop';PP.style.zIndex=40;
 PP.innerHTML='<div class="box" style="text-align:center"><h2 id="apT"></h2><div id="apB"></div><button class="btn" id="apOk" style="margin-top:10px">OK</button></div>';D.body.appendChild(PP);
@@ -4472,7 +4474,7 @@ function readEd(id){const p=id||'ae',v=x=>$a(p+'_'+x);let n=v('n').value;if(n===
  return cleanFields({name:n,rar:v('r').value,lvl:v('l').value,spd:v('s').value,pas:v('p').value,sh:v('sh').checked})}
 
 // ---------- abas ----------
-function render(){const B=body();if(!B)return;if(view)return view();if(tab==='pl')return tabPlayers();if(tab==='ch')return tabChars();tabMe()}
+function render(){const B=body();if(!B)return;if(view)return view();if(tab==='pl')return tabPlayers();if(tab==='ch')return tabChars();if(tab==='bo')return tabBoss();tabMe()}
 function tabChars(){const list=chars.slice().sort((a,b)=>b.rar-a.rar||b.lvl-a.lvl);
  body().innerHTML=`<div class="admS">Criar personagem no seu inventário</div>${editor({rar:4,lvl:10,spd:5})}
  <div style="text-align:center"><button class="admB grn" id="acNew">Criar</button></div><div class="admMsg" id="admMsgL"></div>
@@ -4489,6 +4491,43 @@ function tabMe(){body().innerHTML=`<div class="admS">Suas moedas</div>${Object.k
  <div style="text-align:center"><button class="admB grn" id="amSet">Definir valores</button></div><div class="admMsg" id="admMsgL"></div>`;
  $a('am_coins').value=Math.floor(coins);$a('am_ess').value=Math.floor(ess);$a('am_pk').value=Math.floor(pk);
  $a('amSet').onclick=()=>{coins=Math.max(0,Math.round(+$a('am_coins').value||0));ess=Math.max(0,Math.round(+$a('am_ess').value||0));pk=Math.max(0,Math.round(+$a('am_pk').value||0));try{updHud()}catch(e){}save();msg('Pronto!')}}
+
+// ---------- Boss Mundial (Veldora, Caverna de Gelo) ----------
+// O boss de cada dia mora em wboss/c<dia>. Quando alguém o derrota o servidor grava k (hora) e kb (quem deu o golpe final) e ele só volta
+// às 19:00 do dia seguinte. As regras NÃO aceitam reescrever um boss que já tem k: para invocá-lo de novo apagamos o registro e criamos outro
+// (o ADM pode criar com qualquer vida). Os outros jogadores recebem o aviso "O BOSS MUNDIAL FOI INVOCADO!" (js/05-multiplayer.js).
+const nfB=n=>Math.round(n).toLocaleString('pt-BR');
+const agoB=ms=>{const s=Math.max(0,Math.round(ms/1000));return s<60?s+' s':s<3600?Math.floor(s/60)+' min':Math.floor(s/3600)+' h '+Math.floor(s%3600/60)+' min'};
+function bossInfo(){const W=window.WB;if(!W||!W.key)return{txt:'Sem dados do boss (entre online)',cls:'y'};
+ if(!W.ready)return{txt:'Conectando ao servidor...',cls:'y'};
+ const s=W.srv,mx=W.max||5e6;
+ if(s&&s.k)return{txt:'DERROTADO'+(s.kb?' por '+cleanNick(s.kb):'')+' · há '+agoB(now()-(+s.k||now()))+' · volta amanhã às 19:00',cls:'r',dead:true};
+ let hp=mx;if(s&&typeof s.hp==='number')hp=window.wbRegen?window.wbRegen(s.hp,Math.max(0,now()-(+s.t||now())),mx):s.hp;
+ hp=Math.max(0,Math.min(mx,hp-(W.pend||0)-(W.fl||0)));
+ return{txt:(s?'VIVO':'VIVO (ainda ninguém o atacou)')+' · '+nfB(hp)+' / '+nfB(mx)+' ('+Math.round(hp/mx*100)+'%)',cls:'g',hp,mx}}
+async function bossSet(pct){const W=window.WB;
+ if(!W||!W.key||!MP.db||MP.offline||!W.ready){msg('Entre online para mexer no boss',true);return}
+ const k=W.key,ref=db().ref('wboss/'+k),mx=W.max||5e6,hp=Math.max(1,Math.min(mx,Math.round(mx*pct)));
+ try{const v=(await ref.once('value')).val();
+  if(v&&v.k)await ref.remove();          // derrotado: o servidor só aceita criar de novo depois de apagar
+  await ref.set({hp,t:TS()});
+  W.pend=0;logAct('wboss',k,(pct>=1?'invocou o boss com vida cheia':'vida do boss em '+Math.round(pct*100)+'%')+' (hp '+hp+')');
+  msg(pct>=1?'Veldora invocado com vida cheia!':'Vida do Veldora: '+Math.round(pct*100)+'%');bossStat()}
+ catch(e){fail(e)}}
+function bossStat(){const el=$a('abSt');if(!el)return;const i=bossInfo();el.textContent=i.txt;el.className='admTag '+i.cls}
+function tabBoss(){body().innerHTML=`<div class="admS">Boss Mundial · Veldora (Caverna de Gelo)</div>
+ <div class="admRow" style="flex-wrap:wrap"><span class="nm" style="white-space:normal">Estado agora<br><span id="abSt" class="admTag y" style="margin:4px 0 0;white-space:normal">...</span></span></div>
+ <div style="text-align:center"><button class="admB grn" id="abSum">Invocar Veldora (vida cheia)</button></div>
+ <div class="admS">Testar a luta (deixa o boss vivo com essa vida)</div>
+ <div style="text-align:center"><button class="admB gry sm" data-p="0.5">Vida 50%</button><button class="admB gry sm" data-p="0.1">Vida 10%</button><button class="admB gry sm" data-p="0.01">Vida 1%</button></div>
+ <div style="text-align:center;margin-top:6px"><button class="admB" id="abGo">Ir para a arena</button></div>
+ <div class="admMsg" id="admMsgL"></div>
+ <div style="font-size:12px;opacity:.7;line-height:1.35">Invocar deixa o boss vivo com vida cheia (mesmo se ele já foi derrotado hoje) e avisa os jogadores online. O ranking e o prêmio do dia continuam os mesmos.</div>`;
+ $a('abSum').onclick=()=>bossSet(1);
+ body().querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>bossSet(+b.dataset.p));
+ $a('abGo').onclick=()=>{closeAdm();try{goWorld(2)}catch(e){}};
+ bossStat()}
+setInterval(()=>{if(M.style.display==='flex'&&tab==='bo'&&!view)bossStat()},1000);
 
 // ---------- jogadores ----------
 let plCache=null,plQ='';
