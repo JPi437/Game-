@@ -3414,14 +3414,14 @@ function musMod(c){try{if(!AC)return;if(!MUS.on){if(drone){const d=drone;drone=n
 function pushRemotesW0(L,f,t,SF){if(!window.MP||!MP.me||!MP.live)return;
  for(const id in MP.others){const r=MP.others[id];if(!MP.live(r))continue;
   const dx=r.tx-r.x,dy=r.ty-r.y,dist=Math.hypot(dx,dy);if(dist>160){r.x=r.tx;r.y=r.ty}else{r.x+=dx*.25;r.y+=dy*.25}r.mv=dist>.6;if(r.mv)r.st++;
-  const vis=!(r.x-cam.x<-70||r.x-cam.x>VW+70||r.y-cam.y<-70||r.y-cam.y>VH+70),fe=r.f>=0&&EN[r.f]&&!EN[r.f].dead?EN[r.f]:null,sl=fe?formation(fe):null;
+  const vis=(window.H3C&&H3C.on&&inRoom()&&r.x>MW+40)||!(r.x-cam.x<-70||r.x-cam.x>VW+70||r.y-cam.y<-70||r.y-cam.y>VH+70),fe=r.f>=0&&EN[r.f]&&!EN[r.f].dead?EN[r.f]:null,sl=fe?formation(fe):null;
   r.fp=r.fp||[];
   r.k.forEach((c,i)=>{const q=r.fp[i]||(r.fp[i]={x:r.x,y:r.y,dir:2}),o=OFF[i]||[0,0];let tx=r.x+o[0],ty=r.y+o[1];const s=sl&&sl.get(id+':'+i);if(s){tx=s.x;ty=s.y}
    if(Math.hypot(tx-q.x,ty-q.y)>300){q.x=tx;q.y=ty}q.x+=(tx-q.x)*.1;q.y+=(ty-q.y)*.1;q.dir=fe?(Math.abs(fe.x-q.x)>Math.abs(fe.y+(fe.fcy||0)-q.y)?(fe.x>q.x?3:1):(fe.y+(fe.fcy||0)>q.y?2:0)):r.d;
    const on=fe&&(r.s>>i)&1;q.rfe=fe;q.id=i+1;if(on&&!q.skOn){q.skOn=1;q.skT=t}else if(!on)q.skOn=0;
-   if(vis){L.push([q.y,sh(q.x+8,q.y+12,()=>drawFighterR(c,q,f,t,i))]);if(q.skOn)SF.push({q,e:fe,S:SK[c[2]]||SKD,t0:q.skT})}});
+   if(vis){L.push([q.y,sh(q.x+8,q.y+12,()=>drawFighterR(c,q,f,t,i)),{k:'R'+id+'.'+i,q,nm:c[2]}]);if(q.skOn)SF.push({q,e:fe,S:SK[c[2]]||SKD,t0:q.skT})}});
   if(r.fp.length>r.k.length)r.fp.length=r.k.length;
-  if(vis)L.push([r.y,sh(r.x+8,r.y+14,()=>drawRemoteBody(r,f))])}}
+  if(vis)L.push([r.y,sh(r.x+8,r.y+14,()=>drawRemoteBody(r,f)),{k:'B'+id,q:r,dk:'d'}])}}
 function pushDepsW0(L){const room=inRoom();
  if(room){const ss=RMS_.stakeSpr;for(const[sx,sy]of RMS_.stakes){const x=sx-cam.x-6,y=sy-cam.y-33;if(x>VW||y>VH||x<-14||y<-36)continue;L.push([sy-16,()=>g.drawImage(ss,Math.round(x),Math.round(y))])}return}
  for(const tr of TREES){if(!tr.cv)continue;const x=Math.round(tr.x-cam.x),y=Math.round(tr.y-cam.y);if(x>VW||y>VH||x+tr.w<0||y+tr.h<0)continue;
@@ -3431,13 +3431,13 @@ function pushDepsW0(L){const room=inRoom();
 const _daV6=drawActors;
 drawActors=function(f){if(world!==0)return _daV6(f);if(!MAPOK){loadScreen();return}const t=Date.now(),L=[],SF=[],room=inRoom(),boss=BOSS();
  doorTick();leavesTick(t);const cz=dzTick(t,f);musMod(cz);
- L.push([P.y,sh(P.x+8,P.y+14,()=>{if(mounted)horse();player2(f)})]);
+ L.push([P.y,sh(P.x+8,P.y+14,()=>{if(mounted)horse();player2(f)}),{k:'P',q:P}]);
  if(!room){L.push([NPC.y,sh(NPC.x+8,NPC.y+14,()=>drawNpc(f))]);L.push([GY*T+14,()=>gate(Math.round(GX*T-cam.x),Math.round(GY*T-cam.y),f)])}
  pushDepsW0(L);pushRemotesW0(L,f,t,SF);if(window.STAR_ST)STAR_ST.push(L,t);if(window.hbPush)hbPush(L,t);
- equipped.forEach(id=>{const q=fpos[id],k=chars.find(c=>c.id===id);if(!q||!k)return;L.push([window.fyK?fyK(q):q.y,sh(q.x+8,q.y+12,()=>drawFighterL(k,q,f,t))]);if(q.sk&&fight)SF.push({q,e:fight,S:skOf(k),t0:q.sk.t0})});
+ equipped.forEach(id=>{const q=fpos[id],k=chars.find(c=>c.id===id);if(!q||!k)return;L.push([window.fyK?fyK(q):q.y,sh(q.x+8,q.y+12,()=>drawFighterL(k,q,f,t)),{k:'F'+id,q,nm:k.name}]);if(q.sk&&fight)SF.push({q,e:fight,S:skOf(k),t0:q.sk.t0})});
  EN.forEach(e=>{if(e.dm){if(room)L.push([RMS_.feet.y-2,()=>demonDraw(e,t,f)]);return}if(e.dead)return;const x=e.x-cam.x,y=e.y-cam.y;if(x<-50||x>VW+50||y<-50||y>VH+50)return;L.push([e.y,sh(e.x+8,e.y+14,()=>drawEnemy(e,t,f))])});
  for(let i=DY.length-1;i>=0;i--){const d=DY[i];if(t-d.t0>(d.life||1000)){DY.splice(i,1);continue}L.push([d.y,sh(d.x+8,d.y+14,()=>drawDying(d,t))])}
- L.sort((a,b)=>a[0]-b[0]).forEach(a=>a[1]());
+ if(window.H3C&&H3C.on)H3C.run(L,f,t,SF);else L.sort((a,b)=>a[0]-b[0]).forEach(a=>a[1]());   // modo 3D (js/26-h3-play.js): cada personagem é desenhado numa folha de figurinhas
  if(room)roomLight(t,f,boss);else{towerFx(t);treeLight(t);leavesDraw(t);dzDraw(t,f,cz)}
  SF.forEach(o=>skFx(o,t));emb2Draw(t);
  EN.forEach(e=>{if(!e.dead&&!e.wb&&!e.dm)hpBar(e,t)});
@@ -3450,6 +3450,8 @@ drawActors=function(f){if(world!==0)return _daV6(f);if(!MAPOK){loadScreen();retu
  bossHud(boss);
  if(TRN){const el=t-TRN;if(el>520)TRN=0;else{g.fillStyle='rgba(0,0,0,'+Math.max(0,1-el/520).toFixed(3)+')';g.fillRect(0,0,VW,VH)}}};
 {const _gw=goWorld;goWorld=function(n){const was=world;_gw(n);if(was===0&&world!==0){dmH.style.display='none'}}}
+// ----- ponte para o modo 3D do salão (js/22..26-h3-*.js): só mostra o que é local deste arquivo -----
+window.H3X={inRoom:()=>inRoom(),boss:()=>BOSS(),DM,SK,skOf};
 window.__gen=true;mcStart();{const gi=setInterval(()=>{if(genStep(12))clearInterval(gi)},24)}
 
 })();
@@ -4383,7 +4385,7 @@ const LSg=k=>{try{return localStorage.getItem(k)}catch(e){return null}},LSs=(k,v
 const isAdm=()=>!!A.admin&&!!MP.uid&&!MP.offline&&A.uid===MP.uid;
 const now=()=>Date.now()+(MP.off||0),TS=()=>firebase.database.ServerValue.TIMESTAMP,db=()=>MP.db;
 A.isAdm=isAdm;A.muted=()=>(+A.restr.chat||0)>now();A.noOnline=()=>(+A.restr.online||0)>now();
-const ALLN=[...new Set(['Luffy'].concat(NAMES.flat(),HNAMES.flat()))];
+const ALLN=[...new Set(['Luffy'].concat(NAMES.flat(),HNAMES.flat(),['Herobrine 3D']))];   // 'Herobrine 3D' (so funciona no Salao do Demonio) so existe aqui, nunca sai do gacha
 const CUR={coins:['','moedas'],ess:['','essência'],pk:['','abóboras']};
 const DUR=[['1h','1 hora',36e5],['1d','1 dia',864e5],['7d','7 dias',6048e5],['30d','30 dias',2592e6],['perm','Permanente',0]];
 const PERM=9e15,untilOf=k=>{const d=DUR.find(x=>x[0]===k);return !d||!d[2]?PERM:now()+d[2]};
@@ -7820,6 +7822,1146 @@ HS.Herobrine={d:HB.d,end:HB.end,hit:'p',hc:['#fff3e0','#ff9800'],
     HAL.dynLights = (list, t) => { if (prev) { try { prev(list, t) } catch (e) { } } try { lights(list, t) } catch (e) { } };
   }
   window.BROOM = { ok, draw, fg, icon, lift: LIFT, liftNow, lights, dbg: () => ({ riders: RID.size, parts: total, trail: [...RID.values()].map(q => q.tr.length), view: cur ? cur.view : -1 }) };
+})();
+</script>
+<script>
+// ===================== Modo 3D do Salão do Demônio (TESTE) — parte 1: motor WebGL =====================
+// Motor 3D pequeno e sem biblioteca: malhas "low poly" de cor chapada (cada face tem a sua cor), luz por pixel com até 12 luzes de ponto
+// (tochas, brasas, bolas de fogo...), névoa, cartazes (sprites) para personagens e brilhos, e um canvas 2D por cima para textos.
+// Só entra em ação quando o jogador está dentro do Salão do Demônio e toca no botão de perspectiva (js/25-h3-play.js).
+// Convenções do mundo 3D: X = leste, Z = sul (a porta do salão fica em +Z), Y = para cima, 1 unidade = 1 pixel do jogo 2D (o jogador tem ~24).
+(function(){
+'use strict';
+const H3=window.H3||(window.H3={});
+H3.on=false;H3.mode=0;H3.ok=null;
+const PI=Math.PI,sin=Math.sin,cos=Math.cos,sqrt=Math.sqrt,abs=Math.abs,min=Math.min,max=Math.max,floor=Math.floor;
+
+// ---------- matrizes 4x4 (colunas, como o WebGL espera) ----------
+const M4={
+ id(){const m=new Float32Array(16);m[0]=m[5]=m[10]=m[15]=1;return m},
+ mul(o,a,b){const t=M4._t;for(let c=0;c<4;c++)for(let r=0;r<4;r++){let s=0;for(let k=0;k<4;k++)s+=a[k*4+r]*b[c*4+k];t[c*4+r]=s}for(let i=0;i<16;i++)o[i]=t[i];return o},
+ persp(o,fy,asp,n,f){const t=1/Math.tan(fy/2);o.fill(0);o[0]=t/asp;o[5]=t;o[10]=(f+n)/(n-f);o[11]=-1;o[14]=2*f*n/(n-f);return o},
+ // câmera em (ex,ey,ez) olhando para a direção (yaw, pitch); yaw 0 = olhando para -Z (norte); yaw positivo gira para o leste (+X)
+ view(o,ex,ey,ez,yaw,pitch){const cy=cos(yaw),sy=sin(yaw),cp=cos(pitch),sp=sin(pitch);
+  const fx=sy*cp,fy=sp,fz=-cy*cp,rx=cy,rz=sy,ux=-sy*sp,uy=cp,uz=cy*sp;
+  o[0]=rx;o[1]=ux;o[2]=-fx;o[3]=0;o[4]=0;o[5]=uy;o[6]=-fy;o[7]=0;o[8]=rz;o[9]=uz;o[10]=-fz;o[11]=0;
+  o[12]=-(rx*ex+rz*ez);o[13]=-(ux*ex+uy*ey+uz*ez);o[14]=(fx*ex+fy*ey+fz*ez);o[15]=1;return o},
+ // T * Ry * Rx * Rz * S (usado para posicionar peças animadas)
+ trs(o,tx,ty,tz,rx,ry,rz,sx,sy,sz){const cx=cos(rx),sx_=sin(rx),cy=cos(ry),sy_=sin(ry),cz=cos(rz),sz_=sin(rz);
+  // R = Ry*Rx*Rz
+  const a00=cy*cz+sy_*sx_*sz_,a01=-cy*sz_+sy_*sx_*cz,a02=sy_*cx,a10=cx*sz_,a11=cx*cz,a12=-sx_,a20=-sy_*cz+cy*sx_*sz_,a21=sy_*sz_+cy*sx_*cz,a22=cy*cx;
+  o[0]=a00*sx;o[1]=a10*sx;o[2]=a20*sx;o[3]=0;o[4]=a01*sy;o[5]=a11*sy;o[6]=a21*sy;o[7]=0;o[8]=a02*sz;o[9]=a12*sz;o[10]=a22*sz;o[11]=0;o[12]=tx;o[13]=ty;o[14]=tz;o[15]=1;return o}
+};
+M4._t=new Float32Array(16);
+H3.M4=M4;
+
+// ---------- cores e números aleatórios fixos ----------
+const _hc={};
+function C(h){if(typeof h!=='string')return h;let v=_hc[h];if(!v){let s=h.charAt(0)==='#'?h.slice(1):h;if(s.length===3)s=s[0]+s[0]+s[1]+s[1]+s[2]+s[2];v=_hc[h]=[parseInt(s.slice(0,2),16),parseInt(s.slice(2,4),16),parseInt(s.slice(4,6),16)]}return v}
+const shade=(c,f)=>{c=C(c);return[min(255,c[0]*f),min(255,c[1]*f),min(255,c[2]*f)]};
+const mixC=(a,b,t)=>{a=C(a);b=C(b);return[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t,a[2]+(b[2]-a[2])*t]};
+function rng(s){s=s>>>0;return()=>{s=(s+0x6D2B79F5)>>>0;let t=s;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296}}
+H3.C=C;H3.shade=shade;H3.mixC=mixC;H3.rng=rng;
+
+// ---------- construtor de malhas (tudo é feito de triângulos de cor chapada) ----------
+// vértice = x,y,z, normal, r,g,b, brilho próprio (0 = só recebe luz, 1 = brilha sozinho)
+class MB{
+ constructor(seed){this.a=[];this.st=[M4.id()];this.m=this.st[0];this.r=rng(seed||7);this.jit=.07}
+ push(){this.st.push(this.m.slice());this.m=this.st[this.st.length-1];return this}
+ pop(){this.st.pop();this.m=this.st[this.st.length-1];return this}
+ T(x,y,z){const m=this.m;m[12]+=m[0]*x+m[4]*y+m[8]*z;m[13]+=m[1]*x+m[5]*y+m[9]*z;m[14]+=m[2]*x+m[6]*y+m[10]*z;return this}
+ S(x,y,z){const m=this.m;for(let i=0;i<4;i++){m[i]*=x;m[4+i]*=y;m[8+i]*=z}return this}
+ RY(a){const m=this.m,c=cos(a),s=sin(a);for(let i=0;i<4;i++){const x=m[i],z=m[8+i];m[i]=x*c-z*s;m[8+i]=x*s+z*c}return this}
+ RX(a){const m=this.m,c=cos(a),s=sin(a);for(let i=0;i<4;i++){const y=m[4+i],z=m[8+i];m[4+i]=y*c+z*s;m[8+i]=-y*s+z*c}return this}
+ RZ(a){const m=this.m,c=cos(a),s=sin(a);for(let i=0;i<4;i++){const x=m[i],y=m[4+i];m[i]=x*c+y*s;m[4+i]=-x*s+y*c}return this}
+ tp(p){const m=this.m,x=p[0],y=p[1],z=p[2];return[m[0]*x+m[4]*y+m[8]*z+m[12],m[1]*x+m[5]*y+m[9]*z+m[13],m[2]*x+m[6]*y+m[10]*z+m[14]]}
+ _t(a,b,d,c1,c2,c3,e,j){const ux=b[0]-a[0],uy=b[1]-a[1],uz=b[2]-a[2],vx=d[0]-a[0],vy=d[1]-a[1],vz=d[2]-a[2];
+  let nx=uy*vz-uz*vy,ny=uz*vx-ux*vz,nz=ux*vy-uy*vx;const l=sqrt(nx*nx+ny*ny+nz*nz);if(l<1e-9)return;nx/=l;ny/=l;nz/=l;
+  const A=this.a;
+  A.push(a[0],a[1],a[2],nx,ny,nz,min(255,c1[0]*j),min(255,c1[1]*j),min(255,c1[2]*j),e);
+  A.push(b[0],b[1],b[2],nx,ny,nz,min(255,c2[0]*j),min(255,c2[1]*j),min(255,c2[2]*j),e);
+  A.push(d[0],d[1],d[2],nx,ny,nz,min(255,c3[0]*j),min(255,c3[1]*j),min(255,c3[2]*j),e)}
+ _j(){return 1+(this.r()*2-1)*this.jit}
+ // triângulo (pontos locais); col = cor única ou, com c2/c3, uma cor por vértice
+ tri(p,q,r,col,e,c2,c3){const c=C(col);this._t(this.tp(p),this.tp(q),this.tp(r),c,c2?C(c2):c,c3?C(c3):c,e||0,this._j());return this}
+ // quadrilátero p,q,r,s (em volta, no sentido horário ou anti-horário); cs = quatro cores (uma por canto) opcional
+ quad(p,q,r,s,col,e,cs){const a=this.tp(p),b=this.tp(q),d=this.tp(r),f=this.tp(s),j=this._j();e=e||0;
+  if(cs){const c0=C(cs[0]),c1=C(cs[1]),c2=C(cs[2]),c3=C(cs[3]);this._t(a,b,d,c0,c1,c2,e,j);this._t(a,d,f,c0,c2,c3,e,j)}
+  else{const c=C(col);this._t(a,b,d,c,c,c,e,j);this._t(a,d,f,c,c,c,e,j)}return this}
+ // caixa com o centro na origem (ou a base na origem com base:true); col = cor única ou 6 cores [+x,-x,+y,-y,+z,-z]
+ box(w,h,d,col,e,base){const x=w/2,z=d/2,y0=base?0:-h/2,y1=base?h:h/2,cs=Array.isArray(col)&&Array.isArray(col[0])||(Array.isArray(col)&&typeof col[0]==='string')?col:null,f=i=>cs?cs[i]:col;e=e||0;
+  this.quad([x,y0,z],[x,y0,-z],[x,y1,-z],[x,y1,z],f(0),e);this.quad([-x,y0,-z],[-x,y0,z],[-x,y1,z],[-x,y1,-z],f(1),e);
+  this.quad([-x,y1,z],[x,y1,z],[x,y1,-z],[-x,y1,-z],f(2),e);this.quad([-x,y0,-z],[x,y0,-z],[x,y0,z],[-x,y0,z],f(3),e);
+  this.quad([-x,y0,z],[x,y0,z],[x,y1,z],[-x,y1,z],f(4),e);this.quad([x,y0,-z],[-x,y0,-z],[-x,y1,-z],[x,y1,-z],f(5),e);return this}
+ // tronco de cone de y=0 (raio r0) até y=h (raio r1) com n lados; cap0/cap1 = tampas (padrão: sim)
+ cyl(r0,r1,h,n,col,e,o){o=o||{};const rot=o.rot||0,cap0=o.cap0!==false,cap1=o.cap1!==false,cs=o.cs;e=e||0;
+  for(let i=0;i<n;i++){const a0=rot+i/n*PI*2,a1=rot+(i+1)/n*PI*2,c0=cos(a0),s0=sin(a0),c1=cos(a1),s1=sin(a1);
+   this.quad([c0*r0,0,s0*r0],[c1*r0,0,s1*r0],[c1*r1,h,s1*r1],[c0*r1,h,s0*r1],cs?cs[i%cs.length]:col,e);
+   if(cap1&&r1>0)this.tri([0,h,0],[c0*r1,h,s0*r1],[c1*r1,h,s1*r1],o.ct||col,e);
+   if(cap0&&r0>0)this.tri([0,0,0],[c1*r0,0,s1*r0],[c0*r0,0,s0*r0],o.cb||col,e)}return this}
+ // esfera de poucos polígonos (lat faixas, lon gomos), raio r, centro na origem
+ sph(r,lat,lon,col,e,o){o=o||{};e=e||0;const P=(i,k)=>{const a=-PI/2+PI*i/lat,b=k/lon*PI*2;return[cos(a)*cos(b)*r,sin(a)*r,cos(a)*sin(b)*r]};
+  for(let i=0;i<lat;i++)for(let k=0;k<lon;k++){const p00=P(i,k),p01=P(i,k+1),p10=P(i+1,k),p11=P(i+1,k+1);
+   if(i===0)this.tri(p00,p10,p11,col,e);else if(i===lat-1)this.tri(p00,p10,p01,col,e);else this.quad(p00,p10,p11,p01,col,e)}return this}
+ // tubo que segue uma lista de pontos [x,y,z] com raios rs[i] e n lados (chifres, tentáculos, caudas)
+ tube(pts,rs,n,col,e,o){o=o||{};e=e||0;const rings=[];
+  for(let i=0;i<pts.length;i++){const a=pts[max(0,i-1)],b=pts[min(pts.length-1,i+1)];let tx=b[0]-a[0],ty=b[1]-a[1],tz=b[2]-a[2];const l=sqrt(tx*tx+ty*ty+tz*tz)||1;tx/=l;ty/=l;tz/=l;
+   // dois vetores perpendiculares à direção
+   let ax=0,ay=1,az=0;if(abs(ty)>.9){ax=1;ay=0}
+   let ux=ty*az-tz*ay,uy=tz*ax-tx*az,uz=tx*ay-ty*ax;const ul=sqrt(ux*ux+uy*uy+uz*uz)||1;ux/=ul;uy/=ul;uz/=ul;
+   const vx=ty*uz-tz*uy,vy=tz*ux-tx*uz,vz=tx*uy-ty*ux,ring=[];
+   for(let k=0;k<n;k++){const an=k/n*PI*2,cx=cos(an)*rs[i],cy=sin(an)*rs[i];ring.push([pts[i][0]+ux*cx+vx*cy,pts[i][1]+uy*cx+vy*cy,pts[i][2]+uz*cx+vz*cy])}rings.push(ring)}
+  for(let i=0;i<pts.length-1;i++){const cc=o.cols?o.cols[i%o.cols.length]:col;for(let k=0;k<n;k++){const k2=(k+1)%n;this.quad(rings[i][k],rings[i][k2],rings[i+1][k2],rings[i+1][k],cc,o.em&&o.em[i]!==undefined?o.em[i]:e)}}
+  if(o.capEnd!==false){const L=rings.length-1;for(let k=0;k<n;k++)this.tri(rings[L][k],rings[L][(k+1)%n],pts[L].slice(),col,e)}
+  return this}
+ get count(){return this.a.length/10}
+ // empacota num buffer do WebGL: 28 bytes por vértice (posição e normal em float, cor em bytes)
+ build(gl){const A=this.a,n=A.length/10,buf=new ArrayBuffer(n*28),f=new Float32Array(buf),u=new Uint8Array(buf);let sx=0,sy=0,sz=0;
+  for(let i=0;i<n;i++){const s=i*10,d=i*7,o=i*28+24;f[d]=A[s];f[d+1]=A[s+1];f[d+2]=A[s+2];f[d+3]=A[s+3];f[d+4]=A[s+4];f[d+5]=A[s+5];u[o]=A[s+6];u[o+1]=A[s+7];u[o+2]=A[s+8];u[o+3]=A[s+9]*255;sx+=A[s];sy+=A[s+1];sz+=A[s+2]}
+  let cx=sx/(n||1),cy=sy/(n||1),cz=sz/(n||1),rad=0;for(let i=0;i<n;i++){const s=i*10;rad=max(rad,Math.hypot(A[s]-cx,A[s+1]-cy,A[s+2]-cz))}
+  const vbo=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,vbo);gl.bufferData(gl.ARRAY_BUFFER,buf,gl.STATIC_DRAW);return{vbo,n,cx,cy,cz,rad}}
+}
+H3.MB=MB;
+
+// ---------- WebGL ----------
+const NLMAX=12;                       // luzes de ponto por desenho
+let cv=null,gl=null,W=1,Hh=1,qs=1,lost=false;
+const P={lit:null,spr:null},U={},tex={};
+const VS_LIT=`attribute vec3 aP;attribute vec3 aN;attribute vec4 aC;uniform mat4 uVP;uniform mat4 uM;varying vec3 vP;varying vec3 vN;varying vec4 vC;
+void main(){vec4 w=uM*vec4(aP,1.0);vP=w.xyz;vN=(uM*vec4(aN,0.0)).xyz;vC=aC;gl_Position=uVP*w;}`;
+const FS_LIT=nl=>`#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;
+#else
+precision mediump float;
+#endif
+varying vec3 vP;varying vec3 vN;varying vec4 vC;uniform vec3 uCam;uniform vec4 uL[${nl}];uniform vec3 uLC[${nl}];uniform vec3 uAT;uniform vec3 uAB;uniform vec4 uFog;uniform vec4 uFl;uniform float uEG;uniform float uDi;
+void main(){
+ if(uDi<1.0){float b=fract(52.9829189*fract(dot(gl_FragCoord.xy,vec2(0.06711056,0.00583715))));if(b>uDi)discard;}
+ vec3 n=normalize(vN);vec3 V=uCam-vP;float dV=length(V);if(dot(n,V)<0.0)n=-n;
+ vec3 col=vC.rgb;vec3 lg=mix(uAB,uAT,n.y*0.5+0.5);
+ for(int i=0;i<${nl};i++){vec3 d=uL[i].xyz-vP;float d2=dot(d,d);float r=uL[i].w;float a=1.0-d2/(r*r);if(a<=0.0)continue;a*=a;
+  float nd=dot(n,d*inversesqrt(d2+0.0001));nd=max(nd*0.62+0.38,0.0);lg+=uLC[i]*(a*nd);}
+ vec3 c=col*lg*(1.0-vC.a)+col*(vC.a*uEG);
+ c=c/(1.0+c*0.22);
+ c=mix(c,uFl.rgb,uFl.a);
+ float f=1.0-exp(-dV*dV*uFog.a*uFog.a);c=mix(c,uFog.rgb,f);
+ gl_FragColor=vec4(c,1.0);}`;
+const VS_SPR=`attribute vec3 aP;attribute vec2 aT;attribute vec4 aC;uniform mat4 uVP;uniform vec3 uCam;varying vec2 vT;varying vec4 vC;varying float vD;
+void main(){vT=aT;vC=aC;vec3 d=aP-uCam;vD=length(d);gl_Position=uVP*vec4(aP,1.0);}`;
+const FS_SPR=`#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;
+#else
+precision mediump float;
+#endif
+varying vec2 vT;varying vec4 vC;varying float vD;uniform sampler2D uTex;uniform vec4 uFog;uniform float uAdd;
+void main(){vec4 t=texture2D(uTex,vT);float a=t.a*vC.a;if(a<0.02)discard;vec3 c=t.rgb*vC.rgb;float f=1.0-exp(-vD*vD*uFog.a*uFog.a);
+ if(uAdd>0.5){c*=a*(1.0-f);gl_FragColor=vec4(c,1.0);}else{c=mix(c,uFog.rgb,f);gl_FragColor=vec4(c,a);}}`;
+function compile(type,src){const s=gl.createShader(type);gl.shaderSource(s,src);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)){const e=gl.getShaderInfoLog(s);gl.deleteShader(s);throw new Error('shader: '+e)}return s}
+function program(vs,fs,attrs){const p=gl.createProgram();gl.attachShader(p,compile(gl.VERTEX_SHADER,vs));gl.attachShader(p,compile(gl.FRAGMENT_SHADER,fs));attrs.forEach((a,i)=>gl.bindAttribLocation(p,i,a));gl.linkProgram(p);
+ if(!gl.getProgramParameter(p,gl.LINK_STATUS))throw new Error('programa: '+gl.getProgramInfoLog(p));return p}
+const uloc=(p,names)=>{const o={};names.forEach(n=>o[n]=gl.getUniformLocation(p,n));return o};
+
+// dados da luz: cada luz = {x,y,z,r,cr,cg,cb} (cor já multiplicada pela força)
+const LB=new Float32Array(NLMAX*4),LC=new Float32Array(NLMAX*3);let NL=NLMAX;
+H3.NL=()=>NL;
+// escolhe as luzes que mais pesam num ponto (cx,cy,cz) com raio de influência rad e já escreve nos vetores; dyn = luzes temporárias (sempre entram)
+const NOL=[];
+function pickLights(lights,cx,cy,cz,rad,dyn){
+ const cand=[];lights=lights||NOL;
+ for(let i=0;i<lights.length;i++){const l=lights[i];if(l.k<=0)continue;const dx=l.x-cx,dy=l.y-cy,dz=l.z-cz,d=max(0,sqrt(dx*dx+dy*dy+dz*dz)-rad);if(d>=l.r)continue;const w=1-d/l.r;cand.push([w*w*l.k*(l.cr+l.cg+l.cb+.3),l])}
+ cand.sort((a,b)=>b[0]-a[0]);
+ let n=0;const put=l=>{const k=l.k;LB[n*4]=l.x;LB[n*4+1]=l.y;LB[n*4+2]=l.z;LB[n*4+3]=l.r;LC[n*3]=l.cr*k;LC[n*3+1]=l.cg*k;LC[n*3+2]=l.cb*k;n++};
+ if(dyn)for(let i=0;i<dyn.length&&n<NL;i++){const l=dyn[i];if(l.k<=0)continue;const dx=l.x-cx,dy=l.y-cy,dz=l.z-cz;if(sqrt(dx*dx+dy*dy+dz*dz)-rad>=l.r)continue;put(l)}
+ for(let i=0;i<cand.length&&n<NL;i++)put(cand[i][1]);
+ for(let i=n;i<NL;i++){LB[i*4]=LB[i*4+1]=LB[i*4+2]=0;LB[i*4+3]=1;LC[i*3]=LC[i*3+1]=LC[i*3+2]=0}
+ gl.uniform4fv(U.uL,LB.subarray(0,NL*4));gl.uniform3fv(U.uLC,LC.subarray(0,NL*3))}
+
+// ---------- texturas ----------
+function texNew(cvs,linear){const t=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,t);gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,false);
+ gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,cvs);const f=linear?gl.LINEAR:gl.NEAREST;
+ gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,f);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,f);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+ return{t,w:cvs.width,h:cvs.height,lin:!!linear}}
+function texUp(o,cvs){gl.bindTexture(gl.TEXTURE_2D,o.t);gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,false);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,cvs);o.w=cvs.width;o.h=cvs.height}
+H3.texNew=texNew;H3.texUp=texUp;
+
+// ---------- cartazes (sprites): quadrados que olham para a câmera ----------
+const MAXS=1400,SV=new Float32Array(MAXS*4*9),SI=new Uint16Array(MAXS*6);
+for(let i=0;i<MAXS;i++){const v=i*4;SI.set([v,v+1,v+2,v,v+2,v+3],i*6)}
+let sbuf=null,sidx=null;const SL=[];       // lista do quadro: {tex,add,d,p:[...]}
+let camR=[1,0,0],camU=[0,1,0],camP=[0,0,0];
+H3.cam=()=>({r:camR,u:camU,p:camP});
+// cartaz de frente para a câmera: centro (x,y,z) · largura w, altura h · âncora: 0 = centro, 1 = pés (base) no ponto · uv = [u0,v0,u1,v1] · cor rgba 0..1
+// sph = true gira junto com a câmera (partículas); false = fica em pé e só gira em volta do eixo Y (personagens)
+function spr(t,x,y,z,w,h,uv,rgba,add,anch,sph){const dx=x-camP[0],dy=y-camP[1],dz=z-camP[2];
+ SL.push({t,x,y,z,w,h,uv:uv||[0,0,1,1],c:rgba||[1,1,1,1],add:add?1:0,an:anch||0,sph:!!sph,d:dx*dx+dy*dy+dz*dz,rot:0})}
+// quadrado deitado no chão (sombras, anéis de choque): centro (x,y,z), lados w x d, girado de rot em torno de Y
+function flat(t,x,y,z,w,d,uv,rgba,add,rot){SL.push({t,x,y,z,w,h:d,uv:uv||[0,0,1,1],c:rgba||[1,1,1,1],add:add?1:0,fl:true,rot:rot||0,d:(x-camP[0])**2+(y-camP[1])**2+(z-camP[2])**2-(add?1e6:0)})}
+// faixa de luz de a até b (raios, feixes, rastros): fica de frente para a câmera; w = largura
+function strip(t,ax,ay,az,bx,by,bz,w,rgba,add,uv){const mx=(ax+bx)/2-camP[0],my=(ay+by)/2-camP[1],mz=(az+bz)/2-camP[2];
+ SL.push({t,x:ax,y:ay,z:az,x2:bx,y2:by,z2:bz,w,h:0,uv:uv||[0,0,1,1],c:rgba||[1,1,1,1],add:add?1:0,st:true,d:mx*mx+my*my+mz*mz-(add?1e6:0)})}
+H3.spr=spr;H3.flat=flat;H3.strip=strip;H3.pick=(...a)=>pickLights(...a);
+function flushSprites(fogv){
+ if(!SL.length)return;gl.useProgram(P.spr);gl.uniform4fv(U.sFog,fogv);gl.uniform3fv(U.sCam,camP);gl.uniform1i(U.sTex,0);
+ gl.bindBuffer(gl.ARRAY_BUFFER,sbuf);gl.enableVertexAttribArray(0);gl.enableVertexAttribArray(1);gl.enableVertexAttribArray(2);
+ gl.vertexAttribPointer(0,3,gl.FLOAT,false,36,0);gl.vertexAttribPointer(1,2,gl.FLOAT,false,36,12);gl.vertexAttribPointer(2,4,gl.FLOAT,false,36,20);
+ gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,sidx);gl.depthMask(false);
+ for(const pass of[0,1]){
+  const L=SL.filter(s=>s.add===pass);if(!L.length)continue;
+  if(!pass)L.sort((a,b)=>b.d-a.d);
+  gl.blendFunc(pass?gl.ONE:gl.SRC_ALPHA,pass?gl.ONE:gl.ONE_MINUS_SRC_ALPHA);gl.uniform1f(U.sAdd,pass);
+  let n=0,run=0,cur=null;
+  const flush=()=>{if(!n)return;gl.bindTexture(gl.TEXTURE_2D,cur.t);gl.bufferSubData(gl.ARRAY_BUFFER,0,SV.subarray(0,n*36));gl.drawElements(gl.TRIANGLES,n*6,gl.UNSIGNED_SHORT,0);n=0};
+  for(let i=0;i<L.length;i++){const s=L[i];if(cur!==s.t||n>=MAXS-1){flush();cur=s.t}
+   let rx,ry,rz,ux,uy,uz,cx=s.x,cy=s.y,cz=s.z;
+   if(s.st){const dx=s.x2-s.x,dy=s.y2-s.y,dz=s.z2-s.z,mx=camP[0]-(s.x+s.x2)/2,my=camP[1]-(s.y+s.y2)/2,mz=camP[2]-(s.z+s.z2)/2;
+    let sx=dy*mz-dz*my,sy=dz*mx-dx*mz,sz=dx*my-dy*mx;const l=Math.hypot(sx,sy,sz)||1,hw=s.w/2/l;sx*=hw;sy*=hw;sz*=hw;
+    const o=n*36,q=[[s.x-sx,s.y-sy,s.z-sz,s.uv[0],s.uv[3]],[s.x+sx,s.y+sy,s.z+sz,s.uv[2],s.uv[3]],[s.x2+sx,s.y2+sy,s.z2+sz,s.uv[2],s.uv[1]],[s.x2-sx,s.y2-sy,s.z2-sz,s.uv[0],s.uv[1]]];
+    for(let k=0;k<4;k++){const j=o+k*9;SV[j]=q[k][0];SV[j+1]=q[k][1];SV[j+2]=q[k][2];SV[j+3]=q[k][3];SV[j+4]=q[k][4];SV[j+5]=s.c[0];SV[j+6]=s.c[1];SV[j+7]=s.c[2];SV[j+8]=s.c[3]}n++;continue}
+   if(s.fl){const c=cos(s.rot),sn=sin(s.rot);rx=c;ry=0;rz=sn;ux=-sn;uy=0;uz=c;const hw=s.w/2,hd=s.h/2;
+    const o=n*36,q=[[-hw,-hd,s.uv[0],s.uv[1]],[hw,-hd,s.uv[2],s.uv[1]],[hw,hd,s.uv[2],s.uv[3]],[-hw,hd,s.uv[0],s.uv[3]]];
+    for(let k=0;k<4;k++){const a=q[k][0],b=q[k][1],j=o+k*9;SV[j]=cx+rx*a+ux*b;SV[j+1]=cy;SV[j+2]=cz+rz*a+uz*b;SV[j+3]=q[k][2];SV[j+4]=q[k][3];SV[j+5]=s.c[0];SV[j+6]=s.c[1];SV[j+7]=s.c[2];SV[j+8]=s.c[3]}n++;continue}
+   rx=camR[0];ry=camR[1];rz=camR[2];if(s.sph){ux=camU[0];uy=camU[1];uz=camU[2]}else{ux=0;uy=1;uz=0}
+   const hw=s.w/2,y0=s.an?0:-s.h/2,y1=y0+s.h,o=n*36,
+    q=[[-hw,y0,s.uv[0],s.uv[3]],[hw,y0,s.uv[2],s.uv[3]],[hw,y1,s.uv[2],s.uv[1]],[-hw,y1,s.uv[0],s.uv[1]]];
+   for(let k=0;k<4;k++){const a=q[k][0],b=q[k][1],j=o+k*9;SV[j]=cx+rx*a+ux*b;SV[j+1]=cy+ry*a+uy*b;SV[j+2]=cz+rz*a+uz*b;SV[j+3]=q[k][2];SV[j+4]=q[k][3];SV[j+5]=s.c[0];SV[j+6]=s.c[1];SV[j+7]=s.c[2];SV[j+8]=s.c[3]}
+   n++}
+  flush()}
+ gl.depthMask(true);SL.length=0}
+
+// ---------- contexto ----------
+function init(canvas){
+ cv=canvas;if(gl)return true;
+ try{gl=cv.getContext('webgl',{antialias:true,alpha:false,depth:true,stencil:false,powerPreference:'high-performance',preserveDrawingBuffer:false})||cv.getContext('experimental-webgl')}catch(e){gl=null}
+ if(!gl){H3.ok=false;return false}
+ if(!setup()){H3.ok=false;gl=null;return false}
+ cv.addEventListener('webglcontextlost',e=>{e.preventDefault();lost=true;if(H3.onLost)H3.onLost()},false);
+ // depois que o aparelho devolve o contexto, tudo o que estava na placa de vídeo (programas, buffers, texturas) foi perdido: refaz o básico e avisa quem usa
+ cv.addEventListener('webglcontextrestored',()=>{lost=false;if(setup()&&H3.onRestore)H3.onRestore()},false);
+ H3.ok=true;return true}
+function setup(){
+ const mu=gl.getParameter(gl.MAX_FRAGMENT_UNIFORM_VECTORS)||16;NL=mu>=64?NLMAX:mu>=40?8:4;
+ try{
+  P.lit=program(VS_LIT,FS_LIT(NL),['aP','aN','aC']);P.spr=program(VS_SPR,FS_SPR,['aP','aT','aC'])}catch(e){console.error('H3',e&&e.message||e);return false}
+ gl.useProgram(P.lit);Object.assign(U,uloc(P.lit,['uVP','uM','uCam','uL','uLC','uAT','uAB','uFog','uFl','uEG','uDi']));
+ const s=uloc(P.spr,['uVP','uCam','uTex','uFog','uAdd']);U.sVP=s.uVP;U.sCam=s.uCam;U.sTex=s.uTex;U.sFog=s.uFog;U.sAdd=s.uAdd;
+ sbuf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,sbuf);gl.bufferData(gl.ARRAY_BUFFER,SV.byteLength,gl.DYNAMIC_DRAW);
+ sidx=gl.createBuffer();gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,sidx);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,SI,gl.STATIC_DRAW);
+ gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);gl.enable(gl.BLEND);gl.disable(gl.CULL_FACE);return true}
+function resize(){if(!cv)return;const w=max(2,Math.round(innerWidth*qs)),h=max(2,Math.round(innerHeight*qs));if(cv.width!==w||cv.height!==h){cv.width=w;cv.height=h}W=cv.width;Hh=cv.height;if(gl)gl.viewport(0,0,W,Hh)}
+H3.gl=()=>gl;H3.init=init;H3.resize=resize;H3.size=()=>[W,Hh];H3.isLost=()=>lost;
+H3.setQ=v=>{qs=v;resize()};H3.getQ=()=>qs;
+
+// ---------- quadro ----------
+const VP=new Float32Array(16),PM=new Float32Array(16),VM=new Float32Array(16),IDM=M4.id();
+let fog=new Float32Array([.02,.008,.03,.0036]),ambT=[.17,.11,.2],ambB=[.07,.045,.08];
+H3.env=o=>{if(o.fog)fog.set(o.fog);if(o.ambT)ambT=o.ambT;if(o.ambB)ambB=o.ambB};
+// começa o quadro: câmera em (ex,ey,ez) olhando (yaw,pitch); fov vertical em radianos
+function begin(ex,ey,ez,yaw,pitch,fov,roll){
+ resize();M4.persp(PM,fov,W/Hh,.6,900);M4.view(VM,ex,ey,ez,yaw,pitch);M4.mul(VP,PM,VM);
+ camP=[ex,ey,ez];camR=[cos(yaw),0,sin(yaw)];const cp=cos(pitch),sp=sin(pitch);camU=[-sin(yaw)*sp,cp,cos(yaw)*sp];
+ gl.viewport(0,0,W,Hh);gl.clearColor(fog[0],fog[1],fog[2],1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+ gl.enable(gl.DEPTH_TEST);gl.disable(gl.BLEND);gl.depthMask(true);
+ gl.useProgram(P.lit);gl.uniformMatrix4fv(U.uVP,false,VP);gl.uniform3f(U.uCam,ex,ey,ez);gl.uniform3fv(U.uAT,ambT);gl.uniform3fv(U.uAB,ambB);gl.uniform4fv(U.uFog,fog);
+ gl.uniform4f(U.uFl,0,0,0,0);gl.uniform1f(U.uEG,1);gl.uniform1f(U.uDi,1);gl.uniformMatrix4fv(U.uM,false,IDM);
+ gl.enableVertexAttribArray(0);gl.enableVertexAttribArray(1);gl.enableVertexAttribArray(2)}
+// desenha uma malha com a matriz m (ou a identidade); lights = luzes fixas, dyn = luzes temporárias; o = {fl:[r,g,b,a] clarão, eg: brilho próprio, di: transparência 0..1}
+function mesh(m,mt,lights,dyn,o){
+ o=o||{};gl.useProgram(P.lit);
+ const M=mt||IDM;
+ if(mt)gl.uniformMatrix4fv(U.uM,false,M);else gl.uniformMatrix4fv(U.uM,false,IDM);
+ // o.keep = reaproveita as luzes escolhidas no desenho anterior (peças do mesmo personagem); senão escolhe as que mais pesam no centro da malha
+ if(!o.keep){const cx=M[0]*m.cx+M[4]*m.cy+M[8]*m.cz+M[12],cy=M[1]*m.cx+M[5]*m.cy+M[9]*m.cz+M[13],cz=M[2]*m.cx+M[6]*m.cy+M[10]*m.cz+M[14];
+  pickLights(lights,o.cx!==undefined?o.cx:cx,o.cy!==undefined?o.cy:cy,o.cz!==undefined?o.cz:cz,o.rad!==undefined?o.rad:m.rad*(o.sc||1),dyn)}
+ if(o.fl)gl.uniform4fv(U.uFl,o.fl);else gl.uniform4f(U.uFl,0,0,0,0);
+ gl.uniform1f(U.uEG,o.eg===undefined?1:o.eg);gl.uniform1f(U.uDi,o.di===undefined?1:o.di);
+ gl.bindBuffer(gl.ARRAY_BUFFER,m.vbo);gl.vertexAttribPointer(0,3,gl.FLOAT,false,28,0);gl.vertexAttribPointer(1,3,gl.FLOAT,false,28,12);gl.vertexAttribPointer(2,4,gl.UNSIGNED_BYTE,true,28,24);
+ gl.drawArrays(gl.TRIANGLES,0,m.n)}
+// termina: cartazes por cima de tudo (com profundidade) e brilhos
+function end(){gl.useProgram(P.spr);gl.uniformMatrix4fv(U.sVP,false,VP);gl.enable(gl.BLEND);flushSprites(fog)}
+// teste rápido "está na tela?" para esferas (centro, raio): planos extraídos da matriz câmera*projeção
+const FP=new Float32Array(24);
+function planes(){const m=VP;let k=0;const set=(a,b,c,d)=>{const l=Math.hypot(a,b,c)||1;FP[k++]=a/l;FP[k++]=b/l;FP[k++]=c/l;FP[k++]=d/l};
+ set(m[3]+m[0],m[7]+m[4],m[11]+m[8],m[15]+m[12]);set(m[3]-m[0],m[7]-m[4],m[11]-m[8],m[15]-m[12]);set(m[3]+m[1],m[7]+m[5],m[11]+m[9],m[15]+m[13]);
+ set(m[3]-m[1],m[7]-m[5],m[11]-m[9],m[15]-m[13]);set(m[3]+m[2],m[7]+m[6],m[11]+m[10],m[15]+m[14]);set(m[3]-m[2],m[7]-m[6],m[11]-m[10],m[15]-m[14])}
+H3.vis=(x,y,z,r)=>{for(let i=0;i<24;i+=4)if(FP[i]*x+FP[i+1]*y+FP[i+2]*z+FP[i+3]<-r)return false;return true};
+H3.begin=function(){begin.apply(null,arguments);planes()};H3.mesh=mesh;H3.end=end;H3.fogv=()=>fog;
+// segundo passe com projeção própria (braço em primeira pessoa): limpa a profundidade e desenha com outro campo de visão e plano de corte bem perto
+H3.begin2=function(fov){gl.clear(gl.DEPTH_BUFFER_BIT);gl.disable(gl.BLEND);gl.depthMask(true);gl.useProgram(P.lit);const p=new Float32Array(16),v=new Float32Array(16);M4.persp(p,fov,W/Hh,.1,900);M4.mul(v,p,VM);gl.uniformMatrix4fv(U.uVP,false,v)};
+// matriz que leva coordenadas "da câmera" (x direita, y cima, z para trás) para o mundo: serve para pendurar o braço na frente do olho
+H3.camFrame=function(o,ex,ey,ez,yaw,pitch){const cy=cos(yaw),sy=sin(yaw),cp=cos(pitch),sp=sin(pitch);
+ o[0]=cy;o[1]=0;o[2]=sy;o[3]=0;o[4]=-sy*sp;o[5]=cp;o[6]=cy*sp;o[7]=0;o[8]=-sy*cp;o[9]=-sp;o[10]=cy*cp;o[11]=0;o[12]=ex;o[13]=ey;o[14]=ez;o[15]=1;return o};
+H3.gl_frame=()=>({VP,VM,PM});
+
+// pequenos desenhos prontos (feitos por código, sem arquivo de imagem): brilho redondo, anel, quadradinho e as chamas em pixel art
+H3.makeTex=function(){
+ const mk=(w,h,fn,lin)=>{const c=document.createElement('canvas');c.width=w;c.height=h;fn(c.getContext('2d'),w,h);return texNew(c,lin)};
+ tex.glow=mk(64,64,(x,w,h)=>{const g=x.createRadialGradient(32,32,0,32,32,32);g.addColorStop(0,'rgba(255,255,255,1)');g.addColorStop(.25,'rgba(255,255,255,.55)');g.addColorStop(.6,'rgba(255,255,255,.14)');g.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=g;x.fillRect(0,0,w,h)},true);
+ tex.ring=mk(128,128,(x,w,h)=>{const g=x.createRadialGradient(64,64,40,64,64,63);g.addColorStop(0,'rgba(255,255,255,0)');g.addColorStop(.55,'rgba(255,255,255,.95)');g.addColorStop(.75,'rgba(255,255,255,.35)');g.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=g;x.fillRect(0,0,w,h)},true);
+ tex.beam=mk(32,8,(x,w,h)=>{const g=x.createLinearGradient(0,0,w,0);g.addColorStop(0,'rgba(255,255,255,0)');g.addColorStop(.3,'rgba(255,255,255,.55)');g.addColorStop(.5,'rgba(255,255,255,1)');g.addColorStop(.7,'rgba(255,255,255,.55)');g.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=g;x.fillRect(0,0,w,h)},true);
+ tex.dot=mk(8,8,(x)=>{x.fillStyle='#fff';x.fillRect(1,1,6,6);x.fillStyle='rgba(255,255,255,.5)';x.fillRect(0,1,1,6);x.fillRect(7,1,1,6);x.fillRect(1,0,6,1);x.fillRect(1,7,6,1)},false);
+ // sombra: mancha escura e redonda (alpha)
+ tex.blob=mk(64,64,(x,w,h)=>{const g=x.createRadialGradient(32,32,0,32,32,32);g.addColorStop(0,'rgba(0,0,0,.72)');g.addColorStop(.55,'rgba(0,0,0,.5)');g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.fillRect(0,0,w,h)},true);
+ // chamas em pixel art (mesmo desenho das do salão 2D): linha de cima = 6 quadros grandes, linha de baixo = 6 pequenos (células de 16 x 24)
+ tex.flame=mk(96,48,(x)=>{
+  for(let big=0;big<2;big++)for(let fr=0;fr<6;fr++){const w=big?9:7,h=big?16:13,cx=(w-1)/2,ox=fr*16+((16-w)>>1),oy=(big?0:24)+(24-h);
+   for(let y=0;y<h;y++){const t=y/(h-1),wob=sin(fr*1.05+t*5.5)*(1-t)*1.4,hw=(sin(t*PI*.92)*.5+.12)*(w/2)*(t>.75?1:.35+t*.9);
+    for(let i=0;i<w;i++){const d=abs(i-cx-wob*(1-t))/max(.5,hw);if(d>1)continue;const core=d<.45&&t>.45,mid=d<.75&&t>.25;
+     x.fillStyle=core?(t>.75?'#fff6d8':'#ffd27a'):mid?'#ff7a2a':'#c7321c';x.fillRect(ox+i,oy+y,1,1)}}
+   if(fr%2===0){x.fillStyle='#ffb35a';x.fillRect(ox+Math.round(cx+sin(fr)*2),oy,1,1)}}},false);
+ return tex};
+H3.tex=tex;
+})();
+</script><script>
+// ===================== Modo 3D do Salão do Demônio (TESTE) — parte 2: o salão em 3D =====================
+// Monta (uma vez só, na primeira vez que o jogador troca para 3D) o salão da torre com a mesma planta do desenho 2D (js/04-v6.js, "Salão do Demônio"):
+// chão de pedra em anéis com 26 runas, altar de dois degraus no meio, muro redondo com tochas, estandartes e correntes, 8 estacas com fogo,
+// caveiras e ossos, manchas de sangue, escada de entrada ao sul. Medidas: raio 150, muro com 96 de altura, altar com raio 44 e altura 14.
+// A planta 2D é "achatada" (y x 1,875): o ponto (x,y) do jogo vira X = x - RMX, Z = (y - RMY) * 1,875 aqui.
+(function(){
+'use strict';
+const H3=window.H3,{MB,C,shade,mixC,rng}=H3;
+const PI=Math.PI,sin=Math.sin,cos=Math.cos,sqrt=Math.sqrt,abs=Math.abs,floor=Math.floor,min=Math.min,max=Math.max,round=Math.round;
+const D=a=>a*PI/180,clp=(v,a,b)=>v<a?a:v>b?b:v;
+const R=150,WH=96,K=150/80,ALTR=44;
+const H=H3.hall={R,WH,K,altR:ALTR,altH:14,ready:false,chunks:[],lights:[],flames:[],runeGl:[],candles:[]};
+// o piso da escada da entrada (para a câmera acompanhar os degraus)
+H.floorY=(x,z)=>(abs(x)<17&&z>150)?-2.5*min(5,floor((z-150)/6)):0;
+
+const FS=['#1b1621','#292232','#352d3f','#41394d','#4d445a','#5a5068','#675c76'];                       // pedra do chão
+const WS=['#241e2b','#2f2837','#3a3244','#463c51','#52475e','#5f536c','#6d6079','#7b6e87'];             // pedra do muro
+const BONE=['#e7dfd0','#bfb4a2','#a69b8a'],BL=['#2a0606','#3f0a0a','#561010'];
+
+const secOf=deg=>floor((((deg%360)+360)%360)/30);
+const P=(a,y,r)=>[r*cos(a),y,r*sin(a)];
+// põe o "lápis" do construtor na parede no ângulo a (rad), raio r: o eixo z local aponta para o centro do salão e o x é a tangente
+const rad=(mb,a,r)=>mb.T(r*cos(a),0,r*sin(a)).RY(Math.atan2(-cos(a),-sin(a)));
+
+// luzes fixas: {x,y,z,r,cr,cg,cb,k,b,ph}  (k = força do momento, b = força base, ph = fase do tremor)
+function addLight(x,y,z,r,c,b,ph,kind){const l={x,y,z,r,cr:c[0],cg:c[1],cb:c[2],k:b,b,ph:ph||0,kind:kind||''};H.lights.push(l);return l}
+
+function skull(mb,x,y,z,rot,sc,tilt){mb.push().T(x,y,z).RY(rot).RX(tilt||0).S(sc,sc,sc);
+ mb.push().S(1,.92,1.05).sph(2.5,3,6,BONE[1],0).pop();
+ mb.push().T(0,-2.4,.5).box(3.4,1.4,3,BONE[2],0).pop();
+ mb.push().T(-1,.2,2.2).box(1.1,1.1,.5,'#120c0c',0).pop();mb.push().T(1,.2,2.2).box(1.1,1.1,.5,'#120c0c',0).pop();
+ mb.push().T(0,-.9,2.35).box(.6,.9,.4,'#1a1212',0).pop();mb.pop()}
+function bone(mb,x,y,z,rot){mb.push().T(x,y,z).RY(rot);mb.box(5.6,.8,.8,BONE[1],0);mb.push().T(-2.9,0,0).box(1.5,1.2,1.4,BONE[0],0).pop();mb.push().T(2.9,0,0).box(1.5,1.2,1.4,BONE[0],0).pop();mb.pop()}
+
+function build(gl){
+ H.chunks.length=0;H.lights.length=0;H.flames.length=0;H.runeGl.length=0;H.candles.length=0;
+ const r=rng(6060),FL=[],WL=[],DM=[];
+ for(let i=0;i<24;i++)FL.push(new MB(100+i));for(let i=0;i<12;i++){WL.push(new MB(200+i));DM.push(new MB(300+i))}
+ const ALT=new MB(400),ENT=new MB(401),CHD=new MB(402),UND=new MB(403),RUN=new MB(404);
+ const flBand=(x,z)=>sqrt(x*x+z*z)<75?0:1,flAt=(x,z)=>FL[secOf(Math.atan2(z,x)*180/PI)*2+flBand(x,z)];
+
+ // ---- chão: fundo escuro (a "argamassa") e lajes em anéis, com folga entre elas ----
+ UND.push().T(0,-.1,0).cyl(R+6,R+6,0,48,'#0a080c',0,{cap0:false}).pop();
+ const RB=[44,60,80,100,120,140,150];
+ for(let k=0;k<RB.length-1;k++){const r0=RB[k],r1=RB[k+1],rm=(r0+r1)/2,segs=max(8,round(2*PI*rm/18));
+  for(let s=0;s<segs;s++){const a0=s/segs*PI*2,a1=(s+1)/segs*PI*2,am=(a0+a1)/2,g=.6,ga=g/rm;
+   let v=.55+(r()-.5)*.5-(rm>128?.2:0)-(k===1?.12:0);let ci=clp(round(v*5)+1,1,6);if(r()<.045)ci=r()<.5?0:1;
+   const y=r()*.3,col=FS[ci],mb=flAt(rm*cos(am),rm*sin(am));
+   mb.quad(P(a0+ga,y,r0+g),P(a1-ga,y,r0+g),P(a1-ga,y,r1-g),P(a0+ga,y,r1-g),col,0)}}
+ // faixas de adorno (círculo ritual) em vermelho escuro
+ for(const rr of[62,98,132]){const n=72;for(let s=0;s<n;s++){const a0=s/n*PI*2,a1=(s+1)/n*PI*2,am=(a0+a1)/2;flAt(rr*cos(am),rr*sin(am)).quad(P(a0,.5,rr-.8),P(a1,.5,rr-.8),P(a1,.5,rr+.8),P(a0,.5,rr+.8),'#43100f',0)}}
+ // manchas de sangue
+ for(let k=0;k<16;k++){const a=r()*PI*2,q=.25+r()*.55,cx=cos(a)*R*q,cz=sin(a)*R*q,rr=6+r()*11,n=9,pts=[];const rs=[];for(let i=0;i<n;i++)rs.push(.55+r()*.6);
+  const mb=flAt(cx,cz);for(let i=0;i<n;i++){const a0=i/n*PI*2,a1=(i+1)/n*PI*2;mb.tri([cx,.55,cz],[cx+cos(a0)*rr*rs[i],.55,cz+sin(a0)*rr*rs[i]],[cx+cos(a1)*rr*rs[(i+1)%n],.55,cz+sin(a1)*rr*rs[(i+1)%n]],BL[k%3],0)}}
+ // runas brilhantes no anel (26), voltadas para o altar
+ const GLY=[[[0,-2],[0,-1],[0,0],[0,1],[-1,-1],[1,1]],[[-1,-2],[0,-1],[1,0],[0,1],[-1,2]],[[-1,-1],[0,-1],[1,-1],[0,0],[0,1],[-1,2],[1,2]],[[0,-2],[-1,-1],[1,-1],[-1,1],[1,1],[0,2]]];
+ for(let k=0;k<26;k++){const a=k/26*PI*2,cx=cos(a)*70.5,cz=sin(a)*70.5;RUN.push();rad(RUN,a,70.5).T(0,0,0);
+  // volta ao mundo: rad() já deixou o lápis na posição do raio 70,5 (com z apontando para o centro)
+  for(const[px,py]of GLY[k%4])RUN.push().T(px*2.7,.62,py*2.7).box(2.2,.1,2.2,'#ff5a2a',1).pop();RUN.pop();
+  H.runeGl.push({x:cx,z:cz})}
+ // caveiras e ossos espalhados + montes junto ao muro
+ for(let k=0;k<70;k++){const a=r()*PI*2,q=.2+r()*.75,x=cos(a)*R*q,z=sin(a)*R*q;if(sqrt(x*x+z*z)<56)continue;if(z>124&&abs(x)<24)continue;
+  const mb=flAt(x,z),rot=r()*PI*2;if(r()<.55)skull(mb,x,2.1,z,rot,.9+r()*.25,(r()<.25?(r()-.5)*1.2:0));else bone(mb,x,.6,z,rot)}
+ for(const a of[3.6,4.3,5.1,5.9,2.3,.8]){const bx=cos(a)*R*.86,bz=sin(a)*R*.86;for(let k=0;k<9;k++){const x=bx+(r()-.5)*18,z=bz+(r()-.5)*14,mb=flAt(x,z);skull(mb,x,2.1+(k>5?4.2:0),z,r()*PI*2,.95+r()*.3,(r()-.5)*.8)}}
+
+ // ---- altar de dois degraus ----
+ {const cs=[];for(let i=0;i<24;i++)cs.push(WS[2+(i*7+3)%4]);
+  ALT.cyl(47.5,46,2,24,WS[1],0,{cs:cs.map(c=>shade(c,.8)),cap1:false});
+  ALT.push().T(0,2,0).cyl(45.5,44.2,5.2,24,WS[3],0,{cs,cap1:false}).pop();
+  ALT.push().T(0,6.7,0).cyl(46.2,46.2,1.3,24,WS[6],0,{cs:cs.map(c=>shade(c,1.15)),cap1:false}).pop();
+  // tampo do primeiro degrau (anel) e o segundo degrau
+  for(let s=0;s<24;s++){const a0=s/24*PI*2,a1=(s+1)/24*PI*2;ALT.quad(P(a0,8,30),P(a1,8,30),P(a1,8,46.2),P(a0,8,46.2),WS[3+(s*5)%3],0)}
+  ALT.push().T(0,7.9,0).cyl(31,29.6,6.3,24,WS[4],0,{cs:cs.map(c=>shade(c,.95)),cap1:false}).pop();
+  ALT.push().T(0,13.4,0).cyl(31.6,31.6,1.2,24,WS[6],0,{cs:cs.map(c=>shade(c,1.2)),cap1:false}).pop();
+  for(let s=0;s<24;s++){const a0=s/24*PI*2,a1=(s+1)/24*PI*2;ALT.tri([0,14.6,0],P(a0,14.6,31.6),P(a1,14.6,31.6),WS[3+(s%3)],0)}
+  // sigilo brilhante no topo: anel, estrela de 4 pontas e círculo pequeno
+  for(const[ra,rb]of[[17.8,19.4],[26.2,27]]){const n=32;for(let s=0;s<n;s++){const a0=s/n*PI*2,a1=(s+1)/n*PI*2;RUN.quad(P(a0,14.7,ra),P(a1,14.7,ra),P(a1,14.7,rb),P(a0,14.7,rb),'#e03a1c',1)}}
+  for(const rot of[0,PI/2])RUN.push().RY(rot).quad([-19,14.72,-.7],[19,14.72,-.7],[19,14.72,.7],[-19,14.72,.7],'#e03a1c',1).pop();
+  for(const rot of[PI/4,-PI/4])RUN.push().RY(rot).quad([-11,14.72,-.45],[11,14.72,-.45],[11,14.72,.45],[-11,14.72,.45],'#e03a1c',1).pop();
+  // velas no degrau de baixo
+  for(let k=0;k<6;k++){const a=D(30+k*60),x=cos(a)*38.5,z=sin(a)*38.5;ALT.push().T(x,8,z).cyl(1,1,4.4,6,'#e8dcc8',0).pop();H.candles.push({x,y:12.4,z})}
+  // caveiras no beiral do degrau de baixo
+  for(let k=0;k<8;k++){const a=D(15+k*45),x=cos(a)*42,z=sin(a)*42;skull(ALT,x,9.2,z,Math.atan2(cos(a),sin(a)),.85,0)}}
+
+ // ---- muro: fundo escuro e blocos de pedra em fileiras ----
+ for(let s=0;s<72;s++){const a0=D(s*5),a1=D(s*5+5),dg=s*5+2.5,door=abs(((dg-90+540)%360)-180)<7.2;          // fundo escuro atrás das pedras (com a abertura da porta, para ver o salão de dentro do corredor)
+  UND.quad(P(a0,door?40:0,R+1.2),P(a1,door?40:0,R+1.2),P(a1,WH,R+1.2),P(a0,WH,R+1.2),'#0f0b12',0)}
+ const NB=72,CH=8,NCO=12;
+ for(let c=0;c<NCO;c++){const y0=c*CH,y1=y0+CH,off=(c&1)?.5:0;
+  for(let b=0;b<NB;b++){const a0=D((b+off)*5),a1=a0+D(5),deg=((b+off)*5+2.5)%360;
+   if(c<5&&abs(((deg-90+540)%360)-180)<6.6)continue;                 // abertura da porta (sul)
+   const mb=WL[secOf(deg)],pr=r()*2.4,rin=R+1-pr,g=.5/R,A0=a0+g,A1=a1-g,Y0=y0+.5,Y1=y1-.5;
+   let ci=2+floor(r()*4);const col=WS[ci],dk=c===0?.55:c===1?.8:1,cb=shade(col,.78*dk),ct=shade(col,1.05*dk);
+   mb.quad(P(A0,Y0,rin),P(A1,Y0,rin),P(A1,Y1,rin),P(A0,Y1,rin),col,0,[cb,cb,ct,ct]);
+   mb.quad(P(A0,Y1,rin),P(A1,Y1,rin),P(A1,Y1,R+1),P(A0,Y1,R+1),shade(col,1.12),0);          // topo do bloco (pega a luz de cima)
+   if(c>=3)mb.quad(P(A0,Y0,rin),P(A1,Y0,rin),P(A1,Y0,R+1),P(A0,Y0,R+1),shade(col,.7),0)}}   // barriga do bloco (vista de baixo)
+ // frisos e beiral
+ for(let b=0;b<NB;b++){const a=D(b*5+2.5),deg=b*5+2.5,mb=WL[secOf(deg)];if(abs(((deg-90+540)%360)-180)<8)continue;
+  rad(mb.push(),a,R+.5).T(0,92.8,3.4).box(13.4,6.4,7.4,WS[6],0).pop();rad(mb.push(),a,R+.5).T(0,42,1.4).box(13.4,2.4,3.4,WS[5],0).pop()}
+ // pilastras a cada 30 graus (menos na porta)
+ for(let deg=0;deg<360;deg+=30){if(deg===90||deg===270)continue;const a=D(deg),mb=WL[secOf(deg-1)];
+  rad(mb.push(),a,R+.5);const cc=WS[5];
+  mb.push().T(0,3.5,4.6).box(17,7,10.4,shade(cc,.9),0).pop();mb.push().T(0,45.5,3.8).box(12,77,8,cc,0).pop();
+  mb.push().T(0,86.5,4.6).box(16,5,10.2,shade(cc,1.1),0).pop();
+  for(const sx of[-3.3,3.3])mb.push().T(sx,45.5,7.9).box(.8,70,.5,shade(cc,.55),0).pop();
+  mb.push().T(0,28,8).box(7,.9,.6,shade(cc,1.2),0).pop();mb.push().T(0,62,8).box(7,.9,.6,shade(cc,1.2),0).pop();
+  mb.pop()}
+ // tochas na parede: 6 no fundo (iguais às do 2D) + 6 pelos lados e perto da porta
+ const TD=[200,222,245,295,318,340,20,160,50,130,10,170];
+ TD.forEach((deg,i)=>{const a=D(deg),mb=WL[secOf(deg)];rad(mb.push(),a,R+.5);
+  mb.push().T(0,44,1.2).box(4.4,7,1.6,'#2a262e',0).pop();mb.push().T(0,42.2,4.2).box(1.6,1.6,6.6,'#2a262e',0).pop();
+  mb.push().T(0,43,7.4).cyl(1.8,3.2,3.4,6,'#3a342f',0).pop();mb.push().T(0,48,7.6).RX(-.18).box(1.9,11,1.9,'#4a3220',0,true).pop();
+  mb.push().T(0,56,7.2).cyl(1.6,2.4,2,6,'#15100c',0).pop();mb.pop();
+  const rx=(R+.5-7.4)*cos(a),rz=(R+.5-7.4)*sin(a);H.flames.push({x:rx,y:58.6,z:rz,big:0,k:i,s:1.75,glow:[1,.55,.2]});
+  addLight(rx,54,rz,i<6?74:66,[1,.58,.26],1.2,i*1.7,'torch')});
+ // estandartes (3) e correntes (2) no fundo
+ for(const deg of[233,270,307]){const a=D(deg),mb=WL[secOf(deg)];rad(mb.push(),a,R+.5);
+  mb.push().T(0,87,1.6).box(19,1.6,1.8,'#3a2414',0).pop();
+  const segH=6,nS=5;for(let i=0;i<nS;i++){const ya=86-i*segH,yb=ya-segH,za=1.5+.7*sin(i*1.3+deg),zb=1.5+.7*sin((i+1)*1.3+deg),cl=i%2?'#5c0e1d':'#6a1424',cd=shade(cl,.75);
+   mb.quad([-7.5,ya,za],[7.5,ya,za],[7.5,yb,zb],[-7.5,yb,zb],cl,0,[cl,cl,cd,cd]);mb.quad([-8.2,ya,za-.1],[-7.5,ya,za],[-7.5,yb,zb],[-8.2,yb,zb-.1],'#1e040b',0);mb.quad([7.5,ya,za],[8.2,ya,za-.1],[8.2,yb,zb-.1],[7.5,yb,zb],'#1e040b',0)}
+  const yb=86-nS*segH,zt=1.5+.7*sin(nS*1.3+deg);mb.tri([-7.5,yb,zt],[0,yb,zt],[-7.5,yb-7,zt],'#46091a',0);mb.tri([7.5,yb,zt],[0,yb,zt],[7.5,yb-7,zt],'#46091a',0);
+  // caveira bordada
+  mb.push().T(0,72,2.9);mb.box(5.4,4.6,.3,BONE[1],0);mb.push().T(0,-3.1,0).box(3.4,1.6,.3,BONE[2],0).pop();mb.push().T(-1.2,.2,.2).box(1.1,1.1,.3,'#1e040b',0).pop();mb.push().T(1.2,.2,.2).box(1.1,1.1,.3,'#1e040b',0).pop();mb.pop();
+  mb.pop()}
+ for(const deg of[256,284]){const a=D(deg),mb=WL[secOf(deg)];rad(mb.push(),a,R-4);for(let i=0;i<15;i++)mb.push().T(0,89-i*3,0).RY(i%2?PI/2:0).box(1.5,3.5,.8,i%2?'#3c3a44':'#5c5a66',0).pop();
+  mb.push().T(0,43,0).cyl(3,2.4,2,6,'#2a262e',0).pop();mb.push().T(0,40,0).RX(PI).cyl(0,2.4,3.6,6,'#4a4852',0).pop();mb.pop()}
+
+ // ---- cúpula com nervuras, e o lustre ----
+ const PR=[[148,96],[141,106],[124,124],[93,142],[58,154],[28,160],[0,163]],NS=24;
+ for(let s=0;s<NS;s++){const a0=s/NS*PI*2,a1=(s+1)/NS*PI*2,deg=(a0+a1)/2*180/PI,mb=DM[secOf(deg)];
+  for(let i=0;i<PR.length-1;i++){const[r0,y0]=PR[i],[r1,y1]=PR[i+1],col=WS[1+((s*3+i*2)%3)];
+   if(r1===0)mb.tri(P(a0,y0,r0),P(a1,y0,r0),[0,y1,0],col,0);else mb.quad(P(a0,y0,r0),P(a1,y0,r0),P(a1,y1,r1),P(a0,y1,r1),col,0)}}
+ for(let k=0;k<12;k++){const a=D(k*30),mb=DM[secOf(k*30-1)],pts=PR.map(([rr,yy])=>[cos(a)*(rr-1.2),yy-1.8,sin(a)*(rr-1.2)]);
+  mb.tube(pts,[3.2,3,2.6,2.2,2,2,1.8],4,WS[5],0,{capEnd:false})}
+ // anel de pedra no alto e a argola central
+ DM[0].push().T(0,160,0).cyl(30,30,5,24,WS[5],0,{cap0:false,cap1:false}).pop();
+ {const ry=112,rr=17;for(let i=0;i<3;i++){const a=D(i*120+30);CHD.tube([[cos(a)*12,161,sin(a)*12],[cos(a)*14.6,136,sin(a)*14.6],[cos(a)*rr,ry+1,sin(a)*rr]],[.7,.7,.7],4,'#3c3a44',0)}
+  for(let i=0;i<16;i++){const a=i/16*PI*2;CHD.push().T(cos(a)*rr,ry,sin(a)*rr).RY(Math.atan2(-sin(a),cos(a))+PI/2).box(7,2.4,2.4,'#2a262e',0).pop()}
+  for(let i=0;i<8;i++){const a=i/8*PI*2,x=cos(a)*rr,z=sin(a)*rr;CHD.push().T(x,ry+1.2,z).cyl(1,1,5.5,6,'#e8dcc8',0).pop();H.candles.push({x,y:ry+7.6,z,hi:1})}
+  CHD.push().T(0,ry-4,0).RX(PI).cyl(0,3,9,6,'#2a262e',0).pop();
+  addLight(0,ry-6,0,150,[1,.7,.36],.55,0,'chand')}
+
+ // ---- estacas com fogo (8) ----
+ const SKS=[];for(const ad of[0,58,122,180,238,302]){const a=D(ad);SKS.push([cos(a)*104,sin(a)*105])}SKS.push([-34,131],[34,131]);
+ SKS.forEach(([x,z],i)=>{const mb=flAt(x,z);mb.push().T(x,0,z);mb.push().T(0,15,0).box(3.2,30,3.2,'#3a2414',0).pop();mb.push().T(0,6,0).box(4.4,2,4.4,'#2a262e',0).pop();
+  mb.push().T(0,29,0).cyl(3.4,7.4,6,8,'#2a262e',0,{cap1:false}).pop();mb.push().T(0,35,0).cyl(7.4,7.4,.8,8,'#4a4450',0,{cap0:false,cap1:false}).pop();mb.push().T(0,34.2,0).cyl(6.6,6.6,.5,8,'#7a2a10',.7,{cap0:false}).pop();mb.pop();
+  H.flames.push({x,y:34.6,z,big:1,k:i+7,s:1.9,glow:[1,.5,.2]});addLight(x,42,z,80,[1,.5,.2],1.3,i*2.3,'stake')});
+ H.stakes=SKS;
+
+ // ---- entrada: batentes, verga, degraus descendo e o breu lá fora ----
+ for(const sx of[-1,1])ENT.push().T(sx*17.6,22,158.5).box(7.2,44,35,WS[4],0).pop();
+ ENT.push().T(0,48,158.5).box(42,8,35,WS[5],0).pop();ENT.push().T(0,53.6,150).box(46,3.2,12,WS[6],0).pop();
+ for(let i=0;i<6;i++){const y=-2.5*i;ENT.push().T(0,y-.4,153+i*6).box(28.2,.8,6,i%2?WS[3]:WS[4],0).pop();ENT.push().T(0,y-1.4,153+i*6-3).box(28.2,2.2,.4,WS[1],0).pop()}
+ ENT.quad([-14,-13,177],[14,-13,177],[14,44,177],[-14,44,177],'#05070c',.5,['#0b1a26','#0b1a26','#020306','#020306']);
+ ENT.push().T(0,58,142.5).box(5.6,4.4,1.4,BONE[1],0).pop();
+ addLight(0,16,164,56,[.32,.46,.85],.55,0,'door');
+ // luzes do altar e da runa: um vermelho forte no centro
+ addLight(0,18,0,86,[1,.18,.1],.95,0,'altar');
+
+ // ---- empacota tudo ----
+ const push=(mb,tag,sec)=>{if(!mb.count)return;const m=mb.build(gl);m.tag=tag;H.chunks.push(m)};
+ FL.forEach(m=>push(m,'floor'));WL.forEach(m=>push(m,'wall'));DM.forEach(m=>push(m,'dome'));push(ALT,'altar');push(ENT,'ent');push(CHD,'chand');push(UND,'under');
+ H.runes=RUN.build(gl);H.ready=true}
+H.build=build;
+
+// desenha o salão: lights = luzes fixas já com o tremor do momento, dyn = temporárias
+H.draw=function(t,dyn){
+ for(const m of H.chunks){if(!H3.vis(m.cx,m.cy,m.cz,m.rad))continue;H3.mesh(m,null,H.lights,dyn)}
+ const pul=.78+.3*sin(t/310)+.12*sin(t/97);H3.mesh(H.runes,null,H.lights,dyn,{eg:pul})};
+// tremor das chamas (cada luz com a sua fase)
+H.flicker=function(t){for(const l of H.lights){if(l.kind==='torch'||l.kind==='stake'){const f=.86+.09*sin(t*.0071+l.ph*3.1)+.06*sin(t*.0183+l.ph)+.03*sin(t*.041+l.ph*2);l.k=l.b*f}
+ else if(l.kind==='altar'){l.k=l.b*(.8+.2*sin(t/500)+.06*sin(t/130))}else if(l.kind==='chand')l.k=l.b*(.92+.06*sin(t*.004))}};
+// chamas, brilhos e velas do salão como cartazes
+H.sprites=function(t){const T=H3.tex;
+ for(const f of H.flames){const fr=(floor(t/85)+f.k*3)%6,u0=fr*16/96,u1=(fr+1)*16/96,v0=f.big?0:.5,v1=f.big?.5:1,w=16*f.s,h=24*f.s;
+  H3.spr(T.flame,f.x,f.y,f.z,w,h,[u0,v0,u1,v1],[1,1,1,1],false,1);
+  const gp=.85+.15*sin(t/70+f.k*2.1);H3.spr(T.glow,f.x,f.y+h*.22,f.z,(f.big?44:34)*gp,(f.big?44:34)*gp,null,[f.glow[0],f.glow[1]*.8,f.glow[2]*.6,.55],true,0,true)}
+ for(const c of H.candles){const fr=(floor(t/110)+floor(c.x*3))%6;H3.spr(T.flame,c.x,c.y,c.z,16*.5,24*.5,[fr*16/96,.5,(fr+1)*16/96,1],[1,1,1,1],false,1);H3.spr(T.glow,c.x,c.y+2,c.z,12,12,null,[1,.7,.3,.5],true,0,true)}
+ // brilho vermelho das runas e do sigilo
+ const pul=.5+.5*sin(t/310);for(const q of H.runeGl)H3.flat(T.glow,q.x,.9,q.z,15,15,null,[1,.22,.12,.25+.2*pul],true);
+ H3.flat(T.glow,0,14.9,0,70,70,null,[1,.2,.1,.32+.16*pul],true)};
+})();
+</script><script>
+// ===================== Modo 3D do Salão do Demônio (TESTE) — parte 3: os modelos 3D =====================
+// O Demônio da Torre, o Herobrine 3D e o Ghast (da habilidade do Herobrine), todos em "low poly" (poucos polígonos de cor chapada).
+// Cada corpo é feito de peças (cabeça, tronco, braços, pernas...) com a origem na articulação; o desenho monta a pose a cada quadro.
+// Medidas: o Demônio tem ~64 de altura (chifres até ~72), o Herobrine 3D ~30 (um jogador tem ~24). Origem do modelo = pés, frente = +Z.
+(function(){
+'use strict';
+const H3=window.H3,{MB}=H3;
+const PI=Math.PI,sin=Math.sin,cos=Math.cos,abs=Math.abs,min=Math.min,max=Math.max,floor=Math.floor,sqrt=Math.sqrt;
+const clp=(v,a,b)=>v<a?a:v>b?b:v,sm=(a,b,v)=>{v=clp((v-a)/(b-a),0,1);return v*v*(3-2*v)};
+const MOD=H3.models={ready:false};
+const ms=new MB(1);                         // aqui o MB só serve de pilha de matrizes
+let LI=null,DY=null;                        // luzes fixas e temporárias do desenho atual
+const OPT={keep:false};                     // opções passadas ao H3.mesh (reaproveitadas, sem criar objetos a cada peça)
+function begin(lights,dyn,cx,cy,cz,rad,fl,di){LI=lights;DY=dyn;OPT.keep=false;OPT.cx=cx;OPT.cy=cy;OPT.cz=cz;OPT.rad=rad;OPT.fl=fl||null;OPT.di=di===undefined?1:di;OPT.eg=1}
+function dr(m,eg){if(eg!==undefined)OPT.eg=eg;H3.mesh(m,ms.m,LI,DY,OPT);OPT.keep=true;OPT.eg=1}
+
+// ---------- cores (as mesmas faixas do desenho 2D do Demônio, um pouco mais claras para a luz do salão) ----------
+const SKIN=['#8c2616','#9e301a','#b23c20'],SKD='#7e1f12',BONE='#e3cdbd',BON2='#c3a596',HORN='#4a2a40',HORN2='#8a6280',DARK='#2a1a15',CLOTH='#6a1a2e',CLOTH2='#4a0f1f',HOOF='#2e1a18',LAVA='#ff9a3a';
+
+function mk(seed,fn){const mb=new MB(seed);fn(mb);return mb.build(H3.gl())}
+
+// ============================================================ DEMÔNIO ============================================================
+// pontos de referência (altura do chão): casco 0 · tornozelo 3 · joelho 15 · quadril 28 · cintura 31 · ombros 46 · pescoço 49 · cabeça 54 · pontas dos chifres ~70
+function buildDemon(){const D={};
+ // ---- perna (coxa do quadril até o joelho), canela (do joelho ao tornozelo) e casco ----
+ D.thigh=mk(11,mb=>{mb.tube([[0,0,0],[0,-7,1.4],[0,-14,.4]],[6.6,7,5.2],7,SKIN[1],0);
+  mb.push().T(0,-4,0).cyl(7.2,7.2,.01,7,SKD,0,{cap0:false,cap1:false}).pop()});
+ D.shin=mk(12,mb=>{mb.tube([[0,0,0],[0,-6,-1.6],[0,-12,.4]],[5.2,4.4,3.4],7,SKIN[0],0);
+  mb.push().T(0,-1,2.4).S(1,1.4,1).sph(2.6,2,5,SKD,0).pop()});
+ D.hoof=mk(13,mb=>{mb.push().T(0,-.1,2.6).box(8.4,3.8,11.2,HOOF,0).pop();mb.push().T(0,1.7,-1.2).box(6.6,2.4,6,SKD,0).pop();
+  for(const sx of[-2.5,0,2.5])mb.push().T(sx,-1.4,8.2).RX(1.35).cyl(1.5,.2,4.2,4,BONE,0).pop()});
+ // ---- pelvis, cinto, tanga ----
+ D.pelvis=mk(14,mb=>{mb.push().S(1,1,.8).cyl(9.4,8.6,6.6,8,SKIN[0],0,{cap0:false,cap1:false}).pop();
+  mb.push().T(0,2.6,0).S(1,1,.82).cyl(9.9,9.9,3,8,DARK,0,{cap0:false,cap1:false}).pop();
+  mb.push().T(0,4.1,8.1).box(4.4,3.8,1.6,BONE,0).pop();mb.push().T(-1.1,4.3,8.95).box(1.1,1.2,.4,'#150808',0).pop();mb.push().T(1.1,4.3,8.95).box(1.1,1.2,.4,'#150808',0).pop();mb.push().T(0,3.2,8.95).box(.7,.8,.4,'#150808',0).pop();
+  // espetos de osso no cinto
+  for(const sx of[-8.2,8.2])mb.push().T(sx,4.4,2).RZ(-sx*.09).box(1.4,5,1.4,BON2,0).pop()});
+ D.loinF=mk(15,mb=>{const pts=[[-6.6,0],[6.6,0],[5.6,-9],[-5.6,-9]];
+  mb.quad([-6.6,0,0],[6.6,0,0],[5.9,-8,0],[-5.9,-8,0],CLOTH,0,[CLOTH,CLOTH,CLOTH2,CLOTH2]);
+  for(let i=0;i<4;i++){const x0=-5.9+i*2.95;mb.tri([x0,-8,0],[x0+2.95,-8,0],[x0+1.475,-12-(i%2)*2,0],i%2?CLOTH2:CLOTH,0)}
+  for(const[a,b]of[[0,-4],[0,-5],[0,-6],[-1,-5],[1,-5]])mb.push().T(a*1.3,b*1.1-.5,.25).box(1.1,1.1,.3,'#c04a5a',1).pop()});
+ D.loinB=mk(16,mb=>{mb.quad([-6.6,0,0],[6.6,0,0],[5.6,-9,0],[-5.6,-9,0],CLOTH2,0,[CLOTH2,CLOTH2,'#2e0912','#2e0912']);
+  for(let i=0;i<3;i++){const x0=-5.6+i*3.73;mb.tri([x0,-9,0],[x0+3.73,-9,0],[x0+1.87,-12.5,0],'#2e0912',0)}});
+ // ---- tronco: cintura em y=0, ombros em y=15 ----
+ D.torso=mk(17,mb=>{mb.push().S(1,1,.74);mb.tube([[0,0,0],[0,5,0],[0,11,0],[0,17,0]],[8.2,9.8,13.8,12.2],8,SKIN[1],0);mb.pop();
+  // peitorais, abdômen, costelas
+  for(const sx of[-1,1]){mb.push().T(sx*6.6,12.2,6.5).S(1.2,.9,.9).sph(5,3,6,SKIN[2],0).pop();
+   for(let r=0;r<3;r++)mb.push().T(sx*2.6,1.8+r*3.3,6.1-(r>1?.2:0)).box(4.4,2.7,2,SKIN[r%2?0:1],0).pop();
+   for(let r=0;r<2;r++)mb.push().T(sx*9.3,6+r*3,3.6).RY(sx*.7).box(1.2,2,5,SKD,0).pop()}
+  // costas: coluna de espinhos de osso
+  for(let k=0;k<5;k++)mb.push().T(0,2.5+k*3.2,-7.4-k*.05).RX(PI*.5+.25).cyl(1.5-k*.1,0,4.4-k*.2,4,BON2,0).pop();
+  // rachaduras de lava (emissivas)
+  mb.push().T(0,8,7.45).box(.7,6,.35,LAVA,1).pop();mb.push().T(-3.4,5.2,6.55).RZ(.5).box(.6,4,.35,LAVA,1).pop();mb.push().T(3.8,10.5,7.5).RZ(-.6).box(.6,4.4,.35,LAVA,1).pop();
+  mb.push().T(-9.2,9,4).RY(-.9).RZ(.35).box(.6,4.6,.35,LAVA,1).pop()});
+ D.neck=mk(18,mb=>{mb.tube([[0,0,0],[0,3,.8]],[4.8,4.2],7,SKIN[0],0)});
+ // ---- cabeça: caveira, mandíbula, chifres ----
+ D.head=mk(19,mb=>{
+  mb.push().T(0,6.2,0).S(1,1.1,1.02).sph(6.4,4,8,BONE,0).pop();                  // crânio
+  mb.push().T(0,2.8,1.9).box(7.2,3.2,6.2,BON2,0).pop();                            // mandíbula
+  mb.push().T(0,8.6,3.9).box(9.6,1.7,3.2,BON2,0).pop();                            // testa/sobrancelha
+  for(const sx of[-1,1]){mb.push().T(sx*2.7,6.3,5.7).box(3,2.7,1.8,'#2a0d0d',0).pop();                    // órbitas
+   mb.push().T(sx*2.7,6.1,6.3).box(1.7,1.5,.9,'#ff4a1a',1).pop();mb.push().T(sx*2.7,6.1,6.75).box(.9,.8,.3,'#ffe27a',1).pop();   // olhos em brasa
+   mb.push().T(sx*5.4,4.4,3.4).RY(sx*.5).box(1.6,3,2.4,BON2,0).pop()}                                         // maçãs do rosto
+  mb.push().T(0,4.3,6.2).box(1.3,2.2,.9,'#2a0d0d',0).pop();                                                    // nariz
+  for(let k=0;k<6;k++)mb.push().T(-3.1+k*1.24,1.3+(k%2?-.25:0),5.4).box(.95,1.7,.8,k%2?'#4a2a2a':'#f4e6d6',0).pop();   // dentes
+  // chifres curvos (faixas escuras e claras)
+  for(const sx of[-1,1])mb.tube([[sx*4.6,9,0],[sx*8.6,10.4,-1.2],[sx*12.8,13.4,-2],[sx*14.2,19.4,-.6],[sx*12,25,1.8]],[3.1,2.9,2.3,1.5,.4],6,HORN,0,{cols:[HORN,HORN2,HORN,HORN2],capEnd:true})});
+ // ---- braço: ombreira + braço, antebraço, punho com garras (lado = +1 direita do modelo) ----
+ D.upper=mk(21,mb=>{mb.push().S(1,.95,1).sph(7.4,3,7,SKIN[2],0).pop();
+  for(let k=0;k<3;k++)mb.push().T(0,5.6,-1+k*2.6).RX((k-1)*.35).RZ(-.35).cyl(1.5,0,6+(k===1?1.6:0),4,BONE,0).pop();   // espinhos de osso no ombro (apontam para cima e para fora)
+  mb.tube([[0,0,0],[.9,-7,.8],[1.5,-14,1]],[6,5.9,4.8],7,SKIN[1],0);
+  mb.push().T(1.3,-9,.3).box(.7,3.6,.35,LAVA,1).pop()});
+ D.fore=mk(22,mb=>{mb.tube([[0,0,0],[0,-6.4,1.4],[0,-13,2.6]],[4.8,5.6,5.2],7,SKIN[0],0);
+  mb.push().T(0,-11.2,2.2).cyl(5.9,5.9,2.4,7,DARK,0,{cap0:false,cap1:false}).pop();
+  mb.push().T(0,-5,5.6).box(.7,3.2,.35,LAVA,1).pop()});
+ D.fist=mk(23,mb=>{mb.push().T(0,-3.6,.6).S(1,1.1,1).sph(5.2,3,6,SKIN[1],0).pop();
+  for(let k=0;k<3;k++)mb.push().T((k-1)*2.8,-6.8,2.6).RX(-.45).cyl(.95,0,5.2,4,BONE,0).pop();
+  mb.push().T(-4.2,-3.4,.8).RZ(.9).RX(-.2).cyl(.9,0,4,4,BONE,0).pop()});
+ return D}
+
+// pose do Demônio: o = {x,y,z (pés), yaw, sc, t (ms), look (yaw da cabeça relativo), kn (0..1 de joelhos), hit (0..1), glow (brilho das rachaduras)}
+function drawDemon(D,o,lights,dyn){
+ const t=o.t,br=sin(t/2600*PI*2),br2=sin(t/2600*PI*2-.9),kn=o.kn||0,sc=o.sc||1,lk=o.look||0,lkp=o.lookP||0,fl=o.fl,sh=o.shake||0;
+ begin(lights,dyn,o.x,o.y+34*sc,o.z,46*sc,fl,o.di);
+ ms.push().T(o.x+sh,o.y,o.z).RY(o.yaw||0).S(sc,sc,sc);
+ const bob=-14*kn+br*.35;                                  // altura do quadril (pernas dobram ao cair de joelhos)
+ const hip=28+bob;
+ // pernas
+ for(const sx of[-1,1]){ms.push().T(sx*7.4,hip,0).RX(-kn*1.05).RZ(sx*.04);dr(D.thigh);
+  ms.T(0,-14,.4).RX(kn*1.8);dr(D.shin);ms.T(0,-12,.4).RX(-kn*.7);dr(D.hoof);ms.pop()}
+ // pelvis e tanga
+ ms.push().T(0,hip,0).RX(kn*.2);dr(D.pelvis);ms.push().T(0,3,8.2);dr(D.loinF);ms.pop();ms.push().T(0,3,-7.6).RX(.08);dr(D.loinB);ms.pop();
+ // tronco (inclina para frente ao cair) e o resto preso a ele
+ ms.T(0,3,0).RX(kn*.5+br*.012);dr(D.torso);
+ ms.push().T(0,15.6,0).RX(kn*.35);dr(D.neck);ms.T(0,3.2,.8).RY(lk).RX(lkp+kn*.45+br2*.02);dr(D.head);ms.pop();
+ // braços: cada um com ombro, cotovelo e punho; balançam devagar; ao morrer caem moles
+ for(const sx of[-1,1]){const ph=br2*.05,hh=(o.hit||0);
+  ms.push().T(sx*15.8,13.8+br*.25,0).RZ(sx*(.16+kn*.1)+ph*sx).RX((o.armF||0)*(sx>0?1:.6)-.12+kn*.5);if(sx<0)ms.S(-1,1,1);
+  dr(D.upper);ms.T(1.5,-14,1).RX(-.28-kn*.6-(o.armF||0)*.4+br*.02).RZ(-.04);dr(D.fore);ms.T(0,-13,2.6).RX(-.1);dr(D.fist);ms.pop()}
+ ms.pop();ms.pop()}
+
+// ============================================================ HEROBRINE 3D ============================================================
+// Proporções do Minecraft (cabeça 8 · tronco 12 · pernas 12) com U unidades por "pixel": ~30 de altura. Olhos brancos brilhantes.
+const U=.95;
+function buildHero(){const Hh={};
+ const SKINC=['#b07a52','#a56f48','#bc8760'],HAIR=['#4a2e1a','#5a3a22','#3d2415'],SHIRT=['#16a39a','#1bb0a6','#128e86'],PANTS=['#2b3191','#323aa0','#262b82'],SHOE=['#3a363e','#4a464e'];
+ const rnd=H3.rng(777);
+ // grade de "pixels" numa face: origem o (canto sup. esquerdo visto de fora), eixos ax (para a direita) e ay (para baixo), n x m células
+ const grid=(mb,o,ax,ay,n,m,fn)=>{for(let j=0;j<m;j++)for(let i=0;i<n;i++){const r=fn(i,j);if(!r)continue;const c=r[0],e=r[1]||0;
+   const p=(a,b)=>[o[0]+ax[0]*a+ay[0]*b,o[1]+ax[1]*a+ay[1]*b,o[2]+ax[2]*a+ay[2]*b];mb.quad(p(i,j),p(i+1,j),p(i+1,j+1),p(i,j+1),c,e)}};
+ const pick=a=>a[(rnd()*a.length)|0];
+ // ---- cabeça (8x8x8), origem no pescoço ----
+ Hh.head=mk(31,mb=>{mb.push().S(U,U,U);
+  const F=['HHHHHHHH','HHHHHHHH','HSSSSSSH','SSSSSSSS','SWWSSWWS','SSSNNSSS','SSMMMMSS','SSSMMSSS'];
+  // frente (z = +4): 8x8
+  grid(mb,[-4,8,4],[1,0,0],[0,-1,0],8,8,(i,j)=>{const c=F[j][i];if(c==='W')return['#ffffff',1];if(c==='H')return[pick(HAIR)];if(c==='N')return['#8a5a3a'];if(c==='M')return['#5a3322'];return[pick(SKINC)]});
+  // atrás (z = -4), lados (x = ±4), topo
+  grid(mb,[4,8,-4],[-1,0,0],[0,-1,0],8,8,()=>[pick(HAIR)]);
+  grid(mb,[-4,8,-4],[0,0,1],[0,-1,0],8,8,(i,j)=>j<3||i<1?[pick(HAIR)]:[pick(SKINC)]);
+  grid(mb,[4,8,4],[0,0,-1],[0,-1,0],8,8,(i,j)=>j<3||i>6?[pick(HAIR)]:[pick(SKINC)]);
+  grid(mb,[-4,8,-4],[1,0,0],[0,0,1],8,8,()=>[pick(HAIR)]);
+  grid(mb,[-4,0,4],[1,0,0],[0,0,-1],8,8,()=>[pick(SKINC)]);
+  // franja e cabelo saindo um pouco para fora (dá volume)
+  mb.push().T(0,8.5,0).box(8.8,1.3,8.8,HAIR[1],0).pop();mb.push().T(0,6.2,-4.2).box(8.8,5,.9,HAIR[0],0).pop();
+  for(const sx of[-4.2,4.2])mb.push().T(sx,6.6,0).box(.9,3.6,8.8,HAIR[2],0).pop();
+  mb.pop()});
+ // ---- tronco (8x12x4), origem na cintura ----
+ Hh.body=mk(32,mb=>{mb.push().S(U,U,U);
+  grid(mb,[-4,12,2],[1,0,0],[0,-1,0],8,12,(i,j)=>[j<1&&i>2&&i<5?SKINC[0]:SHIRT[(i+j*3)%3===0?1:0]]);
+  grid(mb,[4,12,-2],[-1,0,0],[0,-1,0],8,12,(i,j)=>[SHIRT[2-((i+j)%3)%2]]);
+  grid(mb,[4,12,2],[0,0,-1],[0,-1,0],4,12,()=>[SHIRT[2]]);grid(mb,[-4,12,-2],[0,0,1],[0,-1,0],4,12,()=>[SHIRT[2]]);
+  grid(mb,[-4,12,-2],[1,0,0],[0,0,1],8,4,()=>[SHIRT[1]]);grid(mb,[-4,0,2],[1,0,0],[0,0,-1],8,4,()=>[PANTS[2]]);
+  mb.pop()});
+ // ---- braço (4x12x4): manga da camisa em cima, pele embaixo; origem no ombro (2 abaixo do topo) ----
+ Hh.arm=mk(33,mb=>{mb.push().S(U,U,U);
+  mb.push().T(0,-1,0).box(4,4,4,SHIRT[0],0).pop();mb.push().T(0,-6,0).box(4,6,4,SKINC[0],0).pop();
+  // pixels da pele (deixa o braço com cara de textura)
+  grid(mb,[-2,-3,2.01],[1,0,0],[0,-1,0],4,2,(i,j)=>[SKINC[(i+j)%3]]);
+  mb.push().T(0,-10.2,0).box(4,.7,4,SKINC[1],0).pop();mb.pop()});
+ // ---- perna (4x12x4): calça e sapato; origem no quadril ----
+ Hh.leg=mk(34,mb=>{mb.push().S(U,U,U);
+  mb.push().T(0,-4.5,0).box(4,9,4,PANTS[0],0).pop();mb.push().T(0,-10.5,0).box(4,3,4,SHOE[0],0).pop();mb.push().T(0,-11.3,.8).box(4.2,1.4,5,SHOE[1],0).pop();
+  mb.push().T(-1.3,-3,2.02).box(.9,5,.1,PANTS[1],0).pop();mb.pop()});
+ return Hh}
+
+// pose do Herobrine: o = {x,y,z,yaw, t, mv (andando), atk (0..1 do soco), crouch, air (altura do pulo), point (0..1 apontando), arms (0..1 braços para cima)}
+function drawHero(Hh,o,lights,dyn){
+ const t=o.t,mv=o.mv||0,ph=o.ph||t/130,sw=sin(ph)*.75*mv,id=sin(t/1700)*.02,cr=o.crouch||0,at=o.atk||0,pt=o.point||0,ar=o.arms||0,sc=o.sc||1,fl=o.fl;
+ begin(lights,dyn,o.x,o.y+15*sc,o.z,26*sc,fl,o.di);
+ ms.push().T(o.x,o.y+(o.air||0),o.z).RY(o.yaw||0).S(sc,sc,sc).RX(o.lean||0);
+ const hh=12*U-cr*5.2*U;
+ // pernas (ao agachar os joelhos abrem; a perna da frente/trás balança ao andar)
+ for(const s of[-1,1]){ms.push().T(s*2*U,hh,0).RX(s*sw*(1-cr)-(o.air?.5:0)*s*.5+cr*.9);dr(Hh.leg);ms.pop()}
+ ms.push().T(0,hh,0).RX(cr*.35);dr(Hh.body);
+ // cabeça
+ ms.push().T(0,12*U,0).RY(o.look||0).RX((o.lookP||0)-cr*.2+id);dr(Hh.head);ms.pop();
+ // braços: esquerda balança ao contrário; direita bate/aponta; braços para cima no pulo
+ {ms.push().T(-6*U,10*U,0).RX(-sw*1.0+id-ar*2.6).RZ(-.05-ar*.5);dr(Hh.arm);ms.pop()}
+ {const swing=at>0?(at<.35?-at/.35*1.9:-1.9+(at-.35)/.65*2.3):0;
+  ms.push().T(6*U,10*U,0).RX(sw*1.0-id+swing-pt*1.45-ar*2.6).RZ(.05+ar*.5);dr(Hh.arm);ms.pop()}
+ ms.pop();ms.pop()}
+
+// ============================================================ GHAST ============================================================
+function buildGhast(){const G={};
+ const W=['#e9e9ee','#d9d9e0','#c8c8d2'],DKc='#2a2630';
+ G.body=mk(41,mb=>{mb.push().T(0,0,0).box(20,20,20,W[0],0);
+  // cantos e remendos mais escuros (dão a cara de pedra lascada)
+  for(let k=0;k<10;k++){const r=H3.rng(900+k),face=k%4;mb.push().T((r()-.5)*14,(r()-.5)*14,(face===0?10.05:face===1?-10.05:0)).box(3+r()*3,2+r()*3,.2,W[1+(k%2)],0).pop()}
+  mb.pop()});
+ // rosto (o Ghast olha para +Z). m = 0 calmo (olhos fechados) · 1 bravo (olhos vermelhos e boca aberta)
+ G.face=[0,1].map(m=>mk(42+m,mb=>{
+  if(!m){for(const sx of[-1,1]){mb.push().T(sx*4.4,3,10.1).RZ(sx*-.18).box(5.2,.8,.3,DKc,0).pop()}mb.push().T(0,-3.2,10.1).box(4,.9,.3,DKc,0).pop()}
+  else{for(const sx of[-1,1]){mb.push().T(sx*4.6,3.6,10.1).RZ(sx*-.35).box(4.8,1,.3,DKc,0).pop();mb.push().T(sx*4.6,2.6,10.2).box(1.8,2,.3,'#ff2a1a',1).pop()}
+   mb.push().T(0,-3.6,10.1).box(4.6,6,.3,DKc,0).pop();mb.push().T(0,-4,10.2).box(2,4,.3,'#ff2a1a',1).pop()}}));
+ // tentáculos (9): cada um com 3 segmentos que balançam
+ G.ten=[];for(let i=0;i<9;i++){const r=H3.rng(950+i),len=13+r()*9;G.ten.push({len,mesh:mk(60+i,mb=>{for(let k=0;k<3;k++)mb.push().T(0,-k*len/3-len/6,0).box(2.7-k*.35,len/3+.3,2.7-k*.35,k%2?W[2]:W[1],0).pop()})})}
+ return G}
+
+// o = {x,y,z (centro do corpo),yaw,t,mood,sc,al (dither), ch (0..1 carregando: treme)}
+function drawGhast(G,o,lights,dyn){
+ const t=o.t,sc=o.sc||1,ch=o.ch||0;
+ begin(lights,dyn,o.x,o.y,o.z,26*sc,o.fl,o.di);
+ const jx=ch?(sin(t/23)*.7)*ch:0,jy=ch?(sin(t/31+1)*.7)*ch:0;
+ ms.push().T(o.x+jx,o.y+jy+sin(t/420)*1.6,o.z).RY(o.yaw||0).S(sc,sc,sc);
+ dr(G.body);dr(G.face[o.mood?1:0]);
+ for(let i=0;i<9;i++){const a=floor(i/3),b=i%3,x=(a-1)*6.2,z=(b-1)*6.2,sp=o.mood?150:260,amp=o.mood?.22:.12;
+  ms.push().T(x,-10,z).RX(sin(t/sp+i*1.9)*amp).RZ(cos(t/sp+i*1.3)*amp);dr(G.ten[i].mesh);ms.pop()}
+ ms.pop()}
+
+// ============================================================ BRAÇO EM PRIMEIRA PESSOA ============================================================
+// Pendurado na frente da câmera (segundo passe, com outro campo de visão e o plano de corte bem perto): manga azul, antebraço e punho.
+function buildArm(){return mk(51,mb=>{mb.push().T(0,0,-9).box(4.8,4.8,18,'#3b5dc9',0).pop();mb.push().T(0,-.3,-21).box(4.4,4.4,9,'#c99a72',0).pop();
+  mb.push().T(0,-.3,-27.6).box(5.2,5.2,5.6,'#d4a47c',0).pop();for(let i=0;i<4;i++)mb.push().T(-1.9+i*1.27,.8,-30.6).box(1.1,1.3,1.8,'#e0b48c',0).pop();
+  mb.push().T(-3,-.8,-27.4).RY(-.4).box(1.3,1.6,3.4,'#e0b48c',0).pop()})}
+// o = {ex,ey,ez,yaw,pitch (câmera), t, mv (andando 0..1), pu (soco 0..1, 0 = parado), fov}
+function drawArm(A,o,lights,dyn){
+ H3.begin2(o.fov||1.15);
+ begin(lights,dyn,o.ex,o.ey,o.ez,60,null,1);
+ const pu=o.pu||0,sw=pu>0?sin(pu*PI):0,bob=sin(o.t/130)*.55*(o.mv||0);
+ H3.camFrame(ms.m,o.ex,o.ey,o.ez,o.yaw,o.pitch);
+ ms.T(9.2-sw*2.2,-9.4+bob-sw*.6,-4-sw*4.5).RY(.2).RX(.08+sw*.22).RZ(-.06).S(.74,.74,.74);
+ dr(A);ms.m.set(H3.M4.id())}
+
+MOD.init=function(){if(MOD.ready)return;MOD.A=buildArm();MOD.D=buildDemon();MOD.H=buildHero();MOD.G=buildGhast();MOD.ready=true};
+MOD.drawArm=(o,l,d)=>drawArm(MOD.A,o,l,d);
+MOD.drawDemon=(o,l,d)=>drawDemon(MOD.D,o,l,d);MOD.drawHero=(o,l,d)=>drawHero(MOD.H,o,l,d);MOD.drawGhast=(o,l,d)=>drawGhast(MOD.G,o,l,d);
+MOD.free=()=>{MOD.ready=false;MOD.A=MOD.D=MOD.H=MOD.G=null};
+})();
+</script><script>
+// ===================== Modo 3D do Salão do Demônio (TESTE) — parte 4: efeitos =====================
+// Partículas (brasas, faíscas, fumaça), luzes temporárias, a "entrada" e a morte do Demônio, os efeitos das habilidades dos outros lutadores
+// (feixe, esfera, cortes, raios...) e a habilidade completa do Herobrine 3D: pular, raio do céu, Ghast, bola de fogo, explosão e chão em chamas.
+// A linha do tempo do Herobrine é a mesma de js/20-herobrine.js (e da tabela SK em js/04-v6.js): 0 agacha · 260 pula · 700 raio + Ghast · 1150 pousa · 1200 aponta ·
+// 1250 o Ghast grita e carrega · 2030 bola de fogo sai · 2580 explode · 2580-5580 chão pegando fogo · 3300 o Ghast some · 6030 fim.
+(function(){
+'use strict';
+const H3=window.H3;
+const PI=Math.PI,sin=Math.sin,cos=Math.cos,abs=Math.abs,min=Math.min,max=Math.max,floor=Math.floor,sqrt=Math.sqrt,rnd=Math.random;
+const clp=(v,a,b)=>v<a?a:v>b?b:v,sm=(a,b,v)=>{v=clp((v-a)/(b-a),0,1);return v*v*(3-2*v)},lerp=(a,b,t)=>a+(b-a)*t;
+const FX=H3.fx={L:[],ready:false};
+const HB={crouch:260,rise:700,land:1150,cmd:1200,eyes:1250,shot:2030,imp:2580,burn:3000,leave:3300,d:6030};
+FX.HB=HB;
+const hexc=h=>{h=h.replace('#','');if(h.length===3)h=h[0]+h[0]+h[1]+h[1]+h[2]+h[2];return[parseInt(h.slice(0,2),16)/255,parseInt(h.slice(2,4),16)/255,parseInt(h.slice(4,6),16)/255]};
+FX.hexc=hexc;
+
+// ---------- luzes temporárias do quadro ----------
+FX.light=(x,y,z,r,c,k)=>{FX.L.push({x,y,z,r,cr:c[0],cg:c[1],cb:c[2],k})};
+
+// ---------- partículas ----------
+// {x,y,z,vx,vy,vz,g (gravidade),t0,life,s0,s1 (tamanho),c:[r,g,b],a (opacidade inicial),add,tex ('glow'|'dot'|'ring'),drag}
+const PT=[];let pLast=0;
+FX.emit=p=>{p.t0=p.t0||Date.now();p.drag=p.drag===undefined?.985:p.drag;PT.push(p);if(PT.length>520)PT.splice(0,PT.length-520)};
+FX.clear=()=>{PT.length=0;FIRES.length=0;BOOMS.length=0;INST.clear&&INST.clear()};
+FX.step=function(t){const dt=pLast?min(.05,(t-pLast)/1000):.016;pLast=t;const f=dt*60;
+ for(let i=PT.length-1;i>=0;i--){const p=PT[i],el=t-p.t0;if(el>p.life){PT.splice(i,1);continue}
+  p.vy-=p.g*f;const d=Math.pow(p.drag,f);p.vx*=d;p.vy*=d;p.vz*=d;p.x+=p.vx*f;p.y+=p.vy*f;p.z+=p.vz*f}};
+FX.draw=function(t){const T=H3.tex;
+ for(const p of PT){const k=(t-p.t0)/p.life,s=lerp(p.s0,p.s1,k),a=p.a*(k<.12?k/.12:1-(k-.12)/.88),tx=T[p.tex||'glow'];
+  H3.spr(tx,p.x,p.y,p.z,s,s,null,[p.c[0],p.c[1],p.c[2],a],p.add!==false,0,true)}};
+
+// ---------- malhas dos efeitos (esferas de explosão, bola de fogo) ----------
+FX.init=function(){if(FX.ready)return;const gl=H3.gl(),mk=(seed,fn)=>{const mb=new H3.MB(seed);fn(mb);return mb.build(gl)};
+ FX.m={shW:mk(81,mb=>mb.sph(1,4,8,'#fff4d0',1)),shY:mk(82,mb=>mb.sph(1,4,8,'#ffc24a',1)),shO:mk(83,mb=>mb.sph(1,4,8,'#ff6a1a',1)),shR:mk(84,mb=>mb.sph(1,4,8,'#9a2408',1)),
+  ball:mk(85,mb=>{mb.sph(1,4,7,'#ff8a2a',1);mb.push().S(.62,.62,.62).sph(1,3,6,'#fff0b8',1).pop()}),
+  bolt:mk(86,mb=>mb.box(1,1,1,'#eaf6ff',1)),
+  soul:mk(87,mb=>{mb.push().S(1,1.3,1).sph(5,3,7,'#c9a0ff',1).pop();mb.push().T(-2,1.4,4.4).box(1.6,1.8,.6,'#ffffff',1).pop();mb.push().T(2,1.4,4.4).box(1.6,1.8,.6,'#ffffff',1).pop()})};
+ FX.ready=true};
+FX.free=()=>{FX.ready=false;FX.m=null};
+
+const MS=new H3.MB(2);
+function drawShell(m,x,y,z,r,di,eg){MS.push().T(x,y,z).S(r,r,r);H3.mesh(m,MS.m,null,null,{keep:false,cx:x,cy:y,cz:z,rad:r,di,eg:eg===undefined?1:eg,fl:null});MS.pop()}
+
+// ============================================================ DEMÔNIO: entrada e morte ============================================================
+// el = ms desde o início do estado (como em demonVortex / demonDeath de js/04-v6.js)
+FX.demonRise=function(ax,ay,az,t,el){const p=min(1,el/900),T=H3.tex;
+ for(let k=0;k<5;k++){const r=(8+k*6*p+4)*1.4,a=t/150+k;H3.flat(T.ring,ax,ay+.7+k*.15,az,r*2.2,r*2.2,null,k%2?[.49,.17,.82,.25+.5*p]:[.77,.24,1,.25+.5*p],true,a)}
+ for(let k=0;k<7;k++){const a=t/120+k*.9,r=44*(1-((el/400+k*.17)%1));H3.spr(T.glow,ax+cos(a)*r,ay+2+(1-r/44)*30,az+sin(a)*r,5,5,null,[.85,.63,1,.9],true,0,true)}
+ FX.light(ax,ay+16,az,110,[.7,.25,1],.9*p)};
+FX.demonTimer=function(ax,ay,az,t){const p=(sin(t/400)+1)/2;H3.flat(H3.tex.glow,ax,ay+.8,az,34,34,null,[1,.23,.1,.2+.2*p],true);
+ if(t%400<200)H3.spr(H3.tex.dot,ax+(floor(t/32)%9)*1.6-6.4,ay+3,az,1.6,1.6,null,[1,.6,.2,1],true,0,true);
+ FX.light(ax,ay+10,az,60,[1,.25,.1],.35+.15*p)};
+// morte: tremor e clarões até 1700, a explosão final em 1700, a alma subindo até 3400
+FX.demonDeath=function(ax,ay,az,t,el,st){
+ if(!st.burst&&el>1700){st.burst=1;FX.deathBurst(ax,ay,az,t)}
+ if(el>1700&&el<2500){const p=(el-1700)/800,T=H3.tex,r=(10+p*150)*1.1;H3.flat(T.ring,ax,ay+.9,az,r*2,r*2,null,[1,.82,.48,1-p],true,0);FX.light(ax,ay+30,az,170,[1,.85,.6],2.6*(1-p))}
+ if(el>=1800&&el<3400){const p=(el-1800)/1600;if(p<1){const y=ay+30+p*40;
+   MS.push().T(ax,y,az).S(1,1,1);H3.mesh(FX.m.soul,MS.m,null,null,{keep:false,cx:ax,cy:y,cz:az,rad:10,di:clp(1.4*(1-p),0,1),eg:1,fl:null});MS.pop();
+   H3.spr(H3.tex.glow,ax,y,az,30,30,null,[.8,.6,1,.55*(1-p)],true,0,true);FX.light(ax,y,az,90,[.8,.6,1],.8*(1-p))}}};
+FX.deathBurst=function(x,y,z,t){
+ for(let k=0;k<46;k++){const a=rnd()*PI*2,s=.5+rnd()*2.4,u=rnd()*PI-PI/2;
+  FX.emit({x,y:y+26,z,vx:cos(a)*s*cos(u)*.9,vy:sin(u)*s*.9+.5,vz:sin(a)*s*cos(u)*.9,g:.02,life:900+rnd()*1400,s0:3+rnd()*3.4,s1:.6,c:rnd()<.5?[1,.7,.35]:rnd()<.5?[1,.35,.16]:[1,.95,.75],a:1,drag:.985})}
+ for(let k=0;k<22;k++){const a=rnd()*PI*2,s=.2+rnd()*.9;FX.emit({x,y:y+18+rnd()*18,z,vx:cos(a)*s,vy:.3+rnd()*.7,vz:sin(a)*s,g:-.004,life:1100+rnd()*900,s0:9+rnd()*8,s1:22,c:[.22,.2,.22],a:.55,add:false,drag:.99})}};
+
+// ============================================================ HABILIDADES GENÉRICAS (outros lutadores) ============================================================
+// S = entrada da tabela SK (fx, c, c2, d, ch, tk), el = ms desde o começo, a = mão do lutador, b = centro do inimigo; luzes e partículas leves
+function jag(a,b,t,seg,amp,w,col,add){const p=[a[0],a[1],a[2]];for(let i=1;i<=seg;i++){const u=i/seg,q=[lerp(a[0],b[0],u)+(i<seg?(rnd()-.5)*amp:0),lerp(a[1],b[1],u)+(i<seg?(rnd()-.5)*amp:0),lerp(a[2],b[2],u)+(i<seg?(rnd()-.5)*amp:0)];
+  H3.strip(H3.tex.beam,p[0],p[1],p[2],q[0],q[1],q[2],w,col,add!==false);p[0]=q[0];p[1]=q[1];p[2]=q[2]}}
+FX.skillGeneric=function(S,q,el,a,b,t){
+ if(el<0||el>S.d+150)return;const T=H3.tex,c1=hexc(S.c==='#1b1b1b'?'#9e9e9e':S.c),c2=hexc(S.c2),ch=el<(S.ch||0),k=S.fx;
+ const glow=(x,y,z,r,c,al)=>H3.spr(T.glow,x,y,z,r,r,null,[c[0],c[1],c[2],al],true,0,true);
+ const dist=Math.hypot(b[0]-a[0],b[1]-a[1],b[2]-a[2]);
+ // brilho no lutador enquanto a habilidade dura
+ glow(a[0],a[1]-2,a[2],26+4*sin(t/60),c1,.35+.1*sin(t/45));FX.light(a[0],a[1],a[2],64,c1,.55);
+ if(k==='barrage'){for(let i=0;i<3;i++){const an=t/35+i*2.1;jag(a,[b[0]+cos(an)*8,b[1]+sin(an*1.3)*7,b[2]+sin(an)*8],t,3,5,2.2,[c1[0],c1[1],c1[2],.5])}
+  for(let i=0;i<7;i++){const an=t/28+i*.9,r=5+((t/18+i*5)%11);glow(b[0]+cos(an)*r,b[1]+sin(an*1.2)*r*.8,b[2]+sin(an)*r,7,i%2?c1:c2,.95)}
+  if((t>>5)%2)glow(b[0]+(rnd()-.5)*18,b[1]+(rnd()-.5)*18,b[2]+(rnd()-.5)*18,6,[1,1,1],1);FX.light(b[0],b[1],b[2],80,c1,.9)}
+ else if(k==='beam'){if(ch){const p=el/S.ch;glow(a[0],a[1],a[2],6+p*22,c1,.9);glow(a[0],a[1],a[2],3+p*10,c2,1)}
+  else{const w=5+sin(t/30)*1.6;H3.strip(T.beam,a[0],a[1],a[2],b[0],b[1],b[2],w*2.6,[c1[0],c1[1],c1[2],.45],true);H3.strip(T.beam,a[0],a[1],a[2],b[0],b[1],b[2],w,[c1[0],c1[1],c1[2],.95],true);H3.strip(T.beam,a[0],a[1],a[2],b[0],b[1],b[2],w*.42,[c2[0],c2[1],c2[2],1],true);
+   glow(b[0],b[1],b[2],26+sin(t/25)*5,c1,.85);glow(b[0],b[1],b[2],12,c2,1);FX.light(b[0],b[1],b[2],100,c1,1.2)}}
+ else if(k==='orb'){let x=b[0],y=b[1],z=b[2];if(ch){const p=el/S.ch;x=lerp(a[0],b[0],p);y=lerp(a[1],b[1],p)+sin(p*PI)*10;z=lerp(a[2],b[2],p)}
+  else for(let i=0;i<8;i++){const an=t/60+i*.785,rr=7+((t/20+i*3)%8);glow(x+cos(an)*rr,y+sin(an*1.3)*rr*.6,z+sin(an)*rr,4,c2,.95)}
+  glow(x,y,z,18,c1,.95);glow(x,y,z,8,c2,1);FX.light(x,y,z,90,c1,1)}
+ else if(k==='slash'){if(ch){glow(a[0],a[1],a[2],10+el/S.ch*8,c2,.9)}
+  else{const per=(S.d-(S.ch||0))/S.tk,n=floor((el-S.ch)/per),lp=((el-S.ch)%per)/per;if(n<S.tk){const r=(10+lp*22)*1.2;H3.spr(T.ring,b[0],b[1],b[2],r*2,r*2,null,[c2[0],c2[1],c2[2],1-lp],true,0,true);
+   H3.flat(T.ring,b[0],b[1]-b[3],b[2],r*2.4,r*2.4,null,[c1[0],c1[1],c1[2],.8*(1-lp)],true,n*1.9);FX.light(b[0],b[1],b[2],90,c2,1.1*(1-lp))}}}
+ else if(k==='bolt'){jag(a,b,t,6,7,3.4,[c1[0],c1[1],c1[2],.55]);jag(a,b,t+1,6,5,1.4,[c2[0],c2[1],c2[2],1]);glow(b[0],b[1],b[2],24+((t>>4)%4)*3,c1,.7);FX.light(b[0],b[1],b[2],90,c1,1.1)}
+ else if(k==='burst'||k==='hero'||k==='guts'){
+  if(ch){const p=el/S.ch;H3.spr(T.ring,a[0],a[1],a[2],(14-p*9)*2.4,(14-p*9)*2.4,null,[c1[0],c1[1],c1[2],.8],true,0,true);glow(a[0],a[1],a[2],4+p*10,c2,1)}
+  else{const tk=S.tk||1,per=(S.d-(S.ch||0))/tk,lp=((el-(S.ch||0))%per)/per;
+   H3.spr(T.ring,b[0],b[1],b[2],(8+lp*34)*1.4,(8+lp*34)*1.4,null,[c1[0],c1[1],c1[2],max(0,1-lp)],true,0,true);
+   for(let i=0;i<6;i++){const an=i*1.047+t/90,r=6+lp*22;glow(b[0]+cos(an)*r,b[1]+sin(an)*r*.8,b[2]+sin(an+1)*r*.6,5,i%2?c1:c2,1-lp*.5)}
+   glow(b[0],b[1],b[2],22*(1-lp*.4),c1,.55*(1-lp));FX.light(b[0],b[1],b[2],100,c1,1.3*(1-lp*.6))}}
+ else if(k==='tentacle'){for(let i=0;i<4;i++){const ph=t/120+i*1.6,p=[a[0],a[1],a[2]],col=i%2?c1:c2;
+   for(let s=1;s<=6;s++){const u=s/6,w=sin(u*PI)*11,q=[lerp(a[0],b[0],u)+sin(ph+u*4)*w,lerp(a[1],b[1],u)+cos(ph+u*3)*w*.6+sin(u*PI)*8,lerp(a[2],b[2],u)+cos(ph+u*4)*w];
+    H3.strip(T.beam,p[0],p[1],p[2],q[0],q[1],q[2],3,[col[0],col[1],col[2],.95],true);p[0]=q[0];p[1]=q[1];p[2]=q[2]}}
+  if((t>>6)%2)glow(b[0]+(rnd()-.5)*12,b[1]+(rnd()-.5)*12,b[2]+(rnd()-.5)*12,5,[1,1,1],1)}};
+
+// ============================================================ HEROBRINE 3D: FOGO DO GHAST ============================================================
+const INST=new Map(),FIRES=[],BOOMS=[];
+const eob=p=>{const q=p-1;return 1+2.70158*q*q*q+1.70158*q*q};
+// pose do Herobrine a cada instante da habilidade (el em ms desde o começo)
+FX.heroPose=function(el){
+ let crouch=0,air=0,arms=0,point=0;
+ if(el<HB.rise-440){crouch=sm(0,HB.crouch,el)}
+ if(el>=HB.crouch-40&&el<HB.land){const u=(el-(HB.crouch-40))/(HB.land-(HB.crouch-40));air=34*sin(PI*clp(u,0,1));arms=1;crouch=el<HB.crouch?sm(0,HB.crouch,el):0}
+ if(el>=HB.land&&el<HB.land+120)crouch=1-sm(HB.land,HB.land+120,el);
+ if(el>=HB.cmd&&el<HB.imp+420)point=sm(HB.cmd,HB.cmd+180,el)*(1-sm(HB.imp+200,HB.imp+420,el));
+ return{crouch,air,arms,point}};
+// estado do Ghast: posição (centro do corpo), opacidade, carregando (0..1) e se está bravo; gx,gy,gz = onde ele fica (atrás do inimigo, olhando para o Herobrine)
+FX.ghastState=function(el,t,g){
+ if(el<HB.rise||el>HB.leave+380)return null;
+ const ap=sm(HB.rise,HB.rise+260,el),lv=sm(HB.leave,HB.leave+360,el),sc=(.5+.5*eob(clp((el-HB.rise)/260,0,1)))*(1-.25*lv),al=sm(HB.rise,HB.rise+90,el)*(1-lv);
+ const chg=el<HB.shot?sm(HB.eyes,HB.shot,el):0,rec=el>=HB.shot?Math.exp(-(el-HB.shot)/120):0;
+ return{x:g.x,y:g.y+(1-sm(HB.rise,HB.rise+300,el))*12-sm(HB.leave,HB.leave+360,el)*-14,z:g.z,yaw:g.yaw,sc:sc*(1+.05*chg),al,ch:chg,rec,mood:el>=HB.eyes&&el<HB.shot+420?1:0}};
+// bola de fogo: posição e tamanho (antes de sair, cresce na boca do Ghast; depois voa até o inimigo)
+FX.fireball=function(el,mouth,tgt,I){
+ if(el<HB.eyes+200||el>=HB.imp)return null;
+ if(el<HB.shot){const k=sm(HB.eyes+200,HB.shot,el);return{x:mouth[0],y:mouth[1],z:mouth[2],s:(1+7*k),k,fly:0}}
+ const u=(el-HB.shot)/(HB.imp-HB.shot),e=u*u*(3-2*u)*.4+u*.6;
+ return{x:lerp(mouth[0],tgt[0],e),y:lerp(mouth[1],tgt[1],e)+sin(u*PI)*4,z:lerp(mouth[2],tgt[2],e),s:8+4*u,k:1,fly:1,u}};
+// tudo da habilidade, chamado a cada quadro enquanto ela existe:
+//   h = {x,y,z} Herobrine (pés) · b = {x,y,z} centro do inimigo (base do chão do altar em b.y0) · retorna o desenho do Ghast para o chamador (ele monta o modelo)
+FX.heroSkill=function(q,t0,t,h,b,dir,cp){
+ const el=t-t0;let I=INST.get(q);if(!I||I.t0!==t0){I={t0,bolt:0,imp:0,fb:null,last:0};INST.set(q,I)}
+ const T=H3.tex;
+ // raio do céu em cima do Herobrine (700 a 840)
+ if(el>=HB.rise-20&&el<HB.rise+140){const k=1-(el-(HB.rise-20))/160,seed=floor(t/38),top=[h.x+(rnd()-.5)*6,150,h.z+(rnd()-.5)*6],end=[h.x,h.y+34,h.z];
+  let p=top;for(let i=1;i<=9;i++){const u=i/9,n=[lerp(top[0],end[0],u)+(i<9?(rnd()-.5)*(14-i):0),lerp(top[1],end[1],u),lerp(top[2],end[2],u)+(i<9?(rnd()-.5)*(14-i):0)];
+   H3.strip(T.beam,p[0],p[1],p[2],n[0],n[1],n[2],12*k+3,[.55,.75,1,.6*k+.2],true);H3.strip(T.beam,p[0],p[1],p[2],n[0],n[1],n[2],3.2,[1,1,1,1],true);p=n}
+  H3.spr(T.glow,end[0],end[1],end[2],70*k+20,70*k+20,null,[.7,.85,1,.7*k],true,0,true);FX.light(h.x,h.y+60,h.z,190,[.6,.8,1],3.4*k);
+  if(!I.bolt){I.bolt=1;for(let i=0;i<22;i++)FX.emit({x:h.x,y:h.y+4,z:h.z,vx:(rnd()-.5)*2.4,vy:.8+rnd()*2,vz:(rnd()-.5)*2.4,g:.06,life:500+rnd()*500,s0:3.4,s1:.6,c:[.7,.85,1],a:1,drag:.97})}}
+ // Ghast: o chamador desenha o modelo com este estado; a boca fica à frente dele (na direção do inimigo)
+ // o Ghast fica ao lado e atrás do inimigo, do jeito que a câmera de quando a habilidade começou enxerga (fixo durante a habilidade), olhando para o inimigo
+ if(!I.gp){let vx=cp?cp.x-b.x:-dir[0],vz=cp?cp.z-b.z:-dir[1];const vl=Math.hypot(vx,vz)||1;vx/=vl;vz/=vl;
+  const wx=-vz,wz=vx,sd=(wx*(h.x-b.x)+wz*(h.z-b.z))>=0?-1:1;let gx=b.x-vx*24+wx*sd*52,gz=b.z-vz*24+wz*sd*52;const gr=Math.hypot(gx,gz);if(gr>112){gx*=112/gr;gz*=112/gr}
+  I.gp={x:gx,y:b.y0+64,z:gz}}
+ const fw=Math.hypot(b.x-I.gp.x,b.z-I.gp.z)||1,gp={x:I.gp.x,y:I.gp.y,z:I.gp.z,yaw:Math.atan2(b.x-I.gp.x,b.z-I.gp.z)},G=FX.ghastState(el,t,gp);
+ let mouth=null,fb=null;
+ if(G){const fwd=[(b.x-I.gp.x)/fw,(b.z-I.gp.z)/fw];mouth=[G.x+fwd[0]*11*G.sc,G.y-2*G.sc,G.z+fwd[1]*11*G.sc];fb=FX.fireball(el,mouth,[b.x,b.y,b.z],I);
+  // carga: faíscas sendo sugadas para a boca
+  if(el>HB.eyes&&el<HB.shot&&rnd()<.7){const a=rnd()*PI*2,r=18+rnd()*14;FX.emit({x:mouth[0]+cos(a)*r,y:mouth[1]+(rnd()-.5)*r,z:mouth[2]+sin(a)*r,vx:-cos(a)*1.1,vy:0,vz:-sin(a)*1.1,g:0,life:300,s0:3,s1:1,c:[1,.6,.2],a:1,drag:1})}}
+ if(fb){const bs=fb.s;MS.push().T(fb.x,fb.y,fb.z).S(bs,bs,bs).RY(t/180).RX(t/230);H3.mesh(FX.m.ball,MS.m,null,null,{keep:false,cx:fb.x,cy:fb.y,cz:fb.z,rad:bs,di:1,eg:1,fl:null});MS.pop();
+  H3.spr(T.glow,fb.x,fb.y,fb.z,bs*5.2,bs*5.2,null,[1,.5,.15,.7],true,0,true);H3.spr(T.glow,fb.x,fb.y,fb.z,bs*2.4,bs*2.4,null,[1,.9,.6,.9],true,0,true);
+  FX.light(fb.x,fb.y,fb.z,120+bs*5,[1,.55,.2],1.6);
+  if(fb.fly&&rnd()<.9)FX.emit({x:fb.x,y:fb.y,z:fb.z,vx:(rnd()-.5)*.5,vy:(rnd()-.5)*.5,vz:(rnd()-.5)*.5,g:-.01,life:420,s0:bs*1.2,s1:2,c:rnd()<.5?[1,.55,.15]:[.9,.3,.08],a:.85,drag:.98})}
+ // impacto: explosão e chão em chamas (continuam sozinhos, mesmo que a habilidade seja interrompida depois)
+ if(el>=HB.imp&&!I.imp){I.imp=1;FX.explode(b.x,b.y0,b.z,b.y,t)}
+ return G&&{G,mouth}};
+// explosão + fogo no chão, em instâncias independentes
+FX.explode=function(x,y0,z,yc,t){BOOMS.push({x,y:yc,y0,z,t0:t});FIRES.push({x,y:y0,z,t0:t,life:3000});
+ for(let k=0;k<44;k++){const a=rnd()*PI*2,s=.6+rnd()*3.2,u=rnd()*PI*.8-.1;FX.emit({x,y:yc,z,vx:cos(a)*s*cos(u),vy:sin(u)*s+.9,vz:sin(a)*s*cos(u),g:.045,life:700+rnd()*900,s0:3+rnd()*3,s1:.6,c:rnd()<.35?[1,.95,.7]:rnd()<.5?[1,.6,.2]:[1,.35,.1],a:1,drag:.985})}
+ for(let k=0;k<16;k++){const a=rnd()*PI*2,s=.2+rnd()*1.1;FX.emit({x:x+cos(a)*8,y:yc+rnd()*10,z:z+sin(a)*8,vx:cos(a)*s,vy:.4+rnd()*.9,vz:sin(a)*s,g:-.006,life:900+rnd()*800,s0:12+rnd()*8,s1:30,c:[.28,.26,.28],a:.6,add:false,drag:.985})}};
+FX.world=function(t){const T=H3.tex;
+ for(let i=BOOMS.length-1;i>=0;i--){const B=BOOMS[i],el=t-B.t0;if(el>1100){BOOMS.splice(i,1);continue}
+  const p=el/700,e=1-Math.pow(1-clp(p,0,1),2.3),f=clp(1-(el-300)/800,0,1);
+  if(el<700){const R=6+30*e;drawShell(FX.m.shR,B.x,B.y,B.z,R*1.04,clp(f*.5,0,1));drawShell(FX.m.shO,B.x,B.y+1,B.z,R*.86,clp(f*.62,0,1));drawShell(FX.m.shY,B.x,B.y+2,B.z,R*.6*(1-p*.3),clp(f*.8,0,1));drawShell(FX.m.shW,B.x,B.y+3,B.z,R*.32*(1-p),clp(1.4-p*1.4,0,1))}
+  H3.spr(T.glow,B.x,B.y,B.z,(70+80*e)*1.2,(70+80*e)*1.2,null,[1,.62,.24,.85*f],true,0,true);
+  H3.flat(T.ring,B.x,B.y0+.9,B.z,(20+190*e)*2,(20+190*e)*2,null,[1,.78,.4,clp(1-p,0,1)],true,0);
+  FX.light(B.x,B.y+10,B.z,200,[1,.72,.4],3.2*Math.exp(-el/260))}
+ for(let i=FIRES.length-1;i>=0;i--){const F=FIRES[i],el=t-F.t0;if(el>F.life+360){FIRES.splice(i,1);continue}
+  const a=el<F.life?1:1-(el-F.life)/360,n=18;
+  for(let k=0;k<n;k++){const s=k*2.399+i,rr=2+sqrt(k/n)*34,fx=F.x+cos(s)*rr,fz=F.z+sin(s)*rr,ph=floor(t/85)+k*3,fr=ph%6,big=k%3===0,sz=(big?1.35:.95)*(.7+.3*sin(t/200+k)),aa=clp(a*(.55+.45*sin(t/120+k*1.7)),0,1)*clp((el-k*40)/300,0,1);
+   if(aa<.04)continue;H3.spr(T.flame,fx,F.y,fz,16*sz,24*sz,[fr*16/96,big?0:.5,(fr+1)*16/96,big?.5:1],[1,1,1,aa],false,1)}
+  H3.flat(T.glow,F.x,F.y+.7,F.z,86,86,null,[1,.4,.12,.4*a],true);
+  FX.light(F.x,F.y+16,F.z,110,[1,.5,.2],1.25*a*(.85+.15*sin(t/70)))}};
+FX.active=()=>BOOMS.length>0||FIRES.length>0;
+})();
+</script><script>
+// ===================== Modo 3D do Salão do Demônio (TESTE) — parte 5: jogar em 1ª e 3ª pessoa =====================
+// Dentro do Salão do Demônio aparece o botão "Perspectiva": 2D (como sempre) → 1ª pessoa → 3ª pessoa. Só vale aqui; ao sair do salão volta sozinho para o 2D.
+// Como funciona: o jogo continua rodando EXATAMENTE como no 2D (posições, luta, dano, habilidades, tabela SK). O 3D é só um jeito diferente de olhar e de andar:
+//  · andar: o joystick anda na direção em que a câmera olha (a posição 2D do jogador é atualizada, com colisão redonda: altar, estacas, parede); arrastar a tela gira a câmera; tocar bate (durante a luta);
+//  · desenho: o passe 2D normal ainda roda, mas cada personagem é desenhado por ele numa folha de figurinhas (H3C) que vira "cartaz" em pé no mundo 3D (escolhendo de frente/costas/lado
+//    conforme o ângulo da câmera); o Demônio e o Herobrine 3D são modelos 3D de verdade (js/24-h3-models.js) e o salão é o de js/23-h3-hall.js.
+// A equipe ao redor do inimigo usa a mesma formação do jogo (js/04-v6.js), só que redonda em volta do altar. Planta 2D → 3D: X = x - RMX, Z = (y - RMY) * 1,875.
+(function(){
+'use strict';
+const H3=window.H3,X=window.H3X;
+if(!H3||!X||!H3.hall||!H3.models||!H3.fx||typeof tick!=='function'||typeof render!=='function')return;
+const HALL=H3.hall,MOD=H3.models,FX=H3.fx;
+const PI=Math.PI,TAU=PI*2,sin=Math.sin,cos=Math.cos,abs=Math.abs,min=Math.min,max=Math.max,floor=Math.floor,round=Math.round,sqrt=Math.sqrt,hypot=Math.hypot,atan2=Math.atan2,rnd=Math.random;
+const clp=(v,a,b)=>v<a?a:v>b?b:v;
+const K=150/80,NM3='Herobrine 3D',ALT_Y=14.6,BZ=-16;           // escala da planta 2D (eixo y) · nome do personagem · topo do altar · Z do Demônio
+const angd=(a,b)=>{let d=(b-a)%TAU;if(d>PI)d-=TAU;if(d<-PI)d+=TAU;return d};
+const S=H3.S={mode:0,yaw:0,pitch:0,moving:false,step:0,dead:false,built:false,qs0:1,punchT:0,bossYaw:0,fr:0,cam:{x:0,y:21,z:131,yaw:0,pitch:0,fov:1},cssW:896,cssH:412,px:0,pz:131,err:0,ft:16,lastT:0,hint:0};
+const $$=id=>document.getElementById(id);
+const toastS=m=>{try{if(typeof toast==='function')toast(m)}catch(e){}};
+const LABEL=['2D','1ª pessoa','3ª pessoa'];
+
+// ============================================================ tela: botão, canvases ============================================================
+let btn=null,glc=null,ovc=null,ovx=null,JG=null;
+function css(){const st=document.createElement('style');st.textContent=`
+#persBtn{position:fixed;left:calc(162px + env(safe-area-inset-left,0px));bottom:calc(26px + env(safe-area-inset-bottom,0px));z-index:3;display:none;background:linear-gradient(#7e57c2,#4527a0);padding:5px 12px;line-height:1.05;min-width:100px;text-align:center}
+#persBtn small{display:block;font-size:9px;opacity:.85;letter-spacing:.3px}#persBtn b{display:block;font-size:15px}
+#h3gl,#h3ov{position:fixed;inset:0;width:100%;height:100%;display:none}#h3gl{image-rendering:pixelated;touch-action:none;background:#050308}#h3ov{pointer-events:none}
+body.h3on #c{visibility:hidden}body.h3on #h3gl,body.h3on #h3ov{display:block}`;document.head.appendChild(st)}
+function mkBtn(){if(btn)return;css();btn=document.createElement('button');btn.className='btn';btn.id='persBtn';btn.innerHTML='<small>Perspectiva</small><b>2D</b>';document.body.appendChild(btn);
+ btn.addEventListener('click',e=>{e.preventDefault();setMode((S.mode+1)%3)})}
+function mkCanvases(){if(glc)return;const cv0=$$('c');
+ glc=document.createElement('canvas');glc.id='h3gl';ovc=document.createElement('canvas');ovc.id='h3ov';cv0.parentNode.insertBefore(glc,cv0.nextSibling);glc.parentNode.insertBefore(ovc,glc.nextSibling);
+ ovx=ovc.getContext('2d');JG=document.createElement('canvas');JG.width=VW;JG.height=VH;JG.getContext('2d').imageSmoothingEnabled=false;JG=JG.getContext('2d');
+ glc.addEventListener('pointerdown',pd);glc.addEventListener('pointermove',pm);glc.addEventListener('pointerup',pu);glc.addEventListener('pointercancel',pu)}
+function syncBtn(){mkBtn();const on=world===0&&X.inRoom()&&!S.dead;if(btn._on!==on){btn._on=on;btn.style.display=on?'block':'none'}
+ if(!on&&S.mode)setMode(0)}
+
+// ============================================================ entrar e sair do 3D ============================================================
+function dirOfYaw(a){a=((a%TAU)+TAU)%TAU;return a<PI/4||a>7*PI/4?0:a<3*PI/4?3:a<5*PI/4?2:1}      // 0 cima(norte) · 1 esquerda(oeste) · 2 baixo(sul) · 3 direita(leste)
+function bossParams(on){const e=X.boss();if(!e)return;
+ if(on){if(!S.bsv)S.bsv={orb:e.orb,fy:e.fy,fcy:e.fcy};e.orb=66;e.fy=1/K;e.fcy=14}           // formação redonda em volta do altar (o 2D usa uma elipse e fica em cima do altar em 3D)
+ else if(S.bsv){e.orb=S.bsv.orb;e.fy=S.bsv.fy;e.fcy=S.bsv.fcy;S.bsv=null}}
+function build3d(){
+ if(S.built)return true;
+ if(!H3.init(glc)){S.dead=true;return false}
+ try{H3.makeTex();H3.env({ambT:[.24,.16,.28],ambB:[.1,.065,.11],fog:[.02,.008,.03,.0034]});HALL.build(H3.gl());MOD.init();FX.init();
+  atlas=H3.texNew(AT,false);S.built=true;return true}catch(e){console.error('H3',e);S.dead=true;return false}}
+function enter3D(){
+ mkCanvases();
+ if(H3.isLost&&H3.isLost()){toastS('Os gráficos 3D estão indisponíveis agora. Tente de novo em instantes.');return false}
+ if(!build3d()){toastS('Este aparelho não consegue mostrar o modo 3D (WebGL).');if(btn)btn.style.display='none';return false}
+ S.osv=OFF.map(a=>a.slice());bossParams(true);
+ S.yaw=[0,-PI/2,PI,PI/2][P.dir|0]||0;S.pitch=0;S.moving=false;S.bossYaw=undefined;S.cam.yaw=S.yaw;
+ const qs=clp(720/max(1,innerWidth),.35,1);S.qs0=qs;H3.setQ(qs);S.ft=16;S.lastT=0;
+ document.body.classList.add('h3on');FX.clear();return true}
+function leave3D(){
+ document.body.classList.remove('h3on');bossParams(false);
+ if(S.osv){for(let i=0;i<S.osv.length;i++){OFF[i][0]=S.osv[i][0];OFF[i][1]=S.osv[i][1]}S.osv=null}
+ g=G0;P.x=round(P.x);P.y=round(P.y);unstick();         // posição inteira de novo (o 2D anda de 1 em 1 pixel)
+ P.moving=false;FX.clear();$$('c').style.visibility=''}
+function setMode(m){
+ if(m===S.mode)return;
+ if(m>0&&(!X.inRoom()||S.dead))return;
+ const was=S.mode;
+ if(!was&&m>0&&!enter3D())return;
+ if(was&&!m)leave3D();
+ S.mode=H3.mode=m;if(btn)btn.querySelector('b').textContent=LABEL[m];
+ if(m){S.cam.yaw=S.yaw;if(was!==m)S.pitch=m===2?-.26:0}
+ if(m&&!S.hint){S.hint=1;toastS('Arraste a tela para olhar · joystick para andar · toque para bater')}
+ else if(m!==was)toastS('Perspectiva: '+LABEL[m])}
+H3.onLost=()=>{if(S.mode){setMode(0);toastS('Os gráficos 3D foram interrompidos. Voltei para o 2D.')}};
+H3.onRestore=()=>{S.built=false;MOD.free();FX.free();HALL.ready=false;S.dead=false};
+
+// ============================================================ arrastar para olhar · tocar para bater ============================================================
+let lp=null;
+function pd(e){if(!S.mode||lp)return;lp={id:e.pointerId,x:e.clientX,y:e.clientY,x0:e.clientX,y0:e.clientY,t:Date.now(),mv:0};try{glc.setPointerCapture(e.pointerId)}catch(x){}e.preventDefault()}
+function pm(e){if(!lp||e.pointerId!==lp.id)return;const dx=e.clientX-lp.x,dy=e.clientY-lp.y;lp.x=e.clientX;lp.y=e.clientY;lp.mv=max(lp.mv,hypot(e.clientX-lp.x0,e.clientY-lp.y0));
+ S.yaw+=dx*.0056;S.pitch=clp(S.pitch-dy*.0046,S.mode===1?-.9:-1.0,S.mode===1?.75:.3);e.preventDefault()}
+function pu(e){if(!lp||e.pointerId!==lp.id)return;const tap=lp.mv<14&&Date.now()-lp.t<500;lp=null;try{glc.releasePointerCapture(e.pointerId)}catch(x){}
+ if(tap&&fight&&!lock){try{punch()}catch(x){}}}
+addEventListener('keydown',e=>{if(S.mode&&(e.key===' ')&&fight&&!lock){e.preventDefault();try{punch()}catch(x){}}});
+{const _p=punch;punch=function(){const r=_p.apply(this,arguments);if(S.mode&&fight)S.punchT=Date.now();return r}}
+{const _rw=rsWatch;rsWatch=function(dt){if(S.mode)return;return _rw(dt)}}                  // o 3D é mais pesado: não deixa o jogo baixar a resolução do 2D por causa dele
+
+// ============================================================ andar (a cada passo de 1/60 s) ============================================================
+// colisão feita direto no 3D (círculos, bem mais natural que a caixa do 2D): altar, estacas, parede redonda e o corredor da porta; encostando, o jogador desliza
+function step3(dx,dz){
+ let X=P.x+8-RMX+dx,Z=(P.y+14-RMY)*K+dz,r=hypot(X,Z);
+ if(r<56&&r>1e-3){X*=56/r;Z*=56/r}
+ for(const s of HALL.stakes||[]){const ax=X-s[0],az=Z-s[1],d=hypot(ax,az);if(d<9&&d>1e-3){X=s[0]+ax*9/d;Z=s[1]+az*9/d}}
+ r=hypot(X,Z);
+ if(abs(X)<=12&&Z>110){X=clp(X,-12,12);Z=min(Z,176)}
+ else if(r>133){X*=133/r;Z*=133/r}
+ P.x=X-8+RMX;P.y=Z/K-14+RMY}
+function unstick(){if(!hit(P.x,P.y))return;                       // ao voltar para o 2D, sai de dentro de qualquer objeto sólido do 2D
+ for(let rr=1;rr<=48;rr++)for(let a=0;a<12;a++){const x=P.x+round(cos(a/12*TAU)*rr),y=P.y+round(sin(a/12*TAU)*rr);if(!hit(x,y)){P.x=x;P.y=y;return}}}
+function updOff(){const rx=cos(S.yaw),rz=sin(S.yaw),bx=-sin(S.yaw),bz=cos(S.yaw),
+ sl=S.mode===1?[[-22,14],[22,14],[-13,34],[13,34]]:[[-25,-2],[25,-2],[-15,-22],[15,-22]];      // 1ª pessoa: a equipe fica atrás de você · 3ª pessoa: ao redor, à frente da câmera
+ for(let i=0;i<4;i++){OFF[i][0]=rx*sl[i][0]+bx*sl[i][1];OFF[i][1]=(rz*sl[i][0]+bz*sl[i][1])/K}}
+function move3(){
+ S.yaw+=((keys.e?1:0)-(keys.q?1:0))*.045;S.moving=false;
+ if(!(lock||window.HALF||(world===0&&window.__gen))){const m=hypot(jx,jy);
+  if(m>.2){const len=min(1,m*1.15),fw=-jy/m,sd=jx/m,dx=sd*cos(S.yaw)+fw*sin(S.yaw),dz=sd*sin(S.yaw)-fw*cos(S.yaw),sp=mspd()*len;
+   step3(dx*sp,dz*sp);S.moving=true;P.step++}}
+ P.dir=dirOfYaw(S.yaw);updOff()}
+const _tick=tick;
+tick=function(){
+ enforceH3D();syncBtn();
+ if(!S.mode)return _tick();
+ if(!X.inRoom()){setMode(0);return _tick()}
+ try{move3()}catch(e){fail(e)}
+ const sj=jx,sy=jy;jx=jy=0;try{_tick()}finally{jx=sj;jy=sy}
+ P.moving=S.moving};
+
+// ============================================================ câmera ============================================================
+function floorAt(x,z){return HALL.floorY(x,z)}
+function camNow(){
+ if(S.dbg)return S.dbg;                                           // câmera fixa (só para testes)
+ const x=P.x+8-RMX,z=(P.y+14-RMY)*K,gy=floorAt(x,z);S.px=x;S.pz=z;
+ const kick=S.punchT&&Date.now()-S.punchT<200?sin((Date.now()-S.punchT)/200*PI)*.025:0;
+ if(S.mode===1){const bob=S.moving?sin(S.step*.55)*.75:0;S.step=P.step;return{x,y:gy+25+bob,z,yaw:S.yaw,pitch:S.pitch-kick,fov:1.0}}
+ const d=86,cp=cos(S.pitch),fx0=sin(S.yaw)*cp,fy0=sin(S.pitch),fz0=-cos(S.yaw)*cp,ty=gy+24;
+ let cx=x-fx0*d,cy=ty-fy0*d,cz=z-fz0*d,t=1;
+ // a câmera de trás do personagem não atravessa a parede: anda do personagem até o ponto ideal e para onde sairia do salão (o corredor da porta também vale)
+ const dr_=z>122,ok=(X,Z)=>X*X+Z*Z<136*136||(dr_&&abs(X)<11&&Z<176);
+ for(let i=1;i<=16;i++){const u=i/16;if(!ok(x+(cx-x)*u,z+(cz-z)*u)){t=(i-1)/16;break}}
+ t=max(t,.2);cx=x+(cx-x)*t;cz=z+(cz-z)*t;cy=gy+24+(cy-gy-24)*t+(1-t)*22;
+ cy=clp(cy,3,cz>139?38:120);return{x:cx,y:cy,z:cz,yaw:S.yaw,pitch:S.pitch-kick*.5,fov:1.0}}      // (no corredor da porta a câmera fica abaixo da verga)
+
+// ============================================================ folha de figurinhas (H3C): cada personagem desenhado pelo 2D vira um cartaz ============================================================
+const CW=96,CH=96,COLS=4,ROWS=4,CS=2,SLN=COLS*ROWS,BS=1.05;                 // BS: cada pixel do 2D vira BS unidades do 3D (o personagem 2D tem ~28 px e o Herobrine 3D ~30 unidades)
+const AT=document.createElement('canvas');AT.width=COLS*CW*CS;AT.height=ROWS*CH*CS;const ATX=AT.getContext('2d');ATX.imageSmoothingEnabled=false;let atlas=null,rowsNow=ROWS;
+// a folha só tem as linhas que o quadro usa (sobe menos pixels para a placa de vídeo a cada quadro)
+function atRows(n){const r=clp(Math.ceil(n/COLS),1,ROWS);if(r!==rowsNow){rowsNow=r;AT.height=r*CH*CS;ATX.imageSmoothingEnabled=false}}
+const H3C=window.H3C={on:false,list:[],SF:[]};H3.AT=AT;
+const DV=[[0,-1],[-1,0],[0,1],[1,0]];                             // direção 2D (0 cima,1 esq.,2 baixo,3 dir.) → sentido no mundo 3D (X leste, Z sul)
+function prep(m){const q=m.q;if(!q||q.x===undefined)return null;
+ const x=q.x+8-RMX,z=(q.y+14-RMY)*K,dk=m.dk||'dir',d0=q[dk],A={m,q,k:m.k,x,z,y:floorAt(x,z),h3d:m.nm===NM3,dk,px:q.x,py:q.y,d0};
+ let fx0,fz0;const kind=m.k.charAt(0);
+ if(kind==='P'){fx0=sin(S.yaw);fz0=-cos(S.yaw)}
+ else if((kind==='F'&&fight)||(kind==='R'&&q.rfe)){const dx=-x,dz=BZ-z,l=hypot(dx,dz)||1;fx0=dx/l;fz0=dz/l}
+ else if(kind==='F'){fx0=sin(S.yaw);fz0=-cos(S.yaw)}
+ else{const v=DV[d0|0]||DV[2];fx0=v[0];fz0=v[1]}
+ A.fx=fx0;A.fz=fz0;A.yaw=atan2(fx0,fz0);
+ const l0=q._h3,d=l0?hypot(x-l0.x,z-l0.z):0;A.mv=(l0?l0.mv*.6:0)+(d>.08?.4:0);q._h3={x,z,mv:A.mv};
+ const C=S.cam;let vx=C.x-x,vz=C.z-z;const vl=hypot(vx,vz)||1;vx/=vl;vz/=vl;
+ const dot=fx0*vx+fz0*vz,cr=fx0*vz-fz0*vx,an=atan2(cr,dot);
+ A.dir=abs(an)<PI/4?2:abs(an)>3*PI/4?0:(cr>0?3:1);
+ return A}
+function capture(a,A,idx){const q=A.q,dk=A.dk,col=idx%COLS,row=(idx/COLS)|0,cx=col*CW,cy=row*CH;
+ ATX.save();ATX.setTransform(CS,0,0,CS,0,0);ATX.beginPath();ATX.rect(cx,cy,CW,CH);ATX.clip();ATX.clearRect(cx,cy,CW,CH);ATX.setTransform(CS,0,0,CS,cx*CS,cy*CS);
+ const sg=g,scx=cam.x,scy=cam.y,od=q[dk];g=ATX;cam.x=q.x-40;cam.y=q.y-66;q[dk]=A.dir;
+ try{a[1]()}catch(e){if(S.err++<3)console.error('H3 figurinha',A.k,e)}finally{q[dk]=od;g=sg;cam.x=scx;cam.y=scy;ATX.restore()}
+ A.uv=[(cx+16)/(COLS*CW),(cy+8)/(rowsNow*CH),(cx+80)/(COLS*CW),(cy+80)/(rowsNow*CH)];A.tex=true}
+H3C.run=function(L,f,t,SF){H3C.SF=SF;const list=H3C.list;list.length=0;let any=false,nn=0;
+ for(const a of L){const m=a[2];if(m&&nn<SLN&&!(m.k==='P'&&S.mode===1))nn++}
+ atRows(nn);
+ for(const a of L){const m=a[2];
+  if(!m){try{a[1]()}catch(e){if(S.err++<3)console.error('H3 2D',e)}continue}              // o resto do desenho 2D segue rodando (porta, estado do Demônio...), só que no canvas descartável
+  if(list.length>=SLN||(m.k==='P'&&S.mode===1))continue;
+  const A=prep(m);if(!A)continue;list.push(A);if(!A.h3d){capture(a,A,list.length-1);any=true}}
+ if(any&&atlas)H3.texUp(atlas,AT)};
+
+// ============================================================ luz nos cartazes (eles não recebem luz do motor 3D) ============================================================
+const AMB=[.17,.11,.195];
+function lightAt(x,y,z,o){let r=AMB[0],gg=AMB[1],b=AMB[2];
+ const add=l=>{const dx=l.x-x,dy=l.y-y,dz=l.z-z,a=1-(dx*dx+dy*dy+dz*dz)/(l.r*l.r);if(a>0){const w=a*a*l.k*.78;r+=l.cr*w;gg+=l.cg*w;b+=l.cb*w}};
+ for(const l of HALL.lights)add(l);for(const l of FX.L)add(l);
+ o[0]=clp(r/(1+r*.22)*1.15,.2,1.15);o[1]=clp(gg/(1+gg*.22)*1.15,.2,1.15);o[2]=clp(b/(1+b*.22)*1.15,.2,1.15);return o}
+
+// ============================================================ o Demônio ============================================================
+function bossPlan(t,C){const e=X.boss();if(!e)return null;const DM=X.DM,ax=0,ay=ALT_Y,az=BZ;
+ if(S.bossYaw===undefined)S.bossYaw=atan2(C.x-ax,C.z-az);
+ const tg=atan2(C.x-ax,C.z-az);S.bossYaw+=clp(angd(S.bossYaw,tg),-.018,.018);const lk=clp(angd(S.bossYaw,tg),-.85,.85);
+ H3.flat(H3.tex.blob,ax,ay+.25,az,52,52,null,[1,1,1,.85],false);
+ if(S.dt0!==DM.t0){S.dt0=DM.t0;S.dst={burst:0}}
+ let di=1,fl=null,kn=0,shake=0;
+ if(e.dead){const el=t-DM.t0;
+  if(DM.st==='die'&&el<3400){FX.demonDeath(ax,ay,az,t,el,S.dst||(S.dst={burst:0}));if(el>=1800)return null;
+   kn=el<700?0:min(1,(el-700)/1000);shake=el<1700?(rnd()-.5)*(el<700?4:2):0;const f=el<700?(((el/80)|0)%2?.85:.15):.25+kn*.5;fl=[1,1,1,f]}
+  else{FX.demonTimer(ax,ay,az,t);return null}}
+ else if(DM.st==='rise'){const el=t-DM.t0;if(el<1500){FX.demonRise(ax,ay,az,t,el);if(el<900)return null;const al=(el-900)/600;di=al;fl=[.04,0,.05,1-al]}}
+ if(!e.dead&&t-(e.lh||0)<55&&!fl){fl=[1,.85,.75,.17];shake=(rnd()-.5)*.8}
+ // olhos em brasa e luz vermelha
+ const fx0=sin(S.bossYaw),fz0=cos(S.bossYaw),rx0=cos(S.bossYaw),rz0=-sin(S.bossYaw),ey=ay+56-kn*14;
+ if(di>.3){for(const sd of[-1,1])H3.spr(H3.tex.glow,ax+fx0*7.2+rx0*sd*2.7,ey,az+fz0*7.2+rz0*sd*2.7,9,9,null,[1,.25,.1,.8*(.6+.4*sin(t/240))],true,0,true);
+  FX.light(ax,ay+44,az,92,[1,.22,.1],.55*(.8+.2*sin(t/300)))}
+ return()=>MOD.drawDemon({x:ax,y:ay,z:az,yaw:S.bossYaw,t,look:lk,kn,fl,di,shake},HALL.lights,FX.L)}
+
+// ============================================================ Herobrine 3D e as habilidades ============================================================
+const GL=[];                                                       // Ghasts a desenhar neste quadro
+function heroEyes(A,o,t){const fx0=sin(A.yaw),fz0=cos(A.yaw),rx0=cos(A.yaw),rz0=-sin(A.yaw),ey=A.y+(o.air||0)+(24*.95-(o.crouch||0)*5.2*.95)+3.3;
+ for(const sd of[-1,1])H3.spr(H3.tex.glow,A.x+fx0*4+rx0*sd*1.95,ey,A.z+fz0*4+rz0*sd*1.95,9,9,null,[.85,.93,1,.6],true,0,true);
+ FX.light(A.x+fx0*5,ey,A.z+fz0*5,44,[.8,.9,1],.3)}
+function heroPlan(A,t,draws){const q=A.q,sk=q.sk&&fight?q.sk:null,pose=sk?FX.heroPose(t-sk.t0):{},atk=q.atk&&t-q.atk<300?(t-q.atk)/300:0;
+ const o={x:A.x,y:A.y,z:A.z,yaw:A.yaw,t,mv:A.mv>.3?1:0,ph:A.k.length?t/120:0,atk,crouch:pose.crouch||0,air:pose.air||0,arms:pose.arms||0,point:pose.point||0,look:0};
+ H3.flat(H3.tex.blob,A.x,A.y+.25,A.z,24*(1-(o.air||0)/60),24*(1-(o.air||0)/60),null,[1,1,1,.9],false);
+ heroEyes(A,o,t);draws.push(()=>MOD.drawHero(o,HALL.lights,FX.L))}
+function skillsPlan(t,draws){
+ for(const sf of H3C.SF){const A=H3C.list.find(a=>a.q===sf.q);if(!A)continue;const hand=[A.x+A.fx*5,A.y+14,A.z+A.fz*5],e=sf.e,tgt=[0,ALT_Y+34,BZ,34];
+  if(e&&!e.dm)continue;
+  if(A.h3d){const dx=0-A.x,dz=BZ-A.z,l=hypot(dx,dz)||1,r=FX.heroSkill(sf.q,sf.t0,t,{x:A.x,y:A.y,z:A.z},{x:0,y:tgt[1],z:BZ,y0:ALT_Y},[dx/l,dz/l],S.cam);
+   if(r&&r.G)GL.push(r.G)}
+  else FX.skillGeneric(sf.S,sf.q,t-sf.t0,hand,tgt,t)}}
+
+// ============================================================ o quadro ============================================================
+const _render=render;
+render=function(){
+ if(!S.mode)return _render();
+ try{frame()}catch(e){fail(e)}};
+function fail(e){console.error('H3',e);S.err++;if(S.mode){H3C.on=false;g=G0;try{setMode(0)}catch(x){}toastS('O modo 3D deu erro e voltou para o 2D.');if(S.err>4)S.dead=true}}
+function proj(x,y,z){const m=H3.gl_frame().VP,cw=m[3]*x+m[7]*y+m[11]*z+m[15];if(cw<=.05)return null;
+ return[(((m[0]*x+m[4]*y+m[8]*z+m[12])/cw)*.5+.5)*S.cssW,(1-(((m[1]*x+m[5]*y+m[9]*z+m[13])/cw)*.5+.5))*S.cssH,cw]}
+function frame(){
+ const t=Date.now(),pf=performance.now();S.fr++;
+ S.cssW=innerWidth;S.cssH=innerHeight;
+ const C=S.cam=camNow();
+ // 1) passe 2D normal (estado do jogo, porta, Demônio...) num canvas descartável; os personagens vão para a folha de figurinhas
+ H3C.on=true;const sg=g;g=JG;try{_render()}finally{H3C.on=false;g=sg}
+ if(!S.mode)return;
+ if(!X.inRoom()){setMode(0);return}
+ fightBtnFix();
+ if(H3.isLost())return;
+ // 2) luzes e efeitos do quadro
+ FX.L.length=0;FX.flash=0;GL.length=0;FX.step(t);
+ H3.begin(C.x,C.y,C.z,C.yaw,C.pitch,C.fov);
+ HALL.flicker(t);FX.light(C.x,C.y+3,C.z,60,[1,.86,.7],.3);
+ const draws=[],bd=bossPlan(t,C);if(bd)draws.push(bd);
+ for(const A of H3C.list)if(A.h3d)heroPlan(A,t,draws);
+ skillsPlan(t,draws);FX.world(t);
+ if(rnd()<.14){const s=HALL.stakes[(rnd()*HALL.stakes.length)|0];FX.emit({x:s[0]+(rnd()-.5)*5,y:36,z:s[1]+(rnd()-.5)*5,vx:(rnd()-.5)*.15,vy:.25+rnd()*.25,vz:(rnd()-.5)*.15,g:-.002,life:1400+rnd()*900,s0:2,s1:.5,c:[1,.55,.2],a:1,drag:.995})}
+ // 3) desenho
+ HALL.draw(t,FX.L);
+ for(const d of draws)d();
+ for(const G of GL)MOD.drawGhast({x:G.x,y:G.y,z:G.z,yaw:G.yaw,t,mood:G.mood,sc:G.sc,di:G.al,ch:G.ch},HALL.lights,FX.L);
+ const lt=[1,1,1];
+ for(const A of H3C.list){if(A.h3d||!A.tex)continue;lightAt(A.x,A.y+12,A.z,lt);
+  H3.flat(H3.tex.blob,A.x,A.y+.25,A.z,34,34,null,[1,1,1,.85],false);
+  H3.spr(atlas,A.x,A.y,A.z,64*BS,72*BS,A.uv,[lt[0],lt[1],lt[2],1],false,1)}
+ FX.draw(t);HALL.sprites(t);H3.end();
+ if(S.mode===1){const pp=S.punchT?(t-S.punchT)/260:1;MOD.drawArm({ex:C.x,ey:C.y,ez:C.z,yaw:C.yaw,pitch:C.pitch,t,mv:S.moving?1:0,pu:pp<1?pp:0,fov:1.15},HALL.lights,FX.L)}
+ overlay(t,C);
+ // 4) qualidade: se o aparelho está lento, desenha o 3D em menos pixels
+ const dt=pf-S.lastT;S.lastT=pf;if(dt>0&&dt<250){S.ft+=(dt-S.ft)*.05;
+  if(S.fr%90===0){if(S.ft>27&&H3.getQ()>.4){H3.setQ(max(.4,H3.getQ()*.82))}else if(S.ft<18.5&&H3.getQ()<S.qs0-.01)H3.setQ(min(S.qs0,H3.getQ()*1.1))}}}
+function fightBtnFix(){const e=X.boss(),b=$$('fightBtn');if(!b)return;
+ const near=!fight&&!lock&&e&&!e.dead&&hypot(S.px,S.pz)<92;b.style.display=near?'block':'none';b._e=near?e:null;b.classList.toggle('dis',!equipped.length)}
+
+// ============================================================ texto por cima: números de dano, nomes, cronômetro, clarões ============================================================
+function overlay(t,C){
+ const cw=S.cssW,ch=S.cssH,dpr=min(2,window.devicePixelRatio||1);if(ovc.width!==round(cw*dpr)||ovc.height!==round(ch*dpr)){ovc.width=round(cw*dpr);ovc.height=round(ch*dpr)}
+ const x=ovx;x.setTransform(dpr,0,0,dpr,0,0);x.clearRect(0,0,cw,ch);
+ const sc=ch/221,e=X.boss(),DM=X.DM;
+ // clarões de tela (explosão da morte do Demônio, raio do Herobrine)
+ let fa=FX.flash||0;if(DM.st==='die'){const el=t-DM.t0;if(el>1700&&el<2100)fa=max(fa,.85*(1-(el-1700)/400))}
+ if(fa>.01){x.fillStyle='rgba(255,244,228,'+min(.9,fa).toFixed(3)+')';x.fillRect(0,0,cw,ch)}
+ // mira
+ if(S.mode===1){x.strokeStyle='rgba(255,255,255,.55)';x.lineWidth=1.5;const cx=cw/2,cy=ch/2;x.beginPath();x.moveTo(cx-6,cy);x.lineTo(cx-2,cy);x.moveTo(cx+2,cy);x.lineTo(cx+6,cy);x.moveTo(cx,cy-6);x.lineTo(cx,cy-2);x.moveTo(cx,cy+2);x.lineTo(cx,cy+6);x.stroke()}
+ // números e nomes das habilidades (a lista fx do jogo; o passe 2D já cuida de apagar os velhos)
+ x.textAlign='center';x.textBaseline='middle';x.lineJoin='round';
+ for(let i=0;i<fx.length;i++){const q=fx[i],a=t-q.t,life=q.lbl?1500:1000;if(a>life||a<0)continue;
+  let wx,wy,wz;
+  if(q.lbl){let best=null,bd=20;for(const A of H3C.list){const d=hypot(A.px-(q.x+14),A.py-(q.y+12));if(d<bd){bd=d;best=A}}if(!best)continue;wx=best.x;wz=best.z;wy=best.y+(best.h3d?34:30)}
+  else if(e&&e.dm&&abs(q.x-(e.x+4))<24&&q.y<e.y+4){wx=(q.x-(e.x+4))*.8;wy=ALT_Y+70;wz=BZ}
+  else{wx=q.x+8-RMX;wz=(q.y+14-RMY)*K;wy=34}
+  const p=proj(wx,wy,wz);if(!p)continue;
+  const size=(q.lbl?7:q.big?9:8)*sc*clp(95/p[2],.75,1.5),al=q.lbl?(a>1100?max(0,(1500-a)/400):1):(a>700?1-(a-700)/300:1),yy=p[1]-a/(q.lbl?90:60)*sc*1.25;
+  x.font='bold '+size.toFixed(1)+'px "Courier New",monospace';x.globalAlpha=al;x.lineWidth=max(2,size*.28);x.strokeStyle='#000';x.strokeText(q.s,p[0],yy);x.fillStyle=q.c;x.fillText(q.s,p[0],yy)}
+ x.globalAlpha=1;
+ // cronômetro do Demônio morto (mesmo visual do 2D)
+ if(e&&e.dead&&DM.tm&&DM.st==='dead'){const p=proj(0,ALT_Y+24,BZ);if(p){const txt=DM.tm.txt,size=9*sc*clp(120/p[2],.8,1.6);x.font='bold '+size.toFixed(1)+'px "Courier New",monospace';const w=x.measureText(txt).width+size*1.4,h=size*1.5;
+  x.fillStyle='rgba(10,2,6,.78)';x.fillRect(p[0]-w/2,p[1]-h/2,w,h);x.fillStyle='#ff7a2a';x.fillRect(p[0]-w/2,p[1]-h/2,w,2);x.fillRect(p[0]-w/2,p[1]+h/2-2,w,2);x.fillStyle='#ff9a3a';x.fillText(txt,p[0],p[1]+1)}}}
+
+// ============================================================ Herobrine 3D: só funciona no Salão do Demônio ============================================================
+// É outro personagem (nome "Herobrine 3D") que só se consegue no painel de ADM. Fora do salão ele não luta: se estiver equipado, sai da equipe.
+// No 2D (dentro do salão) ele aparece e usa a habilidade como o Herobrine de sempre; no 3D ele vira o modelo 3D com a habilidade completa (Ghast, bola de fogo, explosão).
+try{if(typeof HIMG!=='undefined'&&HIMG.Herobrine){HIMG[NM3]=HIMG.Herobrine;if(typeof HDAT!=='undefined')HDAT[NM3]=HDAT.Herobrine;HX[NM3]=HX.Herobrine;if(HS.Herobrine)HS[NM3]=HS.Herobrine;if(typeof SKSND!=='undefined'&&SKSND.Herobrine)SKSND[NM3]=SKSND.Herobrine}
+ if(X.SK.Herobrine)X.SK[NM3]=X.SK.Herobrine}catch(e){console.error('H3 alias',e)}
+{const _ds=drawSp;drawSp=function(c,rar,dir,sh,name){return _ds.call(this,c,rar,dir,sh,name===NM3?'Herobrine':name)}}      // o cartão e o ícone usam o busto do Herobrine
+const isH3D=k=>!!k&&k.name===NM3;
+let warnT=0;
+function enforceH3D(){if(!equipped.length||(X.inRoom()&&world===0))return;
+ const bad=equipped.filter(id=>isH3D(chars.find(c=>c.id===id)));if(!bad.length)return;
+ equipped=equipped.filter(id=>!bad.includes(id));bad.forEach(id=>{delete fpos[id]});fight=fight&&equipped.length?fight:null;
+ const n=Date.now();if(n-warnT>2500){warnT=n;toastS('O Herobrine 3D só funciona no Salão do Demônio.')}
+ try{save()}catch(e){}try{if($$('invM').style.display==='flex')renderInv()}catch(e){}}
+{const b=$$('eqBest');if(b){b.onclick=()=>{const hall=X.inRoom()&&world===0,best=chars.filter(k=>hall||!isH3D(k)).sort((a,c)=>dmgOf(c)-dmgOf(a)).slice(0,maxEq()).map(k=>k.id);
+  equipped.forEach(id=>{if(!best.includes(id))delete fpos[id]});equipped=best;save();renderInv()}}}
+H3.isH3D=isH3D;
 })();
 </script>
 <script>
