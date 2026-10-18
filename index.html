@@ -190,24 +190,25 @@ body.shake{animation:mShake .12s 8}
 .sb.on{background:#11111a;color:#ffe84a;box-shadow:inset 0 0 0 2px #ffe84a}
 .invstats{display:flex;justify-content:space-between;padding:8px 18px 4px;font-weight:bold;font-size:13px;color:#b9b9c4}
 .invstats b{color:#ffd23f;margin-left:10px}
-.invbox #grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px;padding:6px 16px;margin:0;overflow-y:auto;flex:1;min-height:90px;-webkit-overflow-scrolling:touch}
-.fc.it{position:relative;padding:0;border:3px solid var(--c);background:var(--c);border-radius:10px;overflow:hidden;font-size:11px}
-.fc .pic{position:relative;background:radial-gradient(circle,#1d1d26 0,#050508 80%);border-radius:7px 7px 0 0;aspect-ratio:1/1;display:flex;align-items:center;justify-content:center}
-.fc .pic canvas{width:68%;height:auto;aspect-ratio:1/1;margin:0;display:block;filter:drop-shadow(0 3px 0 #0008)}
-.fc .nm{padding:2px 2px 3px;font-weight:900;color:#fff;text-shadow:0 1px 0 #000,1px 0 0 #000,-1px 0 0 #000;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center}
-.fc .lv{position:absolute;left:3px;top:2px;font-size:10px;font-weight:900;color:#fff;text-shadow:0 1px 2px #000,0 0 3px #000}
-.fc .ps{position:absolute;left:3px;bottom:1px;font-size:12px}
-.fc .ck{position:absolute;right:2px;top:-4px;font-size:26px;font-weight:900;color:#2dff55;text-shadow:0 2px 0 #000,2px 0 0 #000,-2px 0 0 #000}
-.invbtns{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;padding:8px 12px 12px}
-.invbtns .btn{flex:1 1 auto;font-size:15px;font-weight:900;padding:9px 12px;border:3px solid #0b1233;border-radius:10px;box-shadow:0 0 0 2px #ffffffaa,0 3px 0 #0008;min-width:110px}
+.invbox #grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:6px;padding:6px 14px;margin:0;overflow-y:auto;flex:1;min-height:90px;-webkit-overflow-scrolling:touch}
+.fc.it{position:relative;padding:0;border:2px solid var(--c);background:var(--c);border-radius:8px;overflow:hidden;font-size:10px}
+.fc .pic{position:relative;background:radial-gradient(circle,#1d1d26 0,#050508 80%);border-radius:6px 6px 0 0;aspect-ratio:1/1;display:flex;align-items:center;justify-content:center}
+.fc .pic canvas{width:68%;height:auto;aspect-ratio:1/1;margin:0;display:block;filter:drop-shadow(0 2px 0 #0008)}
+.fc .nm{padding:2px 2px 3px;font-weight:900;color:#fff;text-shadow:0 1px 0 #000,1px 0 0 #000,-1px 0 0 #000;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center}
+.fc .lv{position:absolute;left:2px;top:1px;font-size:9px;font-weight:900;color:#fff;text-shadow:0 1px 2px #000,0 0 3px #000}
+.fc .ps{position:absolute;left:2px;bottom:0;font-size:10px}
+.fc .ck{position:absolute;right:1px;top:-3px;font-size:20px;font-weight:900;color:#2dff55;text-shadow:0 2px 0 #000,2px 0 0 #000,-2px 0 0 #000}
+.invbtns{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;padding:6px 10px 8px}
+.invbtns .btn{flex:1 1 auto;font-size:12.5px;font-weight:900;padding:7px 8px;border:2px solid #0b1233;border-radius:9px;box-shadow:0 0 0 2px #ffffffaa,0 2px 0 #0008;min-width:0}
 .invbox .xb{position:absolute;top:5px;right:8px;float:none;margin:0;width:42px;height:42px;font-size:20px;border:3px solid #fff;background:radial-gradient(circle at 35% 30%,#ff5a4d,#b01616);z-index:6}
 
 /* fix cards colapsados */
 .invbox #grid{grid-auto-rows:max-content;align-content:start}
 .fc.it{height:auto;min-height:0;display:block}
-.fc .pic{aspect-ratio:auto;height:0;padding-top:100%;display:block}
-.fc .pic canvas{position:absolute;left:16%;top:16%;width:68%;height:68%;aspect-ratio:auto}
-.fc .nm{min-height:20px;line-height:20px;padding:0 2px}
+.fc .pic{aspect-ratio:auto;height:0;padding-top:100%;padding-top:round(down,100%,1px);display:block}
+.fc .pic canvas{position:absolute;left:11%;top:11%;width:78%;height:auto;aspect-ratio:1/1}
+.fc .nm{min-height:16px;line-height:16px;padding:0 2px}
+.fc .nm.sm{font-size:9px;letter-spacing:-.3px}
 
 /* ===== popup do lutador ===== */
 #popM{background:#000a;z-index:8}
@@ -1625,7 +1626,7 @@ function renderInv(){invInfo();
  const list=chars.slice().sort((a,b)=>(equipped.includes(b.id)-equipped.includes(a.id))||key(a,b));
  document.querySelectorAll('#invM .sb').forEach(b=>b.classList.toggle('on',b.dataset.s===invSort));
  $('grid').innerHTML=list.length?list.map(k=>{const on=equipped.includes(k.id),col=COL[k.rar]||'#ff4fd8',pa=PAS[k.pas];
-  return `<div class="it fc${k.sh?' shn':''}" data-id="${k.id}" style="--c:${col}"><div class="pic"><canvas class="sp" data-r="${k.rar}" width="12" height="12"></canvas><span class="lv">Nv${k.lvl}</span>${pa?`<span class="ps">P</span>`:''}${on?'<span class="ck">✓</span>':''}</div><div class="nm">${k.sh?'✦ ':''}${escH(k.name)}</div></div>`}).join(''):'<div style="grid-column:1/-1;opacity:.6;padding:16px;text-align:center">Vazio. Gire a roleta na estrela!</div>';
+  return `<div class="it fc${k.sh?' shn':''}" data-id="${k.id}" style="--c:${col}"><div class="pic"><canvas class="sp" data-r="${k.rar}" width="12" height="12"></canvas><span class="lv">Nv${k.lvl}</span>${pa?`<span class="ps">P</span>`:''}${on?'<span class="ck">✓</span>':''}</div><div class="nm${k.name.length+(k.sh?2:0)>11?' sm':''}">${k.sh?'✦ ':''}${escH(k.name)}</div></div>`}).join(''):'<div style="grid-column:1/-1;opacity:.6;padding:16px;text-align:center">Vazio. Gire a roleta na estrela!</div>';
  paint('#grid',k=>openDet(k.id))}
 document.querySelectorAll('#invM .sb').forEach(b=>b.onclick=()=>{invSort=b.dataset.s;renderInv()});
 $('unAll').onclick=()=>{equipped.forEach(id=>delete fpos[id]);equipped=[];fight=null;save();renderInv()};
