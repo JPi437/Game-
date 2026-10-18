@@ -9711,6 +9711,7 @@ function css(){const st=document.createElement('style');st.textContent=`
 #persBtn{position:fixed;left:calc(162px + env(safe-area-inset-left,0px));bottom:calc(26px + env(safe-area-inset-bottom,0px));z-index:3;display:none;background:linear-gradient(#7e57c2,#4527a0);padding:5px 12px;line-height:1.05;min-width:100px;text-align:center}
 #persBtn small{display:block;font-size:9px;opacity:.85;letter-spacing:.3px}#persBtn b{display:block;font-size:15px}
 #h3gl,#h3ov{position:fixed;inset:0;width:100%;height:100%;display:none}#h3gl{image-rendering:pixelated;touch-action:none;background:#050308}#h3ov{pointer-events:none}
+@media (pointer:fine){#spinBtn::after,#talkBtn::after{content:' [E]';opacity:.75;font-size:.8em}}
 body.h3on #c{visibility:hidden}body.h3on #h3gl,body.h3on #h3ov{display:block}`;document.head.appendChild(st)}
 function mkBtn(){if(btn)return;css();btn=document.createElement('button');btn.className='btn';btn.id='persBtn';btn.innerHTML='<small>Perspectiva</small><b>2D</b>';document.body.appendChild(btn);
  btn.addEventListener('click',e=>{e.preventDefault();setMode((S.mode+1)%3)})}
@@ -9743,6 +9744,7 @@ function enter3D(sc){
  const qs=clp(720/max(1,innerWidth),.35,1);S.qs0=qs;H3.setQ(qs);S.ft=16;S.lastT=0;
  document.body.classList.add('h3on');FX.clear();if(sc.clear)sc.clear();return true}
 function leave3D(){
+ if(document.exitPointerLock&&document.pointerLockElement)document.exitPointerLock();
  H3C.fld=false;H3C.far=0;document.body.classList.remove('h3on');if(SC&&SC.leave)SC.leave();
  if(S.osv){for(let i=0;i<S.osv.length;i++){OFF[i][0]=S.osv[i][0];OFF[i][1]=S.osv[i][1]}S.osv=null}
  g=G0;P.x=round(P.x);P.y=round(P.y);unstick();         // posição inteira de novo (o 2D anda de 1 em 1 pixel)
@@ -9770,19 +9772,26 @@ function setMode(m){
  if(was&&!m)leave3D();
  S.mode=H3.mode=m;if(btn)btn.querySelector('b').textContent=LABEL[m];
  if(m){S.cam.yaw=S.yaw;if(was!==m)S.pitch=m===2?(SC&&SC.p3!==undefined?SC.p3:-.26):0}
- if(m&&!S.hint){S.hint=1;toastS('Arraste a tela para olhar · joystick para andar · toque para bater')}
+ if(m&&!S.hint){S.hint=1;toastS(matchMedia('(pointer:fine)').matches?'Mouse: olhar · WASD: andar · clique/espaço: bater · R: perspectiva · E: interagir · ESC solta o mouse':'Arraste a tela para olhar · joystick para andar · toque para bater')}
  else if(m!==was)toastS('Perspectiva: '+LABEL[m])}
 H3.onLost=()=>{if(S.mode){setMode(0);toastS('Os gráficos 3D foram interrompidos. Voltei para o 2D.')}};
 H3.onRestore=()=>{S.built=false;MOD.free();FX.free();for(const k in SCN)if(SCN[k].free)SCN[k].free();S.dead=false};
 
 // ============================================================ arrastar para olhar · tocar para bater ============================================================
-let lp=null;
-function pd(e){if(!S.mode||lp)return;lp={id:e.pointerId,x:e.clientX,y:e.clientY,x0:e.clientX,y0:e.clientY,t:Date.now(),mv:0};try{glc.setPointerCapture(e.pointerId)}catch(x){}e.preventDefault()}
+let lp=null,glcLock=null;
+function pd(e){if(!S.mode||lp)return;
+ if(e.pointerType==='mouse'&&document.pointerLockElement!==glc&&glc.requestPointerLock){try{glc.requestPointerLock()}catch(x){}e.preventDefault();return}      // PC: o primeiro clique prende o mouse (ESC solta)
+lp={id:e.pointerId,x:e.clientX,y:e.clientY,x0:e.clientX,y0:e.clientY,t:Date.now(),mv:0};try{glc.setPointerCapture(e.pointerId)}catch(x){}e.preventDefault()}
 function pm(e){if(!lp||e.pointerId!==lp.id)return;const dx=e.clientX-lp.x,dy=e.clientY-lp.y;lp.x=e.clientX;lp.y=e.clientY;lp.mv=max(lp.mv,hypot(e.clientX-lp.x0,e.clientY-lp.y0));
  const pl=SC.pl[S.mode-1];S.yaw+=dx*.0056;S.pitch=clp(S.pitch-dy*.0046,pl[0],pl[1]);e.preventDefault()}
+document.addEventListener('mousemove',e=>{if(!S.mode||!glc||document.pointerLockElement!==glc||!SC)return;const pl=SC.pl[S.mode-1];S.yaw+=e.movementX*.0026;S.pitch=clp(S.pitch-e.movementY*.0022,pl[0],pl[1])});
+glcLock=()=>{if(glc&&glc.requestPointerLock&&matchMedia('(pointer:fine)').matches){try{glc.requestPointerLock()}catch(x){}}};
 function pu(e){if(!lp||e.pointerId!==lp.id)return;const tap=lp.mv<14&&Date.now()-lp.t<500;lp=null;try{glc.releasePointerCapture(e.pointerId)}catch(x){}
  if(tap&&SC&&SC.tap&&!lock){try{if(SC.tap(e.clientX,e.clientY))return}catch(x){}}                       // tocar no quadro de ranking (Caverna de Gelo)
  if(tap&&fight&&!lock){try{punch()}catch(x){}}}
+addEventListener('keydown',e=>{const t=e.target,tg=t&&t.tagName;if(tg==='INPUT'||tg==='TEXTAREA'||(t&&t.isContentEditable)||e.ctrlKey||e.metaKey||e.altKey)return;const k=e.key.toLowerCase();
+ if(k==='r'&&!e.repeat&&btn&&btn._on&&!S.ld){e.preventDefault();const n=(S.mode+1)%3;setMode(n);if(n&&glcLock)glcLock();if(!n&&document.exitPointerLock)document.exitPointerLock();return}
+ if(k==='e'&&!e.repeat){for(const id of['spinBtn','pasBtn','talkBtn']){const b=$$(id);if(b&&getComputedStyle(b).display!=='none'&&!b.disabled){e.preventDefault();if(document.exitPointerLock)document.exitPointerLock();b.click();return}}}});
 addEventListener('keydown',e=>{if(S.mode&&(e.key===' ')&&fight&&!lock){e.preventDefault();try{punch()}catch(x){}}});
 {const _p=punch;punch=function(){const r=_p.apply(this,arguments);if(S.mode&&fight)S.punchT=Date.now();return r}}
 {const _rw=rsWatch;rsWatch=function(dt){if(S.mode)return;return _rw(dt)}}                  // o 3D é mais pesado: não deixa o jogo baixar a resolução do 2D por causa dele
@@ -9797,7 +9806,7 @@ function updOff(){const rx=cos(S.yaw),rz=sin(S.yaw),bx=-sin(S.yaw),bz=cos(S.yaw)
  sl=S.mode===1?[[-22,14],[22,14],[-13,34],[13,34]]:[[-25,-2],[25,-2],[-15,-22],[15,-22]];      // 1ª pessoa: a equipe fica atrás de você · 3ª pessoa: ao redor, à frente da câmera
  for(let i=0;i<4;i++){OFF[i][0]=rx*sl[i][0]+bx*sl[i][1];OFF[i][1]=(rz*sl[i][0]+bz*sl[i][1])/SC.K}}
 function move3(){
- S.yaw+=((keys.e?1:0)-(keys.q?1:0))*.045;S.moving=false;
+ S.moving=false;
  if(!(lock||window.HALF||(world===0&&window.__gen))){const m=hypot(jx,jy);
   if(m>.2){const len=min(1,m*1.15),fw=-jy/m,sd=jx/m,dx=sd*cos(S.yaw)+fw*sin(S.yaw),dz=sd*sin(S.yaw)-fw*cos(S.yaw),sp=mspd()*len;
    step3(dx*sp,dz*sp);S.moving=true;P.step++}}
