@@ -12511,7 +12511,7 @@ const mixc=(a,b,t)=>{a=C3(a);b=C3(b);return[lerp(a[0],b[0],t),lerp(a[1],b[1],t),
 const pick=(r,a)=>a[floor(r()*a.length)];
 
 // ---------- clima: noite de lua, névoa densa ----------
-const FOG=[.088,.082,.118,.0062],AMB_T=[.17,.18,.27],AMB_B=[.045,.04,.065];
+const FOG=[.1,.068,.15,.0062],AMB_T=[.25,.16,.36],AMB_B=[.065,.04,.09];
 const CHS=192;                                         // lado de cada pedaço do mapa (unidades)
 const DRAW=430;                                        // além disto a névoa já engoliu tudo
 const CX=1184,FZ=480;                                  // pés da fachada da Catedral (centro e frente)
@@ -12946,9 +12946,9 @@ function* gen(gl){
  {const h1=new MB(31);h1.box(2,11,.6,'#1a1446',0,true);HV.dyn.hour=h1.build(gl);const h2=new MB(32);h2.box(1.4,16,.6,'#1a1446',0,true);HV.dyn.min=h2.build(gl);
   const st=new MB(33);const pts=[];for(let i=0;i<10;i++){const a=i/10*TAU,rr=i%2?3.4:8;pts.push([sin(a)*rr,cos(a)*rr])}for(let i=0;i<10;i++){const a=pts[i],b=pts[(i+1)%10];for(const z of[1.6,-1.6])st.tri([0,0,z*1.4],[a[0],a[1],z],[b[0],b[1],z],'#ffd23f',.85);st.quad([a[0],a[1],1.6],[b[0],b[1],1.6],[b[0],b[1],-1.6],[a[0],a[1],-1.6],'#e8a81a',.7)}HV.dyn.star=st.build(gl);
   const mo=new MB(34);const f=FOG,toC=v=>round(255*v/(1-.22*v));const halo=[toC(f[0]),toC(f[1]),toC(f[2])];
-  for(let i=0;i<28;i++){const a0=i/28*TAU,a1=(i+1)/28*TAU;mo.wt([0,0,0],[cos(a0)*60,sin(a0)*60,0],[cos(a1)*60,sin(a1)*60,0],[90,88,108],halo,halo);
-   mo.wt([0,0,.5],[cos(a0)*22,sin(a0)*22,.5],[cos(a1)*22,sin(a1)*22,.5],[236,234,244],[214,212,226],[214,212,226])}
-  for(let k=0;k<6;k++){const a=k*1.7,d=6+k*2.2,rr=2+k%3;for(let i=0;i<8;i++){const b0=i/8*TAU,b1=(i+1)/8*TAU;mo.wt([cos(a)*d,sin(a)*d,1],[cos(a)*d+cos(b0)*rr,sin(a)*d+sin(b0)*rr,1],[cos(a)*d+cos(b1)*rr,sin(a)*d+sin(b1)*rr,1],[196,194,210],[196,194,210],[196,194,210])}}
+  for(let i=0;i<28;i++){const a0=i/28*TAU,a1=(i+1)/28*TAU;mo.wt([0,0,0],[cos(a0)*95,sin(a0)*95,0],[cos(a1)*95,sin(a1)*95,0],[170,95,255],halo,halo);
+   mo.wt([0,0,.5],[cos(a0)*22,sin(a0)*22,.5],[cos(a1)*22,sin(a1)*22,.5],[250,232,255],[224,190,255],[224,190,255])}
+  for(let k=0;k<6;k++){const a=k*1.7,d=6+k*2.2,rr=2+k%3;for(let i=0;i<8;i++){const b0=i/8*TAU,b1=(i+1)/8*TAU;mo.wt([cos(a)*d,sin(a)*d,1],[cos(a)*d+cos(b0)*rr,sin(a)*d+sin(b0)*rr,1],[cos(a)*d+cos(b1)*rr,sin(a)*d+sin(b1)*rr,1],[200,165,240],[200,165,240],[200,165,240])}}
   const A=mo.a;for(let i=0;i<A.length;i+=10)A[i+9]=1;HV.dyn.moon=mo.build(gl)}
  mkTex();
  HV.ready=true;HV.pct=1;return 1}
@@ -12996,7 +12996,7 @@ function sprites(t){const T=H3.tex,C=H3.S.cam,F=H3.S.foc||C;if(!T||!TX)return;
  for(let i=0;i<9;i++){const a=t/2600*(i%2?1:-1)+i*.7,rr=70+i*14,x=CX+cos(a)*rr,z=FZ-180+sin(a)*rr*.8,y=280+sin(t/700+i)*30+i*8,fl=sin(t/70+i*3)>0?1:.4;
   H3.spr(T.dot,x,y,z,7,3*fl+1,null,[.02,.02,.04,.9],false,0,false)}
  // neblina rasteira: camadas até a cintura do personagem, que andam com o vento
- const fx=F.x,fz=F.z,G=64,R=300,wx=t*.004,wz=t*.0022,fc=[.5,.5,.62];
+ const fx=F.x,fz=F.z,G=64,R=300,wx=t*.004,wz=t*.0022,fc=[.56,.44,.72];
  for(let li=0;li<5;li++){const y=1.5+li*3.2,al=.095-li*.011,ox=(wx*(1+li*.25))%G,oz=(wz*(1+li*.2))%G;
   const i0=floor((fx-R)/G),i1=floor((fx+R)/G),j0=floor((fz-R)/G),j1=floor((fz+R)/G);
   for(let j=j0;j<=j1;j++)for(let i=i0;i<=i1;i++){const x=i*G+ox+(li%2)*G*.5,z=j*G+oz+(li%2)*G*.5,dx=x-fx,dz=z-fz;if(dx*dx+dz*dz>R*R)continue;
@@ -13009,7 +13009,7 @@ function hsl(h){const f=(n,k=(n+h/30)%12)=>.5-.5*max(-1,min(k-3,9-k,1));return[f
 // ============================================================ a cena ============================================================
 const SCN=H3.scenes=H3.scenes||{};
 const blockedCam=(x,z)=>x<4||z<4||x>2364||z>1788||(x>CX-220&&x<CX+220&&z<FZ-2&&!(abs(x-CX)<36&&z>FZ-38));
-SCN.hal={id:'hal',K:1,OX:0,OY:0,eye:25,camD:88,p3:-.16,pl:[[-.95,.9],[-1.0,.45]],amb:[.36,.36,.48],camLight:[.75,.75,.95],iso:false,
+SCN.hal={id:'hal',K:1,OX:0,OY:0,eye:25,camD:88,p3:-.16,pl:[[-.95,.9],[-1.0,.45]],amb:[.42,.32,.56],camLight:[.75,.75,.95],iso:false,
  get fx(){return typeof fight!=='undefined'&&fight?fight.x+8:0},get fz(){return typeof fight!=='undefined'&&fight?fight.y+14:0},
  get lights(){return HV.lights},
  active:()=>world===1&&!!window.HAL&&HAL.ready&&!HAL.inside&&!HAL.tr&&!HV.err,
