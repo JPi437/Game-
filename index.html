@@ -13364,7 +13364,7 @@ function menuOverlay(t){R('#000',0,0,W,H);
    'PC: A/D portas · Q/E luzes · Espaço câmeras.'];
   L.forEach((s,i)=>t2(s,36,63+i*15,i===3?'#ff8a7a':'#fff',7.5,'left','s'));
   if(LY.map)t2('Prédio 3D: "Fnaf 1 Map" de skylajade69 (sketchfab.com) · licença CC BY 4.0',200,186,'#aaa',6,'center','s');btn(150,200,100,16,'Voltar');return}
- t2('Pizzaria',18,14,'#fff',15,'left');t2('do Pixel',18,32,'#fff',15,'left');
+
  const it=[['New Game',62,16],['Continue',96,16]];if(p.w>=5)it.push(['6th Night',140,16]);
  S.msel=S.msel||'Continue';
  for(const[l,y,sz]of it){t2(l,44,y,'#fff',sz,'left');X.font='bold '+sz+'px '+F;UI.push({x:40,y:y-2,w:X.measureText(l).width+12,h:sz+6,label:l});if(S.msel===l)t2('>>',18,y,'#fff',sz,'left')}
