@@ -9055,10 +9055,11 @@ let camR=[1,0,0],camU=[0,1,0],camP=[0,0,0];
 H3.cam=()=>({r:camR,u:camU,p:camP});
 // cartaz de frente para a câmera: centro (x,y,z) · largura w, altura h · âncora: 0 = centro, 1 = pés (base) no ponto · uv = [u0,v0,u1,v1] · cor rgba 0..1
 // sph = true gira junto com a câmera (partículas); false = fica em pé e só gira em volta do eixo Y (personagens)
-function spr(t,x,y,z,w,h,uv,rgba,add,anch,sph){const dx=x-camP[0],dy=y-camP[1],dz=z-camP[2],d2=dx*dx+dy*dy+dz*dz;let c=rgba||[1,1,1,1];
+// xr > 0: o cartaz também aparece "através" do que estiver na frente dele (o personagem atrás de uma árvore ou casa fica visível, meio transparente)
+function spr(t,x,y,z,w,h,uv,rgba,add,anch,sph,xr){const dx=x-camP[0],dy=y-camP[1],dz=z-camP[2],d2=dx*dx+dy*dy+dz*dz;let c=rgba||[1,1,1,1];
  // partículas coladas na câmera somem aos poucos (senão um floco de neve ou fagulha que passa rente vira um borrão que cobre a tela)
  if(sph&&d2<900){const d=sqrt(d2);if(d<5)return;c=[c[0],c[1],c[2],c[3]*(d-5)/25]}
- SL.push({t,x,y,z,w,h,uv:uv||[0,0,1,1],c,add:add?1:0,an:anch||0,sph:!!sph,d:d2,rot:0})}
+ SL.push({t,x,y,z,w,h,uv:uv||[0,0,1,1],c,add:add?1:0,an:anch||0,sph:!!sph,d:d2,rot:0,xr:xr||0})}
 // quadrado deitado no chão (sombras, anéis de choque): centro (x,y,z), lados w x d, girado de rot em torno de Y
 function flat(t,x,y,z,w,d,uv,rgba,add,rot){SL.push({t,x,y,z,w,h:d,uv:uv||[0,0,1,1],c:rgba||[1,1,1,1],add:add?1:0,fl:true,rot:rot||0,d:(x-camP[0])**2+(y-camP[1])**2+(z-camP[2])**2-(add?1e6:0)})}
 // faixa de luz de a até b (raios, feixes, rastros): fica de frente para a câmera; w = largura
@@ -9070,10 +9071,11 @@ function flushSprites(fogv){
  gl.bindBuffer(gl.ARRAY_BUFFER,sbuf);gl.enableVertexAttribArray(0);gl.enableVertexAttribArray(1);gl.enableVertexAttribArray(2);
  gl.vertexAttribPointer(0,3,gl.FLOAT,false,36,0);gl.vertexAttribPointer(1,2,gl.FLOAT,false,36,12);gl.vertexAttribPointer(2,4,gl.FLOAT,false,36,20);
  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,sidx);gl.depthMask(false);
- for(const pass of[0,1]){
-  const L=SL.filter(s=>s.add===pass);if(!L.length)continue;
-  if(!pass)L.sort((a,b)=>b.d-a.d);
-  gl.blendFunc(pass?gl.ONE:gl.SRC_ALPHA,pass?gl.ONE:gl.ONE_MINUS_SRC_ALPHA);gl.uniform1f(U.sAdd,pass);
+ for(const pass of[0,1,2]){                            // 0 = normais · 1 = brilhos (soma) · 2 = "raio-x": só as partes escondidas atrás de algo
+  const L=pass<2?SL.filter(s=>s.add===pass):SL.filter(s=>s.xr>0&&!s.add);if(!L.length)continue;
+  if(pass!==1)L.sort((a,b)=>b.d-a.d);
+  const ad=pass===1?1:0;if(pass===2)gl.depthFunc(gl.GREATER);
+  gl.blendFunc(ad?gl.ONE:gl.SRC_ALPHA,ad?gl.ONE:gl.ONE_MINUS_SRC_ALPHA);gl.uniform1f(U.sAdd,ad);
   let n=0,run=0,cur=null;
   const flush=()=>{if(!n)return;gl.bindTexture(gl.TEXTURE_2D,cur.t);gl.bufferSubData(gl.ARRAY_BUFFER,0,SV.subarray(0,n*36));gl.drawElements(gl.TRIANGLES,n*6,gl.UNSIGNED_SHORT,0);n=0};
   for(let i=0;i<L.length;i++){const s=L[i];if(cur!==s.t||n>=MAXS-1){flush();cur=s.t}
@@ -9086,11 +9088,12 @@ function flushSprites(fogv){
     const o=n*36,q=[[-hw,-hd,s.uv[0],s.uv[1]],[hw,-hd,s.uv[2],s.uv[1]],[hw,hd,s.uv[2],s.uv[3]],[-hw,hd,s.uv[0],s.uv[3]]];
     for(let k=0;k<4;k++){const a=q[k][0],b=q[k][1],j=o+k*9;SV[j]=cx+rx*a+ux*b;SV[j+1]=cy;SV[j+2]=cz+rz*a+uz*b;SV[j+3]=q[k][2];SV[j+4]=q[k][3];SV[j+5]=s.c[0];SV[j+6]=s.c[1];SV[j+7]=s.c[2];SV[j+8]=s.c[3]}n++;continue}
    rx=camR[0];ry=camR[1];rz=camR[2];if(s.sph){ux=camU[0];uy=camU[1];uz=camU[2]}else{ux=0;uy=1;uz=0}
+   const sc=pass===2?[s.c[0]*.7+.32,s.c[1]*.7+.28,s.c[2]*.7+.42,s.xr]:s.c;
    const hw=s.w/2,y0=s.an?0:-s.h/2,y1=y0+s.h,o=n*36,
     q=[[-hw,y0,s.uv[0],s.uv[3]],[hw,y0,s.uv[2],s.uv[3]],[hw,y1,s.uv[2],s.uv[1]],[-hw,y1,s.uv[0],s.uv[1]]];
-   for(let k=0;k<4;k++){const a=q[k][0],b=q[k][1],j=o+k*9;SV[j]=cx+rx*a+ux*b;SV[j+1]=cy+ry*a+uy*b;SV[j+2]=cz+rz*a+uz*b;SV[j+3]=q[k][2];SV[j+4]=q[k][3];SV[j+5]=s.c[0];SV[j+6]=s.c[1];SV[j+7]=s.c[2];SV[j+8]=s.c[3]}
+   for(let k=0;k<4;k++){const a=q[k][0],b=q[k][1],j=o+k*9;SV[j]=cx+rx*a+ux*b;SV[j+1]=cy+ry*a+uy*b;SV[j+2]=cz+rz*a+uz*b;SV[j+3]=q[k][2];SV[j+4]=q[k][3];SV[j+5]=sc[0];SV[j+6]=sc[1];SV[j+7]=sc[2];SV[j+8]=sc[3]}
    n++}
-  flush()}
+  flush();if(pass===2)gl.depthFunc(gl.LEQUAL)}
  gl.depthMask(true);SL.length=0}
 
 // ---------- contexto ----------
@@ -10086,7 +10089,8 @@ function camNow(){
  const d=SC.camD,cp=cos(S.pitch),fx0=sin(S.yaw)*cp,fy0=sin(S.pitch),fz0=-cos(S.yaw)*cp,ty=gy+24+jh*.7-land;
  let cx=x-fx0*d,cy=ty-fy0*d,cz=z-fz0*d;
  // a câmera de trás do personagem não atravessa a parede: anda do personagem até o ponto ideal e para onde sairia da arena (o corredor da porta também vale)
- if(SC.camOk){const ok=SC.camOk(z);let t=1;for(let i=1;i<=16;i++){const u=i/16;if(!ok(x+(cx-x)*u,z+(cz-z)*u)){t=(i-1)/16;break}}
+ // SC.camFar: a câmera fica no ponto livre mais longe (pode ficar atrás de uma casa; o personagem aparece através dela) e só não entra dentro das coisas
+ if(SC.camOk){const ok=SC.camOk(z);let t=1;if(SC.camFar){t=0;for(let i=16;i>=1;i--){const u=i/16;if(ok(x+(cx-x)*u,z+(cz-z)*u)){t=u;break}}}else for(let i=1;i<=16;i++){const u=i/16;if(!ok(x+(cx-x)*u,z+(cz-z)*u)){t=(i-1)/16;break}}
   t=max(t,.2);cx=x+(cx-x)*t;cz=z+(cz-z)*t;cy=gy+24+(cy-gy-24)*t+(1-t)*22}
  cy=SC.camY?SC.camY(cy,cz,cx):clp(cy,3,120);return{x:cx,y:cy,z:cz,yaw:S.yaw,pitch:S.pitch-kick*.5,fov:G3.fov3*DEG}}
 
@@ -10233,11 +10237,11 @@ function frame(){
  SC.draw(t,FX.L);
  for(const d of draws)d();
  for(const G of GL)MOD.drawGhast({x:G.x,y:G.y,z:G.z,yaw:G.yaw,t,mood:G.mood,sc:G.sc,di:G.al,ch:G.ch},SC.lights,FX.L);
- const lt=[1,1,1],bs=C.iso?1:BS;
+ const lt=[1,1,1],bs=C.iso?1:BS,xr=!C.iso&&S.mode===2;       // 3ª pessoa: o personagem aparece por trás de árvores e casas
  for(const A of H3C.list){if(A.h3d||!A.tex)continue;lightAt(A.x,A.y+12,A.z,lt);if(SC.shadeAt)SC.shadeAt(A.x,A.y,A.z,lt);
   const jh=A.jh||0,sk=max(.45,1-jh/60);
   H3.flat(H3.tex.blob,A.x,A.y-jh+.25,A.z,34*sk,34*sk,null,[1,1,1,.85*sk],false);
-  H3.spr(atlas,A.x,A.y,A.z,64*bs,72*bs,A.uv,[lt[0],lt[1],lt[2],1],false,1)}
+  H3.spr(atlas,A.x,A.y,A.z,64*bs,72*bs,A.uv,[lt[0],lt[1],lt[2],1],false,1,false,xr&&(A.k==='P'||(typeof A.k==='string'&&A.k.charAt(0)==='F'))?.5:0)}
  FX.draw(t);SC.sprites(t);H3.end();H3.flushOcc();
  // raios de sol (gráfico Alto, olhando para o lado do sol)
  if(!C.iso&&SC.rays)try{SC.rays(t,C)}catch(e){console.error('H3 raios',e);SC.rays=null}
@@ -13268,7 +13272,9 @@ function terrainChunk(gl,i0,j0,i1,j1){const nc=(i1-i0)*(j1-j0);if(nc<=0)return n
 // ============================================================ vegetação ============================================================
 // fixa (pedaço a pedaço, liga/desliga com a opção Vegetação): arbustos secos, moitas de outono, samambaias na mata, juncos na lama e na beira da água, mato e pedrinhas
 function nearFix(x,z){const F=HV.fixPts;if(!F)return false;for(const p of F){const dx=x-p[0],dz=z-p[1];if(dx*dx+dz*dz<p[2]*p[2])return true}return false}
-const solidAt=(x,z)=>{try{return window.HAL&&HAL.solid?HAL.solid(x|0,z|0):false}catch(e){return false}};
+const solidAt=(x,z)=>{if(x>CX-232&&x<CX+232&&z<FZ+26)return true;                    // dentro e na escadaria da Catedral
+ const g=HV.cb;if(g){const i=x>>3,j=z>>3;if(i>=0&&j>=0&&i<HV.cbW&&j<HV.cbH&&g[j*HV.cbW+i])return true}            // dentro das casas, criptas, torre e capelas
+ try{return window.HAL&&HAL.solid?HAL.solid(x|0,z|0):false}catch(e){return false}};
 function vegStatic(M,vegOf){const W=M.W,H=M.H,ter=M.ter,r=rng(9191);let n=0;
  for(let j=1;j<H-1;j++)for(let i=1;i<W-1;i++){const t=ter[j*W+i];let k=null,p=r();
   if(t===0){k=p<.035?'shrub':p<.065?'deadBush':p<.115?'weeds':p<.125?'stones':null}
@@ -13431,7 +13437,9 @@ HV.free=()=>{const gl=H3.gl();const del=a=>{if(gl&&a)for(const m of a)try{gl.del
  HV.ready=false;HV.gen=null;HV.ochunks=HV.vchunks=HV.tchunks=null;HV.cath.length=0;HV.trees.length=0;HV.grass.clear();HV.dyn={};HV.gtex=HV.lmtex=null;TREEM=null;TX=null;HV.cm=null;HG=null};
 
 // ============================================================ desenho de cada quadro ============================================================
-const MT=new Float32Array(16),FCAP=[.74,.0115,.55],NC_O=[4,12],NC_V=[3,12],NC_T=[7,22],NC_G=[2,8];          // catedral: no máximo 74% de névoa (silhueta), vitrais acesos atravessam mais
+const MT=new Float32Array(16),FCAP=[.74,.0115,.55];
+// o que fica coladinho na câmera some de uma vez (corte limpo, sem pontilhado); na 3ª pessoa a câmera fica longe do personagem, então o corte é maior
+const NC1={o:[2,2.02],v:[2,2.02],t:[3,3.02],g:[1.5,1.52]},NC3={o:[5,5.02],v:[5,5.02],t:[11,11.02],g:[3,3.02]};let NC=NC3;          // catedral: no máximo 74% de névoa (silhueta), vitrais acesos atravessam mais
 const VEGL=[{grass:0,bush:0,R:0,dens:0},{grass:1,bush:1,R:110,dens:.6},{grass:1,bush:1,R:150,dens:1},{grass:1,bush:1,R:205,dens:1.35}];
 const vegNow=()=>{const G=H3.G3||{};return VEGL[G.veg===undefined?2:clp(G.veg|0,0,3)]};
 let FO=0,frameN=0;
@@ -13440,7 +13448,7 @@ const drawR=()=>FO+205;          // além de ~200 a névoa já cobriu 99%
 const fogF=(d,k)=>{const q=max(0,d-FO)*FOGD*(k||1);return 1-Math.exp(-q*q)};
 const fogComp=(d,k,cap)=>min(cap||40,(1-fogF(d,k))/max(1e-4,1-fogF(d)));
 function treeLod(d){return d<72?0:d<142?1:2}
-function draw(t,dyn){const C=H3.S.cam,L=HV.lights,R=drawR(),V=vegNow();frameN++;const DS=HV.ds={n:0,tri:0,c:{}},cnt=(m,k)=>{DS.n++;DS.tri+=m.n/3;if(k)DS.c[k]=(DS.c[k]||0)+1};
+function draw(t,dyn){const C=H3.S.cam,L=HV.lights,R=drawR(),V=vegNow();frameN++;NC=H3.S.mode===2?NC3:NC1;const DS=HV.ds={n:0,tri:0,c:{}},cnt=(m,k)=>{DS.n++;DS.tri+=m.n/3;if(k)DS.c[k]=(DS.c[k]||0)+1};
  // lua (atrás de tudo, sem névoa)
  {const D=760,mx=C.x+MOON[0]*D,my=C.y+MOON[1]*D,mz=C.z+MOON[2]*D,yaw=atan2(C.x-mx,C.z-mz),pit=atan2(my-C.y,hypot(C.x-mx,C.z-mz));
   M4.trs(MT,mx,my,mz,pit,yaw,0,1.55,1.55,1.55);H3.mesh(HV.dyn.moon,MT,null,null,{fog:0,eg:1})}
@@ -13448,18 +13456,15 @@ function draw(t,dyn){const C=H3.S.cam,L=HV.lights,R=drawR(),V=vegNow();frameN++;
  // chão
  for(const m of HV.tchunks)if(vis(m,R+30)){H3.mesh(m,null,m.L,dyn);cnt(m,'t')}
  // objetos e plantas fixas
- for(const m of HV.ochunks)if(vis(m,R)){H3.mesh(m,null,m.L,dyn,{tr:.15,nc:NC_O});cnt(m,'o')}
- if(V.bush)for(const m of HV.vchunks)if(vis(m,min(R,FO+215))){H3.mesh(m,null,m.L,dyn,{tr:.45,nc:NC_V});cnt(m,'v')}
+ for(const m of HV.ochunks)if(vis(m,R)){H3.mesh(m,null,m.L,dyn,{tr:.15,nc:NC.o});cnt(m,'o')}
+ if(V.bush)for(const m of HV.vchunks)if(vis(m,min(R,FO+215))){H3.mesh(m,null,m.L,dyn,{tr:.45,nc:NC.v});cnt(m,'v')}
  // árvores (três níveis de detalhe)
- {const g0=floor((C.x-R)/128),g1=floor((C.x+R)/128),h0=floor((C.z-R)/128),h1=floor((C.z+R)/128),off=FO*.7,F=H3.S.foc||C,third=H3.S.mode===2;
-  // 3ª pessoa: a árvore que fica entre a câmera e o personagem vira pontinhos (para não esconder o personagem)
-  const sx=F.x-C.x,sy=F.y+14-C.y,sz=F.z-C.z,sl=sx*sx+sy*sy+sz*sz||1;
+ {const g0=floor((C.x-R)/128),g1=floor((C.x+R)/128),h0=floor((C.z-R)/128),h1=floor((C.z+R)/128),off=FO*.7;
   for(let gj=h0;gj<=h1;gj++)for(let gi=g0;gi<=g1;gi++){const a=HV.tg.get(gi+','+gj);if(!a)continue;
    for(const T of a){const dx=T.wx-C.x,dz=T.wz-C.z,d=sqrt(dx*dx+dz*dz)-T.rad;if(d>R-8)continue;if(!H3.vis(T.wx,T.wy,T.wz,T.rad))continue;
-    let di=1;if(third){const q=((T.wx-C.x)*sx+(T.wy-C.y)*sy+(T.wz-C.z)*sz)/sl;if(q>.02&&q<1.02){const ex=C.x+sx*q-T.wx,ey=C.y+sy*q-T.wy,ez=C.z+sz*q-T.wz;if(ex*ex+ey*ey+ez*ez<T.rad*T.rad*.55)di=.32}}
-    const mm=TREEM[T.k][T.vi][treeLod(d-off)];H3.mesh(mm,T.m,T.L,dyn,{tr:T.k==='pine'?.3:T.k==='dead'?.15:.5,tint:T.tint,rad:T.rad,cx:T.wx,cy:T.wy,cz:T.wz,nc:NC_T,di});cnt(mm,'T'+treeLod(d-off))}}}
+    const mm=TREEM[T.k][T.vi][treeLod(d-off)];H3.mesh(mm,T.m,T.L,dyn,{tr:T.k==='pine'?.3:T.k==='dead'?.15:.5,tint:T.tint,rad:T.rad,cx:T.wx,cy:T.wy,cz:T.wz,nc:NC.t});cnt(mm,'T'+treeLod(d-off))}}}
  // capim (some em pontinhos na borda)
- if(V.grass){const gr=V.R,fd=[gr*.68,gr];for(const c of HV.grass.values()){const m=c.m;if(!m||!vis(m,FO+gr+40))continue;H3.mesh(m,null,c.L,dyn,{fd,tr:.4,nc:NC_G});cnt(m,'g')}}
+ if(V.grass){const gr=V.R;for(const c of HV.grass.values()){const m=c.m;if(!m||!vis(m,FO+gr+40))continue;H3.mesh(m,null,c.L,dyn,{tr:.4,nc:NC.g});cnt(m,'g')}}
  // catedral (silhueta enorme na névoa)
  for(const m of HV.cath){if(!H3.vis(m.cx,m.cy,m.cz,m.rad))continue;H3.mesh(m,null,L,dyn,{fc:FCAP});cnt(m,'c')}
  // ponteiros: relógios da catedral e da torre (hora do aparelho)
@@ -13557,7 +13562,7 @@ SCN.hal={id:'hal',K:1,OX:0,OY:0,eye:25,camD:88,p3:-.16,pl:[[-.95,.9],[-1.0,.45]]
  env:()=>envOn(),
  floorY:(x,z)=>hAt(x,z),
  step:o=>{const ok=(x,z)=>!hit(x-8,z-14);if(ok(o.x,o.z))return;if(ok(o.x,o.oz)){o.z=o.oz;return}if(ok(o.ox,o.z)){o.x=o.ox;return}o.x=o.ox;o.z=o.oz},
- camOk:pz=>(x,z)=>!blockedCam(x,z)&&!camBlk(x,z),
+ camOk:pz=>(x,z)=>!blockedCam(x,z)&&!camBlk(x,z),camFar:true,
  camY:(cy)=>clp(cy,4,240),
  enter(){envOn();BANKS.length=0;lastFx=0;document.body.classList.add('h3hal')},
  leave(){envOff();document.body.classList.remove('h3hal')},
