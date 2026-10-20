@@ -12635,6 +12635,30 @@ const CAMS={
  '1A':{nm:'Palco',mx:330,my:128},'1B':{nm:'Salão',mx:330,my:148},'1C':{nm:'Teatro dos Fantoches',mx:290,my:162},'5':{nm:'Bastidores',mx:288,my:138},
  '3':{nm:'Depósito',mx:290,my:184},'2A':{nm:'Corredor Oeste',mx:312,my:178},'2B':{nm:'Canto Oeste',mx:312,my:198},'7':{nm:'Banheiros',mx:374,my:146},
  '6':{nm:'Cozinha',mx:372,my:170,audio:1},'4A':{nm:'Corredor Leste',mx:348,my:178},'4B':{nm:'Canto Leste',mx:348,my:198}};
+// mapa das câmeras (no estilo de planta: salas em linhas brancas, botões CAM)
+const MAPL={ox:240,oy:62,s:.385,bw:57,bh:34,
+ btn:{'1A':[128,7],'1B':[108,62],'5':[5,88],'1C':[78,138],'7':[341,88],'3':[45,236],'2A':[128,255],'2B':[128,296],'4A':[236,256],'4B':[236,296],'6':[332,222]},
+ rooms:[[150,22,100,34],[82,56,238,142],[30,62,42,62],[8,82,22,30],[44,140,38,48],[320,84,50,52],[370,92,28,30],[370,160,28,32],[284,206,96,72],
+  [140,198,46,147],[74,226,52,72],[234,198,46,147],[186,286,48,59],[0,314,24,31]]};
+for(const k in MAPL.btn){const b=MAPL.btn[k];CAMS[k].mx=MAPL.ox+(b[0]+MAPL.bw/2)*MAPL.s;CAMS[k].my=MAPL.oy+(b[1]+MAPL.bh/2)*MAPL.s}
+function mapHit(x,y){const M=MAPL;for(const k in M.btn){const b=M.btn[k],bx=M.ox+b[0]*M.s,by=M.oy+b[1]*M.s;if(x>=bx-2&&x<=bx+M.bw*M.s+2&&y>=by-2&&y<=by+M.bh*M.s+2)return k}return null}
+function drawCamMap(id,t){const M=MAPL,s=M.s,ox=M.ox,oy=M.oy,w=404*s,h=349*s;X.save();
+ X.fillStyle='rgba(6,6,8,.62)';X.fillRect(ox-4,oy-4,w+8,h+8);
+ for(let y=0;y<h+8;y+=2){const a=.03+.06*((((y*7+(t/40|0)*13)%11)/11));X.fillStyle='rgba(255,255,255,'+a.toFixed(3)+')';X.fillRect(ox-4,oy-4+y,w+8,1)}
+ X.strokeStyle='rgba(235,235,235,.85)';X.lineWidth=.8;
+ for(const r of M.rooms)X.strokeRect(ox+r[0]*s+.4,oy+r[1]*s+.4,r[2]*s,r[3]*s);
+ // ligações entre as salas e os corredores
+ X.beginPath();for(const[a,b,c,d]of[[200,56,200,22],[163,198,163,200],[257,198,257,200],[126,262,140,262],[234,316,186,316],[320,110,320,110]]){X.moveTo(ox+a*s,oy+b*s);X.lineTo(ox+c*s,oy+d*s)}X.stroke();
+ // VOCÊ
+ X.fillStyle='rgba(235,235,235,.9)';X.font='bold '+(5.2)+'px "Courier New",monospace';X.textAlign='center';X.textBaseline='top';X.fillText('VOCÊ',ox+210*s,oy+300*s);
+ X.fillRect(ox+206*s,oy+322*s,8*s,8*s);
+ for(const k in M.btn){const b=M.btn[k],on=k===id,bx=ox+b[0]*s,by=oy+b[1]*s,bw=M.bw*s,bh=M.bh*s,blink=on&&((t/350|0)%2);
+  X.fillStyle=on?(blink?'#b5d93a':'#9cc32a'):'#3c3c3c';X.fillRect(bx,by,bw,bh);
+  X.strokeStyle=on?'#e4ff9a':'#e8e8e8';X.lineWidth=.8;X.strokeRect(bx+.4,by+.4,bw-.8,bh-.8);
+  X.font='bold 5px "Courier New",monospace';X.textAlign='left';X.textBaseline='top';
+  const tc=on?'#fff':'#f0f0f0';X.fillStyle='rgba(0,0,0,.6)';X.fillText('CAM',bx+2.6,by+1.6);X.fillText(k,bx+2.6,by+6.6);
+  X.fillStyle=tc;X.fillText('CAM',bx+2.2,by+1.2);X.fillText(k,bx+2.2,by+6.2)}
+ X.restore()}
 // cenários de cada câmera (desenhados uma vez só, 400 x 225)
 function wallFloor(wc,fc,fy,check){R(wc,0,0,W,fy);for(let x=0;x<W;x+=40)R('rgba(0,0,0,.08)',x,0,2,fy);
  if(check){for(let y=fy;y<H;y+=12)for(let x=0;x<W;x+=12)R(((x+y)/12)%2?'#1c1c22':'#cfcfd4',x,y,12,12)}else R(fc,0,fy,W,H-fy);R('rgba(0,0,0,.25)',0,fy,W,3)}
@@ -12803,12 +12827,7 @@ function drawCam(t){const id=S.curCam,c=CAMS[id];
  staticFx(S.glitch>0?.55+.3*rnd():.1+.05*rnd());
  // moldura e informações
  R('rgba(0,0,0,.5)',6,6,150,18);txt(id+'  '+c.nm,10,10,'#fff',8);if((t/500|0)%2)circ(146,15,3,'#e02020');
- // mapa
- R('rgba(0,0,0,.55)',268,116,128,104);R('rgba(255,255,255,.25)',268,116,128,1);
- X.strokeStyle='rgba(200,200,200,.5)';X.lineWidth=1;X.beginPath();
- for(const[a,b]of[['1A','1B'],['1B','5'],['1B','1C'],['1B','2A'],['1B','4A'],['1B','7'],['1B','6'],['2A','2B'],['2A','3'],['4A','4B']]){X.moveTo(CAMS[a].mx,CAMS[a].my);X.lineTo(CAMS[b].mx,CAMS[b].my)}X.stroke();
- R('#c8c8c8',322,206,16,9);txt('VOCÊ',330,207,'#000',5,'center',false);
- for(const k in CAMS){const q=CAMS[k],on=k===id;R(on?'#3fbf4f':'#222',q.mx-9,q.my-5,18,10);R(on?'#9fffaf':'#888',q.mx-9,q.my-5,18,1);txt(k,q.mx,q.my-4,on?'#000':'#fff',7,'center',false)}}
+ drawCamMap(id,t)}
 function drawOffice(t){const pan=S.pan,po=S.pout;
  X.drawImage(OFF,-round(pan),0);
  for(const sd of['L','R']){const dx=DOORX[sd]-pan,lit=S.light[sd]&&!po;
@@ -13036,8 +13055,8 @@ function build3d(){const r=H3.rng(777),mb=new MB(4242);mb.jit=.06;
   for(let i=0;i<8;i++)m.push().T(.6,0,-6.4+i*1.83).box(.2,2.2,1.8,i%2?'#111':'#ffd23f',0,true).pop();return up(m)})();
  G3.meshes.shade=(()=>{const m=new MB(13);m.push().T(0,-5,0).cyl(.12,.12,5,4,'#222',0).pop();m.push().T(0,-7.2,0).cyl(4.2,.9,2.2,14,'#2a3a2a',0,{cap0:false,cap1:true}).pop();
   m.push().T(0,-7.15,0).cyl(4,.8,2,14,'#e8d8a0',.7,{cap0:false,cap1:false}).pop();m.push().T(0,-6.9,0).sph(.9,4,8,'#fff6d0',1).pop();return up(m)})();
- G3.meshes.btnD=(()=>{const m=new MB(14);m.RZ(PI/2).cyl(1.1,1.1,.5,12,'#ff3020',1);return up(m)})();
- G3.meshes.btnL=(()=>{const m=new MB(15);m.RZ(PI/2).cyl(1.1,1.1,.5,12,'#fff6c0',1);return up(m)})();
+ G3.meshes.btnD=(()=>{const m=new MB(14);m.box(.5,4.2,4.2,'#2a2a30',0);m.box(1,3.4,3.4,'#ff3020',1);return up(m)})();
+ G3.meshes.btnL=(()=>{const m=new MB(15);m.box(.5,4.2,4.2,'#2a2a30',0);m.box(1,3.4,3.4,'#fff6c0',1);return up(m)})();
  G3.meshes.curt=(()=>{const m=new MB(16);for(let i=0;i<6;i++)m.push().T(0,0,i*2.5).box(.6,26,2.4,i%2?'#4a1a6a':'#5a2280',0,true).pop();for(let i=0;i<5;i++)m.push().T(.4,5+i*4.5,1+((i*7)%5)*2.6).sph(.45,2,4,'#ffd23f',.7).pop();return up(m)})();
  buildBots();buildTex();
  // luzes fixas dos cômodos [x,y,z,raio,r,g,b,tipo]
@@ -13196,8 +13215,8 @@ function renderView(v,t){const[w,h]=g3size();gl.viewport(0,0,w,h);
  {const ms=new MB(2);ms.T(0,30,-14).RZ(sw);draw(G3.meshes.shade,ms.m.slice(),{eg:lampOn?lk:0})}
  {const ms=new MB(3);ms.T(10.5,14.6,-16.9).RZ(po?0:s*14);draw(G3.meshes.fan,ms.m.slice())}
  for(const sd of['L','R']){const sx=sd==='L'?-1:1,k=S.dAnim[sd],ms=new MB(4);ms.T(sx*24,22*(1-k)+.05,-19);draw(G3.meshes.door,ms.m.slice());
-  const b1=new MB(5);b1.T(sx*23.1,15.6,-8.8);draw(G3.meshes.btnD,b1.m.slice(),{eg:S.door[sd]&&!po?1.3:.18});
-  const b2=new MB(6);b2.T(sx*23.1,12,-8.8);draw(G3.meshes.btnL,b2.m.slice(),{eg:S.light[sd]&&!po?1.3:.15})}
+  const b1=new MB(5);b1.T(sx*23.1,17,-8.8);draw(G3.meshes.btnD,b1.m.slice(),{eg:S.door[sd]&&!po?1.3:.32});
+  const b2=new MB(6);b2.T(sx*23.1,12.2,-8.8);draw(G3.meshes.btnL,b2.m.slice(),{eg:S.light[sd]&&!po?1.3:.3})}
  // cortina do teatro: abre conforme o Croco sai
  {const a=S.A.croco,st=a?(a.run?3:a.st):0,op=[0,1.6,5,11][st]||0;const m1=new MB(7);m1.T(-61,3,-200+0-op);draw(G3.meshes.curt,m1.m.slice());const m2=new MB(8);m2.T(-61,3,-185+op);draw(G3.meshes.curt,m2.m.slice())}
  // animatrônicos
@@ -13217,7 +13236,7 @@ function renderView(v,t){const[w,h]=g3size();gl.viewport(0,0,w,h);
   const sc=k==='mola'?1.25:1.08,hy=k==='sapo'?19:k==='mola'?17.5:k==='croco'?19.5:22;
   drawBot(k,{x:v.x+fx*d+(rnd()-.5)*.6,z:v.z+fz*d+(rnd()-.5)*.6,y:v.y-hy*sc+(rnd()-.5)*.6,yaw:-v.yaw,sc,jaw:.7+.3*sin(el/40),nod:k==='croco'?-.12:k==='sapo'?-.35:-.15,lean:k==='croco'?-.1:.1,fl:[.8,.1,.05,el%140<60?.18:0]})}
  // pontos dos botões na tela (para tocar)
- G3.hot=[];if(v.office&&!v.cam)for(const sd of['L','R']){const sx=sd==='L'?-1:1;for(const[y,kind]of[[15.6,'d'],[12,'l']]){const p=proj(sx*23.1,y,-8.8);if(p)G3.hot.push({x:p[0],y:p[1],sd,kind})}}}
+ G3.hot=[];if(v.office&&!v.cam)for(const sd of['L','R']){const sx=sd==='L'?-1:1;for(const[y,kind]of[[17,'d'],[12.2,'l']]){const p=proj(sx*23.1,y,-8.8);if(p)G3.hot.push({x:p[0],y:p[1],sd,kind})}}}
 function proj(x,y,z){const m=VP,w=m[3]*x+m[7]*y+m[11]*z+m[15];if(w<=.05)return null;return[((m[0]*x+m[4]*y+m[8]*z+m[12])/w*.5+.5)*W,(1-((m[1]*x+m[5]*y+m[9]*z+m[13])/w*.5+.5))*H]}
 const officeView=()=>({x:0,y:13,z:4,yaw:S.yaw||0,pitch:-.12,fov:72*PI/180,office:true});
 function camView(id){const c=CAM3[id];if(!c)return null;const dx=c[3]-c[0],dy=c[4]-c[1],dz=c[5]-c[2];return{x:c[0],y:c[1],z:c[2],yaw:Math.atan2(dx,-dz),pitch:Math.atan2(dy,hypot(dx,dz)),fov:c[6]*PI/180,cam:true}}
@@ -13244,12 +13263,8 @@ function camOverlay(t){const id=S.curCam,c=CAMS[id];
  if(c.audio){X.fillStyle='#000';X.fillRect(0,0,W,H);t2('CÂMERA DESLIGADA',W/2,90,'#fff',10,'center');t2('— SÓ ÁUDIO —',W/2,106,'#aaa',8,'center')}
  grain(S.glitch>0?.5+.3*rnd():.045+.025*rnd());vignette(.5);
  X.strokeStyle='rgba(255,255,255,.55)';X.lineWidth=1;X.strokeRect(8.5,8.5,W-17,H-17);
- t2('CAM '+id,16,14,'#fff',10,'left');t2(c.nm.toUpperCase(),16,27,'#ddd',7,'left');if((t/500|0)%2){circ(W-60,18,3,'#e02020');t2('REC',W-54,14,'#fff',7,'left')}
- // mapa
- const ox=0,oy=0;X.fillStyle='rgba(0,0,0,.45)';X.fillRect(266,114,130,104);X.strokeStyle='rgba(255,255,255,.35)';X.strokeRect(266.5,114.5,129,103);
- X.strokeStyle='rgba(255,255,255,.4)';X.beginPath();for(const[a,b]of[['1A','1B'],['1B','5'],['1B','1C'],['1B','2A'],['1B','4A'],['1B','7'],['1B','6'],['2A','2B'],['2A','3'],['4A','4B']]){X.moveTo(CAMS[a].mx,CAMS[a].my);X.lineTo(CAMS[b].mx,CAMS[b].my)}X.stroke();
- X.fillStyle='rgba(255,255,255,.85)';X.fillRect(321,205,18,10);t2('VOCÊ',330,207,'#000',5,'center','s');
- for(const k in CAMS){const q=CAMS[k],on=k===id;X.fillStyle=on?'rgba(120,220,120,.95)':'rgba(30,30,34,.95)';X.fillRect(q.mx-9,q.my-5,18,10);X.strokeStyle=on?'#cfffcf':'rgba(255,255,255,.7)';X.strokeRect(q.mx-8.5,q.my-4.5,17,9);t2(k,q.mx,q.my-3.5,on?'#000':'#fff',7,'center')}}
+ t2('CAM '+id,30,14,'#fff',10,'left');t2(c.nm.toUpperCase(),30,27,'#ddd',7,'left');if((t/500|0)%2){circ(34,42,3,'#e02020');t2('REC',40,38.5,'#fff',7,'left')}
+ drawCamMap(id,t)}
 function frame3(t){
  g.setTransform(3,0,0,3,0,0);X=g;g.clearRect(0,0,W,H);g.imageSmoothingEnabled=true;
  if(S.mode==='menu'){const s=t/1000;renderView({x:sin(s*.15)*6,y:16,z:-188,yaw:sin(s*.15)*.05,pitch:-.05,fov:60*PI/180},t);menuOverlay(t);return}
@@ -13283,6 +13298,7 @@ function frame(now){if(!open_)return;raf=requestAnimationFrame(frame);
  if(S.mode==='play'&&!S.paused){tick(dt);
   // olhar em volta: arrastar, setas do teclado ou mouse perto das bordas
   if(!S.cam){if(drag==null&&PTR.fine&&PTR.in){const ex=PTR.x;if(ex<50){S.pan-=dt*.25*(1-ex/50)*1.6;S.yaw-=dt*.0016*(1-ex/50)}else if(ex>W-50){S.pan+=dt*.25*((ex-(W-50))/50)*1.6;S.yaw+=dt*.0016*((ex-(W-50))/50)}}
+   if(drag&&drag.turn){S.pan+=dt*.4*drag.turn;S.yaw+=dt*.0021*drag.turn}
    S.pan+=S.panV*dt;S.pan=clp(S.pan,0,OW-W);S.yaw=clp(S.yaw+S.panV*dt*.006,-.85,.85)}}
  if(S.mode==='intro'){S.introT+=dt;if(S.introT>2700)S.mode='play'}
  if(S.mode==='jump'){S.jt+=dt;if(S.jt>1900){S.mode='over';loopStop()}}
@@ -13311,16 +13327,21 @@ function click(x,y){ac();
  if(S.paused){const l=hitUI(x,y);if(l==='Continuar'){S.paused=false;loopSet(true,false,S.cam)}else if(l==='Desistir da noite'){S.paused=false;S.mode='menu';loopStop()}return}
  if(x<24&&y<24){S.paused=true;loopSet(false,false,false);return}
  if(!S.pout&&(G3.ok?(y>H-26&&abs(x-W/2)<78):(y>H-18&&abs(x-W/2)<62))){toggleCam();return}
- if(S.cam){for(const k in CAMS){const q=CAMS[k];if(abs(x-q.mx)<=10&&abs(y-q.my)<=6){if(S.curCam!==k){S.curCam=k;S.glitch=250;SND.cam()}return}}return}
+ if(S.cam){const k=mapHit(x,y);if(k){if(S.curCam!==k){S.curCam=k;S.glitch=250;SND.cam()}}return}
  // botões da parede (3D: o ponto de cada botão projetado na tela)
- if(G3.ok){let best=null,bd=14;for(const h of G3.hot){const d=hypot(h.x-x,h.y-y);if(d<bd){bd=d;best=h}}if(best){if(best.kind==='d')doorT(best.sd);else lightT(best.sd)}return}
+ if(G3.ok){const best=hotAt(x,y);if(best){if(best.kind==='d')doorT(best.sd);else lightT(best.sd)}return}
  const px=x+S.pan;for(const sd of['L','R']){const b=BTN[sd];if(px>=b.x-4&&px<=b.x+b.w+4&&y>=b.y-4&&y<=b.y+b.h+4){if(y<b.y+b.h/2)doorT(sd);else lightT(sd);return}}}
+function hotAt(x,y){let best=null,bd=17;for(const h of G3.hot){const d=hypot(h.x-x,h.y-y);if(d<bd){bd=d;best=h}}return best}
+function btn2D(x,y){const px=x+S.pan;for(const sd of['L','R']){const b=BTN[sd];if(px>=b.x-4&&px<=b.x+b.w+4&&y>=b.y-4&&y<=b.y+b.h+4)return 1}return 0}
+// segurar na direita vira a cabeça para a direita; na esquerda, para a esquerda (o meio não gira)
+function turnAt(x,y,moving,okOnly){if(S.mode!=='play'||S.cam||S.paused||S.pout)return 0;
+ if(!moving){if(x<24&&y<24)return 0;if(y>H-26&&abs(x-W/2)<78)return 0;if(G3.ok?hotAt(x,y):btn2D(x,y))return 0}
+ if(okOnly)return 1;return x>W*.6?1:x<W*.4?-1:0}
 function doorT(sd){if(S.pout||(S.inside&&S.inside.side===sd)){SND.knock();return}S.door[sd]=!S.door[sd];SND.door()}
 function lightT(sd){if(S.pout||(S.inside&&S.inside.side===sd)){SND.light();return}const on=!S.light[sd];S.light.L=S.light.R=false;S.light[sd]=on;SND.light();if(on&&atDoor(sd).some(k=>k!=='mola'))try{navigator.vibrate&&navigator.vibrate(60)}catch(e){}}
 function toggleCam(){if(S.pout)return;S.cam=!S.cam;if(S.cam){S.light.L=S.light.R=false;S.glitch=300}SND.camFlip()}
-cv.addEventListener('pointerdown',e=>{e.preventDefault();const[x,y]=toXY(e);drag={x0:x,x:x,p0:S.pan,yw0:S.yaw,mv:0,id:e.pointerId};try{cv.setPointerCapture(e.pointerId)}catch(z){}});
-cv.addEventListener('pointermove',e=>{const[x,y]=toXY(e);PTR.x=x;PTR.y=y;PTR.in=true;if(!drag||e.pointerId!==drag.id)return;drag.mv=max(drag.mv,abs(x-drag.x0));
- if(S.mode==='play'&&!S.cam&&drag.mv>6){S.pan=clp(drag.p0-(x-drag.x0)*1.4,0,OW-W);S.yaw=clp(drag.yw0-(x-drag.x0)*.0075,-.85,.85)}});
+cv.addEventListener('pointerdown',e=>{e.preventDefault();const[x,y]=toXY(e);drag={x0:x,x:x,p0:S.pan,yw0:S.yaw,mv:0,id:e.pointerId,turn:turnAt(x,y),tok:turnAt(x,y,false,true)};try{cv.setPointerCapture(e.pointerId)}catch(z){}});
+cv.addEventListener('pointermove',e=>{const[x,y]=toXY(e);PTR.x=x;PTR.y=y;PTR.in=true;if(!drag||e.pointerId!==drag.id)return;drag.mv=max(drag.mv,abs(x-drag.x0));if(drag.tok)drag.turn=turnAt(x,y,true)});
 cv.addEventListener('pointerup',e=>{if(!drag||e.pointerId!==drag.id)return;const[x,y]=toXY(e);const tap=drag.mv<8;drag=null;if(tap)click(x,y)});
 cv.addEventListener('pointercancel',()=>{drag=null});cv.addEventListener('pointerleave',()=>{PTR.in=false});
 addEventListener('keydown',e=>{if(!open_)return;e.stopPropagation();const k=e.key.toLowerCase();
