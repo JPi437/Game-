@@ -13247,7 +13247,7 @@ function renderView(v,t){const[w,h]=g3size();gl.viewport(0,0,w,h);
  // luminária: balança, pisca às vezes; apaga sem bateria
  const sw=sin(s*.7)*.06+sin(s*1.9)*.015,lpX=LY.sp[0]+sin(sw)*LY.sp[3],lpY=LY.sp[1]-LY.sp[3]*cos(sw),fl=(!po&&(rnd()<.004))?.25:1,lampOn=!po&&S.mode!=='over';
  const lk=lampOn?(S.mode==='jump'?(rnd()<.5?.2:1.4):fl):0;
- const sdl=hypot(sin(sw)*.3,1);FR={sp:[lpX,lpY,LY.sp[2]],sd:[sin(sw)*.3/sdl,-1/sdl,0],sc:[1.0*lk,.8*lk,.56*lk],sk:[.8,.36,60],amb:v.cam?(LY.map?[.085,.085,.09]:[.15,.16,.16]):(v.menu&&LY.map?[.12,.1,.13]:[.03,.027,.036]),fog:v.cam?[.012,.012,.013,.0035]:[.0,.0,.0,.0075],tn:v.cam?[.86,.86,.88,.97]:[.92,.95,1.05,.35],eg:1,
+ const sdl=hypot(sin(sw)*.3,1);FR={sp:[lpX,lpY,LY.sp[2]],sd:[sin(sw)*.3/sdl,-1/sdl,0],sc:[.62*lk,.82*lk,1.1*lk],sk:[.8,.36,60],amb:v.cam?(LY.map?[.085,.085,.09]:[.15,.16,.16]):(v.menu&&LY.map?[.12,.1,.13]:[.03,.027,.036]),fog:v.cam?[.012,.012,.013,.0035]:[.0,.0,.0,.0075],tn:v.cam?[.86,.86,.88,.97]:[.88,.97,1.12,.22],eg:1,
   // da sala, o corredor atrás de cada porta fica no breu; só aparece com a luz do corredor acesa
   dk:v.office&&!v.cam?[S.light.L&&!po?1:.035,S.light.R&&!po?1:.035,LY.dk]:[1,1,999]};
  if(!v.office&&!v.cam){FR.sc=[0,0,0]}
@@ -13256,7 +13256,7 @@ function renderView(v,t){const[w,h]=g3size();gl.viewport(0,0,w,h);
  // luzes da cena
  const L=[],LM=v.cam?1.7:1.0;if(!po)for(const l of G3.L){let k=LM;if(l[7]==='hall')k*=.85+.15*sin(s*7+l[2])*(rnd()<.03?0:1);if(l[7]==='stage')k*=.8+.2*sin(s*1.3+l[0]);L.push([l[0],l[1],l[2],l[3],l[4]*k,l[5]*k,l[6]*k])}
  if(!po){L.push([LY.scrL[0],LY.scrL[1],LY.scrL[2],16,.05,.22,.1,0,1]);                                                         // brilho das telas
-  L.push([LY.genL[0],LY.genL[1],LY.genL[2],30,.05,.045,.055,0,1]);                                                                    // um pouco de luz geral na sala
+  L.push([LY.genL[0],LY.genL[1],LY.genL[2],30,.035,.05,.075,0,1]);                                                                    // um pouco de luz geral na sala
   if(S.light.L)L.push([LY.doorL[0],LY.doorL[1],LY.doorL[2],38,2.1,2,1.8,0,2]);if(S.light.R)L.push([-LY.doorL[0],LY.doorL[1],LY.doorL[2],38,2.1,2,1.8,0,2])}
  if(S.mode==='jump'){L.push([v.x,v.y+4,v.z-3,30,1.6,1.25,1.1,0,4]);L.push([v.x,v.y-6,v.z-6,22,.9,.2,.12,0,3])}
  lights(L);CUR=null;
