@@ -12878,7 +12878,7 @@ function drawMenu(t){R('#05030a',0,0,W,H);staticFx(.06);
  txt('PIZZARIA DO PIXEL',W/2,18,'#ffd23f',18,'center');txt('Turno da Noite',W/2,40,'#ff6a8a',10,'center');
  const p=prog();UI=[];
  if(S.menu==='help'){R('rgba(0,0,0,.75)',30,58,340,140);
-  const L=['Sobreviva das 12 AM às 6 AM na sala de segurança.','P fecha a porta · L acende a luz do corredor (veja quem está ali).','▲ CÂMERAS: olhe o prédio. Arraste a tela para olhar em volta.',
+  const L=['Sobreviva das 12 AM às 6 AM na sala de segurança.','P fecha a porta · L acende a luz do corredor (veja quem está ali).','▲ CÂMERAS: olhe o prédio. Segure na direita ou na esquerda da tela para virar.',
    'Tudo gasta BATERIA. Sem bateria, tudo apaga...','Lata vem pela esquerda · Sapão pela direita.','Croco sai da cortina se ninguém olhar as câmeras e CORRE.','Mola só anda no escuro; na porta, segure a luz para espantar.',
    'PC: A/D portas · Q/E luzes · Espaço câmeras.'];
   L.forEach((s,i)=>txt(s,40,64+i*15,i===3?'#ff8a7a':'#fff',7));btn(150,198,100,16,'Voltar');return}
@@ -12921,12 +12921,13 @@ precision highp float;
 precision mediump float;
 #endif
 `;
-const LGT=`uniform vec3 uCam;uniform vec4 uL[8];uniform vec3 uLC[8];uniform vec3 uSP;uniform vec3 uSD;uniform vec3 uSC;uniform vec3 uSK;uniform vec3 uAmb;uniform vec4 uFog;uniform vec4 uFl;uniform float uEG;uniform float uAK;uniform vec4 uTn;
+const LGT=`uniform vec3 uCam;uniform vec4 uL[8];uniform vec3 uLC[8];uniform vec3 uSP;uniform vec3 uSD;uniform vec3 uSC;uniform vec3 uSK;uniform vec3 uAmb;uniform vec4 uFog;uniform vec4 uFl;uniform float uEG;uniform float uAK;uniform vec4 uTn;uniform vec3 uDk;
 vec3 shade(vec3 alb,vec3 p,vec3 n,float em){vec3 V=normalize(uCam-p);if(dot(n,V)<0.0)n=-n;
  vec3 lg=uAmb*(0.55+0.45*n.y);
  for(int i=0;i<8;i++){vec3 d=uL[i].xyz-p;float d2=dot(d,d);float r=uL[i].w;float a=1.0-d2/(r*r);if(a<=0.0)continue;a*=a;float nd=max(dot(n,d*inversesqrt(d2+0.001)),0.0)*0.8+0.2;lg+=uLC[i]*a*nd;}
  vec3 d=uSP-p;float d2=dot(d,d);float a=1.0-d2/(uSK.z*uSK.z);
  if(a>0.0){vec3 l=d*inversesqrt(d2+0.001);float s=smoothstep(uSK.y,uSK.x,dot(-l,uSD));lg+=uSC*(a*a*s)*(max(dot(n,l),0.0)*0.85+0.15);}
+ if(p.x<-uDk.z)lg*=uDk.x;else if(p.x>uDk.z)lg*=uDk.y;
  vec3 c=alb*uAK*lg*(1.0-em)+alb*em*uEG;
  c=c/(1.0+c*0.22);c=mix(c,uFl.rgb,uFl.a);
  float f=1.0-exp(-length(uCam-p)*uFog.a);c=mix(c,uFog.rgb,f);
@@ -12938,7 +12939,7 @@ const FST=PRE+`varying vec3 vP;varying vec3 vN;varying vec2 vT;uniform sampler2D
 function sh(type,src){const s=gl.createShader(type);gl.shaderSource(s,src);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(s));return s}
 function glProg(vs,fs,at){const p=gl.createProgram();gl.attachShader(p,sh(gl.VERTEX_SHADER,vs));gl.attachShader(p,sh(gl.FRAGMENT_SHADER,fs));at.forEach((a,i)=>gl.bindAttribLocation(p,i,a));gl.linkProgram(p);
  if(!gl.getProgramParameter(p,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(p));return p}
-const UN=['uVP','uM','uCam','uL','uLC','uSP','uSD','uSC','uSK','uAmb','uFog','uFl','uEG','uAK','uTn'];
+const UN=['uVP','uM','uCam','uL','uLC','uSP','uSD','uSC','uSK','uAmb','uFog','uFl','uEG','uAK','uTn','uDk'];
 function g3init(){if(G3.tried)return G3.ok;G3.tried=true;
  if(!M4||!MB)return false;
  try{gl=gcv.getContext('webgl',{antialias:true,alpha:false,depth:true,powerPreference:'high-performance'})||gcv.getContext('experimental-webgl')}catch(e){gl=null}
@@ -13166,7 +13167,7 @@ const CAM3={'1A':[0,27,-196,0,10,-240,72],'1B':[56,28,-124,-5,4,-200,82],'1C':[-
 const VP=new Float32Array(16),PM=new Float32Array(16),VM=new Float32Array(16),MT=new Float32Array(16),ID=M4?M4.id():null;
 let CUR=null,camP=[0,0,0];const LB=new Float32Array(32),LC=new Float32Array(24);
 function useProg(p,U,o){gl.useProgram(p);gl.uniformMatrix4fv(U.uVP,false,VP);gl.uniform3fv(U.uCam,camP);gl.uniform4fv(U.uL,LB);gl.uniform3fv(U.uLC,LC);
- gl.uniform3fv(U.uSP,o.sp);gl.uniform3fv(U.uSD,o.sd);gl.uniform3fv(U.uSC,o.sc);gl.uniform3fv(U.uSK,o.sk);gl.uniform3fv(U.uAmb,o.amb);gl.uniform4fv(U.uFog,o.fog);gl.uniform4fv(U.uTn,o.tn);
+ gl.uniform3fv(U.uSP,o.sp);gl.uniform3fv(U.uSD,o.sd);gl.uniform3fv(U.uSC,o.sc);gl.uniform3fv(U.uSK,o.sk);gl.uniform3fv(U.uAmb,o.amb);gl.uniform4fv(U.uFog,o.fog);gl.uniform4fv(U.uTn,o.tn);gl.uniform3fv(U.uDk,o.dk||[1,1,999]);
  gl.uniform4f(U.uFl,0,0,0,0);gl.uniform1f(U.uEG,o.eg||1);gl.uniform1f(U.uAK,1);CUR=U}
 function draw(m,mt,o){const U=UG;if(CUR!==U)useProg(PG,UG,FR);gl.uniformMatrix4fv(U.uM,false,mt||ID);if(o&&o.fl)gl.uniform4fv(U.uFl,o.fl);else gl.uniform4f(U.uFl,0,0,0,0);
  gl.uniform1f(U.uAK,o&&o.ak!==undefined?o.ak:1);gl.uniform1f(U.uEG,o&&o.eg!==undefined?o.eg:FR.eg||1);
@@ -13196,7 +13197,9 @@ function renderView(v,t){const[w,h]=g3size();gl.viewport(0,0,w,h);
  // luminária: balança, pisca às vezes; apaga sem bateria
  const sw=sin(s*.7)*.06+sin(s*1.9)*.015,lpX=sin(sw)*7,lpY=30-7*cos(sw),fl=(!po&&(rnd()<.004))?.25:1,lampOn=!po&&S.mode!=='over';
  const lk=lampOn?(S.mode==='jump'?(rnd()<.5?.2:1.4):fl):0;
- const sdl=hypot(sin(sw)*.3,1);FR={sp:[lpX,lpY,-14],sd:[sin(sw)*.3/sdl,-1/sdl,0],sc:[1.6*lk,1.3*lk,.95*lk],sk:[.8,.36,60],amb:v.cam?[.15,.16,.16]:[.075,.07,.085],fog:v.cam?[.01,.014,.01,.0035]:[.0,.0,.0,.0075],tn:v.cam?[.78,1,.84,.85]:[1,1,1,0],eg:1};
+ const sdl=hypot(sin(sw)*.3,1);FR={sp:[lpX,lpY,-14],sd:[sin(sw)*.3/sdl,-1/sdl,0],sc:[1.6*lk,1.3*lk,.95*lk],sk:[.8,.36,60],amb:v.cam?[.15,.16,.16]:[.075,.07,.085],fog:v.cam?[.01,.014,.01,.0035]:[.0,.0,.0,.0075],tn:v.cam?[.78,1,.84,.85]:[1,1,1,0],eg:1,
+  // da sala, o corredor atrás de cada porta fica no breu; só aparece com a luz do corredor acesa
+  dk:v.office&&!v.cam?[S.light.L&&!po?1:.035,S.light.R&&!po?1:.035,24.6]:[1,1,999]};
  if(!v.office&&!v.cam){FR.sc=[0,0,0]}
  if(v.cam&&!v.office){const d=hypot(v.x-0,v.z+14);if(d>60)FR.sc=[0,0,0]}
  // luzes da cena
@@ -13283,7 +13286,7 @@ function menuOverlay(t){X.fillStyle='rgba(0,0,0,.35)';X.fillRect(0,0,W,H);vignet
  t2('PIZZARIA DO PIXEL',W/2,16,'#ffd23f',20,'center');t2('Turno da Noite',W/2,40,'#ff6a8a',10,'center','s');
  const p=prog();UI=[];
  if(S.menu==='help'){X.fillStyle='rgba(0,0,0,.8)';X.fillRect(26,56,348,144);
-  const L=['Sobreviva das 12 AM às 6 AM na sala de segurança.','Botão vermelho fecha a porta · branco acende a luz do corredor.','Barra de baixo: câmeras. Arraste a tela para olhar em volta.',
+  const L=['Sobreviva das 12 AM às 6 AM na sala de segurança.','Botão vermelho fecha a porta · branco acende a luz do corredor.','Barra de baixo: câmeras. Segure na direita ou na esquerda da tela para virar.',
    'Tudo gasta BATERIA. Sem bateria, tudo apaga...','Lata vem pela esquerda · Sapão pela direita.','Croco sai da cortina se ninguém olhar as câmeras e CORRE.','Mola só anda no escuro; na porta, segure a luz para espantar.',
    'PC: A/D portas · Q/E luzes · Espaço câmeras.'];
   L.forEach((s,i)=>t2(s,36,63+i*15,i===3?'#ff8a7a':'#fff',7.5,'left','s'));btn(150,200,100,16,'Voltar');return}
