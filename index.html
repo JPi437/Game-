@@ -12745,18 +12745,20 @@ const SAVEK='mp_pz';
 const prog=()=>{try{const o=JSON.parse(localStorage.getItem(SAVEK)||'{}');return{u:clp(o.u|0,1,5)||1,w:o.w|0}}catch(e){return{u:1,w:0}}};
 const progSet=o=>{try{localStorage.setItem(SAVEK,JSON.stringify(o))}catch(e){}};
 // níveis de cada um por noite (0 = parado, 20 = máximo): [Lata, Sapão, Croco, Mola]
-const AI=[null,[3,1,0,0],[5,3,1,1],[7,6,3,3],[10,9,6,5],[14,12,9,8],[18,17,14,13]];
+// níveis iniciais do jogo original (Freddy/Bonnie/Chica/Foxy = Sapão/Lata/Mola/Croco); ordem aqui: [Lata, Sapão, Croco, Mola]
+const AI=[null,[0,0,0,0],[3,0,1,1],[0,1,2,5],[2,1,6,4],[5,3,5,7],[10,4,16,12]];
 const PATH={
  lata:{'1A':['1B'],'1B':['5','2A'],'5':['1B','2A'],'2A':['3','2B'],'3':['2A','2B'],'2B':['dL'],'dL':['1B']},
  sapo:{'1A':['1B'],'1B':['7','6'],'7':['1B','4A'],'6':['4A','7'],'4A':['4B','1B'],'4B':['dR'],'dR':['1B']},
  mola:{'5':['1B'],'1B':['2A','4A'],'2A':['2B'],'4A':['4B'],'2B':['dL'],'4B':['dR'],'dL':['5'],'dR':['5']}};
 function newNight(n){Object.assign(S,{yaw:0,night:n,t:0,power:100,door:{L:false,R:false},dAnim:{L:0,R:0},light:{L:false,R:false},cam:false,camA:0,curCam:'1A',pan:100,
  inside:null,over:null,win:0,pout:0,glitch:0,hint:n===1?9000:4000,reward:false,flash:0,usage:1,mode:'intro',introT:0,wake:-1,paused:false,knocks:0,last:0});
- const L=AI[n];S.A={lata:{at:'1A',lv:L[0],per:5000,acc:rnd()*2000},sapo:{at:'1A',lv:L[1],per:4900,acc:rnd()*2000},
-  croco:{at:'1C',st:0,lv:L[2],per:5000,acc:0,run:0,stall:0},mola:{at:'5',lv:L[3],per:4500,acc:0,fear:0}};
+ const L=AI[n].slice();if(n===4)L[1]=rnd()<.5?1:2;S.A={lata:{at:'1A',lv:L[0],per:4970,acc:rnd()*2000},sapo:{at:'1A',lv:L[1],per:3020,acc:rnd()*2000},
+  croco:{at:'1C',st:0,lv:L[2],per:5010,acc:0,run:0,stall:0},mola:{at:'5',lv:L[3],per:4980,acc:0,fear:0}};
  statStop();loopStop()}
 const hourOf=t=>min(6,floor(t/HOUR));
-const lvl=(k)=>{const a=S.A[k],h=hourOf(S.t);let v=a.lv;if(h>=2&&k==='lata')v++;if(h>=3&&(k==='sapo'||k==='croco'))v++;if(h>=4)v++;return min(20,v)};
+// aumentos programados: Lata +1 às 2, 3 e 4 AM; Mola e Croco +1 às 3 e 4 AM; o Sapão não muda
+const lvl=(k)=>{const a=S.A[k],h=hourOf(S.t);let v=a.lv;if(k==='lata')v+=(h>=2)+(h>=3)+(h>=4);if(k==='mola'||k==='croco')v+=(h>=3)+(h>=4);return min(20,v)};
 // ---------- IA ----------
 function seen(k){const a=S.A[k];return S.cam&&S.curCam===a.at}
 function move(k,to){const a=S.A[k],from=a.at;a.at=to;if(S.cam&&(S.curCam===from||S.curCam===to))S.glitch=900;
