@@ -12939,7 +12939,7 @@ precision mediump float;
 const LGT=`uniform vec3 uCam;uniform vec4 uL[8];uniform vec3 uLC[8];uniform vec3 uSP;uniform vec3 uSD;uniform vec3 uSC;uniform vec3 uSK;uniform vec3 uAmb;uniform vec4 uFog;uniform vec4 uFl;uniform float uEG;uniform float uAK;uniform vec4 uTn;uniform vec3 uDk;
 vec3 shade(vec3 alb,vec3 p,vec3 n,float em){vec3 V=normalize(uCam-p);if(dot(n,V)<0.0)n=-n;
  vec3 lg=uAmb*(0.55+0.45*n.y);
- for(int i=0;i<8;i++){vec3 d=uL[i].xyz-p;float d2=dot(d,d);float r=uL[i].w;float a=1.0-d2/(r*r);if(a<=0.0)continue;a*=a;float nd=max(dot(n,d*inversesqrt(d2+0.001)),0.0)*0.8+0.2;lg+=uLC[i]*a*nd;}
+ for(int i=0;i<8;i++){vec3 d=uL[i].xyz-p;float d2=dot(d,d);float r=uL[i].w;if(r<0.0){r=-r;if(uDk.z<900.0&&p.x*sign(uL[i].x)<uDk.z+0.8)continue;}float a=1.0-d2/(r*r);if(a<=0.0)continue;a*=a;float nd=max(dot(n,d*inversesqrt(d2+0.001)),0.0)*0.8+0.2;lg+=uLC[i]*a*nd;}
  vec3 d=uSP-p;float d2=dot(d,d);float a=1.0-d2/(uSK.z*uSK.z);
  if(a>0.0){vec3 l=d*inversesqrt(d2+0.001);float s=smoothstep(uSK.y,uSK.x,dot(-l,uSD));lg+=uSC*(a*a*s)*(max(dot(n,l),0.0)*0.85+0.15);}
  if(p.x<-uDk.z)lg*=uDk.x;else if(p.x>uDk.z)lg*=uDk.y;
@@ -13229,7 +13229,7 @@ function drawT(it,em){const U=UTx;if(CUR!==U)useProg(PT,UTx,FR);gl.uniformMatrix
  gl.vertexAttribPointer(0,3,gl.FLOAT,false,32,0);gl.vertexAttribPointer(1,3,gl.FLOAT,false,32,12);gl.vertexAttribPointer(2,2,gl.FLOAT,false,32,24);gl.drawArrays(gl.TRIANGLES,0,6)}
 let FR=null;
 // escolhe as 8 luzes que mais pesam para a câmera
-function lights(list){const c=list.map(l=>[max(0,hypot(l[0]-camP[0],l[1]-camP[1],l[2]-camP[2])-l[3])-(l[8]||0)*100,l]).sort((a,b)=>a[0]-b[0]);
+function lights(list){const c=list.map(l=>[max(0,hypot(l[0]-camP[0],l[1]-camP[1],l[2]-camP[2])-Math.abs(l[3]))-(l[8]||0)*100,l]).sort((a,b)=>a[0]-b[0]);
  LB.fill(0);LC.fill(0);for(let i=0;i<8;i++){LB[i*4+3]=1;const l=c[i]&&c[i][1];if(!l)continue;LB[i*4]=l[0];LB[i*4+1]=l[1];LB[i*4+2]=l[2];LB[i*4+3]=l[3];LC[i*3]=l[4];LC[i*3+1]=l[5];LC[i*3+2]=l[6]}}
 function g3size(){const dpr=min(1.5,devicePixelRatio||1),r=cv.getBoundingClientRect();let w=round(r.width*dpr),h=round(r.height*dpr);const k=min(1,1280/max(1,w));w=max(2,round(w*k));h=max(2,round(h*k));
  if(gcv.width!==w||gcv.height!==h){gcv.width=w;gcv.height=h}return[w,h]}
@@ -13257,7 +13257,7 @@ function renderView(v,t){const[w,h]=g3size();gl.viewport(0,0,w,h);
  const L=[],LM=v.cam?1.7:1.0;if(!po&&!(v.office&&LY.map))for(const l of G3.L){let k=LM;if(l[7]==='hall')k*=.85+.15*sin(s*7+l[2])*(rnd()<.03?0:1);if(l[7]==='stage')k*=.8+.2*sin(s*1.3+l[0]);L.push([l[0],l[1],l[2],l[3],l[4]*k,l[5]*k,l[6]*k])}
  if(!po){L.push([LY.scrL[0],LY.scrL[1],LY.scrL[2],16,.05,.22,.1,0,1]);                                                         // brilho das telas
   L.push([LY.genL[0],LY.genL[1],LY.genL[2],30,.03,.018,.01,0,1]);                                                                    // um pouco de luz geral na sala
-  if(S.light.L)L.push([LY.doorL[0],LY.doorL[1],LY.doorL[2],38,2.1,2,1.8,0,2]);if(S.light.R)L.push([-LY.doorL[0],LY.doorL[1],LY.doorL[2],38,2.1,2,1.8,0,2])}
+  const DR=LY.map?-40:38,DC=LY.map?[.55,1.25,3.2]:[2.1,2,1.8];if(S.light.L)L.push([LY.doorL[0],LY.doorL[1],LY.doorL[2],DR,DC[0],DC[1],DC[2],0,2]);if(S.light.R)L.push([-LY.doorL[0],LY.doorL[1],LY.doorL[2],DR,DC[0],DC[1],DC[2],0,2])}
  if(S.mode==='jump'){L.push([v.x,v.y+4,v.z-3,30,1.6,1.25,1.1,0,4]);L.push([v.x,v.y-6,v.z-6,22,.9,.2,.12,0,3])}
  lights(L);CUR=null;
  gl.clearColor(0,0,0,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.enable(gl.DEPTH_TEST);gl.disable(gl.CULL_FACE);
