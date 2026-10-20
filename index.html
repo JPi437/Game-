@@ -45,6 +45,7 @@ const P={
  save:'<path d="M5.2 2.8h11.4l4.6 4.6v11.4a2.4 2.4 0 0 1-2.4 2.4H5.2a2.4 2.4 0 0 1-2.4-2.4V5.2a2.4 2.4 0 0 1 2.4-2.4z"/><path class="k" stroke-width="1.3" d="M7.4 3v5.2h7.6V3M6.8 21v-6.4h10.4V21"/>',
  adm:'<path d="M12 2.4 20 5.4v6.3c0 4.8-3.3 8.5-8 9.9-4.7-1.4-8-5.1-8-9.9V5.4z"/><path class="k" stroke-width="1.9" d="M8.4 12.2l2.6 2.6 4.8-5.2"/>',
  broom:'<g transform="rotate(40 12 12)"><rect x="10.9" y="1.4" width="2.2" height="11.8" rx="1.1"/><path d="M8.2 13h7.6l2.8 8.8H5.4z"/><path class="k" stroke-width="1.15" d="M8.8 16.2l-.5 5M12 16.2v5M15.2 16.2l.5 5"/></g>',
+ ev:'<rect x="3" y="5" width="18" height="16" rx="2.5" fill="#e8edf2"/><rect x="3" y="5" width="18" height="5" rx="2" fill="#e0453a"/><rect x="7" y="2.6" width="2.2" height="4.6" rx="1" fill="#5a6470"/><rect x="14.8" y="2.6" width="2.2" height="4.6" rx="1" fill="#5a6470"/><path d="M12 11.2l1.6 3.2 3.5.5-2.55 2.45.6 3.5L12 19.2l-3.15 1.65.6-3.5L6.9 14.9l3.5-.5z" fill="#f5c24a" stroke="#a8761a" stroke-width=".7"/>',
  pz:'<path d="M12 21.5 2.6 5.2Q12 .6 21.4 5.2z" fill="#f5c24a"/><path d="M3.4 6.6Q12 2.2 20.6 6.6" fill="none" stroke="#c97a2a" stroke-width="2.2"/><circle cx="9.6" cy="9.4" r="1.7" fill="#d8402a"/><circle cx="14.6" cy="10" r="1.6" fill="#d8402a"/><circle cx="12" cy="14.6" r="1.5" fill="#d8402a"/>',
  lock:'<path d="M8 10.4V7.6a4 4 0 0 1 8 0v2.8" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"/><rect x="4.8" y="10" width="14.4" height="11.2" rx="2.6"/><circle cx="12" cy="14.9" r="1.5" fill="#07070b"/><rect x="11.2" y="15.4" width="1.6" height="3.2" rx=".8" fill="#07070b"/>',
  medal:'<path d="M7.4 2.4h3.2l1.4 4.2h-3.2zM13.4 2.4h3.2l-2.6 6.2h-3.2z"/><circle cx="12" cy="14.4" r="7"/><path fill="#07070b" d="M12 9.6l1.5 3.1 3.4.5-2.5 2.4.6 3.4-3-1.6-3 1.6.6-3.4-2.5-2.4 3.4-.5z"/>'
@@ -4401,7 +4402,7 @@ $('lkOk').onclick=()=>{X.cur=E.norm(L);stamp();keep();if(isNew)LSs('look_new',nu
  if(X.me)X.me.idle=Date.now();if(isNew&&typeof toast==='function')toast('Visual pronto! Boa aventura!')};
 M.addEventListener('keydown',e=>e.stopPropagation());
 // botão para trocar o visual depois (fica junto da conta, no chat)
-{const ab=$('acBtn');if(ab){const b=D.createElement('button');b.className='btn';b.id='lkBtn';b.textContent='Visual';b.style.cssText='padding:4px 10px;font-size:12px;background:#8e44ad;margin-left:auto;margin-right:6px';
+{const ab=null;if(ab){const b=D.createElement('button');b.className='btn';b.id='lkBtn';b.textContent='Visual';b.style.cssText='padding:4px 10px;font-size:12px;background:#8e44ad;margin-left:auto;margin-right:6px';
  ab.parentNode.insertBefore(b,ab);b.onclick=()=>{$('chM').style.display='none';lock=false;open(false)}}}
 })();
 </script>
@@ -4684,6 +4685,7 @@ const M=D.createElement('div');M.className='modal';M.id='cfgM';
 const ROWS=[['g','Geral'],['mu','Música'],['fx','Efeitos'],['sk','Habilidades']];
 M.innerHTML=`<div class="box"><button class="btn xb" id="cfgX">✕</button><h2>Configurações</h2>
 ${ROWS.map(([k,l])=>`<div class="vRow"><span class="lb">${l}</span><input type="range" min="0" max="100" step="1" id="vol_${k}"><span class="pc" id="vp_${k}"></span></div>`).join('')}
+<button class="btn" id="cfgLook" style="display:block;width:100%;margin:2px 0 10px;background:#8e44ad;font-weight:900">🎨 Customizar personagem</button>
 <div class="vBtns"><button class="btn" id="vTest" style="background:#6a1b9a">Testar habilidade</button><button class="btn" id="vMus" style="background:#37474f"></button></div>
 <div style="font-size:11px;opacity:.6;text-align:center;margin-top:8px">"Habilidades" controla os sons dos especiais de todos os lutadores. "Efeitos" controla roleta, moedas, golpes e menus.</div></div>`;
 D.body.appendChild(M);
@@ -4691,6 +4693,7 @@ function ui(){ROWS.forEach(([k])=>{const v=Math.round(VOL[k]*100);$c('vol_'+k).v
 ROWS.forEach(([k])=>{const r=$c('vol_'+k);r.oninput=()=>{VOL[k]=r.value/100;$c('vp_'+k).textContent=r.value+'%';ac();vApply()};
  r.onchange=()=>{vSave();if(k==='fx')bp(880,.08,'triangle',.08);else if(k==='sk'){sClang(0,1);sThud(0,.8)}else if(k==='g')bp(660,.08,'triangle',.08)}});
 $c('vTest').onclick=()=>{ac();sGuts()};
+$c('cfgLook').onclick=()=>{close();setTimeout(()=>{if(window.LOOKX&&LOOKX.open)LOOKX.open()},60)};
 $c('vMus').onclick=()=>{if(window.MUSapi)MUSapi.toggle();ui()};
 function open(){ui();M.style.display='flex';lock=true;try{jr()}catch(e){}}
 function close(){vSave();M.style.display='none';lock=false}
@@ -4707,13 +4710,13 @@ setInterval(()=>{try{const t=Date.now();EN.forEach(e=>{if(e.dead||e.wb||e.hp>=e.
 // ===================== HUD novo: barras de ícones compactas nas laterais (sem nomes), que se ajustam à tela =====================
 (function(){
 const $h=id=>document.getElementById(id);
-const DL=['fig','inv','shop','map','mis','ach'],DR=['chat','mus','mount','save','cfg','pz','adm'];
+const DL=['fig','inv','shop','map','mis','ach'],DR=['chat','mus','mount','ev','cfg','adm'];
 const HC={vermelho:['Vermelho','#ef5350','#8e0000'],azul:['Azul','#42a5f5','#0d3c8c'],amarelo:['Amarelo','#ffd54f','#a87400'],verde:['Verde','#66bb6a','#1b5e20'],roxo:['Roxo','#ba68c8','#4a148c'],cinza:['Cinza','#a7b6bf','#37474f']};
 let HCK='azul';try{const v=localStorage.getItem('mp_hudc');if(HC[v])HCK=v}catch(e){}
 function hcApply(k){if(!HC[k])return;HCK=k;const B=document.body.style;B.setProperty('--hc1',HC[k][1]);B.setProperty('--hc2',HC[k][2]);try{localStorage.setItem('mp_hudc',k)}catch(e){}
  document.querySelectorAll('.hcSw button').forEach(b=>b.classList.toggle('on',b.dataset.k===k));const n=document.getElementById('hcNm');if(n)n.textContent=HC[k][0]}
 const css=document.createElement('style');css.textContent=`
-#mnTg,#mnBk{display:none!important}
+#mnTg,#mnBk,#mi_save,#mi_pz{display:none!important}
 .dk{position:fixed;z-index:11;display:grid;grid-auto-flow:column;gap:6px;transition:top .2s}
 #dkL{left:calc(10px + env(safe-area-inset-left,0px))}
 #dkR{right:calc(10px + env(safe-area-inset-right,0px));top:calc(8px + env(safe-area-inset-top,0px));direction:rtl}
@@ -4755,7 +4758,7 @@ function own(){[[dl,DL],[dr,DR]].forEach(([d,ids])=>{const els=ids.map(id=>$h('m
   const nm=sp?sp.textContent.trim():id;el.title=nm;el.setAttribute('aria-label',nm)});
  let i=0;[...d.children].forEach(el=>{if(getComputedStyle(el).display==='none')return;el.style.setProperty('--i',i++)});d.style.setProperty('--n',i)})}
 // ===================== ícones dos botões (GI, em js/00-icons.js) e avisos "+N" =====================
-const DOCK=['cfg','shop','inv','mount','fig','map','mis','ach','chat','save','adm','mus','pz'];
+const DOCK=['cfg','shop','inv','mount','fig','map','mis','ach','chat','adm','mus','pz','ev'];
 function icons(){DOCK.forEach(id=>{const el=$h('mi_'+id),b=el&&el.querySelector('b');if(!b)return;const g=id==='mus'&&!(window.MUSapi&&MUSapi.on)?'musoff':id;if(b.dataset.g!==g){b.dataset.g=g;b.innerHTML=GI.svg(g)}})}
 // aviso amarelo "+N": quantos itens / lutadores / montarias novos chegaram desde a última vez que a janela foi aberta
 let SEEN=null;
@@ -13459,10 +13462,44 @@ function openG(){if(open_)return;buildSprites();if(!OFF)buildOffice();if(!NZ)bui
 function close(){open_=false;M.style.display='none';cancelAnimationFrame(raf);loopStop();statStop();
  try{lock=false}catch(e){}try{if(musWas&&window.MUSapi&&!MUSapi.on)MUSapi.toggle()}catch(e){}}
 window.PZ={open:openG,close,S,_jump:jump,_win:winNight,_new:newNight,_g3:()=>G3,_tc:()=>toggleCam()};
-// ícone no menu (barra da direita)
+// ícone antigo (escondido; o minigame agora abre pelo menu de Eventos)
 const mi=D.createElement('button');mi.className='mi';mi.id='mi_pz';mi.innerHTML='<b></b><span>Pizzaria</span><i class="dot"></i>';
 mi.onclick=e=>{e.stopPropagation();if(window.mnCloseMod)mnCloseMod();setTimeout(openG,50)};
 const mt=$('mnT');if(mt)mt.appendChild(mi);
+// ===================== menu de EVENTOS =====================
+const evCss=D.createElement('style');evCss.textContent=`
+#evM .box{max-width:460px;width:94%}
+.evC{position:relative;overflow:hidden;border-radius:14px;border:2px solid #000;box-shadow:0 4px 0 #0009,0 6px 18px #000a;margin:6px 0 4px;min-height:150px;
+ background:#05050a center/cover no-repeat;color:#fff;display:flex;flex-direction:column;justify-content:flex-end}
+.evC::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,#000e 0%,#000b 45%,#0003 75%,#0000)}
+.evC>*{position:relative}
+.evC .t{font:900 20px/1.05 "Courier New",monospace;letter-spacing:.5px;padding:14px 14px 2px;text-shadow:0 2px 0 #000}
+.evC .s{font-size:12px;opacity:.85;padding:0 14px 8px}
+.evC .tags{display:flex;gap:6px;flex-wrap:wrap;padding:0 14px 10px}
+.evC .tags span{font-size:11px;font-weight:800;padding:2px 8px;border-radius:9px;background:#ffffff1f;border:1px solid #ffffff40}
+.evC .tags .ok{background:#2e7d32cc;border-color:#81c784}
+.evC .pl{margin:0 14px 14px;align-self:flex-start;font:900 16px/1 inherit;padding:11px 28px;border-radius:10px;border:2px solid #000;cursor:pointer;color:#111;
+ background:linear-gradient(#ffe066,#f5b400);box-shadow:0 3px 0 #7a5400,0 0 18px #ffcf4066;animation:evP 1.6s ease-in-out infinite}
+.evC .pl:active{transform:translateY(2px);box-shadow:0 1px 0 #7a5400}
+@keyframes evP{50%{box-shadow:0 3px 0 #7a5400,0 0 26px #ffcf40aa}}
+.evN{font-size:11px;opacity:.6;text-align:center;margin-top:8px}`;
+D.head.appendChild(evCss);
+const EM=D.createElement('div');EM.className='modal';EM.id='evM';
+EM.innerHTML=`<div class="box"><button class="btn xb" id="evX">✕</button><h2>Eventos</h2>
+<div class="evC" id="evPz"><div class="t">Pizzaria do Pixel</div><div class="s">Turno da Noite · sobreviva das 12 AM às 6 AM</div><div class="tags" id="evTags"></div><button class="pl" id="evGo">▶ JOGAR</button></div>
+<div class="evN">Novos eventos aparecem aqui.</div></div>`;
+D.body.appendChild(EM);
+try{if(typeof MBG!=='undefined')$('evPz').style.backgroundImage='url('+MBG.src+')';$('evPz').style.backgroundPosition='right center'}catch(e){}
+function evOpen(){const p=prog(),has=window.LOOKX&&LOOKX.has&&LOOKX.has('c','quepe');
+ $('evTags').innerHTML=`<span>Noite ${p.u}</span>${p.w>=5?'<span>6th Night liberada</span>':''}<span class="${has?'ok':''}">${has?'✓ Quepe de segurança':'Prêmio: Quepe de segurança'}</span>`;
+ EM.style.display='flex';try{lock=true;jr()}catch(e){}}
+function evClose(){EM.style.display='none';try{lock=false}catch(e){}}
+$('evX').onclick=evClose;$('evGo').onclick=()=>{evClose();setTimeout(openG,60)};
+{const _ct=closeTop;closeTop=function(){if(EM.style.display==='flex'){evClose();return true}return _ct()}}
+const me=D.createElement('button');me.className='mi';me.id='mi_ev';me.innerHTML='<b></b><span>Eventos</span><i class="dot"></i>';
+me.onclick=e=>{e.stopPropagation();if(window.mnCloseMod)mnCloseMod();setTimeout(evOpen,50)};
+if(mt)mt.appendChild(me);
+window.openEvents=evOpen;
 })();
 </script>
 <script>
