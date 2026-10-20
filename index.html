@@ -8741,12 +8741,13 @@ class MB{
   for(let i=0;i<n;i++){const s=i*10,d=i*7,o=i*28+24;f[d]=A[s];f[d+1]=A[s+1];f[d+2]=A[s+2];f[d+3]=A[s+3];f[d+4]=A[s+4];f[d+5]=A[s+5];u[o]=A[s+6];u[o+1]=A[s+7];u[o+2]=A[s+8];
    if(pk){const v=A[s+9],sw=min(15,floor(v*.5+1e-6));u[o+3]=sw*16+min(15,Math.round((v-sw*2)*15))}else u[o+3]=A[s+9]*255;
    sx+=A[s];sy+=A[s+1];sz+=A[s+2]}
-  let cx=sx/(n||1),cy=sy/(n||1),cz=sz/(n||1),rad=0;for(let i=0;i<n;i++){const s=i*10;rad=max(rad,Math.hypot(A[s]-cx,A[s+1]-cy,A[s+2]-cz))}
-  return{buf,n,cx,cy,cz,rad,pk}}
+  let cx=sx/(n||1),cy=sy/(n||1),cz=sz/(n||1),rad=0;const bb=[1e9,1e9,1e9,-1e9,-1e9,-1e9];
+  for(let i=0;i<n;i++){const s=i*10,x=A[s],y=A[s+1],z=A[s+2];rad=max(rad,Math.hypot(x-cx,y-cy,z-cz));if(x<bb[0])bb[0]=x;if(y<bb[1])bb[1]=y;if(z<bb[2])bb[2]=z;if(x>bb[3])bb[3]=x;if(y>bb[4])bb[4]=y;if(z>bb[5])bb[5]=z}
+  return{buf,n,cx,cy,cz,rad,pk,bb}}
  build(gl){return H3.upload(gl,this.pack())}
 }
 H3.MB=MB;
-H3.upload=(gl,p)=>{const vbo=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,vbo);gl.bufferData(gl.ARRAY_BUFFER,p.buf,gl.STATIC_DRAW);return{vbo,n:p.n,cx:p.cx,cy:p.cy,cz:p.cz,rad:p.rad,pk:p.pk}};
+H3.upload=(gl,p)=>{const vbo=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,vbo);gl.bufferData(gl.ARRAY_BUFFER,p.buf,gl.STATIC_DRAW);return{vbo,n:p.n,cx:p.cx,cy:p.cy,cz:p.cz,rad:p.rad,pk:p.pk,bb:p.bb}};
 
 // ---------- WebGL ----------
 const NLMAX=12;                       // luzes de ponto por desenho
@@ -8760,7 +8761,7 @@ precision highp float;
 #else
 precision mediump float;
 #endif
-varying vec3 vP;varying vec3 vN;varying vec4 vC;uniform vec3 uCam;uniform vec4 uL[${nl}];uniform vec3 uLC[${nl}];uniform vec3 uAT;uniform vec3 uAB;uniform vec4 uFog;uniform vec4 uFl;uniform float uEG;uniform float uDi;
+varying vec3 vP;varying vec3 vN;varying vec4 vC;uniform vec3 uCam;uniform vec4 uL[${nl}];uniform vec3 uLC[${nl}];uniform vec3 uAT;uniform vec3 uAB;uniform vec4 uFog;uniform vec4 uFl;uniform float uEG;uniform float uDi;uniform float uAl;
 void main(){
  if(uDi<1.0){float b=fract(52.9829189*fract(dot(gl_FragCoord.xy,vec2(0.06711056,0.00583715))));if(b>uDi)discard;}
  vec3 n=normalize(vN);vec3 V=uCam-vP;float dV=length(V);if(dot(n,V)<0.0)n=-n;
@@ -8771,7 +8772,7 @@ void main(){
  c=c/(1.0+c*0.22);
  c=mix(c,uFl.rgb,uFl.a);
  float f=1.0-exp(-dV*dV*uFog.a*uFog.a);c=mix(c,uFog.rgb,f);
- gl_FragColor=vec4(c,1.0);}`;
+ gl_FragColor=vec4(c,uAl);}`;
 const VS_SPR=`attribute vec3 aP;attribute vec2 aT;attribute vec4 aC;uniform mat4 uVP;uniform vec3 uCam;varying vec2 vT;varying vec4 vC;varying float vD;
 void main(){vT=aT;vC=aC;vec3 d=aP-uCam;vD=length(d);gl_Position=uVP*vec4(aP,1.0);}`;
 const FS_SPR=`#ifdef GL_FRAGMENT_PRECISION_HIGH
@@ -8832,7 +8833,7 @@ precision highp float;
 precision mediump float;
 #endif
 varying vec3 vP;varying vec3 vN;varying vec3 vC;varying float vEm;varying float vWat;${GL_COMMON}${SH_COMMON}
-uniform vec4 uL[${nl}];uniform vec3 uLC[${nl}];uniform vec4 uFl;uniform vec3 uTint;uniform float uDi;uniform float uTr;uniform float uEG;uniform vec2 uFd;
+uniform vec4 uL[${nl}];uniform vec3 uLC[${nl}];uniform vec4 uFl;uniform vec3 uTint;uniform float uDi;uniform float uTr;uniform float uEG;uniform vec2 uFd;uniform float uAl;
 void main(){
  vec3 V=uCam-vP;float dV=length(V);V/=dV;
  if(cutAt(vP))discard;
@@ -8850,7 +8851,7 @@ void main(){
  c=c/(1.0+c*0.12);
  c=mix(c,uFl.rgb,uFl.a);
  float f=1.0-exp(-dV*dV*uFog.a*uFog.a);c=mix(c,uFog.rgb,f);
- gl_FragColor=vec4(c,0.0);}`;
+ gl_FragColor=vec4(c,uAl<0.999?uAl:0.0);}`;
 const VS_TER=`attribute vec3 aP;attribute vec3 aN;attribute vec4 aC;uniform mat4 uVP;uniform mat4 uM;uniform vec2 uSq;varying vec3 vP;varying vec3 vN;varying vec4 vC;
 void main(){vec4 w=uM*vec4(aP,1.0);if(uSq.x<0.999){float h=w.y-uSq.y;if(h>0.0)w.y=uSq.y+h*uSq.x;}vP=w.xyz;vN=(uM*vec4(aN,0.0)).xyz;vC=aC;gl_Position=uVP*w;}`;
 const FS_TER=nl=>`#ifdef GL_FRAGMENT_PRECISION_HIGH
@@ -8984,6 +8985,7 @@ function frameO(which){
 const WHITE=[1,1,1];
 function meshO(m,mt,lights,dyn,o){
  if(!P.out)return;
+ if(o.occ&&OCC.on&&!OCC.pass&&occTest(m,mt)){OCC.list.push({m,mt:mt?mt.slice():null,lights,dyn,o:Object.assign({},o)});return}
  const ter=!!m.ter,u=frameO(ter?'ter':'out'),M=mt||IDM;
  curUL=u.uL;curULC=u.uLC;curN=NLO_;
  gl.uniformMatrix4fv(u.uM,false,M);
@@ -8991,7 +8993,7 @@ function meshO(m,mt,lights,dyn,o){
   pickLights(lights,o.cx!==undefined?o.cx:cx,o.cy!==undefined?o.cy:cy,o.cz!==undefined?o.cz:cz,o.rad!==undefined?o.rad:m.rad*(o.sc||1),dyn)}
  if(o.fl)gl.uniform4fv(u.uFl,o.fl);else gl.uniform4f(u.uFl,0,0,0,0);
  gl.uniform2f(u.uSq,ISO&&SQ[0]<1&&(ter||o.sq)?SQ[0]:1,SQ[1]);
- if(!ter){const tn=o.tint||WHITE;gl.uniform3f(u.uTint,tn[0],tn[1],tn[2]);gl.uniform1f(u.uDi,o.di===undefined?1:o.di);gl.uniform1f(u.uTr,o.tr||0);gl.uniform1f(u.uEG,o.eg===undefined?1:o.eg);const fd=o.fd;gl.uniform2f(u.uFd,fd?fd[0]:0,fd?fd[1]:0)}
+ if(!ter){gl.uniform1f(u.uAl,OCC.al);const tn=o.tint||WHITE;gl.uniform3f(u.uTint,tn[0],tn[1],tn[2]);gl.uniform1f(u.uDi,o.di===undefined?1:o.di);gl.uniform1f(u.uTr,o.tr||0);gl.uniform1f(u.uEG,o.eg===undefined?1:o.eg);const fd=o.fd;gl.uniform2f(u.uFd,fd?fd[0]:0,fd?fd[1]:0)}
  gl.bindBuffer(gl.ARRAY_BUFFER,m.vbo);gl.vertexAttribPointer(0,3,gl.FLOAT,false,28,0);gl.vertexAttribPointer(1,3,gl.FLOAT,false,28,12);gl.vertexAttribPointer(2,4,gl.UNSIGNED_BYTE,true,28,24);
  gl.drawArrays(gl.TRIANGLES,0,m.n)}
 // céu: cúpula em volta da câmera (desenhada primeiro, sem profundidade)
@@ -9087,16 +9089,16 @@ function setup(){
  const mu=gl.getParameter(gl.MAX_FRAGMENT_UNIFORM_VECTORS)||16;NL=mu>=64?NLMAX:mu>=40?8:4;
  try{
   P.lit=program(VS_LIT,FS_LIT(NL),['aP','aN','aC']);P.spr=program(VS_SPR,FS_SPR,['aP','aT','aC'])}catch(e){console.error('H3',e&&e.message||e);return false}
- gl.useProgram(P.lit);Object.assign(U,uloc(P.lit,['uVP','uM','uCam','uL','uLC','uAT','uAB','uFog','uFl','uEG','uDi']));
+ gl.useProgram(P.lit);Object.assign(U,uloc(P.lit,['uVP','uM','uCam','uL','uLC','uAT','uAB','uFog','uFl','uEG','uDi','uAl']));gl.uniform1f(U.uAl,1);
  tex.cloud=tex.det=null;H3.outOK=false;try{                          // programas do mundo ao ar livre: se este aparelho não compilar, só o 3D do primeiro mundo fica de fora
   NLO_=mu>=48?NLO:2;
   P.out=program(VS_OUT,FS_OUT(NLO_),['aP','aN','aC']);P.ter=program(VS_TER,FS_TER(NLO_),['aP','aN','aC']);P.sky=program(VS_SKY,FS_SKY,['aP']);
   const com=['uCam','uSun','uSunC','uSkyA','uSkyB','uGndA','uFog','uT','uCloud'],shu=['uShT','uSM','uSh','uShR','uFoc','uCut'];
-  Object.assign(UO,uloc(P.out,com.concat(['uVP','uM','uTv','uWind','uL','uLC','uFl','uTint','uDi','uTr','uEG','uFd','uSq'],shu)));
+  Object.assign(UO,uloc(P.out,com.concat(['uVP','uM','uTv','uWind','uL','uLC','uFl','uTint','uDi','uTr','uEG','uFd','uSq','uAl'],shu)));
   Object.assign(UT,uloc(P.ter,com.concat(['uVP','uM','uGnd','uDet','uGS','uL','uLC','uFl','uSq'],shu)));
   Object.assign(US,uloc(P.sky,com.concat(['uVP','uCamV'])));
   for(const[p,u]of[[P.out,UO],[P.ter,UT]]){gl.useProgram(p);const a=new Float32Array(NLO_*4),b=new Float32Array(NLO_*3);for(let i=0;i<NLO_;i++)a[i*4+3]=1;gl.uniform4fv(u.uL,a);gl.uniform3fv(u.uLC,b);gl.uniform4f(u.uFl,0,0,0,0)}
-  gl.useProgram(P.out);gl.uniformMatrix4fv(UO.uM,false,IDM);gl.uniform3f(UO.uTint,1,1,1);gl.uniform1f(UO.uDi,1);gl.uniform1f(UO.uTr,0);gl.uniform1f(UO.uEG,1);gl.uniform2f(UO.uFd,0,0);
+  gl.useProgram(P.out);gl.uniformMatrix4fv(UO.uM,false,IDM);gl.uniform3f(UO.uTint,1,1,1);gl.uniform1f(UO.uDi,1);gl.uniform1f(UO.uTr,0);gl.uniform1f(UO.uEG,1);gl.uniform2f(UO.uFd,0,0);gl.uniform1f(UO.uAl,1);
   gl.useProgram(P.ter);gl.uniformMatrix4fv(UT.uM,false,IDM);gl.uniform2f(UT.uSq,1,0);gl.useProgram(P.out);gl.uniform2f(UO.uSq,1,0);gl.useProgram(P.ter);
   skyMesh();H3.outOK=true}catch(e){console.error('H3 ao ar livre',e&&e.message||e);P.out=P.ter=P.sky=null;H3.outOK=false}
  // extras (cada um é opcional: se o aparelho não compilar, só aquele recurso fica desligado)
@@ -9131,7 +9133,24 @@ let frameId=0;const PFR={out:-1,ter:-1,sky:-1};
 let NEAR=.6,FAR=900,ISO=null,PIX=null,curFB=null,focNext=false,fogA=null;const FOC=[0,0,0],CUT=[0,0,0,0];
 H3.setCut=(x,y,z,on)=>{CUT[0]=x;CUT[1]=y;CUT[2]=z;CUT[3]=on?1:0};
 // vista de cima: os morros ficam "achatados" acima de uma altura (como o desenho pintado do 2D), para não taparem a tela; vale para o terreno e para malhas com o.sq
-const SQ=[1,12];H3.setSquash=(k,y)=>{SQ[0]=k;if(y!==undefined)SQ[1]=y};   // janela em volta do jogador na vista de cima
+const SQ=[1,12];H3.setSquash=(k,y)=>{SQ[0]=k;if(y!==undefined)SQ[1]=y};
+// vista de cima: o que fica na frente do personagem (árvore, pilastra, ruína, torre, parede...) não some: é desenhado depois de tudo, meio transparente.
+// Cada malha marcada com o.occ é testada pela caixa dela projetada na tela do 2D (x, z - y) contra o retângulo do personagem; quem está ao sul dele e o cobre vai para a lista.
+const OCC={on:false,pass:false,list:[],al:1,x:0,y:0,z:0,a:.42};H3._OCC=OCC;
+H3.setOcc=(x,y,z,a)=>{if(x===null||x===undefined){OCC.on=false;return}OCC.on=true;OCC.x=x;OCC.y=y;OCC.z=z;if(a!==undefined)OCC.a=a};
+function occTest(m,mt){const b=m.bb;if(!b)return false;let x0=1e9,y0=1e9,z0=1e9,x1=-1e9,y1=-1e9,z1=-1e9;const M=mt;
+ for(let i=0;i<8;i++){let x=i&1?b[3]:b[0],y=i&2?b[4]:b[1],z=i&4?b[5]:b[2];if(M){const X=M[0]*x+M[4]*y+M[8]*z+M[12],Y=M[1]*x+M[5]*y+M[9]*z+M[13],Z=M[2]*x+M[6]*y+M[10]*z+M[14];x=X;y=Y;z=Z}
+  if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y;if(z<z0)z0=z;if(z>z1)z1=z}
+ const px=OCC.x,py=OCC.y,pz=OCC.z;
+ if(z1<pz+3||y1<py+8)return false;                                   // precisa ficar ao sul do personagem e ser mais alto que o pé dele
+ if(x1<px-9||x0>px+9)return false;
+ const s0=z0-y1,s1=z1-y0,p0=pz-py-30,p1=pz-py+1;return s1>p0&&s0<p1}
+H3.flushOcc=function(){const L=OCC.list;if(!L.length)return;OCC.pass=true;
+ L.sort((a,b)=>{const ca=a.mt?a.mt[14]+a.mt[13]:a.m.cz+a.m.cy,cb=b.mt?b.mt[14]+b.mt[13]:b.m.cz+b.m.cy;return ca-cb});
+ try{for(const d of L){                                                 // primeiro só a profundidade (fica uma camada só, sem ver o lado de dentro), depois a cor por cima
+   gl.disable(gl.BLEND);gl.colorMask(false,false,false,false);gl.depthMask(true);OCC.al=1;mesh(d.m,d.mt,d.lights,d.dyn,d.o);
+   gl.colorMask(true,true,true,true);gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.depthMask(false);OCC.al=OCC.a;mesh(d.m,d.mt,d.lights,d.dyn,Object.assign({},d.o,{keep:true}))}}
+ finally{OCC.al=1;OCC.pass=false;L.length=0;gl.colorMask(true,true,true,true);gl.depthMask(true);gl.disable(gl.BLEND);gl.useProgram(P.lit);gl.uniform1f(U.uAl,1)}};   // janela em volta do jogador na vista de cima
 H3.clip=(n,f)=>{NEAR=n;FAR=f};
 H3.setIso=o=>{ISO=o||null};          // {x,y,z,w,h}: projeção oblíqua do 2D (x → tela, z - altura → tela, 1 unidade = 1 pixel), centrada em (x,y,z)
 H3.isIso=()=>!!ISO;
@@ -9155,7 +9174,7 @@ function begin(ex,ey,ez,yaw,pitch,fov,roll){
  if(ISO){isoMat(VP,ISO);PM.set(IDM);VM.set(IDM);camP=[ISO.x,ISO.y+3000,ISO.z+3000];camR=[1,0,0];camU=[0,1,0]}
  else{M4.persp(PM,fov,W/Hh,NEAR,FAR);M4.view(VM,ex,ey,ez,yaw,pitch);M4.mul(VP,PM,VM);
   camP=[ex,ey,ez];camR=[cos(yaw),0,sin(yaw)];const cp=cos(pitch),sp=sin(pitch);camU=[-sin(yaw)*sp,cp,cos(yaw)*sp]}
- if(!focNext){FOC[0]=camP[0];FOC[1]=camP[1];FOC[2]=camP[2]}focNext=false;SHS.ok=SHS.pend;SHS.pend=false;
+ if(!focNext){FOC[0]=camP[0];FOC[1]=camP[1];FOC[2]=camP[2]}focNext=false;SHS.ok=SHS.pend;SHS.pend=false;OCC.list.length=0;OCC.al=1;
  if(ISO){if(fogA===null)fogA=fog[3];fog[3]=0}else if(fogA!==null){fog[3]=fogA;fogA=null}      // vista de cima: sem névoa (como no 2D)
  gl.viewport(0,0,W,Hh);gl.clearColor(fog[0],fog[1],fog[2],1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
  gl.enable(gl.DEPTH_TEST);gl.disable(gl.BLEND);gl.depthMask(true);
@@ -9166,7 +9185,8 @@ function begin(ex,ey,ez,yaw,pitch,fov,roll){
 function mesh(m,mt,lights,dyn,o){
  o=o||{};
  if(m.pk||m.ter)return meshO(m,mt,lights,dyn,o);
- gl.useProgram(P.lit);curUL=U.uL;curULC=U.uLC;curN=NL;
+ if(o.occ&&OCC.on&&!OCC.pass&&occTest(m,mt)){OCC.list.push({m,mt:mt?mt.slice():null,lights,dyn,o:Object.assign({},o)});return}
+ gl.useProgram(P.lit);curUL=U.uL;curULC=U.uLC;curN=NL;gl.uniform1f(U.uAl,OCC.al);
  const M=mt||IDM;
  if(mt)gl.uniformMatrix4fv(U.uM,false,M);else gl.uniformMatrix4fv(U.uM,false,IDM);
  // o.keep = reaproveita as luzes escolhidas no desenho anterior (peças do mesmo personagem); senão escolhe as que mais pesam no centro da malha
@@ -9421,18 +9441,20 @@ function build(gl){
 H.build=build;
 
 // desenha o salão: lights = luzes fixas já com o tremor do momento, dyn = temporárias
-H.draw=function(t,dyn){
- for(const m of H.chunks){if(!H3.vis(m.cx,m.cy,m.cz,m.rad))continue;H3.mesh(m,null,H.lights,dyn)}
+const HOCC={wall:1,ent:1,altar:1};
+H.draw=function(t,dyn){const iso=H3.isIso();
+ for(const m of H.chunks){if(iso&&(m.tag==='dome'||m.tag==='chand'||(m.tag==='wall'&&m.cz>25)))continue;   // vista de cima: sem o teto e sem as paredes da frente (como uma casa de bonecas)
+  if(!H3.vis(m.cx,m.cy,m.cz,m.rad))continue;H3.mesh(m,null,H.lights,dyn,{occ:!!HOCC[m.tag]})}
  const pul=.78+.3*sin(t/310)+.12*sin(t/97);H3.mesh(H.runes,null,H.lights,dyn,{eg:pul})};
 // tremor das chamas (cada luz com a sua fase)
 H.flicker=function(t){for(const l of H.lights){if(l.kind==='torch'||l.kind==='stake'){const f=.86+.09*sin(t*.0071+l.ph*3.1)+.06*sin(t*.0183+l.ph)+.03*sin(t*.041+l.ph*2);l.k=l.b*f}
  else if(l.kind==='altar'){l.k=l.b*(.8+.2*sin(t/500)+.06*sin(t/130))}else if(l.kind==='chand')l.k=l.b*(.92+.06*sin(t*.004))}};
 // chamas, brilhos e velas do salão como cartazes
 H.sprites=function(t){const T=H3.tex;
- for(const f of H.flames){const fr=(floor(t/85)+f.k*3)%6,u0=fr*16/96,u1=(fr+1)*16/96,v0=f.big?0:.5,v1=f.big?.5:1,w=16*f.s,h=24*f.s;
+ const isoH=H3.isIso();for(const f of H.flames){if(isoH&&f.z>25&&Math.hypot(f.x,f.z)>122)continue;const fr=(floor(t/85)+f.k*3)%6,u0=fr*16/96,u1=(fr+1)*16/96,v0=f.big?0:.5,v1=f.big?.5:1,w=16*f.s,h=24*f.s;
   H3.spr(T.flame,f.x,f.y,f.z,w,h,[u0,v0,u1,v1],[1,1,1,1],false,1);
   const gp=.85+.15*sin(t/70+f.k*2.1);H3.spr(T.glow,f.x,f.y+h*.22,f.z,(f.big?44:34)*gp,(f.big?44:34)*gp,null,[f.glow[0],f.glow[1]*.8,f.glow[2]*.6,.55],true,0,true)}
- for(const c of H.candles){const fr=(floor(t/110)+floor(c.x*3))%6;H3.spr(T.flame,c.x,c.y,c.z,16*.5,24*.5,[fr*16/96,.5,(fr+1)*16/96,1],[1,1,1,1],false,1);H3.spr(T.glow,c.x,c.y+2,c.z,12,12,null,[1,.7,.3,.5],true,0,true)}
+ if(!H3.isIso())for(const c of H.candles){const fr=(floor(t/110)+floor(c.x*3))%6;H3.spr(T.flame,c.x,c.y,c.z,16*.5,24*.5,[fr*16/96,.5,(fr+1)*16/96,1],[1,1,1,1],false,1);H3.spr(T.glow,c.x,c.y+2,c.z,12,12,null,[1,.7,.3,.5],true,0,true)}
  // brilho vermelho das runas e do sigilo
  const pul=.5+.5*sin(t/310);for(const q of H.runeGl)H3.flat(T.glow,q.x,.9,q.z,15,15,null,[1,.22,.12,.25+.2*pul],true);
  H3.flat(T.glow,0,14.9,0,70,70,null,[1,.2,.1,.32+.16*pul],true)};
@@ -10133,7 +10155,7 @@ function hallBoss(t,C){const e=X.boss();if(!e)return null;const DM=X.DM,ax=0,ay=
  return()=>MOD.drawDemon({x:ax,y:ay,z:az,yaw:S.bossYaw,t,look:lk,kn,fl,di,shake},HALL.lights,FX.L)}
 function fightBtnFix(){const e=X.boss(),b=$$('fightBtn');if(!b)return;
  const near=!fight&&!lock&&e&&!e.dead&&hypot(S.px,S.pz)<92;b.style.display=near?'block':'none';b._e=near?e:null;b.classList.toggle('dis',!equipped.length)}
-const HSC=SCN.hall={id:'hall',K:150/80,OX:RMX,OY:RMY,fx:0,fz:BZ,eye:25,camD:86,pl:[[-.9,.75],[-1.0,.3]],amb:[.17,.11,.195],camLight:[1,.86,.7],
+const HSC=SCN.hall={id:'hall',K:150/80,OX:RMX,OY:RMY,fx:0,fz:BZ,eye:25,camD:86,iso:true,pl:[[-.9,.75],[-1.0,.3]],amb:[.17,.11,.195],camLight:[1,.86,.7],
  get lights(){return HALL.lights},
  active:()=>world===0&&X.inRoom(),
  built:()=>!!HALL.ready,build:gl=>HALL.build(gl),free:()=>{HALL.ready=false},
@@ -10176,7 +10198,7 @@ function frame(){
  const F=S.foc;
  // vista de cima: projeção do 2D + filtro de pixels (só nela)
  H3.setIso(C.iso||null);H3.setPix(C.iso&&SC.pix!==false?{lv:31,dt:1}:null);
- if(C.iso)H3.setCut(S.px,floorAt(S.px,S.pz)+S.jh,S.pz,true);else H3.setCut(0,0,0,false);
+ H3.setCut(0,0,0,false);if(C.iso)H3.setOcc(S.px,floorAt(S.px,S.pz)+S.jh,S.pz);else H3.setOcc(null);       // vista de cima: o que tapa o personagem fica meio transparente
  if(H3.setSquash)H3.setSquash(C.iso&&SC.isoSq?SC.isoSq[0]:1,SC.isoSq?SC.isoSq[1]:12);
  // sombras do sol: mapa de profundidade em volta do jogador, antes do quadro
  if(SC.shadow&&H3.shadowOn()){let ok=false;try{ok=H3.shBegin(F.x,F.y,F.z);if(ok)SC.shadow(t,F)}catch(e){console.error('H3 sombra',e)}finally{if(ok)H3.shEnd()}}
@@ -10195,7 +10217,7 @@ function frame(){
   const jh=A.jh||0,sk=max(.45,1-jh/60);
   H3.flat(H3.tex.blob,A.x,A.y-jh+.25,A.z,34*sk,34*sk,null,[1,1,1,.85*sk],false);
   H3.spr(atlas,A.x,A.y,A.z,64*bs,72*bs,A.uv,[lt[0],lt[1],lt[2],1],false,1)}
- FX.draw(t);SC.sprites(t);H3.end();
+ FX.draw(t);SC.sprites(t);H3.end();H3.flushOcc();
  // raios de sol (gráfico Alto, olhando para o lado do sol)
  if(!C.iso&&SC.rays)try{SC.rays(t,C)}catch(e){console.error('H3 raios',e);SC.rays=null}
  H3.post();
@@ -10446,7 +10468,7 @@ function gateBase(mb){const x=GATE.x,z=GATE.z;
 // ============================================================ desenho ============================================================
 let atl=null,markTex=null;
 ICE.draw=function(t,dyn){const L=ICE.lights;
- for(const m of ICE.chunks){if(!H3.vis(m.cx,m.cy,m.cz,m.rad))continue;H3.mesh(m,null,L,dyn)}
+ for(const m of ICE.chunks){if(!H3.vis(m.cx,m.cy,m.cz,m.rad))continue;H3.mesh(m,null,L,dyn,{occ:m.tag==='wall'||m.tag==='prop'||m.tag==='deco'||m.tag==='cave'})}
  drawPortal(t)};
 ICE.flicker=function(t){const ro=H3.drag?H3.drag.env:0;for(const l of ICE.lights){if(l.kind==='crys'){l.k=l.b*(.82+.18*sin(t/650+l.ph)+.04*sin(t/170+l.ph*3))*(1-ro*.3*(.5+.5*sin(t/38+l.ph*5)))}else if(l.kind==='gate'){l.k=l.b*(.85+.12*sin(t/210)+.05*sin(t/77))}}};      // com o rugido a luz dos cristais treme
 // luzes do relâmpago (somadas por frameFx) e outras coisas que variam por quadro
@@ -10602,7 +10624,7 @@ function iceStep(o){
  if(ok(o.ox,o.z,sl)){o.x=o.ox;return}
  o.x=o.ox;o.z=o.oz}
 const SCN=H3.scenes=H3.scenes||{};
-SCN.ice={id:'ice',K,OX,OY,fx:0,fz:-10,eye:25,camD:92,p3:-.02,pl:[[-.9,.8],[-1,.35]],amb:[.2,.28,.42],camLight:[.7,.85,1],
+SCN.ice={id:'ice',K,OX,OY,fx:0,fz:-10,eye:25,camD:92,iso:true,p3:-.02,pl:[[-.9,.8],[-1,.35]],amb:[.2,.28,.42],camLight:[.7,.85,1],
  get lights(){return ICE.lights},
  active:()=>world===2,
  built:()=>!!ICE.ready&&!!(H3.drag&&H3.drag.ready),
@@ -11379,7 +11401,7 @@ NAT.frame=function(t,C,dt){
   const cx=T.wx,cy=T.cy,cz=T.wz;let want=1;
   const dc=hypot(cx-ax,cy-ay,cz-az),r=T.cr;
   if(dc<r+6)want=min(want,clp((dc-r*.35)/(r*.65+6),.18,1));          // a câmera está dentro da copa
-  if(third){const tq=clp(((cx-ax)*sx+(cy-ay)*sy+(cz-az)*sz)/sl2,0,1);if(tq<.97){const qx=ax+sx*tq-cx,qy=ay+sy*tq-cy,qz=az+sz*tq-cz,dq=hypot(qx,qy,qz);if(dq<r+3)want=min(want,clp(.2+(dq-r*.3)/(r*.9),.2,1))}}
+  if(third&&md!==3){const tq=clp(((cx-ax)*sx+(cy-ay)*sy+(cz-az)*sz)/sl2,0,1);if(tq<.97){const qx=ax+sx*tq-cx,qy=ay+sy*tq-cy,qz=az+sz*tq-cz,dq=hypot(qx,qy,qz);if(dq<r+3)want=min(want,clp(.2+(dq-r*.3)/(r*.9),.2,1))}}
   T.di+=(want-T.di)*min(1,dt*9);if(Math.abs(want-T.di)<.012)T.di=want}};
 
 // ---------- desenho ----------
@@ -11938,7 +11960,8 @@ FLD.zones.push({x0:TWX-TWR-12,x1:TWX+TWR+12,z0:TWZ-TWR-12,z1:TWZ+TWR+16,block:(x
 const SEG=[0,0,0];
 // some (pontilhado) o que fica entre a câmera e o jogador: a copa gigante e a torre
 function fadeFor(it,F,dt){const md=H3.S.mode;let want=1;
- if(it.k==='canopy'){const E=NAT.eye;
+ if(md===3){}                                               // vista de cima: nada some (fica meio transparente, ver H3.setOcc)
+ else if(it.k==='canopy'){const E=NAT.eye;
   const cx=CAN.x,cy=CAN.y,cz=CAN.z,inC=(x,y,z)=>((x-cx)/CAN.rx)**2+((y-cy)/(CAN.ry*1.15))**2+((z-cz)/CAN.rz)**2<1;
   if(E&&inC(E[0],E[1],E[2]))want=.25;
   if(E&&E[6]){for(let i=1;i<10;i++){const u=i/10,x=E[3]+(E[0]-E[3])*u,y=E[4]+(E[1]-E[4])*u,z=E[5]+(E[2]-E[5])*u;if(inC(x,y,z)){want=md===3?.3:.35;break}}}}
@@ -11959,10 +11982,11 @@ SCE.flicker=function(t){if(!SCE.L)return;const L=SCE.L,s=t/1000;
  const hue=(s*.12)%1,hc=hsv(hue,.75,1);L.mach.cr=hc[0];L.mach.cg=hc[1];L.mach.cb=hc[2];L.star.k=.5+.12*sin(s*2.6)};
 function hsv(h,s,v){const i=floor(h*6),f=h*6-i,p=v*(1-s),q=v*(1-f*s),u=v*(1-(1-f)*s);return[[v,u,p],[q,v,p],[p,v,u],[p,q,v],[u,p,v],[v,p,q]][i%6]}
 const MT=new Float32Array(16);
+const OCCK=new Set(['pil','ped','mach','tower','gtree','canopy','ruin','stake','gate']);   // o que pode ficar meio transparente na vista de cima
 SCE.draw=function(t,dyn){if(!SCE.ready)return;const F=H3.S.foc||H3.S.cam,s=t/1000;
  for(const it of SCE.st){const d=hypot(it.wx-F.x,it.wz-F.z)-it.rad;if(d>it.far*(FLD.distK||1))continue;if(!H3.vis(it.wx,it.wy,it.wz,it.rad))continue;
   let m=it.m;if(it.lods){const dd=d+it.rad;m=it.lods[dd<520?0:dd<1100?1:2]}
-  H3.mesh(m,it.mt,FLD.lights,dyn,{di:it.di,tr:it.k==='canopy'?.5:it.k==='gtree'?.2:0,rad:it.rad,cx:it.wx,cy:it.wy,cz:it.wz})}
+  H3.mesh(m,it.mt,FLD.lights,dyn,{di:it.di,tr:it.k==='canopy'?.5:it.k==='gtree'?.2:0,rad:it.rad,cx:it.wx,cy:it.wy,cz:it.wz,occ:OCCK.has(it.k)})}
  // estrela: gira (mais rápido com o jogador perto), sobe e desce
  const st=SCE.star;if(st&&hypot(st.x-F.x,st.z-F.z)<1100&&H3.vis(st.x,st.top-10,st.z,14)){const near=1-sm(30,90,hypot(st.x-F.x,st.z-F.z));
   st.a=(st.a||0)+(.018+.035*near);M4.trs(MT,st.x,st.y+25.5+sin(s*1.6)*1.1,st.z,0,st.a,0,1,1,1);
@@ -12373,13 +12397,15 @@ H3.gfx={apply:()=>apply(true),LV,cur};
 {const _st=FLD.step;FLD.step=function(ms){const r=_st.apply(this,arguments);if(FLD.ready)try{groundTex(!!cur().bake||!H3.shadowOn())}catch(e){}return r}}
 
 // ---------- desenho das árvores, arbustos, pedras e abetos com as distâncias do nível ----------
-function drawList(list,far,cam,dyn,tr,lod){const far2=far*far,l0=lod[0]*lod[0],l1=lod[1]*lod[1];
+function drawList(list,far,cam,dyn,tr,lod,occ){const far2=far*far,l0=lod[0]*lod[0],l1=lod[1]*lod[1];
  for(const T of list){const dx=T.wx-cam.x,dz=T.wz-cam.z,d2=dx*dx+dz*dz;if(d2>far2)continue;if(!H3.vis(T.wx,T.wy,T.wz,T.rad))continue;
   const l=d2<l0?0:d2<l1?1:2,ms=T.v.m,m=ms[l]||ms[ms.length-1];
-  H3.mesh(m,T.m,FLD.lights,dyn,{di:T.di===undefined?1:T.di,tint:T.tint,tr,rad:T.rad,cx:T.wx,cy:T.wy,cz:T.wz})}}
+  H3.mesh(m,T.m,FLD.lights,dyn,{di:T.di===undefined?1:T.di,tint:T.tint,tr,rad:T.rad,cx:T.wx,cy:T.wy,cz:T.wz,occ})}}
+const NAT_D0=NAT.draw;
 NAT.draw=function(t,dyn){const cam=H3.S.foc||H3.S.cam,L=cur();
- drawList(NAT.trees,L.tFar,cam,dyn,.55,L.lod);drawList(NAT.bushes,L.sFar,cam,dyn,.45,L.lod);drawList(NAT.rocks,L.sFar+60,cam,dyn,0,L.lod);drawList(NAT.decor,L.sFar*.5,cam,dyn,.2,L.lod);
+ drawList(NAT.trees,L.tFar,cam,dyn,.55,L.lod,true);drawList(NAT.bushes,L.sFar,cam,dyn,.45,L.lod);drawList(NAT.rocks,L.sFar+60,cam,dyn,0,L.lod);drawList(NAT.decor,L.sFar*.5,cam,dyn,.2,L.lod);
  if(NAT.gal){for(const g of NAT.gal){const ms=g.v.m;H3.mesh(ms[min(g.lod||0,ms.length-1)],g.m,FLD.lights,dyn,{di:1,tr:.55,rad:g.v.rad})}}};
+for(const p of FLD.parts)if(p.draw===NAT_D0)p.draw=(t,dyn)=>NAT.draw(t,dyn);      // a parte registrada guardava a função antiga
 FL.drawPines=function(cam){const far=cur().pFar;for(const c of FL.pines){if(hypot(c.cx-cam.x,c.cz-cam.z)-c.rad>far)continue;if(!H3.vis(c.cx,c.cy,c.cz,c.rad))continue;H3.mesh(c.m,null,null,null,{rad:c.rad,cx:c.cx,cy:c.cy,cz:c.cz,tr:.5,sq:true})}};
 
 // ---------- sombras: o que faz sombra (terreno, árvores, arbustos, pedras, abetos, cenário, inimigos) ----------
