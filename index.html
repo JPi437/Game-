@@ -13259,12 +13259,12 @@ function renderView(v,t){const[w,h]=g3size();gl.viewport(0,0,w,h);
   // da sala, o corredor atrás de cada porta fica no breu; só aparece com a luz do corredor acesa
   dk:v.office&&!v.cam?[S.light.L&&!po?1:.035,S.light.R&&!po?1:.035,LY.dk]:[1,1,999]};
  if(!v.office&&!v.cam){FR.sc=[0,0,0]}
- if(v.cam&&LY.map){const cp=cos(v.pitch);FR.sp=[v.x,v.y,v.z];FR.sd=[sin(v.yaw)*cp,sin(v.pitch),-cos(v.yaw)*cp];FR.sc=[1.25,1.3,1.55];FR.sk=[.94,.74,170];
-  FR.amb=[.014,.015,.024];FR.tn=[.84,.88,1.06,.55];FR.fog=[.0,.0,.01,.004]}
+ if(v.cam&&LY.map){const cp=cos(v.pitch);FR.sp=[v.x,v.y,v.z];FR.sd=[sin(v.yaw)*cp,sin(v.pitch),-cos(v.yaw)*cp];FR.sc=[1.05,1.08,1.28];FR.sk=[.97,.8,150];
+  FR.amb=[.004,.004,.007];FR.tn=[.84,.88,1.06,.55];FR.fog=[.0,.0,.004,.012]}
  if(v.amb){FR.amb=v.amb;FR.fog=[0,0,0,0];FR.tn=[1,1,1,0]}
  if(v.cam&&!v.office&&!LY.map){const d=hypot(v.x-LY.sp[0],v.z-LY.sp[2]);if(d>60)FR.sc=[0,0,0]}
  // luzes da cena
- const L=[],LM=v.cam?(LY.map?.55:1.7):1.0;if(!po&&!(v.office&&LY.map))for(const l of G3.L){let k=LM;if(l[7]==='hall')k*=.85+.15*sin(s*7+l[2])*(rnd()<.03?0:1);if(l[7]==='stage')k*=.8+.2*sin(s*1.3+l[0]);L.push([l[0],l[1],l[2],l[3],l[4]*k,l[5]*k,l[6]*k])}
+ const L=[],LM=v.cam?(LY.map?.22:1.7):1.0;if(!po&&!(v.office&&LY.map))for(const l of G3.L){let k=LM;if(l[7]==='hall')k*=.85+.15*sin(s*7+l[2])*(rnd()<.03?0:1);if(l[7]==='stage')k*=.8+.2*sin(s*1.3+l[0]);L.push([l[0],l[1],l[2],l[3],l[4]*k,l[5]*k,l[6]*k])}
  if(!po){L.push([LY.scrL[0],LY.scrL[1],LY.scrL[2],16,.05,.22,.1,0,1]);                                                         // brilho das telas
   L.push([LY.genL[0],LY.genL[1],LY.genL[2],30,.03,.018,.01,0,1]);                                                                    // um pouco de luz geral na sala
   const DR=LY.map?-40:38,DC=LY.map?[.55,1.25,3.2]:[2.1,2,1.8];if(S.light.L)L.push([LY.doorL[0],LY.doorL[1],LY.doorL[2],DR,DC[0],DC[1],DC[2],0,2]);if(S.light.R)L.push([-LY.doorL[0],LY.doorL[1],LY.doorL[2],DR,DC[0],DC[1],DC[2],0,2])}
