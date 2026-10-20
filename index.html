@@ -13420,7 +13420,9 @@ function turnAt(x,y,moving,okOnly){if(S.mode!=='play'||S.cam||S.paused||S.pout)r
  if(okOnly)return 1;return x>W*.6?1:x<W*.4?-1:0}
 function doorT(sd){if(S.pout||(S.inside&&S.inside.side===sd)){SND.knock();return}S.door[sd]=!S.door[sd];SND.door()}
 function lightT(sd){if(S.pout||(S.inside&&S.inside.side===sd)){SND.light();return}const on=!S.light[sd];S.light.L=S.light.R=false;S.light[sd]=on;SND.light();{const w=atDoor(sd).filter(k=>k!=='mola').join();S.seen=S.seen||{};if(on&&w&&S.seen[sd]!==w)smp('atdoor',.8);if(on)S.seen[sd]=w}if(on&&atDoor(sd).some(k=>k!=='mola'))try{navigator.vibrate&&navigator.vibrate(60)}catch(e){}}
-function toggleCam(){if(S.pout)return;S.cam=!S.cam;if(S.cam){S.light.L=S.light.R=false;S.glitch=300}SND.camFlip()}
+function toggleCam(){if(S.pout)return;S.cam=!S.cam;if(S.cam){S.light.L=S.light.R=false;S.glitch=300;
+  // quem está na porta aberta entra enquanto você olha as câmeras: ao baixar o tablet, susto
+  if(!S.inside)for(const sd of['L','R']){if(S.door[sd])continue;const w=atDoor(sd);if(w.length){S.inside={who:w[0],side:sd,t:S.t,cam:true};break}}}SND.camFlip()}
 cv.addEventListener('pointerdown',e=>{e.preventDefault();const[x,y]=toXY(e);drag={x0:x,x:x,p0:S.pan,yw0:S.yaw,mv:0,id:e.pointerId,turn:turnAt(x,y),tok:turnAt(x,y,false,true)};try{cv.setPointerCapture(e.pointerId)}catch(z){}});
 cv.addEventListener('pointermove',e=>{const[x,y]=toXY(e);PTR.x=x;PTR.y=y;PTR.in=true;if(!drag||e.pointerId!==drag.id)return;drag.mv=max(drag.mv,abs(x-drag.x0));if(drag.tok)drag.turn=turnAt(x,y,true)});
 cv.addEventListener('pointerup',e=>{if(!drag||e.pointerId!==drag.id)return;const[x,y]=toXY(e);const tap=drag.mv<8;drag=null;if(tap)click(x,y)});
@@ -13442,7 +13444,7 @@ function openG(){if(open_)return;buildSprites();if(!OFF)buildOffice();if(!NZ)bui
  raf=requestAnimationFrame(frame)}
 function close(){open_=false;M.style.display='none';cancelAnimationFrame(raf);loopStop();statStop();
  try{lock=false}catch(e){}try{if(musWas&&window.MUSapi&&!MUSapi.on)MUSapi.toggle()}catch(e){}}
-window.PZ={open:openG,close,S,_jump:jump,_win:winNight,_new:newNight,_g3:()=>G3};
+window.PZ={open:openG,close,S,_jump:jump,_win:winNight,_new:newNight,_g3:()=>G3,_tc:()=>toggleCam()};
 // ícone no menu (barra da direita)
 const mi=D.createElement('button');mi.className='mi';mi.id='mi_pz';mi.innerHTML='<b></b><span>Pizzaria</span><i class="dot"></i>';
 mi.onclick=e=>{e.stopPropagation();if(window.mnCloseMod)mnCloseMod();setTimeout(openG,50)};
