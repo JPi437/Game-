@@ -13241,7 +13241,7 @@ function renderView(v,t){const[w,h]=g3size();gl.viewport(0,0,w,h);
  // luminária: balança, pisca às vezes; apaga sem bateria
  const sw=sin(s*.7)*.06+sin(s*1.9)*.015,lpX=LY.sp[0]+sin(sw)*LY.sp[3],lpY=LY.sp[1]-LY.sp[3]*cos(sw),fl=(!po&&(rnd()<.004))?.25:1,lampOn=!po&&S.mode!=='over';
  const lk=lampOn?(S.mode==='jump'?(rnd()<.5?.2:1.4):fl):0;
- const sdl=hypot(sin(sw)*.3,1);FR={sp:[lpX,lpY,LY.sp[2]],sd:[sin(sw)*.3/sdl,-1/sdl,0],sc:[1.0*lk,.8*lk,.56*lk],sk:[.8,.36,60],amb:v.cam?(LY.map?[.08,.09,.085]:[.15,.16,.16]):(v.menu&&LY.map?[.12,.1,.13]:[.03,.027,.036]),fog:v.cam?[.01,.014,.01,.0035]:[.0,.0,.0,.0075],tn:v.cam?[.74,1,.8,.88]:[.92,.95,1.05,.35],eg:1,
+ const sdl=hypot(sin(sw)*.3,1);FR={sp:[lpX,lpY,LY.sp[2]],sd:[sin(sw)*.3/sdl,-1/sdl,0],sc:[1.0*lk,.8*lk,.56*lk],sk:[.8,.36,60],amb:v.cam?(LY.map?[.085,.085,.09]:[.15,.16,.16]):(v.menu&&LY.map?[.12,.1,.13]:[.03,.027,.036]),fog:v.cam?[.012,.012,.013,.0035]:[.0,.0,.0,.0075],tn:v.cam?[.86,.86,.88,.97]:[.92,.95,1.05,.35],eg:1,
   // da sala, o corredor atrás de cada porta fica no breu; só aparece com a luz do corredor acesa
   dk:v.office&&!v.cam?[S.light.L&&!po?1:.035,S.light.R&&!po?1:.035,LY.dk]:[1,1,999]};
  if(!v.office&&!v.cam){FR.sc=[0,0,0]}
@@ -13311,10 +13311,18 @@ function hud3(t){
  X.fillStyle='rgba(0,0,0,.35)';X.fillRect(6,6,16,16);R('#fff',10,10,3,8);R('#fff',15,10,3,8);
  if(S.hint>0&&S.night===1&&!S.cam){const a=min(1,S.hint/800);X.globalAlpha=a;X.fillStyle='rgba(0,0,0,.55)';X.fillRect(60,34,280,30);
   t2('Botão vermelho: porta · botão branco: luz do corredor.',200,38,'#fff',7,'center','s');t2('Vigie as câmeras e poupe a BATERIA até as 6 AM!',200,50,'#ffd23f',7,'center','s');X.globalAlpha=1}}
-function camOverlay(t){const id=S.curCam,c=CAMS[id];
+// falha de sinal: faixas da imagem deslocadas, faixa de interferência rolando, chuvisco e pontinhos
+function signalFx(t){const gw=gcv.width,gh=gcv.height,k=gh/H;
+ const n=1+(rnd()<.25?2+floor(rnd()*3):0);
+ for(let i=0;i<n;i++){const y=rnd()*H,hh=1+rnd()*(rnd()<.2?14:4),dx=(rnd()-.5)*(rnd()<.15?40:10);try{X.drawImage(gcv,0,y*k,gw,hh*k,dx,y,W,hh)}catch(e){}
+  X.fillStyle='rgba(200,200,205,'+(rnd()*.12).toFixed(3)+')';X.fillRect(0,y,W,hh)}
+ const ry=((t/9)%(H+40))-20;const gr=X.createLinearGradient(0,ry-12,0,ry+12);gr.addColorStop(0,'rgba(255,255,255,0)');gr.addColorStop(.5,'rgba(220,220,225,.07)');gr.addColorStop(1,'rgba(255,255,255,0)');X.fillStyle=gr;X.fillRect(0,ry-12,W,24);
+ for(let i=0;i<140;i++){const v=rnd()<.5?20:235;X.fillStyle='rgba('+v+','+v+','+v+','+(.25+rnd()*.5).toFixed(2)+')';X.fillRect(rnd()*W|0,rnd()*H|0,rnd()<.15?2:1,1)}
+ if(rnd()<.03){X.fillStyle='rgba(0,0,0,'+(.2+rnd()*.3).toFixed(2)+')';X.fillRect(0,0,W,H)}}
+function camOverlay(t){const id=S.curCam,c=CAMS[id];if(!c.audio)signalFx(t);
  for(let y=0;y<H;y+=2){X.fillStyle='rgba(0,0,0,.12)';X.fillRect(0,y,W,1)}
  if(c.audio){X.fillStyle='#000';X.fillRect(0,0,W,H);t2('CÂMERA DESLIGADA',W/2,90,'#fff',10,'center');t2('— SÓ ÁUDIO —',W/2,106,'#aaa',8,'center')}
- grain(S.glitch>0?.5+.3*rnd():.06+.03*rnd());vignette(.72);
+ grain(S.glitch>0?.55+.3*rnd():.09+.05*rnd());vignette(.72);
  X.strokeStyle='rgba(255,255,255,.55)';X.lineWidth=1;X.strokeRect(8.5,8.5,W-17,H-17);
  t2('CAM '+id,30,14,'#fff',10,'left');t2(c.nm.toUpperCase(),30,27,'#ddd',7,'left');if((t/500|0)%2){circ(34,42,3,'#e02020');t2('REC',40,38.5,'#fff',7,'left')}
  drawCamMap(id,t)}
