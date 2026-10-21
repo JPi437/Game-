@@ -476,7 +476,7 @@ function sanSave(o){
  const eq=[];(Array.isArray(o.equipped)?o.equipped:(o.equipped?[o.equipped]:[])).forEach(id=>{id=SAN.int(id,1,1e9,0);if(id&&seen.has(id)&&!eq.includes(id))eq.push(id)});
  const qf=q=>({st:SAN.int(q&&q.st,0,10,0),n:SAN.int(q&&q.n,0,1e6,0)}),oa=o.aset&&typeof o.aset==='object'?o.aset:{};
  const five=a=>[0,1,2,3,4].map(i=>Array.isArray(a)&&a[i]?1:0);
- const s={v:2,t:SAN.num(o.t,0,9e15,Date.now()),chars,equipped:eq.slice(0,3+(ups.slot?1:0)),nid,coins:SAN.num(o.coins,0,1e15,0),ups,qs:qf(o.qs),qs0:qf(o.qs0),qs1:qf(o.qs1),
+ const s={v:2,t:SAN.num(o.t,0,9e15,Date.now()),chars,equipped:eq.slice(0,3+(ups.slot?1:0)+(o.ach&&o.ach.rd50?1:0)),nid,coins:SAN.num(o.coins,0,1e15,0),ups,qs:qf(o.qs),qs0:qf(o.qs0),qs1:qf(o.qs1),
   mounts:(Array.isArray(o.mounts)?o.mounts:[]).filter(m=>typeof m==='string'&&/^[a-z0-9_]{1,20}$/.test(m)).slice(0,20),
   mountEq:typeof o.mountEq==='string'&&/^[a-z0-9_]{1,20}$/.test(o.mountEq)?o.mountEq:null,
   pity:SAN.int(o.pity,0,1e6,0),ess:SAN.num(o.ess,0,1e15,0),pk:SAN.num(o.pk,0,1e15,0),ppity:SAN.int(o.ppity,0,1e6,0),
@@ -1155,8 +1155,9 @@ recallBtn.onclick=()=>{fight=null;Object.values(fpos).forEach(q=>q.nx=0)};
 function uiFight(){uiNpc();let e=null;if(!fight&&!lock)e=EN.find(q=>!q.dead&&Math.hypot(P.x-q.x,P.y-q.y)<q.eng);
  fightBtn.style.display=e?'block':'none';fightBtn.classList.toggle('dis',!equipped.length);fightBtn._e=e;recallBtn.style.display=fight&&!lock?'block':'none';document.getElementById('punchBtn').style.display=fight&&!lock?'block':'none'}
 fightBtn.onclick=()=>{if(!equipped.length||!fightBtn._e)return;fight=fightBtn._e;Object.values(fpos).forEach(q=>q.nx=0)};
-function spinUi(){if(spinN>1&&!ups['x'+spinN])spinN=1;try{window.chUi&&window.chUi()}catch(e){}
- const m=[1];for(let i=2;i<=5;i++)if(ups['x'+i])m.push(i);
+function spinUi(){try{window.chUi&&window.chUi()}catch(e){}
+ const m=[1];for(let i=2;i<=5;i++)if(ups['x'+i])m.push(i);try{if(window.XS&&XS().ach.rd25)m.push(m[m.length-1]+1)}catch(e){}   // conquista da dungeon (sala 25): +1 estrela por giro
+ if(!m.includes(spinN))spinN=1;
  $('pity').innerHTML=`<div class="pyT"><b>Piedade Mítica</b><span>[${Math.min(pity,5000).toLocaleString('pt-BR')}/5K]</span><em class="pyS">Slots ${chars.length}/${cap()}</em></div><div class="pyB"><i style="width:${Math.min(100,pity/50).toFixed(2)}%"></i></div>`;
  $('modes').innerHTML=m.length>1?m.map(n=>`<button class="btn md" data-n="${n}" style="padding:6px 12px;margin:0 3px;${n===spinN?'background:#e0a800;color:#222':'background:#555'}">${n}x</button>`).join(''):'';
  $('modes').querySelectorAll('.md').forEach(b=>b.onclick=()=>{if(spinning)return;spinN=+b.dataset.n;spinUi()});
@@ -1199,7 +1200,7 @@ $('feedGo').onclick=()=>{if(!sel.size)return;const t=chars.find(c=>c.id===curId)
  save();$('feedM').style.display='none';renderInv();openDet(t.id)};
 $('feedBack').onclick=()=>{$('feedM').style.display='none';openDet(curId)};
 const UPS=[{k:'x2',n:'Girar 2 em 2',d:'Abre 2 personagens por giro (custa 20 moedas)',c:50},{k:'x3',n:'Girar 3 em 3',d:'Abre 3 personagens por giro (custa 30 moedas). Requer o 2 em 2',c:100,req:'x2'},{k:'x4',n:'Girar 4 em 4',d:'Abre 4 personagens por giro (custa 40 moedas). Requer o 3 em 3',c:250,req:'x3'},{k:'x5',n:'Girar 5 em 5',d:'Abre 5 personagens por giro (custa 50 moedas). Requer o 4 em 4',c:500,req:'x4'},{k:'auto',n:'Auto Click',d:'Soca automaticamente 1 vez a cada 0,5s durante a luta',c:500},{k:'autostar',n:'Auto Estrela',d:'Gira a estrela sozinho (botão Auto na roleta)',c:1000},{k:'autopas',n:'Auto Passiva',d:'Roleta passivas sozinho até sair a passiva alvo',c:1000},{k:'slot',n:'Slot extra',d:'+1 personagem equipado (4 no total)',c:500}];
-function maxEq(){return 3+(ups.slot?1:0)}
+function maxEq(){let b=0;try{b=window.XS&&XS().ach.rd50?1:0}catch(e){}return 3+(ups.slot?1:0)+b}
 function renderUp(){$('upList').innerHTML=UPS.map(u=>{const own=ups[u.k],blk=u.req&&!ups[u.req];return `<div style="display:flex;align-items:center;gap:8px;background:#111;border-radius:8px;padding:8px;margin-bottom:6px;text-align:left"><div style="flex:1"><b>${u.n}</b><br><span style="font-size:11px;opacity:.7">${u.d}</span></div><button class="btn upb${own||blk||coins<u.c?' dis':''}" data-k="${u.k}" style="padding:6px 10px;font-size:13px">${own?'Comprado':blk?'Bloqueado':u.c+' moedas'}</button></div>`}).join('');
  $('upList').querySelectorAll('.upb').forEach(b=>b.onclick=()=>{const u=UPS.find(x=>x.k===b.dataset.k);if(ups[u.k]||coins<u.c||(u.req&&!ups[u.req]))return;coins-=u.c;ups[u.k]=1;save();updHud();renderUp()})}
 $('upBtn').onclick=()=>{renderUp();$('upM').style.display='flex';lock=true;jr()};
@@ -2230,8 +2231,8 @@ function msCheck(){const t=sNow(),d=dayKey(t),w=weekKey(t);if(ms.d!==d){ms.d=d;m
 function prog(k,n){msCheck();MSD.forEach((m,i)=>{if(m.k===k&&!ms.dc[i])ms.dp[i]=Math.min(m.g,ms.dp[i]+n)});MSW.forEach((m,i)=>{if(m.k===k&&!ms.wc[i])ms.wp[i]=Math.min(m.g,ms.wp[i]+n)});
  if($('msM').style.display==='flex')renderMis()}
 function claimable(){msCheck();let n=0;MSD.forEach((m,i)=>{if(ms.dp[i]>=m.g&&!ms.dc[i])n++});MSW.forEach((m,i)=>{if(ms.wp[i]>=m.g&&!ms.wc[i])n++});return n}
-function grant(rw){const out=[];if(rw.gb)out.push('+'+Math.round(rw.gb*100)+'% de ouro para sempre');if(rw.c){coins+=rw.c;lastCoins=coins;out.push(nf(rw.c)+' moedas')}if(rw.e){ess+=rw.e;out.push(rw.e+' essência')}if(rw.i){addItem(rw.i,rw.n||1);out.push((rw.n>1?rw.n+'x ':'')+IT[rw.i].n)}updHud();save();return out.join(' + ')}
-const rwTxt=rw=>[rw.gb?'+'+Math.round(rw.gb*100)+'% de ouro para sempre':'',rw.c?nf(rw.c)+' moedas':'',rw.e?rw.e+' essência':'',rw.i?(rw.n>1?rw.n+'x ':'')+IT[rw.i].n+' ('+durTxt(IT[rw.i].d)+')':''].filter(Boolean).join(' + ');
+function grant(rw){const out=[];if(rw.gb)out.push('+'+Math.round(rw.gb*100)+'% de ouro para sempre');if(rw.sp)out.push('+1 estrela por giro na roleta');if(rw.eq)out.push('+1 personagem equipado');if(rw.c){coins+=rw.c;lastCoins=coins;out.push(nf(rw.c)+' moedas')}if(rw.e){ess+=rw.e;out.push(rw.e+' essência')}if(rw.i){addItem(rw.i,rw.n||1);out.push((rw.n>1?rw.n+'x ':'')+IT[rw.i].n)}updHud();save();return out.join(' + ')}
+const rwTxt=rw=>[rw.gb?'+'+Math.round(rw.gb*100)+'% de ouro para sempre':'',rw.sp?'+1 estrela por giro na roleta (para sempre)':'',rw.eq?'+1 personagem equipado (para sempre)':'',rw.c?nf(rw.c)+' moedas':'',rw.e?rw.e+' essência':'',rw.i?(rw.n>1?rw.n+'x ':'')+IT[rw.i].n+' ('+durTxt(IT[rw.i].d)+')':''].filter(Boolean).join(' + ');
 function claim(tp,i){msCheck();const L=tp==='d'?MSD:MSW,p=tp==='d'?ms.dp:ms.wp,c=tp==='d'?ms.dc:ms.wc,m=L[i];if(!m||c[i]||p[i]<m.g)return;
  c[i]=1;st.mis++;toast('Missão concluída! +'+grant(m.rw));sWin(2);renderMis();mnUi();achCheck();save()}
 function renderMis(){msCheck();const t=sNow(),nd=(dayKey(t)+1)*DAY+BRT,nw=((weekKey(t)+1)*7-3)*DAY+BRT;
@@ -2262,6 +2263,8 @@ const ACH=[
  {id:'hw',n:'Explorador',d:'Visite o mundo Halloween',s:'hw',g:1,rw:{c:300}},
  {id:'h10',n:'Dedicado',d:'Jogue por 10 horas',s:'pt',g:36000,rw:{i:'f2'}},
  {id:'ms20',n:'Missionário',d:'Complete 20 missões',s:'mis',g:20,rw:{i:'d2'}},
+ {id:'rd25',n:'Aventureiro da Dungeon',d:'Limpe a sala 25 da primeira dungeon',s:'rb',g:25,rw:{sp:1}},
+ {id:'rd50',n:'Conquistador da Dungeon',d:'Limpe a sala 50 da primeira dungeon (a última)',s:'rb',g:50,rw:{eq:1}},
  {id:'dex0',n:'Colecionador da Floresta',d:'Libere todos os personagens do primeiro mundo',s:'dex0',g:NAMES.flat().length,rw:{gb:.1}}];
 // personagens do primeiro mundo já liberados (ficam marcados mesmo depois de vender): ach['dx:Nome'] = 1
 window.dexUp=()=>dexUp();window.achCheck=()=>achCheck();
@@ -3724,9 +3727,13 @@ function startWait(){RD.EN.length=0;RD.rooms=[];RD.bk=0;RD.st='wait0';RD.cd=Date
 function startRaid(){RD.rooms=genBlock(0);RD.bk=0;RD.st='run';RD.tEnd=Date.now()+BLK;try{sWin(1)}catch(e){}RD.ban={t:Date.now(),s:'A raid começou!',s2:'5 minutos para 5 salas'}}
 function roomCleared(i){const r=RD.rooms[i];r.cleared=true;const b=Math.floor((r.n-1)/5),boss=r.n%5===0,tk=(1+b)*(boss?4:1);st.rt=(st.rt||0)+tk;RD.run.rooms++;RD.run.tok+=tk;RD.run.far=Math.max(RD.run.far,r.n);
  if(r.n>(st.rb||0)){st.rb=r.n;RD.run.rec=true;rankPush()}
- fx.push({x:P.x-10,y:P.y-24,t:Date.now(),s:'Sala limpa! +'+tk+' fragmentos',c:'#c9a0ff',lbl:1});try{bp(523,.1,'triangle',.07);bp(784,.14,'triangle',.07,.09);bp(1047,.2,'triangle',.06,.18)}catch(e){}updHud();save()}
+ fx.push({x:P.x-10,y:P.y-24,t:Date.now(),s:'Sala limpa! +'+tk+' fragmentos',c:'#c9a0ff',lbl:1});try{bp(523,.1,'triangle',.07);bp(784,.14,'triangle',.07,.09);bp(1047,.2,'triangle',.06,.18)}catch(e){}updHud();save();try{window.achCheck&&window.achCheck()}catch(e){}
+ if(r.n>=LAST){win();return}}
 function blockDone(){RD.bk++;const bonus=2*RD.bk;st.rt=(st.rt||0)+bonus;RD.run.tok+=bonus;try{sWin(3)}catch(e){}
  RD.EN.length=0;fight=null;RD.rooms=genBlock(RD.bk);RD.st='rest';shiftAll(XO[1]-XO[7]);updHud();save();toast('Bloco concluído! +'+bonus+' fragmentos. Mais 5 salas na frente')}
+const LAST=50;   // a primeira dungeon termina na sala 50
+function win(){RD.st='over';const R=RD.run||{rooms:0,tok:0,coins0:coins,far:0};fight=null;RD.EN.length=0;
+ RD.sum={title:'Dungeon concluída!',ok:true,rooms:R.rooms,far:R.far,tok:R.tok,coins:Math.max(0,coins-R.coins0),rec:!!R.rec,t:Date.now()};try{sWin(4)}catch(e){}save()}
 function fail(){RD.st='over';const R=RD.run||{rooms:0,tok:0,coins0:coins,far:0};fight=null;
  RD.sum={title:'Tempo esgotado!',ok:false,rooms:R.rooms,far:R.far,tok:R.tok,coins:Math.max(0,coins-R.coins0),rec:!!R.rec,t:Date.now()};try{bp(300,.3,'sawtooth',.05);bp(200,.4,'sawtooth',.05,.25)}catch(e){}save()}
 RD.tick=function(){const t=Date.now();if(world!==3)return;
