@@ -15692,6 +15692,61 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 })();
 </script>
 <script>
+// ===================== atualização automática =====================
+// GAME_BUILD é carimbado a cada envio (o mesmo número vai no version.json do site).
+// · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
+// · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
+// No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
+const GAME_BUILD=20261021125420;
+(function(){
+if(!GAME_BUILD)return;
+const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
+let ready=false,waiter=null,busy=false,lastFail=0,cdT=0,cdI=0,ov=null,bar=null;
+const css=document.createElement('style');css.textContent=`
+#updOv{position:fixed;inset:0;z-index:2147483000;background:radial-gradient(ellipse at 50% 40%,#2a1f4a,#0b0916 70%);display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-family:monospace;text-align:center;padding:20px;pointer-events:all}
+#updOv b{font-size:20px;letter-spacing:1px;margin-top:16px}#updOv span{font-size:13px;opacity:.75;margin-top:8px;max-width:420px}
+#updOv i{width:46px;height:46px;border-radius:50%;border:5px solid #ffffff26;border-top-color:#ffd23f;animation:updSp 1s linear infinite}
+@keyframes updSp{to{transform:rotate(360deg)}}
+#updBar{position:fixed;left:50%;top:calc(8px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:2147482000;background:linear-gradient(#ff8f00,#c43e00);color:#fff;border:3px solid #fff;border-radius:999px;padding:8px 18px;font:bold 14px monospace;box-shadow:0 4px 14px #0009;white-space:nowrap;pointer-events:none}`;
+document.head.appendChild(css);
+function showOv(t,sub){if(!ov){ov=document.createElement('div');ov.id='updOv';document.body.appendChild(ov)}ov.innerHTML='<i></i><b>'+t+'</b><span>'+(sub||'')+'</span>'}
+function hideOv(){if(ov){ov.remove();ov=null}}
+function showBar(t){if(!bar){bar=document.createElement('div');bar.id='updBar';document.body.appendChild(bar)}bar.textContent=t}
+function hideBar(){if(bar){bar.remove();bar=null}}
+async function remote(){const r=await fetch(SITE+'version.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return 0;const j=await r.json();return +j.v||0}
+// o Android avisa quando terminou de baixar (1 = versão nova pronta)
+window.MPupd=ok=>{if(ok)ready=true;if(waiter){const f=waiter;waiter=null;f(!!ok)}else if(ok&&!busy&&!APKbridge())startCountdown()};
+const APKbridge=()=>!!(B&&B.checkUpdate);
+// APK antigo: o aviso de download chega pelo toast
+try{const _t=toast;toast=function(t){if(typeof t==='string'&&t.indexOf('Nova versão baixada')>=0){window.MPupd(1);return}return _t.apply(this,arguments)}}catch(e){}
+function download(ms){if(!APK)return Promise.resolve(true);if(ready||(B&&B.ready&&B.ready()))return Promise.resolve(true);
+ return new Promise(res=>{waiter=res;try{if(B&&B.checkUpdate)B.checkUpdate()}catch(e){}setTimeout(()=>{if(waiter===res){waiter=null;res(false)}},ms||90000)})}
+function apply(){try{save()}catch(e){}try{if(window.MP&&MP.saveNow)MP.saveNow()}catch(e){}
+ setTimeout(()=>{try{if(B&&B.apply){B.apply();return}}catch(e){}location.reload()},900)}
+// ---- ao abrir o jogo ----
+async function boot(){let v=0;try{v=await remote()}catch(e){return}if(v<=GAME_BUILD)return;updateNow(v)}
+// trava de segurança: no máximo 2 reinícios seguidos para a mesma versão (se o site ainda não entregou o arquivo novo, espera e tenta depois)
+function tries(v){try{const k='mp_updTry',o=JSON.parse(sessionStorage.getItem(k)||'{}');if(o.v!==v){o.v=v;o.n=0}o.n++;sessionStorage.setItem(k,JSON.stringify(o));return o.n}catch(e){return 1}}
+async function updateNow(v){if(busy)return;if(tries(v)>2){lastFail=Date.now();return}
+ busy=true;showOv('Atualizando o jogo...','Baixando a versão nova. Não feche o app, ele vai abrir sozinho em instantes.');
+ if(!APK){apply();return}
+ const ok=await download(90000);
+ if(ok){showOv('Pronto!','Abrindo a versão nova...');apply();return}
+ busy=false;lastFail=Date.now();hideOv();try{toast('Não deu para atualizar agora. Vamos tentar de novo em alguns minutos.')}catch(e){}}
+// ---- jogando: confere a cada minuto ----
+function startCountdown(v){if(busy)return;if(v&&tries(v)>2){lastFail=Date.now();return}busy=true;cdT=Date.now()+60000;const pre=APK?download(120000):Promise.resolve(true);
+ const tickC=()=>{const s=Math.max(0,Math.ceil((cdT-Date.now())/1000));showBar('⚠️ Nova atualização! O jogo vai reiniciar em '+Math.floor(s/60)+':'+String(s%60).padStart(2,'0'));
+  if(s>0)return;clearInterval(cdI);showBar('⏳ Baixando a atualização...');
+  pre.then(ok=>{if(ok){showOv('Atualizando o jogo...','Reiniciando na versão nova.');apply()}else{busy=false;lastFail=Date.now();hideBar();try{toast('Não deu para baixar a atualização agora. Vamos tentar de novo em alguns minutos.')}catch(e){}}})};
+ tickC();cdI=setInterval(tickC,500);try{if(typeof bp==='function'){bp(660,.15,'triangle',.06);bp(880,.2,'triangle',.06,.15)}}catch(e){}}
+async function check(){if(busy||document.hidden||Date.now()-lastFail<180000)return;let v=0;try{v=await remote()}catch(e){return}if(v>GAME_BUILD){
+ if(APK&&!APKbridge()){if(ready)startCountdown();return}   // APK antigo: só dá para aplicar depois que o Android baixou (ao voltar para o app)
+ const sm=document.getElementById('startM');if(sm&&getComputedStyle(sm).display!=='none'){updateNow(v);return}   // ainda na tela de entrar: atualiza na hora
+ startCountdown(v)}}
+setTimeout(boot,300);setInterval(check,60000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)setTimeout(check,1500)});
+})();
+</script>
+<script>
 if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 </script>
 </body></html>
