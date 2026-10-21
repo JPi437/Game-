@@ -11821,6 +11821,7 @@ function machineMB(){const mb=new MB(4601,{pk:true});mb.jit=.05;const M=RA(['#24
  return mb}
 function crystalMB(){const mb=new MB(4602,{pk:true});mb.jit=0;const n=6;oct(mb,0,0,0,2.9,4.6,[255,255,255],[205,205,215],1,n);
  for(let i=0;i<n;i++){const a=i/n*TAU;oct(mb,cos(a)*3.6,-1.2,sin(a)*3.6,.55,1.1,[255,255,255],[200,200,210],1,4)}return mb}
+FLD.props={pedestalMB,starMB,machineMB,crystalMB};          // o mapa de Halloween usa os mesmos modelos da estrela e da máquina
 // chafariz: borda elíptica de pedra, água (sombreado de água do motor), coluna com bacia e jato
 function fountainMB(){const mb=new MB(4701,{pk:true}),S=STN;mb.jit=.04;
  annulus(mb,24.5,18.6,28.4,22,0,4.6,28,S[4],S[2],S[3],{jit:.08,seed:2});
@@ -13207,10 +13208,9 @@ function fixed(m){const T=16;
  for(const s of[-1,1]){m.push().T(s*16,0,0).box(8,4,8,STD[0],0,true).pop();m.push().T(s*16,4,0).box(6,30,6,STN[1],0,true).pop();m.push().T(s*16,34,0).cyl(4,0,8,4,STN[0],0,{rot:PI/4}).pop()}
  const ap=[];for(let i=0;i<=12;i++){const a=PI*i/12;ap.push([-cos(a)*16,32+sin(a)*12,0])}m.tube(ap,ap.map(()=>2.8),5,STN[2],0,{capEnd:false});
  m.push().T(0,44,0).sph(2.4,3,6,'#b78cff',.9).pop();m.pop();HV.portal=[gx,gy+22,gz];
- const sx=SX*T+8,sz=SY*T+14,sy=hAt(sx,sz);m.push().T(sx,sy,sz);m.cyl(11,12,3,10,STD[0],0);m.push().T(0,3,0).cyl(8,9,4,10,STN[1],0).pop();m.push().T(0,7,0).cyl(4,5,14,8,STN[0],0).pop();m.push().T(0,21,0).cyl(7,5,3,10,STN[1],0).pop();m.pop();
- HV.star=[sx,sy+34,sz];
- const tx=TOX*T+8,tz=TOY*T+14,ty=hAt(tx,tz);m.push().T(tx,ty,tz);m.box(14,3,10,STD[0],0,true);m.push().T(0,3,0).box(10,16,7,'#55556a',0,true).pop();m.push().T(0,19,0).box(12,3,9,'#3a3a4a',0,true).pop();
- for(let i=0;i<3;i++)m.push().T(0,6+i*4,3.6).box(4,1,.4,'#00e5ff',1).pop();m.pop();HV.totem=[tx,ty+26,tz]}
+ // estrela da roleta e máquina de passivas: os mesmos modelos do primeiro mundo (montados em h_gen, aqui só a posição)
+ const sx=SX*T+8,sz=SY*T+14,sy=hAt(sx,sz)-.2;HV.starB=[sx,sy,sz];HV.star=[sx,sy+25.5,sz];
+ const tx=TOX*T+8,tz=TOY*T+14,ty=hAt(tx,tz)-.2;HV.totemB=[tx,ty,tz];HV.totem=[tx,ty+24.5,tz]}
 
 // ============================================================ A CATEDRAL ============================================================
 // Fachada com portal de arquivoltas (santos nos batentes e a moldura em ponta), galeria dos reis, rosácea, balaustrada e empena; duas torres com relógio,
@@ -13630,14 +13630,22 @@ function* gen(gl){const T0=performance.now();let TP=T0,IP=0;HV.prof={};HV.idle=0
  yield .93;
  // peças que se mexem: ponteiros, estrela da roleta, lua
  {const h1=new MB(31);h1.box(2,11,.6,'#1a1446',0,true);HV.dyn.hour=h1.build(gl);const h2=new MB(32);h2.box(1.4,16,.6,'#1a1446',0,true);HV.dyn.min=h2.build(gl);
-  const st=new MB(33);const pts=[];for(let i=0;i<10;i++){const a=i/10*TAU,rr=i%2?3.4:8;pts.push([sin(a)*rr,cos(a)*rr])}for(let i=0;i<10;i++){const a=pts[i],b=pts[(i+1)%10];for(const z of[1.6,-1.6])st.tri([0,0,z*1.4],[a[0],a[1],z],[b[0],b[1],z],'#ffd23f',.85);st.quad([a[0],a[1],1.6],[b[0],b[1],1.6],[b[0],b[1],-1.6],[a[0],a[1],-1.6],'#e8a81a',.7)}HV.dyn.star=st.build(gl);
-  const mo=new MB(34),toC=k=>FOGC.map(v=>round(255*v*k/(1-.22*v*k))),halo=toC(1.35),edge=toC(1);
-  for(let i=0;i<32;i++){const a0=i/32*TAU,a1=(i+1)/32*TAU,c0=cos(a0),s0=sin(a0),c1=cos(a1),s1=sin(a1);
-   mo.wt([c0*120,s0*120,-.4],[c0*320,s0*320,-.4],[c1*320,s1*320,-.4],halo,edge,edge);mo.wt([c0*120,s0*120,-.4],[c1*320,s1*320,-.4],[c1*120,s1*120,-.4],halo,edge,halo);
-   mo.wt([0,0,0],[c0*120,s0*120,0],[c1*120,s1*120,0],[150,90,235],halo,halo);
-   mo.wt([0,0,.4],[cos(a0)*44,sin(a0)*44,.4],[cos(a1)*44,sin(a1)*44,.4],[205,150,255],[190,130,250],[190,130,250]);
-   mo.wt([0,0,.8],[cos(a0)*22,sin(a0)*22,.8],[cos(a1)*22,sin(a1)*22,.8],[252,236,255],[226,194,255],[226,194,255])}
-  for(let k=0;k<7;k++){const a=k*1.7,d=6+k*2.1,rr=1.8+k%3;for(let i=0;i<8;i++){const b0=i/8*TAU,b1=(i+1)/8*TAU;mo.wt([cos(a)*d,sin(a)*d,1],[cos(a)*d+cos(b0)*rr,sin(a)*d+sin(b0)*rr,1],[cos(a)*d+cos(b1)*rr,sin(a)*d+sin(b1)*rr,1],[198,160,238],[198,160,238],[198,160,238])}}
+  // estrela, pedestal, máquina e cristal: os modelos do primeiro mundo (js do campo); sem eles, uma estrela simples
+  const PR=H3.fld&&H3.fld.props;HV.props=null;
+  if(PR){const ped=PR.pedestalMB().build(gl),mach=PR.machineMB().build(gl),M1=M4.trs(new Float32Array(16),HV.starB[0],HV.starB[1],HV.starB[2],0,PI/8,0,1,1,1),M2=M4.trs(new Float32Array(16),HV.totemB[0],HV.totemB[1],HV.totemB[2],0,0,0,1,1,1);
+   HV.dyn.star=PR.starMB().build(gl);HV.dyn.cry=PR.crystalMB().build(gl);HV.props=[{m:ped,mt:M1,p:HV.starB},{m:mach,mt:M2,p:HV.totemB}];for(const q of HV.props)q.L=lightsNear(q.p[0],q.p[1]+10,q.p[2],22)}
+  else{const st=new MB(33);const pts=[];for(let i=0;i<10;i++){const a=i/10*TAU,rr=i%2?3.4:8;pts.push([sin(a)*rr,cos(a)*rr])}for(let i=0;i<10;i++){const a=pts[i],b=pts[(i+1)%10];for(const z of[1.6,-1.6])st.tri([0,0,z*1.4],[a[0],a[1],z],[b[0],b[1],z],'#ffd23f',.85);st.quad([a[0],a[1],1.6],[b[0],b[1],1.6],[b[0],b[1],-1.6],[a[0],a[1],-1.6],'#e8a81a',.7)}HV.dyn.star=st.build(gl)}
+  // lua: disco claro (borda um pouco mais escura, crateras de borda macia) e o brilho em muitos anéis, caindo suave até sumir na cor da névoa
+  const mo=new MB(34),enc=c=>c.map(v=>{v=min(.98,v);return round(255*min(1,v/(1-.22*v)/1.5))}),NS=48,RM=22,RO=360,           // cores já na tela (desenhada com brilho 1,5)
+   face=r=>{const u=min(1,r/RM),k=u*u*u;return[.95-.14*k,.9-.18*k,.99-.04*k]},
+   fo=r=>{const d=max(0,r-RM);return .5*Math.exp(-d/14)+.32*Math.exp(-d/48)+.2*Math.exp(-d/140)},f0=fo(RM),f1=fo(RO),
+   glow=r=>{const f=max(0,(fo(r)-f1)/(f0-f1)),q=min(1,max(0,(r-RM)/60));return[FOGC[0]+f*(.74-.1*q),FOGC[1]+f*(.52-.14*q),FOGC[2]+f*(.82-.06*q)]},ring=(r0,r1,z,cf)=>{const ca=enc(cf(r0)),cb=enc(cf(r1));
+   for(let i=0;i<NS;i++){const a0=i/NS*TAU,a1=(i+1)/NS*TAU,c0=cos(a0),s0=sin(a0),c1=cos(a1),s1=sin(a1);
+    if(r0<=0)mo.wt([0,0,z],[c0*r1,s0*r1,z],[c1*r1,s1*r1,z],ca,cb,cb);else{mo.wt([c0*r0,s0*r0,z],[c0*r1,s0*r1,z],[c1*r1,s1*r1,z],ca,cb,cb);mo.wt([c0*r0,s0*r0,z],[c1*r1,s1*r1,z],[c1*r0,s1*r0,z],ca,cb,ca)}}};
+  {let r=0;for(const r1 of[6,11,15,18,20,21.2,RM]){ring(r,r1,.8,face);r=r1}}
+  {const N=30;let r=RM;for(let i=1;i<=N;i++){const r1=RM*Math.pow(RO/RM,i/N);ring(r,r1,0,glow);r=r1}}
+  for(let k=0;k<9;k++){const a=k*2.4+.6,d=4+((k*7)%9)*1.8,rr=1.4+(k%3)*1.1,cx=cos(a)*d,cy=sin(a)*d,fc=face(d),cc=enc([fc[0]*.8,fc[1]*.76,fc[2]*.88]),ce=enc(fc);
+   if(d+rr>RM-.6)continue;for(let i=0;i<10;i++){const b0=i/10*TAU,b1=(i+1)/10*TAU;mo.wt([cx,cy,1],[cx+cos(b0)*rr,cy+sin(b0)*rr,1],[cx+cos(b1)*rr,cy+sin(b1)*rr,1],cc,ce,ce)}}
   const A=mo.a;for(let i=0;i<A.length;i+=10)A[i+9]=1;HV.dyn.moon=mo.build(gl)}
  // o interior da Catedral (fica pronto junto, para entrar pela porta sem esperar)
  try{if(window.HAL&&HAL.innerData)HAL.innerData();for(const p of buildInner(gl))yield .94+.05*p}catch(e){console.error('H3 interior',e);IN.ready=false}
@@ -14088,7 +14096,7 @@ function treeLod(d){return d<72?0:d<142?1:2}
 function draw(t,dyn){const C=H3.S.cam,L=HV.lights,R=drawR(),V=vegNow();frameN++;NC=H3.S.mode===2?NC3:NC1;const DS=HV.ds={n:0,tri:0,c:{}},cnt=(m,k)=>{DS.n++;DS.tri+=m.n/3;if(k)DS.c[k]=(DS.c[k]||0)+1};
  // lua (atrás de tudo, sem névoa)
  {const D=760,mx=C.x+MOON[0]*D,my=C.y+MOON[1]*D,mz=C.z+MOON[2]*D,yaw=atan2(C.x-mx,C.z-mz),pit=atan2(my-C.y,hypot(C.x-mx,C.z-mz));
-  M4.trs(MT,mx,my,mz,pit,yaw,0,1.55,1.55,1.55);H3.mesh(HV.dyn.moon,MT,null,null,{fog:0,eg:1})}
+  M4.trs(MT,mx,my,mz,pit,yaw,0,2.2,2.2,2.2);const fv=H3.fogv();H3.mesh(HV.dyn.moon,MT,null,null,SK>.01?{fog:0,eg:1.5,fl:[fv[0],fv[1],fv[2],min(.85,SK*1.1)]}:{fog:0,eg:1.5})}
  const vis=(m,r)=>{const dx=m.cx-C.x,dz=m.cz-C.z;return dx*dx+dz*dz<(r+m.rad)**2&&H3.vis(m.cx,m.cy,m.cz,m.rad)};
  // chão
  for(const m of HV.tchunks)if(vis(m,R+30)){H3.mesh(m,null,m.L,dyn);cnt(m,'t')}
@@ -14109,8 +14117,12 @@ function draw(t,dyn){const C=H3.S.cam,L=HV.lights,R=drawR(),V=vegNow();frameN++;
   for(const s of[-1,1]){const x=CX+s*160,z=FZ+1.2;M4.trs(MT,x,128,z,0,0,-hh/12*TAU,1,1,1);H3.mesh(HV.dyn.hour,MT,L,dyn,{fc:FCAP,eg:1});M4.trs(MT,x,128,z+.2,0,0,-mi/60*TAU,1,1,1);H3.mesh(HV.dyn.min,MT,L,dyn,{fc:FCAP,eg:1})}
   for(const c of HV.clocks){const dx=c.x-C.x,dz=c.z-C.z;if(dx*dx+dz*dz>R*R)continue;const yw=c.f*PI/2,ox=sin(yw)*.25,oz=cos(yw)*.25;
    M4.trs(MT,c.x,c.y,c.z,0,yw,-hh/12*TAU,c.s,c.s,c.s);H3.mesh(HV.dyn.hour,MT,L,dyn,{eg:1});M4.trs(MT,c.x+ox,c.y,c.z+oz,0,yw,-mi/60*TAU,c.s,c.s,c.s);H3.mesh(HV.dyn.min,MT,L,dyn,{eg:1})}}
- // estrela da roleta girando
- if(HV.star){const s=HV.star;M4.trs(MT,s[0],s[1]+sin(t/600)*1.5,s[2],0,t/900,0,1,1,1);H3.mesh(HV.dyn.star,MT,L,dyn,{eg:1})}}
+ // estrela da roleta (gira mais rápido com o jogador perto) e a máquina de passivas com o cristal que muda de cor — iguais ao primeiro mundo
+ const F=H3.S.foc||C,s=t/1000;
+ if(HV.props)for(const q of HV.props){const dx=q.p[0]-C.x,dz=q.p[2]-C.z;if(dx*dx+dz*dz<R*R&&H3.vis(q.p[0],q.p[1]+10,q.p[2],18))H3.mesh(q.m,q.mt,q.L,dyn,{rad:18,cx:q.p[0],cy:q.p[1]+10,cz:q.p[2],nc:NC.o})}
+ if(HV.star){const st=HV.star,near=1-sm(30,90,hypot(st[0]-F.x,st[2]-F.z));HV.sa=(HV.sa||0)+(.018+.035*near);M4.trs(MT,st[0],st[1]+sin(s*1.6)*1.1,st[2],0,HV.props?HV.sa:t/900,0,1,1,1);
+  H3.mesh(HV.dyn.star,MT,L,dyn,HV.props?{eg:1.15+.35*near+.15*sin(s*3),rad:12,cx:st[0],cy:st[1],cz:st[2]}:{eg:1})}
+ if(HV.props&&HV.dyn.cry){const mc=HV.totem,hc=hsl((s*43)%360);M4.trs(MT,mc[0],mc[1]+sin(s*2),mc[2],0,s*1.4,0,1,1,1);H3.mesh(HV.dyn.cry,MT,L,dyn,{tint:[.38+hc[0]*.62,.38+hc[1]*.62,.38+hc[2]*.62],eg:1.1,rad:6,cx:mc[0],cy:mc[1],cz:mc[2]})}}
 // luzes que tremem (a mesma conta do 2D) e a névoa que começa atrás do personagem na 3ª pessoa
 let shKey='';
 function flicker(t){for(const l of HV.lights){if(!l.fl)continue;l.k=max(0,l.b*(1+l.fl*(sin(t*.0087+l.ph)*.6+sin(t*.0231+l.ph*1.7)*.4)))}
@@ -14142,7 +14154,8 @@ function shadow(t,F){if(!HV.ready)return;
  if(vegNow().bush)for(const m of HV.vchunks)if(H3.shVis(m.cx,m.cy,m.cz,m.rad))H3.shMesh(m,null,true);
  const R=260,g0=floor((F.x-R)/128),g1=floor((F.x+R)/128),h0=floor((F.z-R)/128),h1=floor((F.z+R)/128);
  for(let gj=h0;gj<=h1;gj++)for(let gi=g0;gi<=g1;gi++){const a=HV.tg.get(gi+','+gj);if(!a)continue;for(const T of a)if(H3.shVis(T.wx,T.wy,T.wz,T.rad))H3.shMesh(TREEM[T.k][T.vi][1],T.m,true)}
- for(const m of HV.cath)if(H3.shVis(m.cx,m.cy,m.cz,m.rad))H3.shMesh(m,null,false)}
+ for(const m of HV.cath)if(H3.shVis(m.cx,m.cy,m.cz,m.rad))H3.shMesh(m,null,false);
+ if(HV.props)for(const q of HV.props)if(H3.shVis(q.p[0],q.p[1]+10,q.p[2],18))H3.shMesh(q.m,q.mt,true)}
 function sprites(t){const T=H3.tex,C=H3.S.cam,F=H3.S.foc||C;if(!T||!TX)return;
  const d2c=(x,z)=>{const dx=x-C.x,dz=z-C.z;return sqrt(dx*dx+dz*dz)},R=drawR();
  // chamas
@@ -14162,7 +14175,10 @@ function sprites(t){const T=H3.tex,C=H3.S.cam,F=H3.S.foc||C;if(!T||!TX)return;
  if(HV.hub&&d2c(HV.hub[0],HV.hub[2])<R){const p=.75+.25*sin(t/900),hb=HV.hub;if(TX.rune)H3.flat(TX.rune,hb[0],hb[1]+.45,hb[2],132,132,null,[.95,.85,1,.75*p],true,0);H3.flat(T.glow,hb[0],hb[1]+.6,hb[2],150,150,null,[.55,.35,1,.2*p],true,t/9000)}
  // portal: redemoinho violeta
  if(HV.portal&&d2c(HV.portal[0],HV.portal[2])<R){const p=HV.portal;for(let i=0;i<10;i++){const a=t/500+i/10*TAU,rr=4+(i%4)*3;H3.spr(T.glow,p[0]+cos(a)*rr,p[1]+sin(a)*rr*1.3,p[2],12,12,null,[.65,.4,1,.5],true,0,true)}H3.spr(T.glow,p[0],p[1],p[2],44,52,null,[.55,.3,1,.45],true,0,true)}
- if(HV.star&&d2c(HV.star[0],HV.star[2])<R)H3.spr(T.glow,HV.star[0],HV.star[1],HV.star[2],40,40,null,[1,.85,.35,.4],true,0,true);
+ if(HV.star&&d2c(HV.star[0],HV.star[2])<R){const st=HV.star,b=HV.starB||[st[0],st[1]-25.5,st[2]],s=t/1000,near=1-sm(30,90,d2c(st[0],st[2])),y=st[1]+sin(s*1.6)*1.1,k=.5+.2*sin(s*3)+.3*near;
+  H3.spr(T.glow,st[0],y,st[2],46,46,null,[1,.8,.35,.55*k],true,0,true);H3.spr(T.glow,st[0],y,st[2],18,18,null,[1,.95,.75,.7*k],true,0,true);
+  if(T.beam)H3.strip(T.beam,b[0],b[1]+15,b[2],b[0],b[1]+70,b[2],7,[1,.85,.45,.22*k],true);
+  if(T.ring){H3.flat(T.ring,b[0],b[1]+.4,b[2],30,30,null,[1,.82,.35,.35+.15*sin(s*2)],true,s*.4);H3.flat(T.ring,b[0],b[1]+.45,b[2],20,20,null,[1,.9,.5,.25],true,-s*.6)}}
  if(HV.totem&&d2c(HV.totem[0],HV.totem[2])<R){const h=(t/20)%360,c=hsl(h);H3.spr(T.glow,HV.totem[0],HV.totem[1]+sin(t/300)*1.2,HV.totem[2],14,14,null,[c[0],c[1],c[2],.9],true,0,true)}
  if(HV.caul&&d2c(HV.caul[0],HV.caul[2])<R){for(let i=0;i<5;i++){const ph=(t/900+i*.2)%1;H3.spr(T.glow,HV.caul[0]+sin(i*2.1)*3,HV.caul[1]+ph*14,HV.caul[2]+cos(i*1.7)*3,6*(1-ph)+2,6*(1-ph)+2,null,[.4,1,.5,.6*(1-ph)],true,0,true)}}
  // morcegos em volta das torres da catedral
