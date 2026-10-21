@@ -3536,7 +3536,7 @@ const mult=n=>1+.25*(n-1)+.05*(n-1)*(n-1);
 const ROLE_HP=[3500,15000,35000,120000],ROLE_COIN=[[4,6],[12,18],[35,55],[80,120]];
 const VAR=[[2,2,1],[3,1,1],[1,3,1],[4,2,0],[2,1,2],[3,2,0],[1,2,2]];
 function mkEn(th,role,x,y,n){let e;
- if(th==='h'&&halOk()){const nm=role===0?(rnd()<.5?'zombie':'skeleton'):role===1?'werewolf':role===2?(rnd()<.5?'spiderA':'spiderB'):'dracula';e=HALMON.mkEn(nm,x,y)}
+ if(th==='h'&&halOk()){const nm=role===0?(rnd()<.5?'zombie':'skeleton'):role===1?'werewolf':role===2?(rnd()<.5?'spiderA':'spiderB'):'dracula';e=HALMON.mkEn(nm,x,y);delete e.dk}
  else if(role===3){demonInit();e=Object.assign({},TY[2],{x,y,t:2,dead:false,back:0,rdm:1,ty:22,tr:28,vh:DMS.H+2});delete e.dm}   // boss da Floresta: o Demônio da Torre
  else{const ty=role===0?0:role===1?1:3,d=TY[ty];e=Object.assign({},d,{x,y,t:ty,dead:false,back:0})}
  const m=mult(n),cm=1+.1*(n-1);e.max=e.hp=Math.round(ROLE_HP[role]*m);e.coin=[Math.round(ROLE_COIN[role][0]*cm),Math.round(ROLE_COIN[role][1]*cm)];
@@ -8610,31 +8610,31 @@ const SHEET={
   //   life duração da morte (ms) · lt luz que joga na noite · ed cores da borda da dissolução · bats morcegos
   const DEF = {
     zombie: {
-      t: 0, s: 1.85, vh: 30, max: 20000, coin: [12, 18], r: 9, orb: 20, eng: 34, rsp: 12000, ty: 7, tr: 11,
+      t: 0, s: 1.85, vh: 30, max: 20000, coin: [25, 30], r: 9, orb: 20, eng: 34, rsp: 15000, ty: 7, tr: 11,
       shd: [8, 2.4], rc: 2, lg: [3, 2], look: 1, lie: 6, life: 1950, ed: ['#e8ffb0', '#9be15d', '#4ea72e']
     },
     skeleton: {
-      t: 0, s: 1.9, vh: 31, max: 20000, coin: [12, 18], r: 9, orb: 20, eng: 34, rsp: 12000, ty: 7, tr: 11,
+      t: 0, s: 1.9, vh: 31, max: 20000, coin: [25, 30], r: 9, orb: 20, eng: 34, rsp: 15000, ty: 7, tr: 11,
       shd: [8, 2.4], rc: 2, lg: [3, 2], look: 1, lie: 5, life: 1850, ed: ['#ffffff', '#ece6d4', '#ffcf8a', '#ff9a3a'],
       lt: { pk: 'max', r: 38, c: 'or', a: .85, fl: .3 }
     },
     werewolf: {
-      t: 1, s: 2.8, vh: 44, max: 70000, coin: [35, 55], r: 12, orb: 28, eng: 42, rsp: 30000, fy: .8, fcy: 3, ty: 14, tr: 16,
+      t: 1, s: 2.8, vh: 44, max: 150000, coin: [50, 60], r: 12, orb: 28, eng: 42, rsp: 15000, fy: .8, fcy: 3, ty: 14, tr: 16,
       shd: [14, 3.4], rc: 2, lg: [4, 2], look: 0, lie: 9, life: 2500, ed: ['#fff2c0', '#ffd86a', '#b79bff', '#6a4cc0'],
       lt: { pk: 'eyes', r: 22, c: 'yl', a: .55, fl: .1 }
     },
     spiderA: {
-      t: 3, mb: 1, s: 3.6, vh: 58, max: 120000, coin: [60, 90], r: 16, orb: 34, eng: 50, rsp: 60000, fy: .6, fcy: 6, ty: 21, tr: 20,
+      t: 3, mb: 1, s: 3.6, vh: 58, max: 250000, coin: [80, 100], r: 16, orb: 34, eng: 50, rsp: 15000, fy: .6, fcy: 6, ty: 21, tr: 20,
       shd: [24, 5], rc: 2, lg: [4, 3], look: 1, life: 2400, ed: ['#f4ffd8', '#b4ea72', '#5aa03a'],
       lt: { pk: 'eyes', r: 24, c: 'rd', a: .5, fl: .15 }
     },
     spiderB: {
-      t: 3, mb: 1, s: 3.6, vh: 58, max: 120000, coin: [60, 90], r: 16, orb: 34, eng: 50, rsp: 60000, fy: .6, fcy: 6, ty: 21, tr: 20,
+      t: 3, mb: 1, s: 3.6, vh: 58, max: 250000, coin: [80, 100], r: 16, orb: 34, eng: 50, rsp: 15000, fy: .6, fcy: 6, ty: 21, tr: 20,
       shd: [24, 5], rc: 2, lg: [4, 3], look: 1, life: 2400, ed: ['#f4ffd8', '#b4ea72', '#5aa03a'],
       lt: { pk: 'eyes', r: 24, c: 'rd', a: .5, fl: .15 }
     },
     dracula: {
-      t: 2, s: 5.4, vh: 86, max: 250000, coin: [150, 220], r: 14, orb: 44, eng: 62, rsp: 110000, fy: .45, fcy: 42, bw: 52, dk: 126, arc: 2.2, ty: 38, tr: 22, fxt: -52,
+      t: 2, s: 5.4, vh: 86, max: 500000, coin: [150, 250], r: 14, orb: 44, eng: 62, rsp: 30000, fy: .45, fcy: 42, bw: 52, dk: 293, arc: 2.2, ty: 38, tr: 22, fxt: -52,
       shd: [22, 4.4], rc: 0, lg: [0, 2], look: 0, fl: 12, bob: 2.5, bc: 1, life: 3600, bats: 1, ed: ['#ffffff', '#ffb0a0', '#e0302a', '#7a0f14'],
       lt: { pk: 'body', dy: 36, r: 100, c: 'rd', a: .55, fl: .12 }
     }
@@ -8649,7 +8649,7 @@ const SHEET={
     werewolf: [[872,540], [1476,156], [1368,664], [912,264], [1504,424], [1104,676], [1312,492], [1496,556]],
     spiderA: [[1508,1052], [792,144], [1204,784], [1544,1556], [788,488]],
     spiderB: [[904,1616], [832,1064], [1580,152], [1240,1444], [1096,1012]],
-    dracula: [[2696,93]]
+    dracula: [[2696,260]]
   };
   // @@POS-END
   const ORDER = ['zombie', 'skeleton', 'werewolf', 'spiderA', 'spiderB', 'dracula'];
