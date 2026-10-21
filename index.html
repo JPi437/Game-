@@ -3991,23 +3991,26 @@ setInterval(()=>upload(false),30000);
 MP.saveNow=()=>upload(true);
 
 // ===== INIMIGOS COMPARTILHADOS =====
-const SH={pend:{},hit:{},death:{},rew:{},last:{},ref:null};
+const SH={pend:{},hit:{},death:{},rew:{},last:{},ref:null,noT:0};   // noT: o banco recusou o campo 't' -> grava só hp/e/b
 const IDL=e=>e&&e.dm?120000:60000; // sem dano por esse tempo = vida cheia de novo
+// As regras do banco só aceitam 'b' (hora de renascer) até 15 s no futuro. Quem demora mais (Drácula 30 s, Demônio 20 s)
+// grava 12 s e o resto (EXT) é somado aqui no aparelho de todo mundo, igual para todos.
+const RSPW=e=>Math.min((e&&e.rsp)||10000,12000),EXT=e=>Math.max(0,((e&&e.rsp)||10000)-RSPW(e));
 window.MPshared=false;
 window.MPhit=(e,d)=>{if(!window.MPshared)return;const i=EN.indexOf(e);if(i>=0)SH.pend[i]=(SH.pend[i]||0)+d};
 function shStart(w){shStop();SH.ref=MP.db.ref('enemies/'+w);SH.ref.on('child_added',shSync);SH.ref.on('child_changed',shSync);window.MPshared=true}
 function shStop(){if(SH.ref)SH.ref.off();SH.ref=null;window.MPshared=false;SH.pend={};SH.hit={};SH.death={};SH.rew={};SH.last={}}
-function shSync(s){const i=+s.key,e=EN[i],v=s.val();if(!e||!v)return;const ns=nowS(),dead=v.b&&ns<v.b;
- if(dead){SH.death[i]=v.e;if(!e.dead){e.dead=true;e.hp=0;e.back=Date.now()+(v.b-ns);if(window.onEnemyDeath&&ns-(v.b-(e.rsp||10000))<2000)window.onEnemyDeath(e);if(fight===e){fight=null;Object.values(fpos).forEach(q=>{q.nx=0;q.sk=null})}}tryRew(i)}
- else if(!e.dead){if(v.b||!(+v.t)||ns-(+v.t)>IDL(e))e.hp=e.max;else{const hp=Math.max(0,Math.min(e.max,v.hp-(SH.pend[i]||0)));if(SH.last[i]!=null&&v.hp<SH.last[i]&&fight!==e)e.lh=Date.now();e.hp=hp}}
+function shSync(s){const i=+s.key,e=EN[i],v=s.val();if(!e||!v)return;const ns=nowS(),dead=v.b&&ns<v.b+EXT(e);
+ if(dead){SH.death[i]=v.e;if(!e.dead){e.dead=true;e.hp=0;e.back=Date.now()+(v.b+EXT(e)-ns);if(window.onEnemyDeath&&ns-(v.b-RSPW(e))<2000)window.onEnemyDeath(e);if(fight===e){fight=null;Object.values(fpos).forEach(q=>{q.nx=0;q.sk=null})}}tryRew(i)}
+ else if(!e.dead){if(v.b||(+v.t&&ns-(+v.t)>IDL(e)))e.hp=e.max;else{const hp=Math.max(0,Math.min(e.max,v.hp-(SH.pend[i]||0)));if(fight!==e&&v.hp<e.max){if(+v.t)e.lh=Math.max(e.lh||0,Date.now()-Math.max(0,ns-(+v.t)));else if(SH.last[i]==null||v.hp<SH.last[i])e.lh=Date.now()}e.hp=hp}}
  SH.last[i]=v.b?e.max:v.hp}
 function tryRew(i){if(SH.death[i]==null||SH.hit[i]==null||SH.hit[i]!==SH.death[i]-1||SH.rew[i]===SH.death[i])return;
  SH.rew[i]=SH.death[i];const e=EN[i],now=Date.now();giveDrop(e,now);questKill(e);bossDrop(e,now)}
 setInterval(()=>{if(!window.MPshared||!MP.conn||!SH.ref)return;
  for(const k in SH.pend){const i=+k,d=SH.pend[k],e=EN[i];delete SH.pend[k];if(!e||!(d>0))continue;let ap=null;
-  SH.ref.child(k).transaction(v=>{ap=null;const ns=nowS();v=v&&typeof v==='object'?{hp:+v.hp||0,e:+v.e||0,b:+v.b||0,t:+v.t||0}:{hp:e.max,e:0,b:0,t:0};
-   if(v.b&&ns>=v.b){v.hp=e.max;v.b=0}if(v.b)return;if(!v.t||ns-v.t>IDL(e))v.hp=e.max;v.t=Math.round(ns);ap=v.e;v.hp=Math.max(0,Math.round(v.hp-d));if(v.hp<=0){v.b=Math.round(ns+(e.rsp||10000));v.e++}return v},
-   (err,ok)=>{if(err)e.noSync=1;if(!err&&ok&&ap!=null){SH.hit[i]=Math.max(SH.hit[i]==null?-1:SH.hit[i],ap);tryRew(i)}},false)}},400);
+  const T=!SH.noT;SH.ref.child(k).transaction(v=>{ap=null;const ns=nowS(),o=v&&typeof v==='object',vt=o?+v.t||0:0;v=o?{hp:+v.hp||0,e:+v.e||0,b:+v.b||0}:{hp:e.max,e:0,b:0};
+   if(v.b&&ns>=v.b+EXT(e)){v.hp=e.max;v.b=0}if(v.b)return;if(T){if(!vt||ns-vt>IDL(e))v.hp=e.max;v.t=Math.round(ns)}ap=v.e;v.hp=Math.max(0,Math.round(v.hp-d));if(v.hp<=0){v.b=Math.round(ns+RSPW(e));v.e++}return v},
+   (err,ok)=>{if(err){if(T&&!SH.noT){SH.noT=1;SH.pend[i]=(SH.pend[i]||0)+d}else e.noSync=1}if(!err&&ok&&ap!=null){SH.hit[i]=Math.max(SH.hit[i]==null?-1:SH.hit[i],ap);tryRew(i)}},false)}},400);
 // ===== BOSS MUNDIAL (Caverna de Gelo): vida compartilhada, regenera 10.000/s (25.000/s com metade da vida), renasce todo dia às 19:00 (Brasília) =====
 const WBX={ref:null,key:'',shownDead:'',greet:false},WBM=5000000;
 const cycNow=()=>Math.floor((nowS()-22*36e5)/864e5);
@@ -15697,7 +15700,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261021125420;
+const GAME_BUILD=20261021132128;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
