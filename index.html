@@ -3500,7 +3500,7 @@ const MW3=XE/T,MH3=RH/T,BLK=300000,WAIT=60000;
 const map3=[];for(let y=0;y<MH3;y++)map3.push(new Array(MW3).fill(0));
 WD[3]={map:map3,EN:RD.EN};QS[3]={st:4,n:0};
 // arenas (canto superior esquerdo do recorte de 512x288 no mapa de origem)
-const AR={f:[[176,616],[752,232],[720,456],[656,648],[24,144]],h:[[464,264],[144,584],[1712,808],[144,1448],[912,1288]]};
+const AR={f:[[176,616],[752,232],[720,456],[656,648],[864,48]],h:[[464,264],[144,584],[1712,808],[144,1448],[912,1288]]};
 const THN={f:'Floresta',h:'Halloween'};
 const mkcv=(w,h)=>{const c=document.createElement('canvas');c.width=w;c.height=h;return c};
 const rnd=Math.random,ri_=(a,b)=>a+Math.floor(rnd()*(b-a+1));
@@ -3571,7 +3571,10 @@ function planClear(r){r.clr=new Uint8Array(CGW*CGH);r.rmD=new Set();r.rmO=new Se
  for(const e of L.ruins||[])if(typeof e[1]==='number')all.push([e[1],e[2]]);
  c.sort((a,b)=>a[0]-b[0]);
  const near=(x,y)=>{let b=null,bd=1e9;for(const p of all){const d=(p[0]-x)**2+((p[1]-y)*1.4)**2;if(d<bd){bd=d;b=p}}return b};
- for(const[,wx,wy,k]of c.slice(0,NRM)){const own=near(wx,wy);
+ const mzAt=(x0,y0,x1,y1)=>{if(!W3.mz)return false;for(let y=Math.max(0,y0)>>2;y<=Math.min(H0*T-1,y1)>>2;y++)for(let x=Math.max(0,x0)>>2;x<=Math.min(W0*T-1,x1)>>2;x++)if(W3.mz[y*W3.tw+x])return true;return false};
+ let done=0;for(const[,wx,wy,k]of c){if(done>=NRM)break;
+  let tr=null;for(const d of DEPS_W0){if(Math.abs(d.x+d.w/2-wx)<10&&Math.abs(d.by-wy)<10){tr=d;break}}
+  if(tr?mzAt(tr.x-6,tr.y-6,tr.x+tr.w+6,tr.y+tr.h+6):mzAt(wx-20,wy-28,wx+20,wy+12))continue;done++;const own=near(wx,wy);
   // tira a colisão: as células sólidas em volta da base que são "deste" objeto
   const q=[],seen=new Set(),st0=[];for(let dy=-8;dy<=2;dy+=2)for(let dx=-6;dx<=6;dx+=2)st0.push([wx+dx,wy+dy]);
   for(const[x,y]of st0){if(!fWalk(x,y)){const key=(x>>2)+','+(y>>2);if(!seen.has(key)){seen.add(key);q.push([x>>2,y>>2])}}}
@@ -3580,7 +3583,6 @@ function planClear(r){r.clr=new Uint8Array(CGW*CGH);r.rmD=new Set();r.rmO=new Se
    const lx=px-sx,ly=py-sy;if(lx<0||ly<0||lx>=AW||ly>=RH)continue;r.clr[(ly>>2)*CGW+(lx>>2)]=1;bx0=Math.min(bx0,lx-2);by0=Math.min(by0,ly-2);bx1=Math.max(bx1,lx+2);by1=Math.max(by1,ly+2);
    for(const[a,b]of[[1,0],[-1,0],[0,1],[0,-1]]){const X=cx+a,Y=cy+b,key=X+','+Y;if(seen.has(key))continue;seen.add(key);if(!fWalk(X*4+2,Y*4+2))q.push([X,Y])}}
   // e o desenho: a árvore inteira (sprite) ou um retângulo em volta da pedra/arbusto
-  let tr=null;for(const d of DEPS_W0){if(Math.abs(d.x+d.w/2-wx)<10&&Math.abs(d.by-wy)<10){tr=d;break}}
   if(tr){r.rmD.add(tr);r.er.push([tr.x-sx-1,tr.y-sy-1,tr.w+2,tr.h+2,wx-sx,wy-sy,Math.max(12,tr.w*.5)])}
   else{const x0=Math.min(bx0,wx-sx-12),y0=Math.min(by0,wy-sy-20),x1=Math.max(bx1,wx-sx+12),y1=Math.max(by1,wy-sy+6);r.er.push([x0-3,y0-3,x1-x0+6,y1-y0+6,wx-sx,wy-sy,14])}}}
 // chão sem objetos (o mesmo do 3D): 1024x1024 para o mapa inteiro; tira também a sombra pintada
