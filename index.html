@@ -1709,8 +1709,9 @@ const IT={
  s2:{n:'Super Sorte',c:'#00e676',k:'s',m:1.5,d:9e5,p:2500,t:'+50% de sorte na roleta (1,5x)',sup:1},
  d2:{n:'Super Drop',c:'#00b0ff',k:'d',m:1.5,d:9e5,p:2500,t:'+50% de drop de itens (1,5x)',sup:1},
  m2:{n:'Super Dinheiro',c:'#ffc400',k:'m',m:1.5,d:9e5,p:2500,t:'+50% de ouro (1,5x)',sup:1},
- xp:{n:'Poção de XP',c:'#b388ff',k:'x',m:1,d:3e4,t:'Seus lutadores ganham XP ao derrotar inimigos'}};
-const IORD=['f1','s1','d1','m1','f2','s2','d2','m2','xp'];
+ xp:{n:'Poção de XP',c:'#b388ff',k:'x',m:1,d:3e4,t:'Seus lutadores ganham XP ao derrotar inimigos'},
+ key:{n:'Chave da Raid',c:'#c9a0ff',k:'key',m:1,d:0,t:'Abre a Raid: entre no portão aceso do saguão da Raid',key:1}};   // cai de boss (5%, a Poção de Drop aumenta)
+const IORD=['key','f1','s1','d1','m1','f2','s2','d2','m2','xp'];
 const S0={pt:0,kills:0,boss:0,wb:0,gold:0,rolls:0,myth:0,leg:0,shiny:0,pots:0,mis:0,hw:0,rt:0,rb:0};
 let items={},buffs={},st=Object.assign({},S0),ach={},ms={d:-1,w:-1,dp:[0,0,0],dc:[0,0,0],wp:[0,0,0],wc:[0,0,0]},wbc={};
 try{if(SV){
@@ -1727,10 +1728,13 @@ const bm=k=>{let m=1;for(const id in buffs)if(buffs[id]>0&&IT[id]&&IT[id].k===k)
 let lastCoins=coins;
 window.invCount=()=>{let n=0;for(const k in items)n+=items[k]|0;return n};   // usado pelo aviso "+N" do botão Inventário (09-hud.js)
 function addItem(id,n){items[id]=(items[id]||0)+(n||1);if($('itM').style.display==='flex')renderItems();save()}
-function useItem(id){const it=IT[id];if(!it||!(items[id]>0))return;items[id]--;if(!items[id])delete items[id];buffs[id]=(buffs[id]||0)+it.d;st.pots++;
+function useItem(id){const it=IT[id];if(!it||!(items[id]>0)||it.key)return;items[id]--;if(!items[id])delete items[id];buffs[id]=(buffs[id]||0)+it.d;st.pots++;
  toast(it.n+' ativada! ('+durTxt(it.d)+')');bp(520,.12,'triangle',.1);bp(780,.14,'triangle',.1,.08);bp(1040,.16,'triangle',.08,.16);bfUi(true);renderItems();save();achCheck()}
 // garrafinha de poção em pixel art (12x16)
 function potIco(cv,id){const it=IT[id];if(!cv||!it)return;cv.width=12;cv.height=16;const x=cv.getContext('2d'),F=(c,a,b,w,h)=>{x.fillStyle=c;x.fillRect(a,b,w,h)};
+ if(it.key){   // chave dourada com joia roxa
+  F('#1a1a22',3,0,7,7);F('#1a1a22',5,6,3,10);F('#1a1a22',7,10,4,2);F('#1a1a22',7,13,3,2);
+  F('#ffd23f',4,1,5,5);F('#b8860b',5,2,3,3);F('#c9a0ff',5,2,3,3);F('#fff',5,2,1,1);F('#ffd23f',6,7,1,8);F('#ffe57f',6,7,1,2);F('#ffd23f',8,11,2,1);F('#ffd23f',8,14,1,1);F('#b8860b',6,13,1,2);return}
  F('#1a1a22',3,0,6,3);F(it.sup?'#ffd23f':'#8d6e63',4,0,4,2);F('#1a1a22',3,3,6,2);F('#d7eef2',4,3,4,2);
  F('#1a1a22',1,5,10,10);F('#1a1a22',0,7,12,7);F('#1a1a22',2,15,8,1);
  F('#cfe3e8',2,6,8,8);F('#cfe3e8',1,8,10,5);F(it.c,2,9,8,5);F(it.c,1,10,10,3);F('#0003',2,13,8,1);
@@ -2162,7 +2166,8 @@ drawActors=function(f){if(world===1&&window.HAL&&!HAL.ready)return;const t=Date.
 // ===================== economia: ouro, drops, roleta, abates =====================
 giveDrop=function(e,t){let c;const mm=bm('m');if(world===1){c=Math.max(1,Math.round(ri(...e.coin)*mm));pk+=c}else{c=Math.max(1,Math.round(ri(...e.coin)*goldMul()*mm));coins+=c}
  save();updHud();fx.push({x:e.x-4,y:e.y-12,t,s:'+'+c+(world===1?' abóboras':' moedas'),c:world===1?'#ff9800':'#ffd23f'});coinBurst(e,c,world===1)};
-bossDrop=function(e,t){if(e.t!==2)return;const n=Math.random()<.25*bm('d')?1:0;if(!n)return;ess+=n;   // 25% de chance de 1 essência (a Poção de Drop aumenta a chance)
+function keyDrop(x,y,t){if(Math.random()>=.05*bm('d'))return false;addItem('key',1);fx.push({x:x-14,y:y-36,t,s:'+1 Chave da Raid',c:'#c9a0ff',lbl:1});try{qToast('Você achou uma Chave da Raid!')}catch(e){}return true}   // 5% (Poção de Drop: 6,25% / Super: 7,5%)
+bossDrop=function(e,t){if(e.t!==2)return;keyDrop(e.x,e.y,t);const n=Math.random()<.25*bm('d')?1:0;if(!n)return;ess+=n;   // 25% de chance de 1 essência (a Poção de Drop aumenta a chance)
  save();updHud();fx.push({x:e.x-4,y:e.y-24,t,s:'+'+n+' essência',c:'#80d8ff'})};
 roll=function(){pity++;const Lk=bm('s'),ch=CH.map((c,i)=>i?c*Lk:0);ch[0]=Math.max(0,100-ch[1]-ch[2]-ch[3]-ch[4]);
  let r=Math.random()*100,k=0;for(;k<4;k++){if((r-=ch[k])<0)break}if(pity>=5000)k=4;if(k===4)pity=0;
@@ -2330,7 +2335,7 @@ function renderItems(){const ids=IORD.filter(id=>items[id]>0);if(itSel&&!(items[
  const G=$('itGrid');G.innerHTML=ids.length?ids.map(id=>`<div class="ic${itSel===id?' on':''}" data-id="${id}" style="--c:${IT[id].c}"><canvas></canvas><b>x${items[id]}</b><span>${IT[id].n}</span></div>`).join(''):'<div class="emp" style="grid-column:1/-1">Seu inventário está vazio.<br>Compre poções na Loja ou ganhe nas Missões!</div>';
  G.querySelectorAll('.ic').forEach(el=>{potIco(el.querySelector('canvas'),el.dataset.id);el.onclick=()=>{itSel=el.dataset.id;renderItems()}});
  const d=$('itDet');if(!itSel){d.innerHTML=ids.length?'<div class="hint">Toque em um item para ver e usar</div>':'';return}
- const it=IT[itSel],on=buffs[itSel]>0;d.innerHTML=`<div class="dt"><canvas id="itDc"></canvas><div><b style="color:${it.c};font-size:14px">${it.n}</b><br>${it.t}<br>Duração: ${durTxt(it.d)}${on?'<br><span style="color:#7CFC9A">Ativa agora: usar soma mais '+durTxt(it.d)+'</span>':''}</div><button class="btn" id="itUse">Usar</button></div>`;
+ const it=IT[itSel],on=buffs[itSel]>0;if(it.key){d.innerHTML=`<div class="dt"><canvas id="itDc"></canvas><div><b style="color:${it.c};font-size:14px">${it.n}</b><br>${it.t}<br><span style="opacity:.75">Cada entrada na Raid gasta 1 chave. Cai de qualquer boss (5% de chance; a Poção de Drop aumenta).</span></div></div>`;potIco($('itDc'),itSel);return}d.innerHTML=`<div class="dt"><canvas id="itDc"></canvas><div><b style="color:${it.c};font-size:14px">${it.n}</b><br>${it.t}<br>Duração: ${durTxt(it.d)}${on?'<br><span style="color:#7CFC9A">Ativa agora: usar soma mais '+durTxt(it.d)+'</span>':''}</div><button class="btn" id="itUse">Usar</button></div>`;
  potIco($('itDc'),itSel);$('itUse').onclick=()=>useItem(itSel)}
 
 // ===================== loja =====================
@@ -2378,7 +2383,7 @@ D.querySelectorAll('#rkM .tb[data-o]').forEach(b=>b.onclick=()=>{rkO=b.dataset.o
 $('wbRk').onclick=()=>{if(!lock)openRank()};$('rkBtn').onclick=()=>{if(!lock)openRank()};
 function wbReward(key,place){if(wbc[key])return false;wbc[key]=1;const ks=Object.keys(wbc).sort((a,b)=>+a.slice(1)-+b.slice(1));while(ks.length>6)delete wbc[ks.shift()];
  const rw={c:2500,e:3},bon=[null,{c:5000,e:5},{c:3000,e:3},{c:2000,e:2}][place]||null;let s=grant(rw);if(bon)s+=' + bônus Top '+place+': '+grant(bon);
- const pid=['f1','s1','d1','m1'][ri(0,3)];addItem(pid,1);s+=' + '+IT[pid].n;
+ const pid=['f1','s1','d1','m1'][ri(0,3)];addItem(pid,1);s+=' + '+IT[pid].n;if(Math.random()<.05*bm('d')){addItem('key',1);s+=' + Chave da Raid'}
  st.wb++;prog('wb',1);prog('boss',1);st.boss++;achCheck();save();banner('Recompensa do Boss Mundial!<small>'+s+'</small>','dead');return true}
 
 // ===================== avisos, timers e HUD do boss =====================
@@ -2484,6 +2489,154 @@ window.V6F=function(f){const t=Date.now();let dt=t-lastF;lastF=t;if(dt<0||dt>100
 
 // ===================== ligações finais =====================
 [['itM','itClose'],['shM','shClose'],['msM','msClose'],['acM','acClose'],['pfM','pfClose'],['rkM','rkClose']].forEach(([m,c])=>xbtn(m,c));
+// ===================== TROCA entre jogadores =====================
+// Toque em um jogador online -> perfil -> "Trocar". O outro aceita, cada um monta a sua oferta (itens, personagens, moedas),
+// os dois confirmam e cada aparelho entrega a sua parte e recebe a do outro.
+// Firebase: trades/<id> = {a,an,b,bn,t,st,oa,ob,ka,kb,lk,da,db}  ·  tradeReq/<uid>/<id> = {a,n,t} (pedido para quem recebe)
+//   st: 'ask' (esperando aceitar) · 'open' (montando) · 'no' (recusou) · 'cancel' · 'done'.  lk = travou (os dois confirmaram).
+//   oa/ob = oferta em JSON {c:moedas, i:{item:qtd}, h:[personagens]}. ka/kb = confirmou. da/db = já recebeu.
+const TR={id:null,ref:null,cb:null,v:null,me:'',my:{c:0,i:{},h:[]},pick:'',busy:false,reqRef:null,reqUid:null,applied:{},lastSent:''};
+try{TR.applied=JSON.parse(localStorage.getItem('mp_trd')||'{}')||{}}catch(e){TR.applied={}}
+const trDb=()=>window.MP&&MP.db&&MP.uid&&!MP.offline&&MP.conn?MP.db:null;
+const trTS=()=>firebase.database.ServerValue.TIMESTAMP;
+const TRMAXH=6;
+{const css=D.createElement('style');css.textContent=`
+#trM .box{max-width:560px;width:100%;max-height:92vh;overflow:auto}
+.trc{display:grid;grid-template-columns:1fr 1fr;gap:8px}@media(max-width:520px){.trc{grid-template-columns:1fr}}
+.trs{background:#0006;border:2px solid #ffffff2a;border-radius:12px;padding:8px;min-height:120px}.trs.ok{border-color:#4caf50;box-shadow:0 0 0 2px #4caf5055 inset}
+.trh{font-weight:900;font-size:13px;margin-bottom:6px;display:flex;justify-content:space-between;gap:6px;align-items:center}.trh i{font-style:normal;font-size:11px;color:#7CFC9A}
+.trl{display:flex;flex-wrap:wrap;gap:5px}.tri{position:relative;display:flex;align-items:center;gap:4px;background:#ffffff14;border:2px solid var(--c,#ffffff33);border-radius:9px;padding:3px 6px;font-size:11px;font-weight:bold}
+.tri canvas{width:18px;height:24px;image-rendering:pixelated}.tri canvas.sp{width:24px;height:24px}.tri .x{margin-left:2px;background:#c62828;border:0;color:#fff;border-radius:6px;font:bold 11px monospace;padding:1px 5px}
+.trp{background:#0009;border-radius:12px;padding:8px;margin-top:8px}.trp .tabs{display:flex;gap:5px;margin-bottom:6px}.trp .tabs button{flex:1;font:inherit;font-weight:900;font-size:12px;padding:6px;border-radius:9px;border:2px solid #ffffff55;background:#1c2240;color:#fff}.trp .tabs button.on{background:#ffd23f;color:#3a2600}
+.trp .lst{display:flex;flex-wrap:wrap;gap:5px;max-height:200px;overflow:auto}.trp .lst .tri{cursor:pointer}
+.trb{display:flex;gap:8px;justify-content:center;margin-top:10px;flex-wrap:wrap}.trst{text-align:center;font-size:12px;opacity:.85;margin-top:8px}
+#trQ .box{max-width:360px;text-align:center}`;D.head.appendChild(css)}
+const trM=D.createElement('div');trM.className='modal';trM.id='trM';trM.style.zIndex=12;trM.innerHTML='<div class="box v6box"><div id="trBody"></div></div>';D.body.appendChild(trM);
+const trQ=D.createElement('div');trQ.className='modal';trQ.id='trQ';trQ.style.zIndex=13;trQ.innerHTML='<div class="box"><h2>Pedido de troca</h2><div id="trQt" style="margin:6px 0 12px"></div><div class="trb"><button class="btn" id="trQy" style="background:#2e7d32">Aceitar</button><button class="btn" id="trQn" style="background:#c62828">Recusar</button></div></div>';D.body.appendChild(trQ);
+
+// ---------- ofertas ----------
+function trCh(c){const o={id:Math.round(+c.id||0),rar:Math.max(0,Math.min(4,Math.round(+c.rar||0))),sh:c.sh?1:0,
+ name:String(c.name||'Lutador').replace(/[^A-Za-zÀ-ÿ0-9_ .\-]/g,'').slice(0,20)||'Lutador',lvl:Math.max(1,Math.min(9999,Math.round(+c.lvl||1))),
+ xp:Math.max(0,Math.round(+c.xp||0)),spd:Math.max(1,Math.min(999,Math.round(+c.spd||1)))};if(c.pas&&typeof PAS!=='undefined'&&PAS[c.pas])o.pas=c.pas;return o}
+function trParse(s){let o={};try{o=typeof s==='string'?JSON.parse(s||'{}'):(s||{})}catch(e){o={}}if(!o||typeof o!=='object')o={};
+ const r={c:Math.max(0,Math.min(1e15,Math.floor(+o.c||0))),i:{},h:[]};
+ if(o.i&&typeof o.i==='object')for(const k in o.i){const n=Math.floor(+o.i[k]||0);if(IT[k]&&n>0)r.i[k]=Math.min(n,99999)}
+ if(Array.isArray(o.h))r.h=o.h.filter(c=>c&&typeof c==='object').slice(0,TRMAXH).map(trCh);return r}
+const trStr=o=>JSON.stringify({c:Math.floor(o.c||0),i:o.i,h:o.h});
+const trEmpty=o=>!(o.c>0)&&!Object.keys(o.i).length&&!o.h.length;
+// a minha oferta ainda cabe no que eu tenho?
+function trCan(o){if(o.c>coins)return 'Você não tem '+nf(o.c)+' moedas';for(const k in o.i)if((items[k]|0)<o.i[k])return 'Você não tem '+o.i[k]+'x '+IT[k].n;
+ for(const h of o.h)if(!chars.some(c=>c.id===h.id))return h.name+' não está mais com você';return ''}
+function trItemsHtml(o,mine){const out=[];
+ if(o.c>0)out.push(`<span class="tri" style="--c:#ffd23f">${nf(o.c)} moedas${mine?'<button class="x" data-rc="1">✕</button>':''}</span>`);
+ for(const k of IORD)if(o.i[k])out.push(`<span class="tri" style="--c:${IT[k].c}"><canvas data-it="${k}"></canvas>${o.i[k]}x ${esc(IT[k].n)}${mine?`<button class="x" data-ri="${k}">✕</button>`:''}</span>`);
+ o.h.forEach((c,j)=>out.push(`<span class="tri" style="--c:${COL[c.rar]||'#ff4fd8'}"><canvas class="sp" width="12" height="12" data-r="${c.rar}" data-sh="${c.sh}" data-n="${esc(c.name)}"></canvas>${c.sh?'✦ ':''}${esc(c.name)} · Nv${c.lvl}${mine?`<button class="x" data-rh="${j}">✕</button>`:''}</span>`));
+ return out.length?`<div class="trl">${out.join('')}</div>`:'<div class="emp">Nada ainda</div>'}
+function trPaint(root){root.querySelectorAll('canvas[data-it]').forEach(c=>potIco(c,c.dataset.it));root.querySelectorAll('canvas.sp').forEach(c=>{try{drawSp(c,+c.dataset.r,2,+c.dataset.sh,c.dataset.n)}catch(e){}})}
+
+// ---------- abrir / acompanhar uma troca ----------
+function trClose(msg){if(TR.ref&&TR.cb){try{TR.ref.off('value',TR.cb)}catch(e){}}try{if(TR.ref)TR.ref.onDisconnect().cancel()}catch(e){}
+ try{if(localStorage.getItem('mp_trp')===TR.id&&(!TR.v||!TR.v.lk||TR.applied[TR.id]||TR.v['d'+TR.me]))localStorage.removeItem('mp_trp')}catch(e){}
+ TR.id=null;TR.ref=null;TR.cb=null;TR.v=null;TR.pick='';TR.lastSent='';if(trM.style.display==='flex')hide('trM');if(msg)toast(msg)}
+function trOpen(id){const db=trDb();if(!db)return;TR.id=id;TR.ref=db.ref('trades/'+id);TR.my={c:0,i:{},h:[]};TR.pick='';TR.lastSent='';
+ try{TR.ref.onDisconnect().update({st:'cancel'})}catch(e){}
+ TR.cb=TR.ref.on('value',s=>{if(TR.id!==id)return;const v=s.val();if(!v){trClose('A troca foi cancelada.');return}TR.v=v;TR.me=v.a===MP.uid?'a':'b';trStep()},()=>trClose('Não deu para abrir a troca (confira as regras do Firebase).'));
+ show('trM');$('trBody').innerHTML='<div class="emp">Abrindo a troca...</div>'}
+function trStep(){const v=TR.v,me=TR.me,ot=me==='a'?'b':'a',onm=esc(v[ot+'n']||'?');
+ if(v.lk){                                   // os dois confirmaram: cada um entrega a sua parte e recebe a do outro
+  try{TR.ref.onDisconnect().cancel()}catch(e){}
+  if(!v['d'+me]&&!TR.applied[TR.id])trApply(TR.id,v,me);
+  else if(v.da&&v.db&&v.st!=='done')TR.ref.update({st:'done'}).catch(()=>{});
+  if(v['d'+me]||TR.applied[TR.id]){trClose();return}
+  $('trBody').innerHTML='<div class="emp">Concluindo a troca...</div>';return}
+ if(v.st==='no'){trClose(onm+' recusou a troca.');return}
+ if(v.st==='cancel'){trClose('A troca foi cancelada.');return}
+ if(v.st==='done'){trClose();return}
+ if(v.st==='ask'){$('trBody').innerHTML=`<h2>Troca</h2><div class="emp">Esperando ${onm} aceitar o pedido...</div><div class="trb"><button class="btn" id="trX" style="background:#c62828">Cancelar</button></div>`;$('trX').onclick=trCancel;return}
+ if(v.ka&&v.kb){trLock();}
+ trRender()}
+function trRender(){const v=TR.v,me=TR.me,ot=me==='a'?'b':'a',onm=esc(v[ot+'n']||'?'),oo=trParse(v['o'+ot]),mk=!!v['k'+me],ok=!!v['k'+ot];
+ const B=$('trBody');
+ B.innerHTML=`<h2>Troca com ${onm}</h2><div class="trc">
+  <div class="trs${mk?' ok':''}"><div class="trh">Você oferece${mk?'<i>✔ confirmado</i>':''}</div>${trItemsHtml(TR.my,!mk)}${mk?'':`<div class="trb" style="margin-top:6px"><button class="btn" id="trAdd" style="padding:6px 12px;font-size:13px;background:#1565c0">+ Adicionar</button></div>`}</div>
+  <div class="trs${ok?' ok':''}"><div class="trh">${onm} oferece${ok?'<i>✔ confirmado</i>':''}</div>${trItemsHtml(oo,false)}</div></div>
+  ${TR.pick&&!mk?trPickHtml():''}
+  <div class="trst">${mk&&ok?'Concluindo...':mk?'Esperando '+onm+' confirmar.':ok?onm+' já confirmou. Confira e confirme também.':'Montem as ofertas e confirmem. Se alguém mudar a oferta, a confirmação dos dois é desfeita.'}</div>
+  <div class="trb">${mk?'<button class="btn" id="trUn" style="background:#6d6d6d">Mudar oferta</button>':'<button class="btn" id="trOk" style="background:#2e7d32">Confirmar troca</button>'}<button class="btn" id="trX" style="background:#c62828">Cancelar</button></div>`;
+ trPaint(B);
+ $('trX').onclick=trCancel;
+ if($('trAdd'))$('trAdd').onclick=()=>{TR.pick=TR.pick?'':'it';trRender()};
+ if($('trOk'))$('trOk').onclick=trConfirm;
+ if($('trUn'))$('trUn').onclick=()=>{TR.ref.update({['k'+TR.me]:false}).catch(()=>{})};
+ B.querySelectorAll('[data-rc]').forEach(b=>b.onclick=()=>{TR.my.c=0;trSend()});
+ B.querySelectorAll('[data-ri]').forEach(b=>b.onclick=()=>{delete TR.my.i[b.dataset.ri];trSend()});
+ B.querySelectorAll('[data-rh]').forEach(b=>b.onclick=()=>{TR.my.h.splice(+b.dataset.rh,1);trSend()});
+ trPickWire(B)}
+// ---------- escolher o que oferecer ----------
+function trPickHtml(){const p=TR.pick;let body='';
+ if(p==='it'){const ids=IORD.filter(k=>(items[k]|0)>(TR.my.i[k]|0));
+  body=ids.length?ids.map(k=>`<span class="tri" style="--c:${IT[k].c}" data-pi="${k}"><canvas data-it="${k}"></canvas>${esc(IT[k].n)} <small>(tem ${(items[k]|0)-(TR.my.i[k]|0)})</small></span>`).join(''):'<div class="emp">Nenhum item para oferecer.</div>'}
+ else if(p==='ch'){const used=new Set(TR.my.h.map(h=>h.id)),L=chars.filter(c=>!used.has(c.id)).sort((a,b)=>b.rar-a.rar||b.lvl-a.lvl).slice(0,120);
+  body=TR.my.h.length>=TRMAXH?'<div class="emp">No máximo '+TRMAXH+' personagens por troca.</div>':L.length?L.map(c=>`<span class="tri" style="--c:${COL[c.rar]||'#ff4fd8'}" data-ph="${c.id}"><canvas class="sp" width="12" height="12" data-r="${c.rar}" data-sh="${c.sh?1:0}" data-n="${esc(c.name)}"></canvas>${c.sh?'✦ ':''}${esc(c.name)} · Nv${c.lvl}${equipped.includes(c.id)?' <small>(equipado)</small>':''}</span>`).join(''):'<div class="emp">Sem personagens.</div>'}
+ else body=`<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">Você tem ${nf(coins)} moedas.<input id="trCi" type="number" min="0" step="1" value="${TR.my.c||''}" placeholder="Quantas moedas" style="flex:1;min-width:120px;font:inherit;padding:6px;border-radius:8px;border:2px solid #ffffff55;background:#111;color:#fff"><button class="btn" id="trCs" style="padding:6px 12px;font-size:13px;background:#2e7d32">Colocar</button></div>`;
+ return `<div class="trp"><div class="tabs"><button data-pt="it" class="${p==='it'?'on':''}">Itens</button><button data-pt="ch" class="${p==='ch'?'on':''}">Personagens</button><button data-pt="c" class="${p==='c'?'on':''}">Moedas</button></div><div class="lst">${body}</div></div>`}
+function trPickWire(B){B.querySelectorAll('[data-pt]').forEach(b=>b.onclick=()=>{TR.pick=b.dataset.pt;trRender()});
+ B.querySelectorAll('[data-pi]').forEach(b=>b.onclick=()=>{const k=b.dataset.pi;if((items[k]|0)>(TR.my.i[k]|0)){TR.my.i[k]=(TR.my.i[k]|0)+1;trSend()}});
+ B.querySelectorAll('[data-ph]').forEach(b=>b.onclick=()=>{const c=chars.find(x=>x.id===+b.dataset.ph);if(c&&TR.my.h.length<TRMAXH&&!TR.my.h.some(h=>h.id===c.id)){TR.my.h.push(trCh(c));trSend()}});
+ if($('trCs'))$('trCs').onclick=()=>{const n=Math.max(0,Math.floor(+$('trCi').value||0));if(n>coins){toast('Você só tem '+nf(coins)+' moedas');return}TR.my.c=n;trSend()}}
+// mudou a minha oferta: grava e desfaz a confirmação dos dois
+function trSend(){if(!TR.ref)return;const s=trStr(TR.my);TR.lastSent=s;TR.ref.update({['o'+TR.me]:s,ka:false,kb:false}).catch(e=>toast('Não deu para atualizar a troca'));trRender()}
+function trConfirm(){const e=trCan(TR.my);if(e){toast(e);return}const v=TR.v,ot=TR.me==='a'?'b':'a';
+ if(trEmpty(TR.my)&&trEmpty(trParse(v['o'+ot]))){toast('Coloquem alguma coisa na troca');return}
+ if(trStr(TR.my)!==String(v['o'+TR.me]||'')){trSend()}   // garante que o servidor tem a oferta que estou confirmando
+ try{localStorage.setItem('mp_trp',TR.id)}catch(e){}TR.ref.update({['k'+TR.me]:true}).catch(()=>toast('Não deu para confirmar'))}
+function trCancel(){if(TR.ref)TR.ref.update({st:'cancel'}).catch(()=>{});trClose('Troca cancelada.')}
+// os dois confirmaram: trava a troca (só um aparelho consegue)
+function trLock(){if(!TR.ref||TR.locking)return;TR.locking=true;
+ TR.ref.transaction(v=>{if(!v||v.lk||v.st!=='open'||!v.ka||!v.kb)return;v.lk=true;return v},()=>{TR.locking=false},false)}
+// entrega a minha parte e recebe a do outro (uma vez só: da/db no servidor + registro no aparelho)
+function trApply(id,v,me){if(TR.applying)return;TR.applying=true;const ot=me==='a'?'b':'a',mine=trParse(v['o'+me]),theirs=trParse(v['o'+ot]),onm=v[ot+'n']||'?';
+ TR.ref.child('d'+me).transaction(d=>d?undefined:true,(err,ok)=>{TR.applying=false;if(err||!ok||TR.applied[id])return;
+  TR.applied[id]=Date.now();try{const k=Object.keys(TR.applied).sort((x,y)=>TR.applied[x]-TR.applied[y]);while(k.length>200)delete TR.applied[k.shift()];localStorage.setItem('mp_trd',JSON.stringify(TR.applied))}catch(e){}
+  // entrega
+  coins=Math.max(0,coins-mine.c);
+  for(const k in mine.i){items[k]=Math.max(0,(items[k]|0)-mine.i[k]);if(!items[k])delete items[k]}
+  for(const h of mine.h){const i=chars.findIndex(c=>c.id===h.id);if(i>=0)chars.splice(i,1);equipped=equipped.filter(x=>x!==h.id);try{delete fpos[h.id]}catch(e){}}
+  // recebe
+  coins+=theirs.c;for(const k in theirs.i)items[k]=(items[k]|0)+theirs.i[k];
+  for(const h of theirs.h){const c=Object.assign({},h);c.id=nid++;chars.push(c)}
+  save();updHud();try{if(window.MP&&MP.saveNow)MP.saveNow()}catch(e){}try{renderItems()}catch(e){}try{window.dexUp&&window.dexUp();achCheck()}catch(e){}
+  const got=[];if(theirs.c)got.push(nf(theirs.c)+' moedas');for(const k in theirs.i)got.push(theirs.i[k]+'x '+IT[k].n);for(const h of theirs.h)got.push(h.name);
+  banner('Troca concluída com '+esc(onm)+'!<small>Você recebeu: '+esc(got.join(', ')||'nada')+'</small>');
+  try{bp(523,.1,'triangle',.07);bp(784,.14,'triangle',.07,.09)}catch(e){}
+  if(TR.ref)TR.ref.update(Object.assign({['d'+me]:true},v['d'+ot]?{st:'done'}:{})).catch(()=>{});trClose()},false)}
+
+// ---------- pedir / receber pedidos ----------
+async function trAsk(uid,nick){const db=trDb();if(!db){toast('Entre online para trocar');return}if(TR.id){toast('Termine a troca atual primeiro');return}
+ if(uid===MP.uid)return;const r=MP.others&&MP.others[uid];if(!r||!MP.live(r)){toast(nick+' não está online');return}
+ const id=db.ref('trades').push().key;
+ try{await db.ref('trades/'+id).set({a:MP.uid,an:MP.nick,b:uid,bn:String(nick||r.n||'?').slice(0,14),t:trTS(),st:'ask',oa:'{}',ob:'{}',ka:false,kb:false});
+  await db.ref('tradeReq/'+uid+'/'+id).set({a:MP.uid,n:MP.nick,t:trTS()})}
+ catch(e){toast('Não deu para pedir a troca ('+(e.code||e.message)+')');return}
+ hide('pfM');trOpen(id)}
+function trReqWatch(){const db=trDb();const uid=db?MP.uid:null;if(uid===TR.reqUid)return;
+ if(TR.reqRef){try{TR.reqRef.off()}catch(e){}TR.reqRef=null}TR.reqUid=uid;if(!uid)return;
+ try{const pid=localStorage.getItem('mp_trp');if(pid&&!TR.id&&!TR.applied[pid])db.ref('trades/'+pid).once('value').then(s=>{const v=s.val();
+  if(v&&v.lk&&(v.a===uid||v.b===uid)&&!v[(v.a===uid?'d'+'a':'d'+'b')])trOpen(pid);else localStorage.removeItem('mp_trp')}).catch(()=>{})}catch(e){}
+ TR.reqRef=db.ref('tradeReq/'+uid);TR.reqRef.on('child_added',s=>{const v=s.val()||{},id=s.key,rm=()=>db.ref('tradeReq/'+uid+'/'+id).remove().catch(()=>{});
+  const age=Date.now()+(MP.off||0)-(+v.t||0);if(!v.a||age>120000){rm();return}
+  if(TR.id||trQ.style.display==='flex'){db.ref('trades/'+id).update({st:'no'}).catch(()=>{});rm();return}
+  $('trQt').innerHTML='<b>'+esc(v.n||'?')+'</b> quer trocar com você.';show('trQ');
+  const done=()=>{hide('trQ');rm()};
+  $('trQy').onclick=async()=>{done();try{const r=await db.ref('trades/'+id).once('value');const t=r.val();if(!t||t.st!=='ask'){toast('Esse pedido já foi cancelado.');return}
+   await db.ref('trades/'+id).update({st:'open'});trOpen(id)}catch(e){toast('Não deu para aceitar ('+(e.code||e.message)+')')}};
+  $('trQn').onclick=()=>{done();db.ref('trades/'+id).update({st:'no'}).catch(()=>{})}},()=>{})}
+setInterval(trReqWatch,3000);
+// botão "Trocar" no perfil de quem está online
+{const _sp=showProfile;showProfile=function(d,o){_sp.apply(this,arguments);try{o=o||{};if(!o.uid||o.me||!o.online||!window.MP||o.uid===MP.uid)return;
+ const B=$('pfBody'),b=D.createElement('div');b.className='trb';b.innerHTML='<button class="btn" style="background:linear-gradient(#26a69a,#00695c)">Trocar itens</button>';
+ b.firstChild.onclick=()=>trAsk(o.uid,d&&d.n);B.insertBefore(b,B.children[1]||null)}catch(e){}}}
+window.TRADE={ask:trAsk,state:()=>TR};
 window.V6={wbReward,wbClaimed:k=>!!wbc[k],markClaimed:k=>{if(/^c\d+$/.test(k))wbc[k]=1},banner,showProfile,profile:myProfile,teamDps,wbCyc,fk,nf,openRank,qToast,addItem};
 bfUi(true);mnUi();updHud();setTimeout(()=>{achOk=true;achCheck()},2500);
 
@@ -3493,7 +3646,7 @@ drawActors=function(f){if(world!==0)return _daV6(f);if(!MAPOK){loadScreen();retu
  if(TRN){const el=t-TRN;if(el>520)TRN=0;else{g.fillStyle='rgba(0,0,0,'+Math.max(0,1-el/520).toFixed(3)+')';g.fillRect(0,0,VW,VH)}}};
 {const _gw=goWorld;goWorld=function(n){const was=world;_gw(n);if(was===0&&world!==0){dmH.style.display='none'}}}
 // ===================== RAID (mundo 3, por enquanto só no 2D) =====================
-// Saguão com 4 portões (só o 1º funciona por enquanto) → sala de espera (1 minuto) → corredor de 5 salas, uma atrás da outra.
+// Saguão com 4 portões (só o 1º funciona por enquanto; entrar gasta 1 Chave da Raid) → sala de espera (sem contagem) → corredor de 5 salas, uma atrás da outra.
 // Cada sala é um pedaço recortado do mapa da Floresta ou do Halloween (tema sorteado a cada bloco de 5; a mesma arena nunca vem duas vezes seguidas).
 // Ao entrar numa sala os inimigos aparecem; limpando todos, a porta da frente abre. Boss nas salas 5, 10, 15... O jogador tem 5 minutos para cada bloco de 5 salas.
 // Depois da sala 5 vem outra sala de espera (igual à primeira): ali as 5 salas de trás somem, o jogador volta "para a sala de espera do começo" sem perceber
@@ -3503,7 +3656,7 @@ const RD=window.RAID={st:'off',EN:[],rooms:[],bk:0,tEnd:0,cd:0,run:null,sum:null
 const RW=512,AW=384,WW=256,RH=240,WL=16,DY0=92,DY1=148,NL=8;   // saguão 512 · salas 384 · espera 256 (altura 240) · parede 16 · abertura das portas
 const SW=[RW,WW,AW,AW,AW,AW,AW,WW],XO=[];{let x=0;for(const w of SW){XO.push(x);x+=w}}const XE=XO[NL-1]+SW[NL-1];  // 8 espaços: 0 saguão, 1 espera, 2..6 salas, 7 espera
 const liOf=x=>{for(let i=NL-1;i>=0;i--)if(x>=XO[i])return i;return 0};
-const MW3=XE/T,MH3=RH/T,BLK=300000,WAIT=60000;
+const MW3=XE/T,MH3=RH/T,BLK=300000,WAIT=0;   // sem espera: a raid começa assim que entra (gastando 1 Chave da Raid)
 const map3=[];for(let y=0;y<MH3;y++)map3.push(new Array(MW3).fill(0));
 WD[3]={map:map3,EN:RD.EN};QS[3]={st:4,n:0};
 // arenas (canto superior esquerdo do recorte de 512x288 no mapa de origem)
@@ -3727,7 +3880,7 @@ function toHub(){RD.st='hub';RD.EN.length=0;RD.rooms=[];RD.run=null;RD.bk=0;figh
 function enter(){setWorld3(RW/2-8,RH-64);toHub();save();toast('Raid: entre no portão aceso para começar')}
 function shiftAll(dx){P.x+=dx;for(const k in fpos){fpos[k].x+=dx;if(fpos[k].tx!==undefined)fpos[k].tx+=dx}}
 function startWait(){RD.EN.length=0;RD.rooms=[];RD.bk=0;RD.st='wait0';RD.cd=Date.now()+WAIT;P.x=XO[1]+WW/2-8;P.y=DY0+12;P.dir=3;for(const k in fpos){fpos[k].x=P.x;fpos[k].y=P.y}
- RD.run={rooms:0,tok:0,coins0:coins,far:0};try{bp(330,.2,'triangle',.07);bp(495,.25,'triangle',.06,.18)}catch(e){}toast('A raid começa em 1 minuto')}
+ RD.run={rooms:0,tok:0,coins0:coins,far:0};try{bp(330,.2,'triangle',.07);bp(495,.25,'triangle',.06,.18)}catch(e){}}
 function startRaid(){RD.rooms=genBlock(0);RD.bk=0;RD.st='run';RD.tEnd=Date.now()+BLK;try{sWin(1)}catch(e){}RD.ban={t:Date.now(),s:'A raid começou!',s2:'5 minutos para 5 salas'}}
 function roomCleared(i){const r=RD.rooms[i];r.cleared=true;const b=Math.floor((r.n-1)/5),boss=r.n%5===0,tk=(1+b)*(boss?4:1);st.rt=(st.rt||0)+tk;RD.run.rooms++;RD.run.tok+=tk;RD.run.far=Math.max(RD.run.far,r.n);
  if(r.n>(st.rb||0)){st.rb=r.n;RD.run.rec=true;rankPush()}
@@ -3744,7 +3897,8 @@ RD.tick=function(){const t=Date.now();if(world!==3)return;
  if(window.HAL&&!HAL.ready&&RD.st!=='off'){try{HAL.ensure();HAL.loadStep(6)}catch(e){}}
  if(RD.st==='over'){if(RD.sum&&t-RD.sum.t>4200){RD.sum=null;toHub()}return}
  const fx_=P.x+8,fy_=P.y+15,li=liOf(fx_),lx=fx_-XO[li];
- if(RD.st==='hub'&&li===0){if(fy_<92&&Math.abs(lx-GTX[0])<20)startWait();else if(fy_<92){for(let i=1;i<4;i++)if(Math.abs(lx-GTX[i])<20&&!(t-(RD.soonT||0)<2500)){RD.soonT=t;fx.push({x:P.x-12,y:P.y-18,t,s:'Em breve',c:'#ddd',lbl:1})}}
+ if(RD.st==='hub'&&li===0){if(fy_<92&&Math.abs(lx-GTX[0])<20){if((items.key|0)>0){items.key--;if(!items.key)delete items.key;save();toast('Chave da Raid usada · restam '+(items.key|0));startWait()}
+   else{P.y=Math.max(P.y,92-15+10);if(!(t-(RD.keyT||0)<2500)){RD.keyT=t;fx.push({x:P.x-30,y:P.y-18,t,s:'Precisa de uma Chave da Raid',c:'#c9a0ff',lbl:1});toast('Você precisa de uma Chave da Raid. Ela cai de qualquer boss (5%).')}}}else if(fy_<92){for(let i=1;i<4;i++)if(Math.abs(lx-GTX[i])<20&&!(t-(RD.soonT||0)<2500)){RD.soonT=t;fx.push({x:P.x-12,y:P.y-18,t,s:'Em breve',c:'#ddd',lbl:1})}}
   if(Math.hypot(lx-EXIT.x,fy_-EXIT.y)<20){goWorld(0);return}
   const dS=Math.hypot(lx-SHP.x,fy_-SHP.y-4),dR=Math.hypot(lx-RKP.x,fy_-RKP.y);rkUi(dR<34&&dR<=dS);shUi(dS<34&&dS<dR);return}
  rkUi(false);shUi(false);
@@ -15721,7 +15875,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261021151125;
+const GAME_BUILD=20261021153015;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
