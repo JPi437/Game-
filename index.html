@@ -9360,7 +9360,7 @@ const NOL=[];let curNone=null,LCAP=99;
 H3.lightCap=n=>{LCAP=n;curNone=null};   // Iluminação: quantas luzes de ponto (tochas, lava, chamas...) cada desenho pode usar
 function pickLights(lights,cx,cy,cz,rad,dyn){
  const cand=[];lights=lights||NOL;
- for(let i=0;i<lights.length;i++){const l=lights[i];if(l.k<=0)continue;const dx=l.x-cx,dy=l.y-cy,dz=l.z-cz,d=max(0,sqrt(dx*dx+dy*dy+dz*dz)-rad);if(d>=l.r)continue;const w=1-d/l.r;cand.push([w*w*l.k*(l.cr+l.cg+l.cb+.3),l])}
+ for(let i=0;i<lights.length;i++){const l=lights[i];if(l.k<=0)continue;const dx=l.x-cx,dy=l.y-cy,dz=l.z-cz,d=max(0,sqrt(dx*dx+dy*dy+dz*dz)-rad);if(d>=l.r)continue;const w=1-d/l.r;cand.push([w*w*(l.fl&&l.b>0?l.b:l.k)*(l.cr+l.cg+l.cb+.3),l])}
  cand.sort((a,b)=>b[0]-a[0]);
  const NN=curN,NC=min(NN,LCAP);let n=0;const put=l=>{const k=l.k;LB[n*4]=l.x;LB[n*4+1]=l.y;LB[n*4+2]=l.z;LB[n*4+3]=l.r;LC[n*3]=l.cr*k;LC[n*3+1]=l.cg*k;LC[n*3+2]=l.cb*k;n++};
  if(dyn)for(let i=0;i<dyn.length&&n<NC;i++){const l=dyn[i];if(l.k<=0)continue;const dx=l.x-cx,dy=l.y-cy,dz=l.z-cz;if(sqrt(dx*dx+dy*dy+dz*dz)-rad>=l.r)continue;put(l)}
@@ -10558,10 +10558,12 @@ function prep(m){const q=m.q;if(!q||q.x===undefined)return null;
  A.dir=abs(an)<PI/4?2:abs(an)>3*PI/4?0:(cr>0?3:1);
  return A}
 function capture(a,A,idx){const q=A.q,dk=A.dk,col=idx%COLS,row=(idx/COLS)|0,cx=col*CW,cy=row*CH;
- ATX.save();ATX.setTransform(CS,0,0,CS,0,0);ATX.beginPath();ATX.rect(cx,cy,CW,CH);ATX.clip();ATX.clearRect(cx,cy,CW,CH);ATX.setTransform(CS,0,0,CS,cx*CS,cy*CS);
- const sg=g,scx=cam.x,scy=cam.y,od=q[dk];g=ATX;cam.x=q.x-40;cam.y=q.y-66;q[dk]=A.dir;
+ const big=(q.vh||0)>70;A.big=big;   // personagens altos (Drácula): usa a célula inteira (96x96), mais para cima, senão a cabeça sai cortada
+ ATX.save();ATX.setTransform(CS,0,0,CS,0,0);ATX.beginPath();ATX.rect(cx,cy,CW,CH);ATX.clip();ATX.clearRect(cx,cy,CW,CH);
+ const sg=g,scx=cam.x,scy=cam.y,od=q[dk];g=ATX;q[dk]=A.dir;
+ ATX.setTransform(CS,0,0,CS,cx*CS,cy*CS);cam.x=q.x-40;cam.y=big?q.y-84:q.y-66;
  try{a[1]()}catch(e){if(S.err++<3)console.error('H3 figurinha',A.k,e)}finally{q[dk]=od;g=sg;cam.x=scx;cam.y=scy;ATX.restore()}
- A.uv=[(cx+16)/(COLS*CW),(cy+8)/(rowsNow*CH),(cx+80)/(COLS*CW),(cy+80)/(rowsNow*CH)];A.tex=true}
+ A.uv=big?[cx/(COLS*CW),cy/(rowsNow*CH),(cx+CW)/(COLS*CW),(cy+CH)/(rowsNow*CH)]:[(cx+16)/(COLS*CW),(cy+8)/(rowsNow*CH),(cx+80)/(COLS*CW),(cy+80)/(rowsNow*CH)];A.tex=true}
 H3C.run=function(L,f,t,SF){H3C.SF=SF;const list=H3C.list;list.length=0;let any=false,nn=0;
  for(const a of L){const m=a[2];if(m&&nn<SLN&&!(m.k==='P'&&S.mode===1&&!S.ctrOn))nn++}
  atRows(nn);
@@ -10683,7 +10685,7 @@ function frame(){
  for(const A of H3C.list){if(A.h3d||!A.tex)continue;lightAt(A.x,A.y+12,A.z,lt);if(SC.shadeAt)SC.shadeAt(A.x,A.y,A.z,lt);
   const jh=A.jh||0,sk=max(.45,1-jh/60);
   H3.flat(H3.tex.blob,A.x,A.y-jh+.25,A.z,34*sk,34*sk,null,[1,1,1,.85*sk],false);
-  H3.spr(atlas,A.x,A.y,A.z,64*bs,72*bs,A.uv,[lt[0],lt[1],lt[2],1],false,1,false,xr&&(A.k==='P'||(typeof A.k==='string'&&A.k.charAt(0)==='F'))?.5:0)}
+  H3.spr(atlas,A.x,A.y-(A.big?2*bs:0),A.z,(A.big?96:64)*bs,(A.big?96:72)*bs,A.uv,[lt[0],lt[1],lt[2],1],false,1,false,xr&&(A.k==='P'||(typeof A.k==='string'&&A.k.charAt(0)==='F'))?.5:0)}
  FX.draw(t);SC.sprites(t);H3.end();H3.flushOcc();
  // raios de sol (gráfico Alto, olhando para o lado do sol)
  if(!C.iso&&SC.rays)try{SC.rays(t,C)}catch(e){console.error('H3 raios',e);SC.rays=null}
