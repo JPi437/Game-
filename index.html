@@ -3533,13 +3533,13 @@ const ROLE_HP=[700,3000,7000,24000],ROLE_COIN=[[4,6],[12,18],[35,55],[80,120]];
 const VAR=[[2,2,1],[3,1,1],[1,3,1],[4,2,0],[2,1,2],[3,2,0],[1,2,2]];
 function mkEn(th,role,x,y,n){let e;
  if(th==='h'&&halOk()){const nm=role===0?(rnd()<.5?'zombie':'skeleton'):role===1?'werewolf':role===2?(rnd()<.5?'spiderA':'spiderB'):'dracula';e=HALMON.mkEn(nm,x,y)}
- else{const ty=role===0?0:role===1?1:3,d=TY[ty];e=Object.assign({},d,{x,y,t:ty,dead:false,back:0});
-  if(role===3){e.mon='cyclops';e.s=d.s*1.6;e.vh=Math.round(d.vh*1.55);e.mb=1;e.orb=50;e.eng=66;e.r=22;e.fcy=10}}
+ else if(role===3){demonInit();e=Object.assign({},TY[2],{x,y,t:2,dead:false,back:0,rdm:1,ty:22,tr:28,vh:DMS.H+2});delete e.dm}   // boss da Floresta: o Demônio da Torre
+ else{const ty=role===0?0:role===1?1:3,d=TY[ty];e=Object.assign({},d,{x,y,t:ty,dead:false,back:0})}
  const m=mult(n),cm=1+.1*(n-1);e.max=e.hp=Math.round(ROLE_HP[role]*m);e.coin=[Math.round(ROLE_COIN[role][0]*cm),Math.round(ROLE_COIN[role][1]*cm)];
  if(role===3)e.t=2;e.rsp=1e15;e.back=0;e.dead=false;e.noSync=1;e.rd=1;return e}
 // lugares livres dentro da sala para os inimigos (longe da entrada e uns dos outros)
 function spots(li,cnt,boss){const out=[],x0=XO[li];let tries=0;
- if(boss){out.push([x0+AW*.6,RH*.5-12])}
+ if(boss){out.push([x0+AW*.6,RH*.5+18])}
  while(out.length<cnt&&tries++<900){const x=x0+90+rnd()*(AW-140),y=34+rnd()*(RH-84);
   let ok=true;for(const[a,b]of[[0,0],[16,0],[0,14],[16,14],[8,7]])if(RD.solid(Math.round(x+a),Math.round(y+b+6))){ok=false;break}
   if(ok)for(const p of out)if(Math.hypot(p[0]-x,p[1]-y)<(boss&&p===out[0]?60:34)){ok=false;break}
@@ -3758,6 +3758,15 @@ async function openRk(){show('rdM');const L=$('rdL'),I=$('rdInfo');I.textContent
   L.innerHTML=a.length?'<table class="rk">'+a.map((r,i)=>`<tr class="${r.uid===MP.uid?'me':''}"><td>${i+1}</td><td>${esc(r.n||'?')}</td><td class="d">Sala ${r.r}</td></tr>`).join('')+'</table>':'<div class="emp">Ninguém no ranking ainda. Seja o primeiro!</div>'}
  catch(e){L.innerHTML='<div class="emp">'+(String(e&&(e.code||e.message)).includes('PERMISSION')?'O ranking da raid ainda não foi liberado no servidor.':'Não deu para carregar o ranking agora.')+'</div>'}}
 // ---------- ganchos no jogo ----------
+// ---------- o Demônio na raid (mesmo desenho do salão da torre, mas preso ao inimigo da sala) ----------
+{const _de=drawEnemy;drawEnemy=function(e,t,f){if(!e.rdm)return _de(e,t,f);demonInit();const cx=Math.round(e.x+8-cam.x),fy=Math.round(e.y+16-cam.y),H_=DMS.H;
+  g.fillStyle='rgba(0,0,0,.45)';g.beginPath();g.ellipse(cx,fy,20,5,0,0,6.283);g.fill();
+  const ph=(Math.sin(t/2600*6.283)+1)/2,k=ph<.33?0:ph<.66?1:2,fr=DMS.fr[k],hit=t-(e.lh||0)<90;
+  tmx.clearRect(0,0,64,72);tmx.globalCompositeOperation='source-over';tmx.drawImage(fr.c,4,4);
+  if(hit){tmx.globalCompositeOperation='source-atop';tmx.fillStyle='rgba(255,255,255,.75)';tmx.fillRect(0,0,64,72);tmx.globalCompositeOperation='source-over'}
+  const jx=hit?(Math.random()<.5?-1:1):0;g.drawImage(TMP,cx-32+jx,fy-H_-2);g.globalAlpha=.45+.35*Math.sin(t/240);g.drawImage(fr.g,cx-28+jx,fy-H_+2);g.globalAlpha=1}}
+{const _dd=drawDying;drawDying=function(d,t){if(!d.rdm)return _dd(d,t);const el=t-d.t0,cx=Math.round(d.x+8-cam.x),fy=Math.round(d.y+16-cam.y),k=DM.done1;DM.done1=d.db;try{demonDeath(d,t,cx,fy,el)}catch(x){}d.db=DM.done1;DM.done1=k}}
+{const _od=window.onEnemyDeath;window.onEnemyDeath=function(e){if(e&&e.rdm){DY.push({x:e.x,y:e.y,rdm:1,t0:Date.now(),life:3400,db:0});try{bp(70,.9,'sawtooth',.09,0,35)}catch(x){}return}return _od(e)}}
 {const _g=goWorld;goWorld=function(n){if(n===3){if(world===3)return;enter();return}if(world===3){RD.leave()}return _g(n)}}
 {const _b=bgDraw;bgDraw=function(){if(world===3){RD.bg(Date.now());return}return _b()}}
 {const _r=render;render=function(){_r();if(world===3)try{RD.overlay(Date.now())}catch(e){console.error('raid',e)}}}
