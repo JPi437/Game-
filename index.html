@@ -4691,7 +4691,7 @@ ${ROWS.map(([k,l])=>`<div class="vRow"><span class="lb">${l}</span><input type="
 <div class="vBtns"><button class="btn" id="vTest" style="background:#6a1b9a">Testar habilidade</button><button class="btn" id="vMus" style="background:#37474f"></button></div>
 <div style="font-size:11px;opacity:.6;text-align:center;margin-top:8px">"Habilidades" controla os sons dos especiais de todos os lutadores. "Efeitos" controla roleta, moedas, golpes e menus.</div></div>`;
 D.body.appendChild(M);
-function ui(){ROWS.forEach(([k])=>{const v=Math.round(VOL[k]*100);$c('vol_'+k).value=v;$c('vp_'+k).textContent=v+'%'});$c('vMus').textContent=(window.MUSapi&&MUSapi.on)?'Música: ligada':'Música: desligada'}
+function ui(){ROWS.forEach(([k])=>{const v=Math.round(VOL[k]*100);$c('vol_'+k).value=v;$c('vp_'+k).textContent=v+'%'});$c('vMus').textContent=(window.MUSapi&&MUSapi.on)?'🎵 Música: ligada':'🔇 Música: desligada'}
 ROWS.forEach(([k])=>{const r=$c('vol_'+k);r.oninput=()=>{VOL[k]=r.value/100;$c('vp_'+k).textContent=r.value+'%';ac();vApply()};
  r.onchange=()=>{vSave();if(k==='fx')bp(880,.08,'triangle',.08);else if(k==='sk'){sClang(0,1);sThud(0,.8)}else if(k==='g')bp(660,.08,'triangle',.08)}});
 $c('vTest').onclick=()=>{ac();sGuts()};
@@ -4744,6 +4744,7 @@ const css=document.createElement('style');css.textContent=`
 #hcRow{flex-wrap:wrap;row-gap:8px}#hcRow .lb{width:auto;flex:1}#hcRow .pc{width:auto}.hcSw{display:flex;gap:9px;flex-basis:100%;justify-content:center;order:3;padding:2px 0 3px}.hcSw button{width:30px;height:30px;border-radius:50%;border:2px solid #ffffff80;padding:0;cursor:pointer;box-shadow:0 2px 0 #0008;transition:transform .2s cubic-bezier(.3,1.5,.5,1)}
 .hcSw button.on{border:3px solid #fff;transform:scale(1.18);box-shadow:0 0 0 2px #000,0 0 10px #fff9}.hcSw button:active{transform:scale(.9)}
 body.dkHide .dk,body.dkHide .dkT{display:none!important}
+#mi_mus{display:none!important}   /* a música liga/desliga só nas Configurações */
 #chFeed{left:var(--chL,12px)!important}
 body.mdOpen .modal{padding-left:calc(var(--dkW,0px) + 14px)!important;padding-right:calc(var(--dkW,0px) + 14px)!important}
 @media (hover:hover){.dk .mi:hover b{filter:brightness(1.15)}}`;
