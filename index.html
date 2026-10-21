@@ -8772,10 +8772,13 @@ precision highp float;
 precision mediump float;
 #endif
 varying vec3 vP;varying vec3 vN;varying vec4 vC;uniform vec3 uCam;uniform vec4 uL[${nl}];uniform vec3 uLC[${nl}];uniform vec3 uAT;uniform vec3 uAB;uniform vec4 uFog;uniform vec4 uFl;uniform float uEG;uniform float uDi;uniform float uAl;uniform float uFO;uniform vec3 uFC;
+uniform sampler2D uDetL;uniform float uDLK;uniform vec3 uMoD;uniform vec3 uMoL;uniform vec2 uNC;
 void main(){
  if(uDi<1.0){float b=fract(52.9829189*fract(dot(gl_FragCoord.xy,vec2(0.06711056,0.00583715))));if(b>uDi)discard;}
- vec3 n=normalize(vN);vec3 V=uCam-vP;float dV=length(V);if(dot(n,V)<0.0)n=-n;
+ vec3 n=normalize(vN);vec3 V=uCam-vP;float dV=length(V);if(uNC.y>0.5&&dV<uNC.y)discard;if(dot(n,V)<0.0)n=-n;
  vec3 col=vC.rgb;vec3 lg=mix(uAB,uAT,n.y*0.5+0.5);
+ if(uDLK>0.0&&vC.a<0.5){vec3 an=abs(n);vec2 uv=an.y>max(an.x,an.z)?vP.xz:(an.x>an.z?vP.zy:vP.xy);float d1=texture2D(uDetL,uv*0.13).r-0.5;float d2=texture2D(uDetL,uv*0.021).r-0.5;col*=max(0.0,1.0+(d1*0.55+d2*0.6)*uDLK);}
+ lg+=uMoL*max(dot(n,uMoD),0.0);
  for(int i=0;i<${nl};i++){vec3 d=uL[i].xyz-vP;float d2=dot(d,d);float r=uL[i].w;float a=1.0-d2/(r*r);if(a<=0.0)continue;a*=a;
   float nd=dot(n,d*inversesqrt(d2+0.0001));nd=max(nd*0.62+0.38,0.0);lg+=uLC[i]*(a*nd);}
  vec3 c=col*lg*(1.0-vC.a)+col*(vC.a*uEG);
@@ -9110,7 +9113,7 @@ function setup(){
  const mu=gl.getParameter(gl.MAX_FRAGMENT_UNIFORM_VECTORS)||16;NL=mu>=64?NLMAX:mu>=40?8:4;
  try{
   P.lit=program(VS_LIT,FS_LIT(NL),['aP','aN','aC']);P.spr=program(VS_SPR,FS_SPR,['aP','aT','aC'])}catch(e){console.error('H3',e&&e.message||e);return false}
- gl.useProgram(P.lit);Object.assign(U,uloc(P.lit,['uVP','uM','uCam','uL','uLC','uAT','uAB','uFog','uFl','uEG','uDi','uAl','uFO','uFC']));gl.uniform1f(U.uAl,1);gl.uniform1f(U.uFO,0);gl.uniform3f(U.uFC,0,0,0);
+ gl.useProgram(P.lit);Object.assign(U,uloc(P.lit,['uVP','uM','uCam','uL','uLC','uAT','uAB','uFog','uFl','uEG','uDi','uAl','uFO','uFC','uDetL','uDLK','uMoD','uMoL','uNC']));gl.uniform1f(U.uAl,1);gl.uniform2f(U.uNC,0,0);gl.uniform1f(U.uFO,0);gl.uniform3f(U.uFC,0,0,0);gl.uniform1f(U.uDLK,0);gl.uniform3f(U.uMoL,0,0,0);
  tex.cloud=tex.det=null;H3.outOK=false;try{                          // programas do mundo ao ar livre: se este aparelho não compilar, só o 3D do primeiro mundo fica de fora
   NLO_=mu>=48?NLO:2;
   P.out=program(VS_OUT,FS_OUT(NLO_),['aP','aN','aC']);P.ter=program(VS_TER,FS_TER(NLO_),['aP','aN','aC']);P.sky=program(VS_SKY,FS_SKY,['aP']);
@@ -9142,13 +9145,13 @@ H3.setQ=v=>{qs=v;resize()};H3.getQ=()=>qs;
 // ---------- quadro ----------
 const VP=new Float32Array(16),PM=new Float32Array(16),VM=new Float32Array(16),IDM=M4.id();
 let fog=new Float32Array([.02,.008,.03,.0036]),ambT=[.17,.11,.2],ambB=[.07,.045,.08];
-let FOGO=0,DETK=0,LMK=0,TRS=0;          // névoa começando mais longe (3ª pessoa) · grão de textura nas malhas ao ar livre · força do mapa de luz do chão
+let FOGO=0,DETK=0,LMK=0,TRS=0,DETKL=0,MOOND=[0,1,0],MOONL=[0,0,0];          // névoa começando mais longe (3ª pessoa) · grão de textura nas malhas ao ar livre · força do mapa de luz do chão
 // parâmetros do mundo ao ar livre: sun = direção PARA o sol · sunC = cor/força do sol · skyA = céu em cima · skyB = céu no horizonte · gndA = luz que sobe do chão · wind = [x,z] do balanço
 let SUN=[-.57,.6,-.4],SUNC=[1.05,.94,.76],SKYA=[.42,.58,.74],SKYB=[.72,.8,.86],GNDA=[.34,.3,.22],WIND=[1.7,.7],GSC=[1/1344,1/1008];
 H3.env=o=>{if(o.fog){fog.set(o.fog);fogA=null}if(o.ambT)ambT=o.ambT;if(o.ambB)ambB=o.ambB;
  if(o.sun){const l=Math.hypot(o.sun[0],o.sun[1],o.sun[2])||1;SUN=[o.sun[0]/l,o.sun[1]/l,o.sun[2]/l]}
  if(o.sunC)SUNC=o.sunC;if(o.skyA)SKYA=o.skyA;if(o.skyB)SKYB=o.skyB;if(o.gndA)GNDA=o.gndA;if(o.wind)WIND=o.wind;if(o.gscale)GSC=o.gscale;
- if(o.fogOff!==undefined)FOGO=o.fogOff;if(o.detk!==undefined)DETK=o.detk;if(o.lmk!==undefined)LMK=o.lmk;if(o.trs!==undefined)TRS=o.trs};
+ if(o.fogOff!==undefined)FOGO=o.fogOff;if(o.detk!==undefined)DETK=o.detk;if(o.lmk!==undefined)LMK=o.lmk;if(o.trs!==undefined)TRS=o.trs;if(o.detkL!==undefined)DETKL=o.detkL;if(o.moonD)MOOND=o.moonD;if(o.moonL)MOONL=o.moonL};
 H3.fogOff=v=>{FOGO=v;if(gl&&P.lit){gl.useProgram(P.lit);gl.uniform1f(U.uFO,v)}};
 H3.sunDir=()=>SUN;
 // começa o quadro: câmera em (ex,ey,ez) olhando (yaw,pitch); fov vertical em radianos
@@ -9176,7 +9179,7 @@ H3.flushOcc=function(){const L=OCC.list;if(!L.length)return;OCC.pass=true;
    gl.colorMask(true,true,true,true);gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.depthMask(false);OCC.al=OCC.a;mesh(d.m,d.mt,d.lights,d.dyn,Object.assign({},d.o,{keep:true}))}}
  finally{OCC.al=1;OCC.pass=false;L.length=0;gl.colorMask(true,true,true,true);gl.depthMask(true);gl.disable(gl.BLEND);gl.useProgram(P.lit);gl.uniform1f(U.uAl,1)}};   // janela em volta do jogador na vista de cima
 H3.clip=(n,f)=>{NEAR=n;FAR=f};
-H3.setIso=o=>{ISO=o||null};          // {x,y,z,w,h}: projeção oblíqua do 2D (x → tela, z - altura → tela, 1 unidade = 1 pixel), centrada em (x,y,z)
+H3.setIso=o=>{ISO=o||null};let ISOB=null;const TMPM=new Float32Array(16);H3.setIsoBlend=(I,k)=>{ISOB=I&&k>0?{I,k:Math.min(1,k)}:null};   // fim da subida para a vista de cima: a projeção vai virando a do 2D aos poucos          // {x,y,z,w,h}: projeção oblíqua do 2D (x → tela, z - altura → tela, 1 unidade = 1 pixel), centrada em (x,y,z)
 H3.isIso=()=>!!ISO;
 H3.setPix=o=>{PIX=o||null};          // {lv,dt}: desenha numa textura do tamanho do canvas, sem suavização, e passa o filtro de cores do PS1 no fim
 H3.focus=(x,y,z)=>{FOC[0]=x;FOC[1]=y;FOC[2]=z;focNext=true};   // de onde contam as distâncias de sumiço (capim, detalhe do chão, sombras); padrão = câmera
@@ -9197,12 +9200,14 @@ function begin(ex,ey,ez,yaw,pitch,fov,roll){
  gl.bindFramebuffer(gl.FRAMEBUFFER,fb);curFB=fb;
  if(ISO){isoMat(VP,ISO);PM.set(IDM);VM.set(IDM);camP=[ISO.x,ISO.y+3000,ISO.z+3000];camR=[1,0,0];camU=[0,1,0]}
  else{M4.persp(PM,fov,W/Hh,NEAR,FAR);M4.view(VM,ex,ey,ez,yaw,pitch);M4.mul(VP,PM,VM);
-  camP=[ex,ey,ez];camR=[cos(yaw),0,sin(yaw)];const cp=cos(pitch),sp=sin(pitch);camU=[-sin(yaw)*sp,cp,cos(yaw)*sp]}
+  camP=[ex,ey,ez];camR=[cos(yaw),0,sin(yaw)];const cp=cos(pitch),sp=sin(pitch);camU=[-sin(yaw)*sp,cp,cos(yaw)*sp];
+  if(ISOB){isoMat(TMPM,ISOB.I);const k=ISOB.k;for(let i=0;i<16;i++)VP[i]+=(TMPM[i]-VP[i])*k}}
  if(!focNext){FOC[0]=camP[0];FOC[1]=camP[1];FOC[2]=camP[2]}focNext=false;SHS.ok=SHS.pend;SHS.pend=false;OCC.list.length=0;OCC.al=1;
- if(ISO){if(fogA===null)fogA=fog[3];fog[3]=0}else if(fogA!==null){fog[3]=fogA;fogA=null}      // vista de cima: sem névoa (como no 2D)
+ if(ISO){if(fogA===null)fogA=fog[3];fog[3]=0}else if(ISOB){if(fogA===null)fogA=fog[3];fog[3]=fogA*(1-ISOB.k)}else if(fogA!==null){fog[3]=fogA;fogA=null}      // vista de cima: sem névoa (como no 2D)
  gl.viewport(0,0,W,Hh);gl.clearColor(fog[0],fog[1],fog[2],1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
  gl.enable(gl.DEPTH_TEST);gl.disable(gl.BLEND);gl.depthMask(true);
  gl.useProgram(P.lit);gl.uniformMatrix4fv(U.uVP,false,VP);gl.uniform3f(U.uCam,ex,ey,ez);gl.uniform3fv(U.uAT,ambT);gl.uniform3fv(U.uAB,ambB);gl.uniform4fv(U.uFog,fog);gl.uniform1f(U.uFO,FOGO);gl.uniform3f(U.uFC,0,0,0);
+ gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,tex.det?tex.det.t:null);gl.uniform1i(U.uDetL,2);gl.activeTexture(gl.TEXTURE0);gl.uniform1f(U.uDLK,tex.det?DETKL:0);gl.uniform3fv(U.uMoD,MOOND);gl.uniform3fv(U.uMoL,MOONL);
  gl.uniform4f(U.uFl,0,0,0,0);gl.uniform1f(U.uEG,1);gl.uniform1f(U.uDi,1);gl.uniformMatrix4fv(U.uM,false,IDM);
  gl.enableVertexAttribArray(0);gl.enableVertexAttribArray(1);gl.enableVertexAttribArray(2)}
 // desenha uma malha com a matriz m (ou a identidade); lights = luzes fixas, dyn = luzes temporárias; o = {fl:[r,g,b,a] clarão, eg: brilho próprio, di: transparência 0..1}
@@ -9217,7 +9222,7 @@ function mesh(m,mt,lights,dyn,o){
  if(!o.keep){const cx=M[0]*m.cx+M[4]*m.cy+M[8]*m.cz+M[12],cy=M[1]*m.cx+M[5]*m.cy+M[9]*m.cz+M[13],cz=M[2]*m.cx+M[6]*m.cy+M[10]*m.cz+M[14];
   pickLights(lights,o.cx!==undefined?o.cx:cx,o.cy!==undefined?o.cy:cy,o.cz!==undefined?o.cz:cz,o.rad!==undefined?o.rad:m.rad*(o.sc||1),dyn)}
  if(o.fl)gl.uniform4fv(U.uFl,o.fl);else gl.uniform4f(U.uFl,0,0,0,0);
- gl.uniform1f(U.uEG,o.eg===undefined?1:o.eg);gl.uniform1f(U.uDi,o.di===undefined?1:o.di);if(o.fog!==undefined)gl.uniform4f(U.uFog,fog[0],fog[1],fog[2],fog[3]*o.fog);if(o.fc)gl.uniform3fv(U.uFC,o.fc);
+ gl.uniform1f(U.uEG,o.eg===undefined?1:o.eg);gl.uniform1f(U.uDi,o.di===undefined?1:o.di);if(o.fog!==undefined)gl.uniform4f(U.uFog,fog[0],fog[1],fog[2],fog[3]*o.fog);if(o.fc)gl.uniform3fv(U.uFC,o.fc);{const nc=o.nc;gl.uniform2f(U.uNC,nc?nc[0]:0,nc?nc[1]:0)}
  gl.bindBuffer(gl.ARRAY_BUFFER,m.vbo);gl.vertexAttribPointer(0,3,gl.FLOAT,false,28,0);gl.vertexAttribPointer(1,3,gl.FLOAT,false,28,12);gl.vertexAttribPointer(2,4,gl.UNSIGNED_BYTE,true,28,24);
  gl.drawArrays(gl.TRIANGLES,0,m.n);if(o.fog!==undefined)gl.uniform4fv(U.uFog,fog);if(o.fc)gl.uniform3f(U.uFC,0,0,0)}
 // termina: cartazes por cima de tudo (com profundidade) e brilhos
@@ -9919,7 +9924,7 @@ const clp=(v,a,b)=>v<a?a:v>b?b:v;
 const NM3='Herobrine 3D',ALT_Y=14.6,BZ=-16;                    // nome do personagem · topo do altar · Z do Demônio
 const angd=(a,b)=>{let d=(b-a)%TAU;if(d>PI)d-=TAU;if(d<-PI)d+=TAU;return d};
 const SCN=H3.scenes=H3.scenes||{};let SC=null;                  // cenas registradas · cena do modo 3D em uso
-const sceneNow=()=>world===0?(X.inRoom()?SCN.hall:(SCN.field||null)):world===2?SCN.ice:world===1?(SCN.hal||null):null;
+const sceneNow=()=>world===0?(X.inRoom()?SCN.hall:(SCN.field||null)):world===2?SCN.ice:world===1?((window.HAL&&HAL.inside)?(SCN.halIn||null):(SCN.hal||null)):null;
 const S=H3.S={mode:0,yaw:0,pitch:0,moving:false,step:0,dead:false,built:false,qs0:1,punchT:0,bossYaw:0,fr:0,cam:{x:0,y:21,z:131,yaw:0,pitch:0,fov:1},foc:{x:0,y:0,z:131},cssW:896,cssH:412,px:0,pz:131,err:0,ft:16,lastT:0,hint:0,sc:null,
  jh:0,jv:0,isoY:null};
 const $$=id=>document.getElementById(id);
@@ -9944,7 +9949,7 @@ body.h3on #c{visibility:hidden}body.h3on #h3gl,body.h3on #h3ov{display:block}
 body.h3on.h3j #jumpBtn{display:block}
 #h3gl.pix{image-rendering:pixelated;image-rendering:crisp-edges}`;document.head.appendChild(st)}
 function mkBtn(){if(btn)return;css();btn=document.createElement('button');btn.className='btn';btn.id='persBtn';btn.innerHTML='<small>Perspectiva</small><b>2D</b>';document.body.appendChild(btn);
- btn.addEventListener('click',e=>{e.preventDefault();setMode((S.mode+1)%nModes())});
+ btn.addEventListener('click',e=>{e.preventDefault();toMode((S.mode+1)%nModes())});
  // botão de pulo (só no 3D)
  const jb=document.createElement('button');jb.id='jumpBtn';jb.setAttribute('aria-label','Pular');jb.innerHTML='<svg viewBox="0 0 24 24"><path d="M12 3l7 8h-4.2v5H9.2v-5H5z"/><rect x="7" y="18" width="10" height="2.6" rx="1.3"/></svg>PULAR';document.body.appendChild(jb);
  const jd=e=>{e.preventDefault();e.stopPropagation();jb.classList.add('on');jump()},ju=()=>jb.classList.remove('on');
@@ -9988,7 +9993,7 @@ function leave3D(){
  H3.setIso(null);H3.setPix(null);if(glc)glc.classList.remove('pix');S.jh=S.jv=0;if(H3.fbReset)H3.fbReset();
  if(S.osv){for(let i=0;i<S.osv.length;i++){OFF[i][0]=S.osv[i][0];OFF[i][1]=S.osv[i][1]}S.osv=null}
  g=G0;P.x=round(P.x);P.y=round(P.y);unstick();         // posição inteira de novo (o 2D anda de 1 em 1 pixel)
- P.moving=false;FX.clear();if(SC&&SC.clear)SC.clear();$$('c').style.visibility=''}
+ P.moving=false;FX.clear();if(SC&&SC.clear)SC.clear();$$('c').style.visibility='';S.b2d=0;S.b2on=false;if(glc)glc.style.opacity='';if(ovc)ovc.style.opacity=''}
 // cenas grandes (o campo do primeiro mundo) montam o 3D aos poucos, em fatias de uns 9 ms por quadro, enquanto o jogo segue normal em 2D; o botão mostra a porcentagem
 function startLoad(sc,m){
  if(S.ld)return;mkCanvases();
@@ -10011,7 +10016,7 @@ function setMode(m){
  const was=S.mode;
  if(m>0){const sc=sceneNow();if(!sc||!sc.active()||S.dead)return;if(!was&&sc.stepBuild&&!sc.built()){startLoad(sc,m);return}if(!was&&!enter3D(sc))return}
  if(was&&!m)leave3D();
- S.mode=H3.mode=m;if(btn)btn.querySelector('b').textContent=LABEL[m];
+ S.mode=H3.mode=m;if(btn)btn.querySelector('b').textContent=LABEL[m];if(m&&!was&&!S.sw){S.ctrIn=true;S.b2d=1;S.b2on=true;$$('c').style.visibility='visible';if(glc)glc.style.opacity='0';if(ovc)ovc.style.opacity='0'}
  // vista de cima: o canvas fica do tamanho da tela do 2D (cada pixel do jogo = um pixel do canvas) e o navegador amplia sem suavizar
  if(m===3){if(document.exitPointerLock&&document.pointerLockElement)document.exitPointerLock();S.isoY=null;isoQ()}
  else if(was===3){H3.setIso(null);H3.setPix(null);if(glc)glc.classList.remove('pix');H3.setQ(S.qs0)}
@@ -10036,7 +10041,7 @@ function pu(e){if(!lp||e.pointerId!==lp.id)return;const tap=lp.mv<14&&Date.now()
  if(tap&&SC&&SC.tap&&!lock){try{if(SC.tap(e.clientX,e.clientY))return}catch(x){}}                       // tocar no quadro de ranking (Caverna de Gelo)
  if(tap&&fight&&!lock){try{punch()}catch(x){}}}
 addEventListener('keydown',e=>{const t=e.target,tg=t&&t.tagName;if(tg==='INPUT'||tg==='TEXTAREA'||(t&&t.isContentEditable)||e.ctrlKey||e.metaKey||e.altKey)return;const k=e.key.toLowerCase();
- if(k==='r'&&!e.repeat&&btn&&btn._on&&!S.ld){e.preventDefault();const n=(S.mode+1)%nModes();setMode(n);if(n&&glcLock)glcLock();if(!n&&document.exitPointerLock)document.exitPointerLock();return}
+ if(k==='r'&&!e.repeat&&btn&&btn._on&&!S.ld){e.preventDefault();const n=(S.mode+1)%nModes();toMode(n);if(n&&glcLock)glcLock();if(!n&&document.exitPointerLock)document.exitPointerLock();return}
  if(k==='e'&&!e.repeat){for(const id of['spinBtn','pasBtn','talkBtn']){const b=$$(id);if(b&&getComputedStyle(b).display!=='none'&&!b.disabled){e.preventDefault();if(document.exitPointerLock)document.exitPointerLock();b.click();return}}}});
 // no 3D: espaço pula · F bate (o clique também bate)
 addEventListener('keydown',e=>{if(!S.mode||lock)return;const t=e.target,tg=t&&t.tagName;if(tg==='INPUT'||tg==='TEXTAREA')return;
@@ -10058,13 +10063,14 @@ function updOff(){
  for(let i=0;i<4;i++){OFF[i][0]=rx*sl[i][0]+bx*sl[i][1];OFF[i][1]=(rz*sl[i][0]+bz*sl[i][1])/SC.K}}
 function move3(){
  S.moving=false;
- if(!(lock||window.HALF||(world===0&&window.__gen))){const m=hypot(jx,jy);
+ if(!(lock||window.HALF||S.exitT||(world===0&&window.__gen))){const m=hypot(jx,jy);
   if(m>.2){const len=min(1,m*1.15),fw=-jy/m,sd=jx/m,yw=S.mode===3?0:S.yaw,dx=sd*cos(yw)+fw*sin(yw),dz=sd*sin(yw)-fw*cos(yw),sp=mspd()*len;
    step3(dx*sp,dz*sp);S.moving=true;P.step++;
    if(S.mode===3)P.dir=abs(jx)>abs(jy)?(jx>0?3:1):(jy>0?2:0)}}            // vista de cima: o boneco vira para onde anda, como no 2D
  if(S.mode!==3)P.dir=dirOfYaw(S.yaw);updOff()}
 const _tick=tick;
 tick=function(){
+ if(S.exitT&&(!S.mode||Date.now()-S.exitT>=EXD)){const m=S.mode;S.exitT=0;S.exitFrom=null;if(m)setMode(0)}
  enforceH3D();syncBtn();
  if(!S.mode)return _tick();
  jumpTick();
@@ -10076,7 +10082,7 @@ tick=function(){
 // ============================================================ câmera ============================================================
 function floorAt(x,z){return SC.floorY(x,z)}
 const DEG=PI/180;
-function camNow(){
+function camRaw(){
  if(S.dbg){S.foc={x:S.dbg.x,y:S.dbg.y,z:S.dbg.z};return S.dbg}                 // câmera fixa (só para testes)
  const x=P.x+8-SC.OX,z=(P.y+14-SC.OY)*SC.K,gy=floorAt(x,z),jh=S.jh;S.px=x;S.pz=z;
  const kick=S.punchT&&Date.now()-S.punchT<200?sin((Date.now()-S.punchT)/200*PI)*.025:0,
@@ -10093,6 +10099,39 @@ function camNow(){
  if(SC.camOk){const ok=SC.camOk(z);let t=1;if(SC.camFar){t=0;for(let i=16;i>=1;i--){const u=i/16;if(ok(x+(cx-x)*u,z+(cz-z)*u)){t=u;break}}}else for(let i=1;i<=16;i++){const u=i/16;if(!ok(x+(cx-x)*u,z+(cz-z)*u)){t=(i-1)/16;break}}
   t=max(t,.2);cx=x+(cx-x)*t;cz=z+(cz-z)*t;cy=gy+24+(cy-gy-24)*t+(1-t)*22}
  cy=SC.camY?SC.camY(cy,cz,cx):clp(cy,3,120);return{x:cx,y:cy,z:cz,yaw:S.yaw,pitch:S.pitch-kick*.5,fov:G3.fov3*DEG}}
+// ---------- transição entre as câmeras: 1ª pessoa ⇄ 3ª pessoa ⇄ vista de cima, e ao entrar no 3D (a câmera sobe e desce em arco, suave) ----------
+// Vindo do 2D ou da vista de cima, a câmera começa lá no alto, olhando para baixo como o 2D, e desce até o lugar dela; da 1ª para a 3ª pessoa ela sai da cabeça,
+// sobe num arco e para atrás do personagem (e o contrário). Indo para a vista de cima ela sobe até ficar quase igual ao desenho de cima e só então troca.
+const CTR={mode:-1,from:null,t0:0,dur:0,arc:0,last:null};S.ctrOn=false;S.ctrIn=false;
+function isoLike(F){const h=(typeof VH!=='undefined'?VH:221)*.5;let top=1e9,ok=null;
+ try{if(SC&&SC.camY){const v=SC.camY(1e9,F.z,F.x);if(v<1e8)top=v}if(SC&&SC.camOk&&!SC.camFar)ok=SC.camOk(F.z)}catch(e){}
+ for(const pit of[PI/4,1.05,1.3]){const c=Math.cos(pit),sn=Math.sin(pit);let D=Math.min(640,(top-4-F.y)/sn);
+  if(ok){while(D>30&&!ok(F.x,F.z+D*c))D-=8}
+  if(D>=110||pit===1.3){D=Math.max(30,D);return{x:F.x,y:F.y+D*sn,z:F.z+D*c,yaw:0,pitch:-pit,fov:Math.min(1.45,2*Math.atan(h/D))}}}}
+const EXD=950;S.exitT=0;S.exitFrom=null;
+// pede um modo; do 3D para o 2D a câmera primeiro sobe (sai do personagem e vai para o alto, como o desenho 2D) e só depois troca
+function toMode(n){if(S.exitT)return;if(n===0&&S.mode&&S.mode!==3&&!S.dbg&&SC&&SC.active()&&!S.dead){S.exitT=Date.now();S.exitFrom=CTR.last;return}setMode(n)}
+function blend2D(){const k=S.b2d||0,cv0=$$('c');
+ if(k>.001){const sg=g;g=G0;try{G0.setTransform(1,0,0,1,0,0);G0.imageSmoothingEnabled=false;_render()}catch(e){}finally{g=sg}
+  cv0.style.visibility='visible';const o=(1-k).toFixed(3);if(glc)glc.style.opacity=o;if(ovc)ovc.style.opacity=o;S.b2on=true}
+ else if(S.b2on){S.b2on=false;cv0.style.visibility='';if(glc)glc.style.opacity='';if(ovc)ovc.style.opacity=''}}
+function camNow(){const p=camRaw();S.ctrOn=false;if(S.dbg){CTR.last=null;CTR.mode=S.mode;S.exitT=0;S.b2d=0;return p}
+ const now=Date.now(),F=S.foc;
+ if(S.exitT){const e=Math.min(1,(now-S.exitT)/EXD),u=e*e*e*(e*(e*6-15)+10),A=S.exitFrom||p,B=isoLike(F),L=(a,b)=>a+(b-a)*u;S.ctrOn=true;CTR.from=null;
+  S.b2d=Math.max(0,Math.min(1,(e-.6)/.4));
+  const o={x:L(A.x,B.x),y:L(A.y,B.y)+(S.mode===1?14:6)*Math.sin(PI*u),z:L(A.z,B.z),yaw:A.yaw+angd(A.yaw,B.yaw)*u,pitch:L(A.pitch,B.pitch),fov:L(A.fov,B.fov)};return o}
+ S.b2d=0;
+ if(S.ctrIn||S.mode!==CTR.mode){const was=S.ctrIn?0:CTR.mode;S.ctrIn=false;CTR.mode=S.mode;
+  if(S.mode&&was!==S.mode){const from=was===0||!CTR.last||CTR.last.iso?isoLike(F):CTR.last;
+   CTR.from=from;CTR.t0=now;CTR.enter=was===0;CTR.dur=was===0?1350:(S.mode===3||was===3)?1050:780;CTR.arc=(was===1&&S.mode===2)||(was===2&&S.mode===1)?20:0}
+  else CTR.from=null}
+ let out=p;
+ if(CTR.from){const e=(now-CTR.t0)/CTR.dur;
+  if(e>=1)CTR.from=null;
+  else{const u=e*e*e*(e*(e*6-15)+10),A=CTR.from,B=p.iso?isoLike(F):p,L=(a,b)=>a+(b-a)*u;if(CTR.enter)S.b2d=Math.max(0,1-e/.3);
+   out={x:L(A.x,B.x),y:L(A.y,B.y)+CTR.arc*Math.sin(PI*u),z:L(A.z,B.z),yaw:A.yaw+angd(A.yaw,B.yaw)*u,pitch:L(A.pitch,B.pitch),fov:L(A.fov,B.fov)};S.ctrOn=true;
+   if(p.iso&&!CTR.enter){const q=Math.max(0,Math.min(1,(e-.55)/.45));out.isoB=p.iso;out.isoK=q*q*(3-2*q)}}}
+ CTR.last=out;return out}
 
 // ============================================================ folha de figurinhas (H3C): cada personagem desenhado pelo 2D vira um cartaz ============================================================
 const CW=96,CH=96,COLS=4,ROWS=4,CS=2,SLN=COLS*ROWS,BS=1.05;                 // BS: cada pixel do 2D vira BS unidades do 3D (o personagem 2D tem ~28 px e o Herobrine 3D ~30 unidades)
@@ -10121,11 +10160,11 @@ function capture(a,A,idx){const q=A.q,dk=A.dk,col=idx%COLS,row=(idx/COLS)|0,cx=c
  try{a[1]()}catch(e){if(S.err++<3)console.error('H3 figurinha',A.k,e)}finally{q[dk]=od;g=sg;cam.x=scx;cam.y=scy;ATX.restore()}
  A.uv=[(cx+16)/(COLS*CW),(cy+8)/(rowsNow*CH),(cx+80)/(COLS*CW),(cy+80)/(rowsNow*CH)];A.tex=true}
 H3C.run=function(L,f,t,SF){H3C.SF=SF;const list=H3C.list;list.length=0;let any=false,nn=0;
- for(const a of L){const m=a[2];if(m&&nn<SLN&&!(m.k==='P'&&S.mode===1))nn++}
+ for(const a of L){const m=a[2];if(m&&nn<SLN&&!(m.k==='P'&&S.mode===1&&!S.ctrOn))nn++}
  atRows(nn);
  for(const a of L){const m=a[2];
   if(!m){try{a[1]()}catch(e){if(S.err++<3)console.error('H3 2D',e)}continue}              // o resto do desenho 2D segue rodando (porta, estado do Demônio...), só que no canvas descartável
-  if(list.length>=SLN||(m.k==='P'&&S.mode===1))continue;
+  if(list.length>=SLN||(m.k==='P'&&S.mode===1&&!S.ctrOn))continue;
   const A=prep(m);if(!A)continue;list.push(A);if(!A.h3d){capture(a,A,list.length-1);any=true}}
  if(any&&atlas)H3.texUp(atlas,AT)};
 
@@ -10222,7 +10261,7 @@ function frame(){
  if(SC.shake){const sh=SC.shake(t);if(sh){C=Object.assign({},C,{x:C.x+sh[0],y:C.y+sh[1],z:C.z+sh[2],yaw:C.yaw+sh[3],pitch:C.pitch+sh[4]});if(C.iso)C.iso=Object.assign({},C.iso,{x:C.iso.x+sh[0],y:C.iso.y+sh[1]*.5,z:C.iso.z+sh[2]})}}
  const F=S.foc;
  // vista de cima: projeção do 2D + filtro de pixels (só nela)
- H3.setIso(C.iso||null);H3.setPix(C.iso&&SC.pix!==false?{lv:31,dt:1}:null);
+ H3.setIso(C.iso||null);H3.setIsoBlend(C.isoB||null,C.isoK||0);H3.setPix(C.iso&&SC.pix!==false?{lv:31,dt:1}:null);
  H3.setCut(0,0,0,false);if(C.iso)H3.setOcc(S.px,floorAt(S.px,S.pz)+S.jh,S.pz);else H3.setOcc(null);       // vista de cima: o que tapa o personagem fica meio transparente
  if(H3.setSquash)H3.setSquash(C.iso&&SC.isoSq?SC.isoSq[0]:1,SC.isoSq?SC.isoSq[1]:12);
  // sombras do sol: mapa de profundidade em volta do jogador, antes do quadro
@@ -10246,8 +10285,8 @@ function frame(){
  // raios de sol (gráfico Alto, olhando para o lado do sol)
  if(!C.iso&&SC.rays)try{SC.rays(t,C)}catch(e){console.error('H3 raios',e);SC.rays=null}
  H3.post();
- if(S.mode===1){const pp=S.punchT?(t-S.punchT)/260:1;MOD.drawArm({ex:C.x,ey:C.y,ez:C.z,yaw:C.yaw,pitch:C.pitch,t,mv:S.moving&&S.jh<=0?1:0,pu:pp<1?pp:0,fov:1.15,jv:S.jv,jh:S.jh},SC.lights,FX.L)}
- overlay(t,C);
+ if(S.mode===1&&!S.ctrOn){const pp=S.punchT?(t-S.punchT)/260:1;MOD.drawArm({ex:C.x,ey:C.y,ez:C.z,yaw:C.yaw,pitch:C.pitch,t,mv:S.moving&&S.jh<=0?1:0,pu:pp<1?pp:0,fov:1.15,jv:S.jv,jh:S.jh},SC.lights,FX.L)}
+ overlay(t,C);blend2D();
  // 4) qualidade: se o aparelho está lento, desenha o 3D em menos pixels (a vista de cima já usa a resolução do 2D)
  const dt=pf-S.lastT;S.lastT=pf;if(dt>0&&dt<250&&!C.iso){S.ft+=(dt-S.ft)*.05;
   if(S.fr%90===0){if(S.ft>27&&H3.getQ()>.4){H3.setQ(max(.4,H3.getQ()*.82))}else if(S.ft<18.5&&H3.getQ()<S.qs0-.01)H3.setQ(min(S.qs0,H3.getQ()*1.1))}}}
@@ -10261,7 +10300,7 @@ function overlay(t,C){
  let fa=FX.flash||0;if(SC.flash)fa=max(fa,SC.flash(t));
  if(fa>.01){const fc=SC.flashCol||'255,244,228';x.fillStyle='rgba('+fc+','+min(.9,fa).toFixed(3)+')';x.fillRect(0,0,cw,ch)}
  // mira
- if(S.mode===1){x.strokeStyle='rgba(255,255,255,.55)';x.lineWidth=1.5;const cx=cw/2,cy=ch/2;x.beginPath();x.moveTo(cx-6,cy);x.lineTo(cx-2,cy);x.moveTo(cx+2,cy);x.lineTo(cx+6,cy);x.moveTo(cx,cy-6);x.lineTo(cx,cy-2);x.moveTo(cx,cy+2);x.lineTo(cx,cy+6);x.stroke()}
+ if(S.mode===1&&!S.ctrOn){x.strokeStyle='rgba(255,255,255,.55)';x.lineWidth=1.5;const cx=cw/2,cy=ch/2;x.beginPath();x.moveTo(cx-6,cy);x.lineTo(cx-2,cy);x.moveTo(cx+2,cy);x.lineTo(cx+6,cy);x.moveTo(cx,cy-6);x.lineTo(cx,cy-2);x.moveTo(cx,cy+2);x.lineTo(cx,cy+6);x.stroke()}
  // números e nomes das habilidades (a lista fx do jogo; o passe 2D já cuida de apagar os velhos)
  x.textAlign='center';x.textBaseline='middle';x.lineJoin='round';
  for(let i=0;i<fx.length;i++){const q=fx[i],a=t-q.t,life=q.lbl?1500:1000;if(a>life||a<0)continue;
@@ -13111,17 +13150,25 @@ function fixed(m){const T=16;
  for(let i=0;i<3;i++)m.push().T(0,6+i*4,3.6).box(4,1,.4,'#00e5ff',1).pop();m.pop();HV.totem=[tx,ty+26,tz]}
 
 // ============================================================ A CATEDRAL ============================================================
+// Fachada com portal de arquivoltas (santos nos batentes e a moldura em ponta), galeria dos reis, rosácea, balaustrada e empena; duas torres com relógio,
+// campanário e agulha; nave com clerestório, naves laterais e arcobotantes (com gárgulas); transepto com rosáceas; abside; torre do cruzeiro e a grande agulha.
+// As paredes são de blocos de pedra (cada bloco num tom e a argamassa escura entre eles); os telhados são de chumbo em faixas, com a crista de ferro no cume.
+// A luz: refletores no chão rente às paredes (âmbar no portal, violeta nas torres e nos lados), lanternas no portal, os vitrais e a lua por trás.
 const CS1='#7a7889',CS2='#686676',CS3='#525060',CTR='#8a889c',CRF='#262a37',CRF2='#2e3242',GOLD='#d8b25a';
 const GLC=['#7a52ff','#ff4a6a','#3a8aff','#ffb43a','#b85cff','#28c8a8'];
-// arco ogival (ponta) no plano XY: base em y0, meia largura w, altura total h (arco começa em y0 + h - w*1.4)
+const CST=RAMP(['#555364','#605e70','#6b697b','#767487','#828093']),CMO=C3('#2c2b37');
+// arco ogival (ponta) no plano XY: base em y0, meia largura w, altura total h (arco começa em y0 + h - w*1.35)
 function ogive(cx,y0,w,h,n){const ys=y0+h-w*1.35,pts=[[cx-w,y0],[cx-w,ys]];n=n||5;
  for(let i=1;i<=n;i++){const a=i/n*1.05;pts.push([cx-w+w*(1-cos(a))*1.0,ys+sin(a)*w*1.35])}
  const half=pts.slice(2);const top=[cx,y0+h];const right=half.map(p=>[2*cx-p[0],p[1]]).reverse();return[...pts,top,...right,[cx+w,ys],[cx+w,y0]]}
+// o ponto (u,v) está dentro do arco ogival? (mesma forma do ogive)
+function inOg(u,v,cx,y0,w,h){const du=abs(u-cx);if(du>w||v<y0||v>y0+h)return false;const ys=y0+h-w*1.35;if(v<=ys)return true;const t=(v-ys)/(w*1.35);return du<=(t<.867?w*sqrt(max(0,1-t*t)):.4976*w*(1-t)/.133)}
 // vitral ogival no plano z = 0 (de frente para +z): moldura de pedra, vidro aceso em faixas coloridas e um mainel
 function gwin(m,cx,y0,w,h,cols,e,fr){const P=ogive(cx,y0,w,h,5),c=avgP(P);
  for(let i=0;i<P.length;i++){const a=P[i],b=P[(i+1)%P.length],t=(a[1]-y0)/h,col=cols[floor(t*cols.length*.999)%cols.length];m.tri([c[0],c[1],.15],[a[0],a[1],.15],[b[0],b[1],.15],col,e)}
  const Po=ogive(cx,y0-1.4,w+1.6,h+2.4,5);for(let i=0;i<Po.length-1;i++){const a=Po[i],b=Po[i+1];m.tube([[a[0],a[1],.6],[b[0],b[1],.6]],[fr||1,fr||1],4,CS3,0,{capEnd:false})}
- m.push().T(cx,y0,.5).box(.9,h-w*.8,.6,CS3,0,true).pop();for(let k=1;k<4;k++)m.push().T(cx,y0+k*h/4.6,.5).box(w*2,.6,.6,CS3,0).pop()}
+ m.push().T(cx,y0,.5).box(.9,h-w*.8,.6,CS3,0,true).pop();for(let k=1;k<4;k++)m.push().T(cx,y0+k*h/4.6,.5).box(w*2,.6,.6,CS3,0).pop();
+ m.push().T(cx,y0-1.6,1.2).box(w*2+5,1.8,2.6,CTR,0).pop()}                          // peitoril
 function avgP(P){let x=0,y=0;for(const p of P){x+=p[0];y+=p[1]}return[x/P.length,y/P.length]}
 // pináculo: haste quadrada + agulha + bolinha dourada
 function pinn(m,x,y,z,s){s=s||1;m.push().T(x,y,z).box(5*s,10*s,5*s,CS2,0,true).pop();m.push().T(x,y+10*s,z).cyl(3.8*s,0,16*s,4,CS1,0,{rot:PI/4}).pop();
@@ -13139,101 +13186,210 @@ function rose(m,cx,cy,R){const n=16;
   m.quad([cx+cos(a0)*R*.45,cy+sin(a0)*R*.45,.2],[cx+cos(a0)*R,cy+sin(a0)*R,.2],[cx+cos(a1)*R,cy+sin(a1)*R,.2],[cx+cos(a1)*R*.45,cy+sin(a1)*R*.45,.2],col,.95)}
  for(const rr of[R+2,R*.46,R*.15]){const pts=[];for(let i=0;i<=20;i++){const a=i/20*TAU;pts.push([cx+cos(a)*rr,cy+sin(a)*rr,.9])}m.tube(pts,pts.map(()=>rr>R?2.6:1.2),4,CS3,0,{capEnd:false})}
  for(let i=0;i<n;i++){const a=i/n*TAU;m.tube([[cx+cos(a)*R*.15,cy+sin(a)*R*.15,.9],[cx+cos(a)*R,cy+sin(a)*R,.9]],[.8,.8],4,CS3,0,{capEnd:false})}
- for(let i=0;i<8;i++){const a=(i+.5)/8*TAU,c=[cx+cos(a)*R*.73,cy+sin(a)*R*.73],pts=[];for(let k=0;k<=8;k++){const b=k/8*TAU;pts.push([c[0]+cos(b)*R*.2,c[1]+sin(b)*R*.2,1.1])}m.tube(pts,pts.map(()=>.7),3,CS3,0,{capEnd:false})}}
-function cathedral(){HV.cathMs=null;
+ for(let i=0;i<8;i++){const a=(i+.5)/8*TAU,c=[cx+cos(a)*R*.73,cy+sin(a)*R*.73],pts=[];for(let k=0;k<=8;k++){const b=k/8*TAU;pts.push([c[0]+cos(b)*R*.2,c[1]+sin(b)*R*.2,1.1])}m.tube(pts,pts.map(()=>.7),3,CS3,0,{capEnd:false})}
+ const po=[];for(let i=0;i<=28;i++){const a=i/28*TAU;po.push([cx+cos(a)*(R+5),cy+sin(a)*(R+5),.7])}m.tube(po,po.map(()=>1.6),4,CTR,0,{capEnd:false})}
+// quadrifólio aceso (janelinha da empena)
+function quatre(m,cx,cy,R,col){for(let i=0;i<4;i++){const a=i/4*TAU+PI/4;m.push().T(cx+cos(a)*R*.42,cy+sin(a)*R*.42,.15).RX(PI/2).cyl(R*.5,R*.5,.4,10,col,.85).pop()}
+ m.push().T(cx,cy,.2).RX(PI/2).cyl(R*.45,R*.45,.4,10,col,.85).pop();
+ const pts=[];for(let i=0;i<=24;i++){const a=i/24*TAU;pts.push([cx+cos(a)*R,cy+sin(a)*R,.9])}m.tube(pts,pts.map(()=>1.1),4,CS3,0,{capEnd:false});
+ for(let i=0;i<4;i++){const a=i/4*TAU;m.tube([[cx,cy,.8],[cx+cos(a)*R,cy+sin(a)*R,.8]],[.5,.5],3,CS3,0,{capEnd:false})}}
+// paredes de blocos de pedra (a mesma função do interior): argamassa um pouco à frente da parede e cada bloco mais à frente
+function exW(m,wp,u0,u1,v0,v1,hole,top,sd,n){ashW(()=>m,wp,u0,u1,v0,v1,hole,top,sd,CST,{n,d0:.12,dd:.42,mc:CMO,hc:true})}
+// telhado de chumbo: faixas da beira (a,b) até o cume (d,c), cada uma num tom; e as juntas (rolos) descendo o telhado a cada "seam"
+function roofS(m,a,b,c,d,cA,cB,n,sd,seam){const r=rng(sd),A=C3(cA),B=C3(cB),L=(p,q,t)=>[p[0]+(q[0]-p[0])*t,p[1]+(q[1]-p[1])*t,p[2]+(q[2]-p[2])*t];
+ for(let i=0;i<n;i++){const t0=i/n,t1=(i+1)/n,f=r(),k=(i%2?.88:1)*(.92+r()*.16),col=[(A[0]+(B[0]-A[0])*f)*k,(A[1]+(B[1]-A[1])*f)*k,(A[2]+(B[2]-A[2])*f)*k];
+  m.quad(L(a,d,t0),L(b,c,t0),L(b,c,t1),L(a,d,t1),col,0)}
+ if(seam){const len=hypot(b[0]-a[0],b[1]-a[1],b[2]-a[2]),ns=floor(len/seam);for(let j=1;j<ns;j++){const t=j/ns;m.tube([L(a,b,t),L(d,c,t)],[.45,.45],3,sh(A,.72),0,{capEnd:false})}}}
+// telhado em triângulo (abside): faixas da beira até a ponta
+function roofT(m,a,b,ap,cA,cB,n,sd){const r=rng(sd),A=C3(cA),B=C3(cB),L=(p,q,t)=>[p[0]+(q[0]-p[0])*t,p[1]+(q[1]-p[1])*t,p[2]+(q[2]-p[2])*t];
+ for(let i=0;i<n;i++){const t0=i/n,t1=(i+1)/n,f=r(),k=(i%2?.88:1)*(.92+r()*.16),col=[(A[0]+(B[0]-A[0])*f)*k,(A[1]+(B[1]-A[1])*f)*k,(A[2]+(B[2]-A[2])*f)*k];
+  if(i===n-1)m.tri(L(a,ap,t0),L(b,ap,t0),ap,col,0);else m.quad(L(a,ap,t0),L(b,ap,t0),L(b,ap,t1),L(a,ap,t1),col,0)}}
+// balaustrada ao longo de um segmento (coordenadas locais da malha): corrimão, base e os balaústres
+function balusL(m,ax,az,bx,bz,y,st){const L=hypot(bx-ax,bz-az),a=atan2(bx-ax,bz-az),n=max(1,round(L/st));
+ m.push().T((ax+bx)/2,y,(az+bz)/2).RY(a);
+ m.push().T(0,.7,0).box(3,1.4,L,CTR,0).pop();m.push().T(0,9.6,0).box(3.4,1.6,L+1,CTR,0).pop();
+ for(let i=0;i<=n;i++){const t=-L/2+L*i/n;m.push().T(0,1.4,t).box(1.5,7.4,1.5,i%4?CS1:CTR,0,true).pop();if(i%4===0)m.push().T(0,11.2,t).cyl(1.2,0,3.2,4,CS1,0,{rot:PI/4}).pop()}
+ m.pop()}
+// gárgula: bicho de pedra saindo da parede (local +z = para fora), olhos acesos, chifres e asinhas
+function gargoyle(m,x,y,z,a,s){s=s||1;const c=C3(CS3),cd=sh(CS3,.72);m.push().T(x,y,z).RY(a).S(s,s,s);
+ m.push().T(0,0,5).RX(-.18).box(4.4,3.6,13,c,0).pop();m.push().T(0,-1.8,3.5).box(3.4,1.4,8,cd,0).pop();
+ m.push().T(0,1.2,12.6).RX(-.12).box(4.8,4.2,5,c,0).pop();m.push().T(0,-1.3,14.2).RX(.45).box(4,1.1,5,cd,0).pop();
+ for(const q of[-1,1]){m.push().T(q*1.3,2,15.15).box(.9,.7,.4,'#ff8a2a',.9).pop();m.push().T(q*1.8,3.1,11.6).RX(-.9).RZ(q*.45).cyl(.8,0,3.6,4,c,0).pop();
+  m.tri([q*2.1,1.2,2],[q*9.5,6.5,4.5],[q*2.3,1,9],sh(c,.9),0);m.tri([q*9.5,6.5,4.5],[q*7.2,1,8],[q*2.3,1,9],cd,0);m.push().T(q*1.7,-2.6,6).box(1.2,2.4,1.6,cd,0).pop()}
+ m.pop()}
+// rei da galeria: manto, coroa e cetro
+function kingAt(m,x,y,z,v){const c=C3(CS1),c2=sh(CS1,.84);m.push().T(x,y,z);
+ m.cyl(3.2,3.2,1,8,CS3,0);m.push().T(0,1,0).cyl(3.3,2.3,12,8,c,0,{cs:[c,c2]}).pop();m.push().T(0,12.5,0).cyl(2.4,2.7,2.6,8,c,0).pop();
+ m.push().T(0,16.6,.2).sph(2,3,6,c,0).pop();m.push().T(0,18,0).cyl(2.1,2.4,1.7,6,GOLD,.45).pop();for(let i=0;i<5;i++){const a=i/5*TAU;m.push().T(cos(a)*2.1,19.7,sin(a)*2.1).cyl(.5,0,1.3,3,GOLD,.45).pop()}
+ const sx=v%2?-2.6:2.6;m.push().T(sx,6,2).box(.5,10,.5,GOLD,.3,true).pop();m.push().T(sx,16.4,2).sph(.8,2,4,GOLD,.4).pop();m.pop()}
+// santo do batente do portal: manto pregueado, livro, auréola e o dossel em cima
+function jambSaint(m,x,y,z,a){const c=C3(CS1),c2=sh(CS1,.84);m.push().T(x,0,z).box(5.8,y,5.8,CS3,0,true).pop();m.push().T(x,y-3,z).box(7,3,7,CTR,0,true).pop();
+ m.push().T(x,y,z).RY(a);
+ m.cyl(3.8,3.8,1.2,8,CS3,0);m.push().T(0,1.2,0).cyl(3.5,2.3,15,10,c,0,{cs:[c,c2]}).pop();m.push().T(0,14.2,0).cyl(2.5,2.8,3,8,c,0).pop();
+ for(const s of[-1,1])m.tube([[s*2.6,15.5,0],[s*2.4,11.6,1.6],[s*.8,10.8,2.8]],[.9,.8,.7],4,c,0);
+ m.push().T(0,10.6,3.1).RX(-.4).box(3.6,3,1,c2,0).pop();
+ m.push().T(0,19.6,.1).sph(2.1,3,7,c,0).pop();m.push().T(0,20,-1.9).RX(PI/2).cyl(3.4,3.4,.4,12,GOLD,.35).pop();
+ m.push().T(0,23.6,0).box(8,1.2,7,CTR,0).pop();m.push().T(0,24.8,0).cyl(4.8,0,6,4,CS2,0,{rot:PI/4}).pop();m.pop()}
+// lanterna de ferro presa na parede (z = distância da parede; y = base do corpo)
+function lantern(m,x,y,z){const ir=IRON;
+ m.push().T(x,y+12,z*.5).box(1.2,1.2,z+1,ir,0).pop();m.tube([[x,y+4,.3],[x,y+11.4,z*.6]],[.5,.5],4,ir,0,{capEnd:false});m.push().T(x,y+10.6,z).box(.6,2,.6,ir,0).pop();
+ m.push().T(x,y+8.6,z).cyl(4.4,.6,3.4,6,ir,0).pop();m.push().T(x,y+7.8,z).cyl(3.7,3.7,.8,6,ir,0).pop();m.push().T(x,y,z).cyl(3.7,3.7,.8,6,ir,0).pop();
+ for(let i=0;i<6;i++){const a=i/6*TAU;m.push().T(x+cos(a)*3.5,y+.8,z+sin(a)*3.5).box(.5,7,.5,ir,0,true).pop()}
+ m.push().T(x,y+.8,z).cyl(3.1,3.1,7,6,'#ffb456',.92).pop();m.push().T(x,y-2.6,z).cyl(.3,3,2.6,6,ir,0).pop()}
+// divide as malhas da catedral em pedaços (pela posição de cada triângulo): cada pedaço pega as luzes perto dele
+function splitCells(ms){const cells=new Map(),xb=x=>x<CX-112?0:x<CX?1:x<CX+112?2:3,zb=z=>z<130?0:z<230?1:z<310?2:z<384?3:4;
+ for(const mb of ms){const A=mb.a;for(let i=0;i+29<A.length;i+=30){const cx=(A[i]+A[i+10]+A[i+20])/3,cy=(A[i+1]+A[i+11]+A[i+21])/3,cz=(A[i+2]+A[i+12]+A[i+22])/3;
+  const k=xb(cx)*100+zb(cz)*10+(cy<200?0:1);let c=cells.get(k);if(!c){c=new MB(1);cells.set(k,c)}const B=c.a;for(let j=0;j<30;j++)B.push(A[i+j])}}
+ return[...cells.values()]}
+function cathedral(){HV.cathMs=null;HV.clights=[];
  const ms=[];const mk=()=>{const m=new MB(7000+ms.length*13);m.jit=.045;ms.push(m);return m};
+ const NF=[0,0,1],NB=[0,0,-1];
+ // refletor: luz que só pega na catedral (não clareia o chão inteiro); no chão fica a caixinha com a lente acesa e uma poça pequena de luz
+ const mf=mk(),CL=(x,y,z,r,c,k)=>{const L={x,y,z,r,cr:c[0],cg:c[1],cb:c[2],k,b:k,ph:0,fl:0,kind:'cl',g:false};HV.clights.push(L);return L};
+ const upl=(x,z,c,k,r,ry)=>{CL(x,4,z,r,c,k);mf.push().T(x,hAt(x,z)-.4,z).RY(ry||0).box(7,3,5,IRON,0,true).pop();mf.push().T(x,hAt(x,z)+2.4,z).RY(ry||0).RX(-.35).box(5,.7,3.4,[c[0]*255,c[1]*255,c[2]*255],.9).pop();addL(x,3,z,30,c,.42,0,'up')};
  // ---------------- fachada central e portal ----------------
  let m=mk();
  m.push().T(CX,0,FZ);
- // degraus
- for(let i=0;i<3;i++)m.push().T(0,0,18-i*5).box(170-i*10,.8+i*.8,10,STD[0],0,true).pop();
- // pilares do portal e parede acima
+ // degraus e o rodapé de pedra escura
+ for(let i=0;i<4;i++)m.push().T(0,0,22-i*5).box(178-i*10,.7+i*.75,10,STD[i%3],0,true).pop();
+ for(const s of[-1,1])m.push().T(s*78,0,1.4).box(68,7,2.8,STD[1],0,true).pop();
  for(const s of[-1,1]){m.push().T(s*76,0,-48).box(72,200,96,CS2,0,true).pop();
-  // contrafortes da fachada (escalonados)
+  // contrafortes da fachada (escalonados, com talude) e os santos nos batentes do portal
   m.push().T(s*42,0,4).box(10,150,10,CS1,0,true).pop();m.push().T(s*42,150,1).box(8,40,6,CS1,0,true).pop();pinn(m,s*42,190,0,1.1);
-  // estátuas nos batentes do portal
-  for(let k=0;k<3;k++){const xx=s*(34+k*.01),zz=-6-k*9;m.push().T(s*(40-k*2),30,zz).cyl(3,2,16,6,CS1,0).pop();m.push().T(s*(40-k*2),46,zz).sph(2.2,2,5,CS1,0).pop();m.push().T(s*(40-k*2),49,zz).cyl(3.6,3.6,.6,6,CS3,0).pop()}}
- m.push().T(0,96,-48).box(80,104,96,CS2,0,true).pop();
- // fundo do portal (portas a 34 da frente), forro
- m.push().T(0,0,-36).box(80,96,4,CS3,0,true).pop();m.push().T(0,94,-17).box(80,4,38,CS3,0,true).pop();
- // portas de madeira com ferragens e luz pela fresta
- m.push().T(0,0,-33.6).box(56,70,1.6,'#3a1a14',0,true).pop();for(const s of[-1,1])for(let k=0;k<4;k++)m.push().T(s*14,10+k*16,-32.6).box(22,1.6,.6,IRON,0).pop();
+  m.push().T(s*42,149,7.2).RX(-.75).box(10.4,1.6,6,CS2,0).pop();m.push().T(s*42,60,9.2).box(11,2.2,1.2,CTR,0).pop();
+  jambSaint(m,s*36,30,-11.5,-s*1.0);jambSaint(m,s*32,30,-20.5,-s*1.15)}
+ m.push().T(0,118,-48).box(80,82,96,CS2,0,true).pop();
+ // fundo do portal e as portas de madeira com ferragens e luz pela fresta
+ m.push().T(0,0,-36).box(80,96,4,CS3,0,true).pop();
+ m.push().T(0,0,-33.6).box(56,70,1.6,'#3a1a14',0,true).pop();for(const s of[-1,1])for(let k=0;k<4;k++){m.push().T(s*14,10+k*16,-32.6).box(22,1.6,.6,IRON,0).pop();m.push().T(s*24,10.8+k*16,-32.3).sph(1,2,4,IRON,0).pop()}
+ for(const s of[-1,1]){const rp=[];for(let i=0;i<=10;i++){const a=i/10*TAU;rp.push([s*5+cos(a)*2.6,34+sin(a)*2.6,-32.2])}m.tube(rp,rp.map(()=>.45),4,'#8a6a2a',.15,{capEnd:false});m.push().T(s*5,37,-32.4).box(2,2,.6,IRON,0).pop()}
  m.push().T(0,0,-32.5).box(.8,70,.4,'#ffc46a',1,true).pop();
- // tímpano dourado e arquivoltas
- m.push().T(0,0,-33.2);{const P=ogive(0,70,28,26,6);const c=avgP(P);for(let i=0;i<P.length;i++){const a=P[i],b=P[(i+1)%P.length];m.tri([c[0],c[1],0],[a[0],a[1],0],[b[0],b[1],0],'#8c6a2e',.35)}}m.pop();
- for(let k=0;k<4;k++){const w=30+k*4,P=ogive(0,0,w,96+k*6,7);m.push().T(0,0,-34+k*9);for(let i=0;i<P.length-1;i++){const a=P[i],b=P[i+1];m.tube([[a[0],a[1],0],[b[0],b[1],0]],[2.2,2.2],4,k%2?CTR:CS1,0,{capEnd:false})}m.pop()}
- // galeria dos reis
- for(let i=0;i<9;i++){const x=-96+i*24;if(abs(x)<20)continue;m.push().T(x,104,.2).box(16,22,1,'#1c1a24',0,true).pop();m.push().T(x,105,1.6).cyl(3,2,13,6,CS1,0).pop();m.push().T(x,120,1.6).sph(2.2,2,5,CS1,0).pop();
-  m.push().T(x,126,1.2).cyl(3,0,4,4,CS1,0,{rot:PI/4}).pop()}
- m.push().T(0,102,1).box(224,2.4,3,CTR,0).pop();m.push().T(0,128,1).box(224,2.4,3,CTR,0).pop();
+ // tímpano dourado, arquivoltas (quatro arcos em degrau) e o intradorso entre elas
+ m.push().T(0,0,-33.2);{const P=ogive(0,70,28,26,6);const c=avgP(P);for(let i=0;i<P.length;i++){const a=P[i],b=P[(i+1)%P.length];m.tri([c[0],c[1],0],[a[0],a[1],0],[b[0],b[1],0],'#8c6a2e',.35)}
+  m.push().T(0,82,.3).cyl(5,5,.4,10,'#b8923e',.45).pop();for(let i=0;i<6;i++){const a=i/6*TAU;m.push().T(cos(a)*9,82+sin(a)*6,.25).box(2.4,2.4,.4,'#a07c34',.35).pop()}}m.pop();
+ {const AV=[0,1,2,3].map(k=>({w:30+k*4,h:96+k*6,z:-34+k*9}));AV.push({w:43.5,h:117,z:-.04});const AP=AV.map(a=>ogive(0,0,a.w,a.h,7));
+  for(let k=0;k<4;k++){const P=AP[k];m.push().T(0,0,AV[k].z);for(let i=0;i<P.length-1;i++){const a=P[i],b=P[i+1];m.tube([[a[0],a[1],0],[b[0],b[1],0]],[2.2,2.2],4,k%2?CTR:CS1,0,{capEnd:false})}m.pop()}
+  for(let k=0;k<4;k++){const A=AP[k],B=AP[k+1],za=AV[k].z,zb=AV[k+1].z,col=k%2?CS3:CS2;for(let i=0;i<A.length-1;i++)m.quad([A[i][0],A[i][1],za],[A[i+1][0],A[i+1][1],za],[B[i+1][0],B[i+1][1],zb],[B[i][0],B[i][1],zb],col,0)}
+  // tampa entre o arco e o retângulo acima da porta (atrás das pedras)
+  for(const s of[-1,1]){const P=[[s*40,96]];for(let i=0;i<=12;i++){const v=96+i*(117-96)/12,t=(v-(117-43.5*1.35))/(43.5*1.35),hw=t<.867?43.5*sqrt(max(0,1-t*t)):.4976*43.5*(1-t)/.133;P.push([s*min(40,hw),v])}
+   const C0=[s*40,118];for(let i=0;i<P.length-1;i++)m.tri([C0[0],C0[1],-.06],[P[i][0],P[i][1],-.06],[P[i+1][0],P[i+1][1],-.06],CS2,0);m.tri([C0[0],C0[1],-.06],[P[P.length-1][0],P[P.length-1][1],-.06],[0,118,-.06],CS2,0)}
+  // moldura em ponta por cima do portal, com ganchos (crochês) e as cabecinhas nas pontas
+  const H=ogive(0,0,44.4,117.6,9).slice(1,-1);for(let i=0;i<H.length-1;i++){const a=H[i],b=H[i+1];m.tube([[a[0],a[1],.9],[b[0],b[1],.9]],[1.7,1.7],4,CTR,0,{capEnd:false});
+   if(i>0&&i%2===0){const s=a[0]<0?-1:1;m.push().T(a[0],a[1]+1.2,1.4).RZ(-s*.7).cyl(1.3,0,3.4,4,CS1,0).pop()}}
+  for(const s of[-1,1]){m.push().T(s*44.4,56,1.4).box(4.4,4.4,3,CS1,0).pop();m.push().T(s*44.4,53.4,2.4).sph(1.8,2,5,CS3,0).pop()}
+  m.push().T(0,118.6,1.2).cyl(1.6,.4,3,4,CS1,0).pop();for(const s of[-1,1])m.push().T(s*2,119,1.2).RZ(-s*.9).cyl(1.1,0,3,4,CS1,0).pop()}
+ // lanternas de ferro dos dois lados do portal
+ for(const s of[-1,1]){lantern(m,s*56,44,4.2);addL(CX+s*56,48,FZ+8,78,[1,.66,.34],.85,.1,'lamp');addGlow(CX+s*56,48,FZ+4.2,18,[1,.62,.3],.42)}
+ // galeria dos reis: nichos com colunetas e arco, cada um com um rei de coroa
+ for(let i=0;i<9;i++){const x=-96+i*24;if(abs(x)<40)continue;m.push().T(x,104,.2).box(16,22,1,'#1c1a24',0,true).pop();
+  for(const q of[-1,1])m.push().T(x+q*8.6,104,1.4).cyl(.9,.9,20,6,CS1,0).pop();
+  {const P=ogive(x,104,8.6,23.5,4).slice(1,-1);for(let k=0;k<P.length-1;k++)m.tube([[P[k][0],P[k][1],1.4],[P[k+1][0],P[k+1][1],1.4]],[.8,.8],4,CTR,0,{capEnd:false})}
+  kingAt(m,x,104.4,1.8,i)}
+ for(const s of[-1,1])m.push().T(s*78,102,1).box(68,2.4,3,CTR,0).pop();m.push().T(0,128,1).box(224,2.4,3,CTR,0).pop();
  // rosácea
  m.push().T(0,0,.4);rose(m,0,160,40);m.pop();
- // empena com ganchos, estátua e cruz
- m.tri([-112,200,0],[112,200,0],[0,272,0],CS1,0);m.quad([-112,200,0],[0,272,0],[0,272,-96],[-112,200,-96],CS2,0);m.quad([0,272,0],[112,200,0],[112,200,-96],[0,272,-96],CS2,0);
+ // empena: telhado de chumbo, ganchos, quadrifólio aceso, cruz; cornija e balaustrada
+ m.tri([-112,200,0],[112,200,0],[0,272,0],CS1,0);roofS(m,[-112,200,-96],[-112,200,0],[0,272,0],[0,272,-96],CRF,CRF2,9,201,12);roofS(m,[112,200,0],[112,200,-96],[0,272,-96],[0,272,0],CRF2,CRF,9,202,12);
  for(let i=1;i<9;i++){const t=i/9;for(const s of[-1,1])m.push().T(s*112*(1-t),200+72*t+1,1).RZ(s*.6).cyl(1.6,0,5,3,CTR,0).pop()}
+ for(const s of[-1,1])m.tube([[s*112,200,1.2],[0,272,1.2]],[1.4,1.4],4,CTR,0,{capEnd:false});
+ quatre(m,0,228,10,'#a070ff');
  m.push().T(0,272,0).box(3,22,3,CS1,0,true).pop();m.push().T(0,287,0).box(12,3,3,CS1,0).pop();
- m.push().T(0,200,1).box(224,3,3,CTR,0).pop();
+ m.push().T(0,200,1).box(224,3,3,CTR,0).pop();balusL(m,-110,1.8,110,1.8,201.5,6.5);
  m.pop();
+ // pedras da fachada (com os furos do portal, da rosácea, da galeria e do quadrifólio)
+ {const wF=(u,v,d)=>[CX+u,v,FZ+d];
+  exW(m,wF,-112,112,7,200,(u,v)=>(v<57.9?abs(u)<40.4:inOg(u,v,0,0,44.9,119))||hypot(u,v-160)<45.2||(v>100.6&&v<130.4),null,101,NF);
+  exW(m,wF,-112,112,201.5,272,(u,v)=>hypot(u,v-228)<11.6,u=>200+72*(1-abs(u)/112),102,NF)}
  // ---------------- as duas torres ----------------
  for(const s of[-1,1]){m=mk();const tx=CX+s*160,tz=FZ-48;m.push().T(tx,0,tz);
-  m.box(96,232,96,CS2,0,true);
-  // contrafortes nos cantos (dois andares) com pináculos
-  for(const ax of[-1,1])for(const az of[-1,1]){m.push().T(ax*46,0,az*46).box(16,160,16,CS1,0,true).pop();m.push().T(ax*45,160,az*45).box(12,72,12,CS1,0,true).pop();pinn(m,ax*45,232,az*45,1.3)}
+  m.box(96,232,96,CS2,0,true);m.box(100,7,100,STD[1],0,true);
+  // contrafortes nos cantos (dois andares, com talude) e pináculos
+  for(const ax of[-1,1])for(const az of[-1,1]){m.push().T(ax*46,0,az*46).box(16,160,16,CS1,0,true).pop();m.push().T(ax*46,0,az*46).box(18,8,18,STD[1],0,true).pop();
+   m.push().T(ax*45,158,az*45).box(17,3,17,CTR,0,true).pop();m.push().T(ax*45,160,az*45).box(12,72,12,CS1,0,true).pop();pinn(m,ax*45,232,az*45,1.3)}
   // cornijas
   for(const y of[100,160,232])m.push().T(0,y,0).box(100,3,100,CTR,0).pop();
-  // janelas: lancetas na frente e no lado de fora, aberturas do campanário
+  // janelas: lancetas na frente e no lado de fora, aberturas do campanário (com venezianas)
   for(const face of[0,1]){m.push();if(face===1)m.RY(s*PI/2);m.T(0,0,48.2);
    for(const wx of[-14,14])gwin(m,wx,30,9,60,['#3b2a6a','#5a2a5a','#2a3a6a'],.55);
    for(const wx of[-15,15]){const P=ogive(wx,168,10,56,5),c=avgP(P);for(let i=0;i<P.length;i++){const a=P[i],b=P[(i+1)%P.length];m.tri([c[0],c[1],.1],[a[0],a[1],.1],[b[0],b[1],.1],'#3a1e10',.35)}
-    for(let k=0;k<6;k++)m.push().T(wx,172+k*7,1.4).RX(.5).box(20,1,3,'#141218',0).pop()}
+    for(let k=0;k<6;k++)m.push().T(wx,172+k*7,1.4).RX(.5).box(20,1,3,'#141218',0).pop();
+    const Po=ogive(wx,166.6,11.6,58.4,5);for(let i=0;i<Po.length-1;i++){const a=Po[i],b=Po[i+1];m.tube([[a[0],a[1],.7],[b[0],b[1],.7]],[1.3,1.3],4,CTR,0,{capEnd:false})}
+    m.push().T(wx,166,1.4).box(25,1.8,2.8,CTR,0).pop()}
    m.pop()}
-  // relógio na frente
+  // arcadinha (mísulas) embaixo da cornija de cima
+  for(let f=0;f<4;f++){m.push().RY(f*PI/2);for(let u=-36;u<=36;u+=8)m.push().T(u,226,49.6).box(2.6,4.4,2.6,CS1,0,true).pop();m.pop()}
+  // relógio na frente (moldura com bolinhas douradas)
   m.push().T(0,128,48.4).RX(PI/2).cyl(21,21,.6,20,'#e9e4cc',.75).pop();m.push().T(0,128,48.2).RX(PI/2).cyl(24,24,.4,20,CS3,0).pop();
+  {const rp=[];for(let i=0;i<=28;i++){const a=i/28*TAU;rp.push([sin(a)*24.5,128+cos(a)*24.5,49])}m.tube(rp,rp.map(()=>1.4),4,CTR,0,{capEnd:false});for(let i=0;i<12;i++){const a=i/12*TAU;m.push().T(sin(a)*24.5,128+cos(a)*24.5,50).sph(.9,2,4,GOLD,.4).pop()}}
   for(let i=0;i<12;i++){const a=i/12*TAU;m.push().T(sin(a)*18,128+cos(a)*18,49.2).box(1.2,i%3?2:4,.4,'#1a1446',0).pop()}
+  // balaustrada em volta do topo
+  balusL(m,-41,49,41,49,233.5,6.5);balusL(m,-41,-49,41,-49,233.5,6.5);balusL(m,49,-41,49,41,233.5,6.5);balusL(m,-49,-41,-49,41,233.5,6.5);
   // campanário octogonal (acende por dentro)
   m.push().T(0,235,0).cyl(46,40,72,8,CS2,0,{rot:PI/8,cap1:false}).pop();
-  for(let i=0;i<8;i++){const a=(i+.5)/8*TAU,rr=44.2;m.push().T(cos(a)*rr,0,sin(a)*rr).RY(PI/2-a);{const P=ogive(0,248,8,46,5),c=avgP(P);for(let k=0;k<P.length;k++){const p=P[k],q=P[(k+1)%P.length];m.tri([c[0],c[1],.6],[p[0],p[1],.6],[q[0],q[1],.6],'#ff9a40',.45)}}m.pop()}
+  for(let i=0;i<8;i++){const a=(i+.5)/8*TAU,rr=44.2;m.push().T(cos(a)*rr,0,sin(a)*rr).RY(PI/2-a);{const P=ogive(0,248,8,46,5),c=avgP(P);for(let k=0;k<P.length;k++){const p=P[k],q=P[(k+1)%P.length];m.tri([c[0],c[1],.6],[p[0],p[1],.6],[q[0],q[1],.6],'#ff9a40',.45)}
+   const Po=ogive(0,247,9.4,48,5);for(let k=0;k<Po.length-1;k++)m.tube([[Po[k][0],Po[k][1],1],[Po[k+1][0],Po[k+1][1],1]],[1,1],4,CTR,0,{capEnd:false})}m.pop()}
   m.push().T(0,307,0).cyl(44,46,4,8,CTR,0,{rot:PI/8}).pop();
   for(let i=0;i<8;i++){const a=i/8*TAU;pinn(m,cos(a)*44,311,sin(a)*44,1)}
-  // gárgulas
-  for(const ax of[-1,1])for(const az of[-1,1]){m.push().T(ax*54,226,az*54).RY(atan2(ax,az)).box(4,4,14,CS3,0).pop();m.push().T(ax*60,226,az*60).sph(3,2,5,CS3,0).pop()}
+  // gárgulas nos cantos
+  for(const ax of[-1,1])for(const az of[-1,1])gargoyle(m,ax*53,222,az*53,atan2(ax,az),1.15);
   m.pop();
   spire(m,tx,311,tz,40,190,8);
-  addL(tx,268,tz,120,'wm',.95,.06,'bell');}
+  addL(tx,268,tz,120,'wm',.95,.06,'bell');
+  // pedras: frente, lado de fora, fundos (o telhado da nave lateral cobre o pé) e o lado de dentro acima da fachada
+  const holeT=(u,v)=>inOg(u,v,-14,29,11.2,63.4)||inOg(u,v,14,29,11.2,63.4)||inOg(u,v,-15,166,12.8,60.6)||inOg(u,v,15,166,12.8,60.6);
+  exW(m,(u,v,d)=>[tx+u,v,FZ+d],-48,48,7,232,(u,v)=>holeT(u,v)||hypot(u,v-128)<26.2,null,110+s,NF);
+  exW(m,(u,v,d)=>[tx+s*(48+d),v,tz+u],-48,48,7,232,holeT,null,112+s,[s,0,0]);
+  exW(m,(u,v,d)=>[tx+u,v,FZ-96-d],-48,48,7,232,(u,v)=>{const x=abs(tx+u-CX);return x<152&&v<92+(152-max(70,x))/82*32+2},null,114+s,NB);
+  exW(m,(u,v,d)=>[tx-s*(48+d),v,tz+u],-48,48,200,232,null,null,116+s,[-s,0,0])}
  // ---------------- nave, naves laterais e arcobotantes ----------------
- m=mk();const n0=FZ-96,n1=130,bays=8,bl=(n0-n1)/bays;
+ m=mk();const n0=FZ-96,n1=130,bays=8,bl=(n0-n1)/bays,zcs=[];for(let b=0;b<bays;b++)zcs.push(n1+bl*(b+.5));
+ const inTr=u=>u>226&&u<314;
  m.push().T(CX,0,(n0+n1)/2).box(140,180,n0-n1,CS2,0,true).pop();
- m.push().T(CX,180,(n0+n1)/2);{const L=n0-n1;m.quad([-74,0,-L/2],[-74,0,L/2],[0,92,L/2],[0,92,-L/2],CRF,0);m.quad([74,0,L/2],[74,0,-L/2],[0,92,-L/2],[0,92,L/2],CRF2,0);m.push().T(0,92,0).box(3,3,L,'#3a3f52',0).pop()}m.pop();
+ roofS(m,[CX-74,180,n1],[CX-74,180,n0],[CX,272,n0],[CX,272,n1],CRF,CRF2,16,301,11);roofS(m,[CX+74,180,n0],[CX+74,180,n1],[CX,272,n1],[CX,272,n0],CRF2,CRF,16,302,11);
+ m.push().T(CX,272,(n0+n1)/2).box(3,3,n0-n1,'#3a3f52',0).pop();
+ for(let z=n1+6;z<n0-4;z+=9){m.push().T(CX,273.5,z).box(.7,4,.7,IRON,0,true).pop();m.push().T(CX,278.5,z).RX(PI/4).box(.6,2,2,IRON,0).pop()}
  for(const s of[-1,1]){
-  m.push().T(CX+s*110,0,(n0+n1)/2).box(80,92,n0-n1,CS3,0,true).pop();
-  {const L=n0-n1,xi=CX+s*70,xo=CX+s*152;m.quad([xo,92,n1],[xi,124,n1],[xi,124,n0],[xo,92,n0],s<0?CRF:CRF2,0);m.quad([xo,92,n0],[xi,124,n0],[xi,124,n1],[xo,92,n1],s<0?CRF:CRF2,0)}
-  for(let b=0;b<bays;b++){const zc=n1+bl*(b+.5),zb=n1+bl*b;
+  m.push().T(CX+s*110,0,(n0+n1)/2).box(80,92,n0-n1,CS3,0,true).pop();m.push().T(CX+s*151,0,(n0+n1)/2).box(4,7,n0-n1,STD[1],0,true).pop();
+  {const xi=CX+s*70,xo=CX+s*152;if(s<0)roofS(m,[xo,92,n1],[xo,92,n0],[xi,124,n0],[xi,124,n1],CRF,CRF2,6,303,11);else roofS(m,[xo,92,n0],[xo,92,n1],[xi,124,n1],[xi,124,n0],CRF2,CRF,6,304,11)}
+  m.push().T(CX+s*151,92,(n0+n1)/2).box(5,2.6,n0-n1,CTR,0).pop();
+  for(let b=0;b<bays;b++){const zc=zcs[b],zb=n1+bl*b;
    // vitrais altos (clerestório) e baixos
    m.push().T(CX+s*70.2,0,zc).RY(s*PI/2);gwin(m,0,128,8,44,[GLC[(b+1)%6],GLC[(b+3)%6],GLC[(b+5)%6]],.82,1);m.pop();
    m.push().T(CX+s*150.2,0,zc).RY(s*PI/2);gwin(m,0,22,9,52,[GLC[b%6],GLC[(b+2)%6]],.7,1);m.pop();
-   // pilar do arcobotante + pináculo
-   if(b>0){m.push().T(CX+s*160,0,zb).box(16,140,14,CS1,0,true).pop();pinn(m,CX+s*160,140,zb,1.3);
+   // pilar do arcobotante + talude + pináculo + gárgula, e os dois arcos voando até a nave
+   if(b>0){m.push().T(CX+s*160,0,zb).box(16,140,14,CS1,0,true).pop();m.push().T(CX+s*160,0,zb).box(18,8,16,STD[1],0,true).pop();m.push().T(CX+s*160,70,zb).box(17,2.4,15,CTR,0,true).pop();pinn(m,CX+s*160,140,zb,1.3);
+    if(!inTr(zb))gargoyle(m,CX+s*168,112,zb,s*PI/2,.95);
     m.tube([[CX+s*154,132,zb],[CX+s*118,154,zb],[CX+s*74,168,zb]],[4.2,3.6,3.2],4,CS1,0);
-    m.tube([[CX+s*154,108,zb],[CX+s*112,128,zb],[CX+s*74,140,zb]],[3.2,2.8,2.6],4,CS1,0)}}}
+    m.tube([[CX+s*154,108,zb],[CX+s*112,128,zb],[CX+s*74,140,zb]],[3.2,2.8,2.6],4,CS1,0)}}
+  // pedras do clerestório e da parede da nave lateral (sem a parte escondida no transepto)
+  exW(m,(u,v,d)=>[CX+s*(70+d),v,u],n1,n0,124,180,(u,v)=>inTr(u)||zcs.some(zc=>inOg(u,v,zc,126.6,9.8,47.4)),null,120+s,[s,0,0]);
+  exW(m,(u,v,d)=>[CX+s*(150+d),v,u],n1,n0,7,92,(u,v)=>inTr(u)||zcs.some(zc=>inOg(u,v,zc,20.6,10.8,55.4)),null,122+s,[s,0,0])}
  // ---------------- transepto com rosáceas laterais ----------------
- m=mk();const tz0=230,tz1=310,tw=420;
- m.push().T(CX,0,(tz0+tz1)/2).box(tw,180,tz1-tz0,CS2,0,true).pop();
- m.push().T(CX,180,(tz0+tz1)/2);{const d=tz1-tz0;m.quad([-tw/2-4,0,d/2+4],[tw/2+4,0,d/2+4],[tw/2+4,72,0],[-tw/2-4,72,0],CRF2,0);m.quad([tw/2+4,0,-d/2-4],[-tw/2-4,0,-d/2-4],[-tw/2-4,72,0],[tw/2+4,72,0],CRF,0);
-  for(const s of[-1,1])m.tri([s*tw/2,0,-d/2],[s*tw/2,0,d/2],[s*tw/2,72,0],CS1,0)}m.pop();
- for(const s of[-1,1]){m.push().T(CX+s*(tw/2+.4),0,(tz0+tz1)/2).RY(s*PI/2);rose(m,0,130,30);gwin(m,-24,20,8,60,[GLC[1],GLC[3]],.7);gwin(m,24,20,8,60,[GLC[2],GLC[5]],.7);
-  m.push().T(0,0,-.6).box(84,1,1,CTR,0).pop();m.pop();
-  for(const az of[-1,1])pinn(m,CX+s*(tw/2-4),180,(tz0+tz1)/2+az*38,1.4);
-  // fachada do transepto voltada para o sul: vitral grande
-  m.push().T(CX+s*150,0,tz1+.3);gwin(m,0,40,14,100,[GLC[(3+s)%6],GLC[4],GLC[0]],.8,1.4);m.pop()}
+ m=mk();const tz0=230,tz1=310,tw=420,tzc=(tz0+tz1)/2;
+ m.push().T(CX,0,tzc).box(tw,180,tz1-tz0,CS2,0,true).pop();
+ roofS(m,[CX+tw/2+4,180,tz1+4],[CX-tw/2-4,180,tz1+4],[CX-tw/2-4,252,tzc],[CX+tw/2+4,252,tzc],CRF2,CRF,10,311,11);roofS(m,[CX-tw/2-4,180,tz0-4],[CX+tw/2+4,180,tz0-4],[CX+tw/2+4,252,tzc],[CX-tw/2-4,252,tzc],CRF,CRF2,10,312,11);
+ for(const s of[-1,1])m.tri([CX+s*tw/2,180,tz0],[CX+s*tw/2,180,tz1],[CX+s*tw/2,252,tzc],CS1,0);
+ for(let x=CX-tw/2+8;x<CX+tw/2-4;x+=9){if(abs(x-CX)<76)continue;m.push().T(x,253.5,tzc).box(.7,4,.7,IRON,0,true).pop();m.push().T(x,258.5,tzc).RZ(PI/4).box(2,2,.6,IRON,0).pop()}
+ for(const s of[-1,1]){m.push().T(CX+s*(tw/2+.4),0,tzc).RY(s*PI/2);rose(m,0,130,30);gwin(m,-24,20,8,60,[GLC[1],GLC[3]],.7);gwin(m,24,20,8,60,[GLC[2],GLC[5]],.7);
+  m.push().T(0,0,-.6).box(84,1,1,CTR,0).pop();m.push().T(0,0,1.4).box(84,7,2.8,STD[1],0,true).pop();
+  for(let i=1;i<8;i++){const t=i/8;for(const q of[-1,1])m.push().T(q*40*(1-t),180+72*t+1,1).RZ(q*.6).cyl(1.5,0,4.6,3,CTR,0).pop()}m.pop();
+  for(const az of[-1,1])pinn(m,CX+s*(tw/2-4),180,tzc+az*38,1.4);
+  // fachadas do transepto voltadas para o sul: vitral grande
+  m.push().T(CX+s*180,0,tz1+.3);gwin(m,0,40,12,96,[GLC[(3+s)%6],GLC[4],GLC[0]],.8,1.3);m.pop()}
+ {const aisY=u=>{const a=abs(u);return a<70?999:a<152?92+(152-a)/82*32:-1};
+  for(const[zf,nz,sd]of[[tz1,1,130],[tz0,-1,131]])exW(m,(u,v,d)=>[CX+u,v,zf+nz*d],-210,210,0,180,(u,v)=>abs(u)<72||v<aisY(u)+1||(nz>0&&(inOg(u,v,-180,38.6,14.6,99.6)||inOg(u,v,180,38.6,14.6,99.6))),null,sd,[0,0,nz]);
+  for(const s of[-1,1])exW(m,(u,v,d)=>[CX+s*(210+d),v,u],tz0,tz1,7,252,(u,v)=>hypot(u-tzc,v-130)<35.4||inOg(u,v,tzc-24,18.6,9.8,63.4)||inOg(u,v,tzc+24,18.6,9.8,63.4),u=>180+72*(1-abs(u-tzc)/40),132+s,[s,0,0])}
  // ---------------- abside ----------------
  m=mk();const ac=[CX,n1],ar=70,na=7;
  for(let i=0;i<na;i++){const a0=PI+i/na*PI,a1=PI+(i+1)/na*PI,p0=[ac[0]+cos(a0)*ar,ac[1]+sin(a0)*ar],p1=[ac[0]+cos(a1)*ar,ac[1]+sin(a1)*ar];
   m.quad([p0[0],0,p0[1]],[p1[0],0,p1[1]],[p1[0],180,p1[1]],[p0[0],180,p0[1]],CS2,0);
-  m.tri([p0[0],180,p0[1]],[p1[0],180,p1[1]],[ac[0],262,ac[1]],i%2?CRF:CRF2,0);
+  roofT(m,[p0[0],180,p0[1]],[p1[0],180,p1[1]],[ac[0],262,ac[1]],i%2?CRF:CRF2,CRF2,7,320+i);
   const mx=(p0[0]+p1[0])/2,mz=(p0[1]+p1[1])/2,am=(a0+a1)/2;m.push().T(mx+cos(am)*.3,0,mz+sin(am)*.3).RY(PI/2-am);gwin(m,0,70,7,70,[GLC[i%6],GLC[(i+2)%6]],.8);m.pop();
-  m.push().T(ac[0]+cos(a0)*(ar+8),0,ac[1]+sin(a0)*(ar+8)).RY(-a0).box(12,150,12,CS1,0,true).pop();pinn(m,ac[0]+cos(a0)*(ar+8),150,ac[1]+sin(a0)*(ar+8),1.2)}
+  m.push().T(ac[0]+cos(a0)*(ar+8),0,ac[1]+sin(a0)*(ar+8)).RY(-a0).box(12,150,12,CS1,0,true).pop();pinn(m,ac[0]+cos(a0)*(ar+8),150,ac[1]+sin(a0)*(ar+8),1.2);
+  const len=hypot(p1[0]-p0[0],p1[1]-p0[1]),dx=(p1[0]-p0[0])/len,dz=(p1[1]-p0[1])/len,nm=[cos(am),0,sin(am)];
+  exW(m,(u,v,d)=>[p0[0]+dx*u+nm[0]*d,v,p0[1]+dz*u+nm[2]*d],0,len,0,180,(u,v)=>inOg(u,v,len/2,68.6,8.8,73.4),null,140+i,nm)}
  // ---------------- torre do cruzeiro e a grande agulha ----------------
- m=mk();const cz=(tz0+tz1)/2;
+ m=mk();const cz=tzc;
  m.push().T(CX,180,cz).box(104,120,104,CS2,0,true).pop();
  for(const ax of[-1,1])for(const az of[-1,1]){m.push().T(CX+ax*52,180,cz+az*52).box(14,130,14,CS1,0,true).pop();pinn(m,CX+ax*52,310,cz+az*52,1.5)}
  for(let i=0;i<4;i++){const a=i/4*TAU;m.push().T(CX+cos(a)*52.3,0,cz+sin(a)*52.3).RY(PI/2-a);gwin(m,-18,214,9,64,[GLC[i],GLC[i+1]],.75);gwin(m,18,214,9,64,[GLC[i+2],GLC[(i+3)%6]],.75);m.pop()}
@@ -13244,12 +13400,16 @@ function cathedral(){HV.cathMs=null;
  m.push().T(CX,378,cz).cyl(52,52,4,8,CTR,0,{rot:PI/8}).pop();
  spire(m,CX,382,cz,46,270,8);
  addL(CX,345,cz,170,'wm',1,.05,'lantern');
- // ---------------- luzes de destaque (cartão postal) ----------------
- addL(CX-92,6,FZ+40,260,[1,.62,.32],1.35,.03,'flood');addL(CX+92,6,FZ+40,260,[1,.62,.32],1.35,.03,'flood');
- addL(CX-160,8,FZ+30,240,[.55,.38,1],.75,.02,'flood');addL(CX+160,8,FZ+30,240,[.55,.38,1],.75,.02,'flood');
- addL(CX,40,FZ-8,110,[1,.7,.38],1.1,.08,'porch');addL(CX,70,FZ+30,210,[1,.66,.4],1.25,.02,'flood');for(const s of[-1,1])addL(CX+s*160,100,FZ+34,180,[1,.7,.45],.95,.02,'flood');addL(CX,160,FZ-16,120,[.6,.45,1],.9,.03,'rose');
- for(const s of[-1,1]){addFlame(CX+s*30,30,FZ+2,1.3,true);addL(CX+s*30,34,FZ+6,60,'wm',.8,.18)}
- HV.cathMs=ms}
+ for(let f=0;f<4;f++){const a=f/4*TAU,nx=cos(a),nz=sin(a);exW(m,(u,v,d)=>[CX+nx*(52+d)-nz*u,v,cz+nz*(52+d)+nx*u],-52,52,180,300,(u,v)=>inOg(u,v,-18,212.6,10.8,67.4)||inOg(u,v,18,212.6,10.8,67.4),null,150+f,[nx,0,nz])}
+ // ---------------- luz: refletores rentes às paredes, o portal, as lanternas e o brilho dos vitrais ----------------
+ const AMB=[1,.6,.3],VIO=[.62,.42,1],VIO2=[.52,.42,.98];
+ for(const s of[-1,1]){upl(CX+s*62,FZ+9,AMB,1.05,165);upl(CX+s*100,FZ+9,AMB,.8,150);upl(CX+s*136,FZ+10,VIO,.95,215);upl(CX+s*184,FZ+10,VIO,.95,215);
+  upl(CX+s*216,FZ-48,VIO2,.85,200,PI/2);upl(CX+s*157,178,VIO2,.65,150,PI/2);upl(CX+s*157,346,VIO2,.65,150,PI/2);upl(CX+s*218,tzc,AMB,.8,180,PI/2);
+  CL(CX+s*160,160,FZ+80,190,[.6,.5,1],.42)}
+ for(const a of[1.25,1.5,1.75]){const x=CX+cos(a*PI)*84,z=n1+sin(a*PI)*84;upl(x,z,VIO2,.62,140,PI/2-a*PI)}
+ CL(CX,90,FZ+70,210,[1,.72,.5],.42);CL(CX,160,FZ+12,72,[.65,.45,1],.7);
+ addL(CX,40,FZ-8,110,[1,.7,.38],1.1,.08,'porch');
+ HV.cathStat=ms.map(m=>m.count/3|0);HV.cathMs=splitCells(ms)}
 
 
 // ============================================================ relevo e malha do chão ============================================================
@@ -13393,7 +13553,9 @@ function* gen(gl){const T0=performance.now();let TP=T0,IP=0;HV.prof={};HV.idle=0
  // 11) sobe para a placa de vídeo
  HV.ochunks=[];HV.vchunks=[];
  for(let i=0;i<NX*NZ;i++){if(OBJ[i]&&OBJ[i].count){const g=OBJ[i].build(gl);g.occ=true;HV.ochunks.push(g)}if(VEG[i]&&VEG[i].count){const g=VEG[i].build(gl);HV.vchunks.push(g)}OBJ[i]=VEG[i]=null;if((i&15)===15)yield .76+.12*i/(NX*NZ)}
- HV.cath.length=0;for(const m of HV.cathMs){const g=m.build(gl);g.occ=true;HV.cath.push(g)}HV.cathMs=null;
+ HV.cath.length=0;for(const m of HV.cathMs){if(!m.count)continue;const g=m.build(gl);g.occ=true;HV.cath.push(g)}HV.cathMs=null;
+ // cada pedaço da catedral guarda as 12 luzes que mais pesam nele (luzes do mapa + refletores da catedral); assim nada pisca quando as chamas tremem
+ for(const g of HV.cath){const o=[];for(const l of HV.lights.concat(HV.clights||[])){const d=max(0,hypot(l.x-g.cx,l.y-g.cy,l.z-g.cz)-g.rad*.7);if(d<l.r){const w=1-d/l.r;o.push([w*w*l.b*(l.cr+l.cg+l.cb+.3),l])}}o.sort((a,b)=>b[0]-a[0]);g.L=o.length?o.slice(0,12).map(q=>q[1]):null}
  TREEM={};for(const k in TREE){TREEM[k]=TREE[k].map(L=>L.map(mb=>mb.build(gl)))}PM('upload');yield .9;
  // caixas das árvores (centro e raio de verdade) e as luzes de cada coisa
  for(const T of HV.trees){const m0=TREEM[T.k][T.vi][0],M_=T.m;T.wx=M_[0]*m0.cx+M_[4]*m0.cy+M_[8]*m0.cz+M_[12];T.wy=M_[1]*m0.cx+M_[5]*m0.cy+M_[9]*m0.cz+M_[13];T.wz=M_[2]*m0.cx+M_[6]*m0.cy+M_[10]*m0.cz+M_[14];T.rad=m0.rad*T.s*1.05}
@@ -13414,6 +13576,8 @@ function* gen(gl){const T0=performance.now();let TP=T0,IP=0;HV.prof={};HV.idle=0
    mo.wt([0,0,.8],[cos(a0)*22,sin(a0)*22,.8],[cos(a1)*22,sin(a1)*22,.8],[252,236,255],[226,194,255],[226,194,255])}
   for(let k=0;k<7;k++){const a=k*1.7,d=6+k*2.1,rr=1.8+k%3;for(let i=0;i<8;i++){const b0=i/8*TAU,b1=(i+1)/8*TAU;mo.wt([cos(a)*d,sin(a)*d,1],[cos(a)*d+cos(b0)*rr,sin(a)*d+sin(b0)*rr,1],[cos(a)*d+cos(b1)*rr,sin(a)*d+sin(b1)*rr,1],[198,160,238],[198,160,238],[198,160,238])}}
   const A=mo.a;for(let i=0;i<A.length;i+=10)A[i+9]=1;HV.dyn.moon=mo.build(gl)}
+ // o interior da Catedral (fica pronto junto, para entrar pela porta sem esperar)
+ try{if(window.HAL&&HAL.innerData)HAL.innerData();for(const p of buildInner(gl))yield .94+.05*p}catch(e){console.error('H3 interior',e);IN.ready=false}
  mkTex();
  const tri=a=>a.reduce((s,m)=>s+m.n/3,0);HV.stats={ter:tri(HV.tchunks),obj:tri(HV.ochunks),veg:tri(HV.vchunks),cath:tri(HV.cath),trees:HV.trees.length,lights:HV.lights.length,lm:HV.lights.filter(l=>l.g).length,ms:round(performance.now()-T0),cpu:round(performance.now()-T0-HV.idle)};
  HV.ready=true;HV.pct=1;return 1}
@@ -13426,6 +13590,8 @@ function mkTex(){const mk=(w,h,fn)=>{const c=document.createElement('canvas');c.
   skirt:mk(32,64,(x,w,h)=>{const g=x.createLinearGradient(0,0,0,h);g.addColorStop(0,'rgba(255,255,255,0)');g.addColorStop(.55,'rgba(255,255,255,.55)');g.addColorStop(1,'rgba(255,255,255,.9)');x.fillStyle=g;x.fillRect(0,0,w,h);
    x.globalCompositeOperation='destination-in';const g2=x.createLinearGradient(0,0,w,0);g2.addColorStop(0,'rgba(0,0,0,0)');g2.addColorStop(.25,'rgba(0,0,0,1)');g2.addColorStop(.75,'rgba(0,0,0,1)');g2.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g2;x.fillRect(0,0,w,h)}),
   rune:(()=>{const s=window.HAL&&HAL.SPR&&HAL.SPR.hub;try{return s&&s.c?H3.texNew(s.c,true):null}catch(e){return null}})(),
+  shaft:mk(32,128,(x,w,h)=>{for(let y=0;y<h;y++){const t=y/(h-1),a=(1-t)*.75+.18+(t>.9?(t-.9)*2.4:0);const g=x.createLinearGradient(0,0,w,0);g.addColorStop(0,'rgba(255,255,255,0)');g.addColorStop(.3,'rgba(255,255,255,'+(a*.55).toFixed(3)+')');g.addColorStop(.5,'rgba(255,255,255,'+a.toFixed(3)+')');g.addColorStop(.7,'rgba(255,255,255,'+(a*.55).toFixed(3)+')');g.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=g;x.fillRect(0,y,w,1)}
+   const r=rng(5);x.globalCompositeOperation='destination-out';for(let i=0;i<10;i++){const xx=r()*w;x.fillStyle='rgba(0,0,0,'+(.15+r()*.25).toFixed(2)+')';x.fillRect(xx,0,1+r()*2,h)}}),
   cone:mk(64,64,(x,w,h)=>{for(let y=0;y<h;y++){const t=y/(h-1),hw=4+t*28,a=(1-t)*.55+.08;const g=x.createLinearGradient(32-hw,0,32+hw,0);g.addColorStop(0,'rgba(255,255,255,0)');g.addColorStop(.5,'rgba(255,255,255,'+a.toFixed(3)+')');g.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=g;x.fillRect(32-hw,y,hw*2,1)}})}}
 HV.step=function(ms){if(HV.ready)return true;const gl=H3.gl();if(!gl)return true;if(!HV.gen){HV.gen=gen(gl);HV.lastY=0}const t0=performance.now();if(HV.lastY)HV.idle+=t0-HV.lastY;
  while(performance.now()-t0<ms){const r=HV.gen.next();if(r.done){HV.gen=null;return true}HV.pct=r.value||HV.pct}HV.lastY=performance.now();return false};
@@ -13433,8 +13599,405 @@ HV.buildSync=function(){const gl=H3.gl();HV.gen=gen(gl);let r;do{r=HV.gen.next()
 HV.free=()=>{const gl=H3.gl();const del=a=>{if(gl&&a)for(const m of a)try{gl.deleteBuffer(m.vbo)}catch(e){}};
  del(HV.ochunks);del(HV.vchunks);del(HV.tchunks);del(HV.cath);for(const c of HV.grass.values())del([c.m]);
  if(TREEM)for(const k in TREEM)for(const L of TREEM[k])del(L);
- if(gl){if(HV.gtex)try{gl.deleteTexture(HV.gtex.t)}catch(e){}if(HV.lmtex)try{gl.deleteTexture(HV.lmtex.t)}catch(e){}}
+ if(gl){if(HV.gtex)try{gl.deleteTexture(HV.gtex.t)}catch(e){}if(HV.lmtex)try{gl.deleteTexture(HV.lmtex.t)}catch(e){}if(IN.ftex)try{gl.deleteTexture(IN.ftex.t)}catch(e){}if(IN.lm)try{gl.deleteTexture(IN.lm.t)}catch(e){}}
+ del(IN.ms);if(IN.floor)del([IN.floor]);IN.ms.length=0;IN.floor=null;IN.ready=false;IN.ftex=IN.lm=null;
  HV.ready=false;HV.gen=null;HV.ochunks=HV.vchunks=HV.tchunks=null;HV.cath.length=0;HV.trees.length=0;HV.grass.clear();HV.dyn={};HV.gtex=HV.lmtex=null;TREEM=null;TX=null;HV.cm=null;HG=null};
+
+// ============================================================ o interior da Catedral em 3D ============================================================
+// Mesma planta do interior 2D (A.inner): nave central, duas naves laterais, vestíbulo, as seis colunas (com os cristais flutuando), os oito bancos,
+// os candelabros, o altar e os dois anjos nos nichos. Em pé fica: arcadas góticas, abóbada de pedras com nervuras e céu estrelado, órgão sobre a porta.
+// A luz da lua entra pelos vitrais: cada vitral é um mosaico de vidros coloridos; o facho de luz atravessa a poeira e o desenho do vitral aparece no chão,
+// com as mesmas cores (projeção de cada vidro no piso, feita pixel a pixel no mapa de luz do chão). As velas e os lustres completam a luz.
+// Coordenadas: as do desenho do interior (x 0..480, z 0..544), chão em y = 0.
+const IN=HV.IN={ready:false,ms:[],floor:null,L:[],shafts:[],motes:[],cry:[],flames:[],glows:[],ftex:null,lm:null,dyn:{}};
+const IW=480,IH=544,NX0=128,NX1=352,WYN=112,WWY=128,FBS=512,AX0=32,AX1=448,VX0=208,VX1=272,VZ1=544;
+const NSP=230,NAP=360,ASP=126,AAP=168,ARS=70,ART=126;              // nave: nascença e topo da abóbada · laterais · arcadas (nascença e topo dos arcos)
+const PIERS=[205,325,445],BAYS=[[WYN,205],[205,325],[325,445],[445,FBS]];
+const LMIS=8;
+const IGOLD=C3('#d8b25a'),IST=RAMP(['#34374a','#3d4053','#46495d','#4f5367','#595d72']),IMORT=C3('#15161d'),IWD=RAMP(['#24160f','#331f15','#432a1d','#553627','#684432']),ISTAT=RAMP(['#16282a','#20393a','#2e4f4e','#3f6662','#558079']);
+const GLX={vi:[.55,.3,1],bl:[.18,.36,1],mg:[1,.26,.62],go:[1,.72,.2],cy:[.16,.82,.92],rd:[1,.16,.2],gr:[.26,.86,.4],wh:[.92,.88,1],dp:[.3,.16,.75]};
+const NRM=v=>{const l=hypot(v[0],v[1],v[2]);return[v[0]/l,v[1]/l,v[2]/l]};
+const L_N=NRM([-.06,-.7,.71]),L_E=NRM([-.66,-.66,.36]);              // a luz que entra pelos vitrais do norte (atrás do altar) e do leste
+// ---------- os vitrais ----------
+// pl: parede (N, S, E, W) · o: posição da parede · u: centro ao longo da parede · v0..v0+h (lanceta) ou cy, R (rosácea) · lit: recebe a lua
+const IWIN=[];
+for(const x of[168,216,264,312])IWIN.push({pl:'N',o:WYN,u:x,v0:58,h:124,w:14,lit:1,sd:x});
+IWIN.push({pl:'N',o:WYN,u:240,cy:286,R:56,lit:1,sd:5},{pl:'N',o:WYN,u:162,cy:222,R:26,lit:1,sd:6},{pl:'N',o:WYN,u:318,cy:222,R:26,lit:1,sd:7});
+for(const z of[166,265,385,478]){IWIN.push({pl:'E',o:AX1,u:z,v0:24,h:70,w:10,lit:1,sd:z+1},{pl:'W',o:AX0,u:z,v0:24,h:70,w:10,lit:0,sd:z+2})}
+for(const z of[160,265,385,478]){IWIN.push({pl:'E',o:NX1-5,u:z,v0:176,h:50,w:12,lit:1,sd:z+3,cl:1},{pl:'W',o:NX0+5,u:z,v0:176,h:50,w:12,lit:0,sd:z+4,cl:1})}
+IWIN.push({pl:'S',o:FBS,u:240,cy:240,R:48,lit:0,sd:9});
+for(const w of IWIN){w.L=w.pl==='N'?L_N:L_E;if(!w.R){w.top=w.v0+w.h;w.sp=w.top-w.w*1.449}}
+// ponto da parede (u ao longo, v altura, d para dentro da sala) → mundo
+function wpt(w,u,v,d){switch(w.pl){case'N':return[u,v,w.o+d];case'S':return[u,v,w.o-d];case'E':return[w.o-d,v,u];default:return[w.o+d,v,u]}}
+const wnrm=w=>w.pl==='N'?[0,0,1]:w.pl==='S'?[0,0,-1]:w.pl==='E'?[-1,0,0]:[1,0,0];
+// lanceta: retângulo com o topo em arco pontudo
+function inLan(w,u,v){const du=abs(u-w.u);if(du>w.w||v<w.v0||v>w.top)return false;if(v<=w.sp)return true;const R=w.w*1.55,cx=w.u+(u<w.u?R-w.w:-(R-w.w)),dy=v-w.sp;return hypot(u-cx,dy)<=R&&dy<=w.top-w.sp}
+// cor do vidro num ponto da janela (null = fora); o chumbo entre os vidros fica bem escuro
+function glassAt(w,u,v){
+ if(w.R){const du=u-w.u,dv=v-w.cy,r=hypot(du,dv)/w.R;if(r>1)return null;if(r>.94)return[.06,.05,.08];
+  const a=(atan2(dv,du)+TAU)%TAU,n=r<.24?1:r<.55?12:24,sec=a/TAU*n,fs=sec-floor(sec),ring=r<.24?0:r<.55?1:2;
+  if(abs(r-.24)<.025||abs(r-.55)<.022||(ring>0&&(fs<.05||fs>.95)))return[.07,.06,.09];
+  if(ring===0)return r<.12?GLX.wh:GLX.go;
+  const h=hs(floor(sec),ring,w.sd);if(ring===1)return floor(sec)%2?GLX.rd:GLX.bl;
+  return h<.3?GLX.vi:h<.55?GLX.cy:h<.75?GLX.go:h<.9?GLX.mg:GLX.gr}
+ if(!inLan(w,u,v))return null;
+ const cu=floor((u-w.u+w.w)/5),cv=floor((v-w.v0)/6),fu=((u-w.u+w.w)/5)-cu,fv=((v-w.v0)/6)-cv;
+ if(fu<.1||fv<.1)return[.06,.05,.08];
+ const edge=abs(u-w.u)>w.w-4,med=((cv+2)%7)<3&&abs(u-w.u)<w.w*.6,h=hs(cu,cv,w.sd);
+ if(edge)return h<.5?GLX.bl:GLX.dp;
+ if(med)return h<.35?GLX.go:h<.7?GLX.rd:GLX.wh;
+ return h<.45?GLX.bl:h<.7?GLX.rd:h<.85?GLX.vi:GLX.cy}
+// cor mais viva (satura e põe o canal mais forte em 1)
+const satC=(c,k)=>{const g=(c[0]+c[1]+c[2])/3,r=[0,1,2].map(i=>max(0,g+(c[i]-g)*k)),mx=max(r[0],r[1],r[2],1e-3);return r.map(v=>min(1,v/mx))};
+function glassAvg(w,u){let r=0,g=0,b=0,n=0;const v0=w.R?w.cy-w.R*.9:w.v0+2,v1=w.R?w.cy+w.R*.9:w.top-2;for(let k=0;k<14;k++){const c=glassAt(w,u,lerp(v0,v1,k/13));if(c){r+=c[0];g+=c[1];b+=c[2];n++}}return n?[r/n,g/n,b/n]:[.5,.4,.9]}
+
+// ---------- paredes de blocos de pedra (com argamassa) e os furos (janelas, arcos, nichos, portas) ----------
+// plano local da parede: u (ao longo), v (altura) → mundo por wp(u,v,d); hole(u,v) = vazado; top(u) = altura da parede naquele u
+function ashW(mbOf,wp,u0,u1,v0,v1,hole,top,sd,cols,o){o=o||{};const bh=o.bh||9,bw0=o.bw||13,bwv=o.bwv||9,r=rng(sd),nrm=o.n,d0=o.d0||0,d1=d0+(o.dd||.45),mc=o.mc||IMORT,hc=o.hc;
+ for(let v=v0,row=0;v<v1;v+=bh,row++){const vb=min(v1,v+bh);let u=u0-(row&1?r()*9:0);
+  while(u<u1){const bw=bw0+r()*bwv,ua=max(u0,u),ub=min(u1,u+bw);u+=bw;if(ub-ua<2)continue;const cu=(ua+ub)/2,cv=(v+vb)/2;
+   let ya=vb,yb=vb;if(top){const ta=top(ua),tb=top(ub);if(v>=max(ta,tb)-.5)continue;ya=min(vb,ta);yb=min(vb,tb);if(ya<v+.6&&yb<v+.6)continue;ya=max(ya,v+.6);yb=max(yb,v+.6)}
+   if(hole){if(hole(cu,cv))continue;if(hc&&(hole(ua+.5,v+.5)||hole(ub-.5,v+.5)||hole(ua+.5,ya-.5)||hole(ub-.5,yb-.5)||hole(cu,v+.5)||hole(cu,(ya+yb)/2-.5)))continue}
+   const m=mbOf(wp(cu,cv,0)),gy=cv<14?.8+cv/70:1,k=(.86+r()*.28)*gy,c=rampAt(cols,.25+r()*.55),cc=[c[0]*k,c[1]*k,c[2]*k];
+   const a=wp(ua,v,d0),b=wp(ub,v,d0),C=wp(ub,yb,d0),D=wp(ua,ya,d0);m.raw(a,b,C,nrm,nrm,nrm,mc,mc,mc,0,0,0);m.raw(a,C,D,nrm,nrm,nrm,mc,mc,mc,0,0,0);
+   const i=.45,A2=wp(ua+i,v+i,d1),B2=wp(ub-i,v+i,d1),C2=wp(ub-i,max(v+i,yb-i),d1),D2=wp(ua+i,max(v+i,ya-i),d1);m.raw(A2,B2,C2,nrm,nrm,nrm,cc,cc,cc,0,0,0);m.raw(A2,C2,D2,nrm,nrm,nrm,cc,cc,cc,0,0,0)}}}
+// moldura de pedra seguindo um contorno (lista [u,v]) e o "fundo" da abertura (espessura da parede)
+function frameW(m,w,pts,d0,d1,rad,col){for(let i=0;i<pts.length-1;i++){const a=pts[i],b=pts[i+1];m.tube([wpt(w,a[0],a[1],d0),wpt(w,b[0],b[1],d0)],[rad,rad],4,col,0,{capEnd:false});
+  if(d1!==undefined){const p0=wpt(w,a[0],a[1],0),p1=wpt(w,b[0],b[1],0),q0=wpt(w,a[0],a[1],d1),q1=wpt(w,b[0],b[1],d1);m.quad(p0,p1,q1,q0,sh(col,.7),0)}}}
+function lanOutline(w,ext){const e=ext||0,W=w.w+e,pts=[[w.u-W,w.v0-e]];const R=w.w*1.55+e;for(let i=0;i<=8;i++){const t=i/8,v=w.sp+(w.top+e-w.sp)*t;
+  let u=w.u-W;for(let s=0;s<40;s++){const uu=w.u-W+s/40*W;if(inLanE(w,uu,v,e)){u=uu;break}}pts.push([u,v])}
+ const L=pts.slice(1).reverse().map(p=>[2*w.u-p[0],p[1]]);return pts.concat(L,[[w.u+W,w.v0-e]])}
+function inLanE(w,u,v,e){const W=w.w+e,du=abs(u-w.u);if(du>W||v<w.v0-e||v>w.top+e)return false;if(v<=w.sp)return true;const R=w.w*1.55+e,cx=w.u+(u<w.u?R-W:-(R-W));return hypot(u-cx,v-w.sp)<=R}
+// um vitral inteiro: fundo de chumbo, os vidros (brilham; os que pegam a lua brilham mais), a moldura e a fundura da parede
+function winMesh(m,w){const em=w.lit?.92:.38,dg=-2.6,nr=wnrm(w);
+ if(w.R){const R=w.R,Ns=28;for(let i=0;i<Ns;i++){const a0=i/Ns*TAU,a1=(i+1)/Ns*TAU;m.raw(wpt(w,w.u,w.cy,dg-.3),wpt(w,w.u+cos(a0)*R,w.cy+sin(a0)*R,dg-.3),wpt(w,w.u+cos(a1)*R,w.cy+sin(a1)*R,dg-.3),nr,nr,nr,[10,8,14],[10,8,14],[10,8,14],0,0,0)}
+  const rings=[[0,.24,1],[.24,.55,12],[.55,.94,24]];
+  for(const[r0,r1,n]of rings){const nn=n===1?10:n;for(let i=0;i<nn;i++){const a0=(i+.08)/nn*TAU,a1=(i+.92)/nn*TAU,am=(i+.5)/nn*TAU,rm=(r0+r1)/2*R,c=glassAt(w,w.u+cos(am)*rm,w.cy+sin(am)*rm)||[.5,.4,.9],cc=c.map(v=>min(255,v*235)),e=em*2/2;
+    const ra=(r0+.02)*R,rb=(r1-.02)*R,p=(a,rr)=>wpt(w,w.u+cos(a)*rr,w.cy+sin(a)*rr,dg);
+    if(n===1){m.raw(p(a0,0),p(a0,rb),p(a1,rb),nr,nr,nr,cc,cc,cc,e,e,e)}else{m.raw(p(a0,ra),p(a0,rb),p(a1,rb),nr,nr,nr,cc,cc,cc,e,e,e);m.raw(p(a0,ra),p(a1,rb),p(a1,ra),nr,nr,nr,cc,cc,cc,e,e,e)}}}
+  for(let i=0;i<12;i++){const a=i/12*TAU;m.tube([wpt(w,w.u+cos(a)*R*.24,w.cy+sin(a)*R*.24,dg+.6),wpt(w,w.u+cos(a)*R*.95,w.cy+sin(a)*R*.95,dg+.6)],[.9,.9],4,rampAt(IST,.6),0,{capEnd:false})}
+  for(const rr of[.24,.55,1]){const pts=[];for(let i=0;i<=28;i++){const a=i/28*TAU;pts.push([w.u+cos(a)*R*rr,w.cy+sin(a)*R*rr])}frameW(m,w,pts,rr===1?.9:dg+.6,rr===1?-3.4:undefined,rr===1?2.4:1,rampAt(IST,.7))}
+  return}
+ const W=w.w;m.raw(wpt(w,w.u-W,w.v0,dg-.3),wpt(w,w.u+W,w.v0,dg-.3),wpt(w,w.u+W,w.top,dg-.3),nr,nr,nr,[10,8,14],[10,8,14],[10,8,14],0,0,0);m.raw(wpt(w,w.u-W,w.v0,dg-.3),wpt(w,w.u+W,w.top,dg-.3),wpt(w,w.u-W,w.top,dg-.3),nr,nr,nr,[10,8,14],[10,8,14],[10,8,14],0,0,0);
+ for(let v=w.v0;v<w.top;v+=6)for(let u=w.u-W;u<w.u+W;u+=5){const cu=u+2.5,cv=v+3;if(!inLan(w,cu,cv))continue;const c=glassAt(w,cu+.3,cv+.3);if(!c||c[0]+c[1]+c[2]<.4)continue;const cc=c.map(x=>min(255,x*235));
+  const a=wpt(w,u+.45,v+.45,dg),b=wpt(w,min(w.u+W,u+5)-.45,v+.45,dg),C=wpt(w,min(w.u+W,u+5)-.45,min(w.top,v+6)-.45,dg),D=wpt(w,u+.45,min(w.top,v+6)-.45,dg);m.raw(a,b,C,nr,nr,nr,cc,cc,cc,em,em,em);m.raw(a,C,D,nr,nr,nr,cc,cc,cc,em,em,em)}
+ if(W>=12)m.tube([wpt(w,w.u,w.v0,dg+.5),wpt(w,w.u,w.sp,dg+.5)],[.9,.9],4,rampAt(IST,.6),0,{capEnd:false});
+ const ol=lanOutline(w,.6);frameW(m,w,ol,.9,-3.4,2.2,rampAt(IST,.72));
+ m.push();{const p=wpt(w,w.u,w.v0-1.5,1.2);m.T(p[0],p[1],p[2]);if(w.pl==='E'||w.pl==='W')m.RY(PI/2);m.box(W*2+8,2,3.4,rampAt(IST,.8),0).pop()}}
+
+// ---------- abóbadas: berço pontudo com nervuras, pedras azuladas e estrelas douradas ----------
+function vaultY(x,x0,x1,ys,yt){const a=(x1-x0)/2,h=yt-ys,R=(h*h+a*a)/(2*a),xc=x<(x0+x1)/2?x0+R:x1-R;return ys+sqrt(max(0,R*R-(x-xc)*(x-xc)))}
+function vault(mbOf,x0,x1,ys,yt,z0,z1,sd,ribs){const r=rng(sd),N=16,base=C3('#27315e'),base2=C3('#2f3a6c'),star=C3('#f0cf72');
+ for(let z=z0;z<z1;z+=16){const zb=min(z1,z+16);for(let i=0;i<N;i++){const xa=lerp(x0,x1,i/N),xb=lerp(x0,x1,(i+1)/N),ya=vaultY(xa,x0,x1,ys,yt),yb=vaultY(xb,x0,x1,ys,yt),m=mbOf([(xa+xb)/2,ys+40,(z+zb)/2]);
+  const nA=NRM([-(xa-(x0+x1)/2)*.6,-(yt-ya)-20,0]),nB=NRM([-(xb-(x0+x1)/2)*.6,-(yt-yb)-20,0]),c=(i+floor(z/16))%2?base:base2;
+  m.raw([xa,ya,z],[xb,yb,z],[xb,yb,zb],nA,nB,nB,c,c,c,0,0,0);m.raw([xa,ya,z],[xb,yb,zb],[xa,ya,zb],nA,nB,nA,c,c,c,0,0,0);
+  if(r()<.32){const sx=lerp(xa,xb,r()),sz=lerp(z,zb,r()),sy=vaultY(sx,x0,x1,ys,yt)-.4,s=1+r()*1.1;m.raw([sx-s,sy,sz],[sx+s,sy,sz],[sx,sy,sz+s*1.6],[0,-1,0],[0,-1,0],[0,-1,0],star,star,star,.9,.9,.9);m.raw([sx-s,sy,sz+.9],[sx,sy,sz-s*.7],[sx+s,sy,sz+.9],[0,-1,0],[0,-1,0],[0,-1,0],star,star,star,.9,.9,.9)}}}
+ // nervuras: arcos transversais e diagonais, chave dourada
+ const rc=rampAt(IST,.75),rib=(pts)=>{const m=mbOf(pts[floor(pts.length/2)]);m.tube(pts,pts.map(()=>2.4),5,rc,0,{capEnd:false})};
+ for(const zr of ribs){const pts=[];for(let i=0;i<=16;i++){const x=lerp(x0,x1,i/16);pts.push([x,vaultY(x,x0,x1,ys,yt)-1.5,zr])}rib(pts)}
+ for(let k=0;k<ribs.length-1;k++){const za=ribs[k],zb=ribs[k+1],zm=(za+zb)/2;
+  for(const sgn of[1,-1]){const pts=[];for(let i=0;i<=16;i++){const t=i/16,x=lerp(x0,x1,t),z=sgn>0?lerp(za,zb,t):lerp(zb,za,t);pts.push([x,vaultY(x,x0,x1,ys,yt)-1.8,z])}rib(pts)}
+  const m=mbOf([(x0+x1)/2,yt,zm]);m.push().T((x0+x1)/2,yt-3,zm).sph(4.5,3,8,IGOLD,.25).pop();
+  const lp=[];for(let i=0;i<=16;i++){const z=lerp(za,zb,i/16);lp.push([(x0+x1)/2,yt-1.4,z])}rib(lp)}}
+
+// ---------- peças ----------
+function pierAt(mbOf,x,z,side){const m=mbOf([x,60,z]),c=IST,cd=rampAt(c,.3),cm=rampAt(c,.55),cl=rampAt(c,.8);
+ m.push().T(x,0,z).box(26,6,26,cd,0,true).pop();m.push().T(x,6,z).box(22,3,22,cm,0,true).pop();
+ for(const[dx,dz]of[[-1,0],[1,0],[0,-1],[0,1]]){m.push().T(x+dx*9,9,z+dz*9).cyl(4.2,4.2,ARS-9,8,cm,0,{cap0:false}).pop()}
+ m.push().T(x,9,z).box(16,ARS-9,16,cm,0,true).pop();
+ // capitel com folhas
+ m.push().T(x,ARS,z).cyl(10,14,7,8,cl,0,{rot:PI/8}).pop();m.push().T(x,ARS+7,z).box(30,4,30,cd,0,true).pop();
+ for(let i=0;i<8;i++){const a=i/8*TAU;m.push().T(x+cos(a)*11,ARS+3,z+sin(a)*11).S(1,1.3,1).sph(2.6,2,5,rampAt(ISTAT,.5),0).pop()}
+ // feixe de colunetas que sobe até a abóbada (do lado da nave)
+ const xs=x+(side<0?9:-9);m.push().T(xs,ARS+11,z).cyl(3.4,3.4,NSP-ARS-11,8,cm,0,{cap0:false}).pop();for(const dz of[-6,6])m.push().T(xs,ARS+11,z+dz).cyl(2.2,2.2,NSP-ARS-11,6,cd,0,{cap0:false}).pop();
+ m.push().T(xs,NSP-4,z).cyl(6,8,5,8,cl,0).pop()}
+function pewAt(mbOf,x,z){const m=mbOf([x,10,z]),L=62,c=IWD,cs=rampAt(c,.55),cd=rampAt(c,.3),cl=rampAt(c,.75);
+ m.push().T(x,9,z-4).box(L-4,2,10,cs,0).pop();                                          // assento
+ m.push().T(x,10,z+1.2).box(L-4,15,2,cs,0,true).pop();m.push().T(x,25.4,z+1.2).box(L-3,1.4,3,cl,0).pop();   // encosto
+ for(let k=0;k<5;k++)m.push().T(x-24+k*12,11,z+2.3).box(1,12,.4,cd,0,true).pop();
+ for(const s of[-1,1]){m.push().T(x+s*(L/2-1),0,z-3).box(3,24,14,cd,0,true).pop();m.push().T(x+s*(L/2-1),24,z-3).RZ(PI/2).cyl(3.5,3.5,3,8,cl,0).pop()}
+ m.push().T(x,3,z-10).box(L-6,2.4,3,cd,0).pop();                                         // genuflexório
+ m.push().T(x,0,z-3).box(L-4,1.5,9,c[0],0,true).pop()}
+function candelabraAt(mbOf,x,z){const m=mbOf([x,25,z]),g=C3('#a07a2c'),gd=C3('#6a4c18'),gl=C3('#d8b050');
+ for(let i=0;i<3;i++){const a=i/3*TAU+.4;m.tube([[x,6,z],[x+cos(a)*7,1,z+sin(a)*7],[x+cos(a)*9,0,z+sin(a)*9]],[1,.8,.6],4,gd,0,{})}
+ m.push().T(x,4,z).cyl(1.6,1.1,40,6,g,0).pop();for(const y of[12,24,34])m.push().T(x,y,z).S(1,.7,1).sph(2.2,2,6,gl,.08).pop();
+ for(const dx of[-9,9])m.tube([[x,40,z],[x+dx*.5,43,z],[x+dx,44,z]],[.9,.8,.7],4,g,0,{capEnd:false});
+ for(const dx of[-9,0,9]){const y=dx?44:46;m.push().T(x+dx,y,z).cyl(2.2,1.4,1.4,7,gl,0).pop();m.push().T(x+dx,y+1.4,z).cyl(.9,.9,5,6,'#efe6d2',.25).pop();IN.flames.push({x:x+dx,y:y+6.6,z,s:.55,ph:hs(x+dx|0,z|0,3)*6})}}
+function chandelierAt(mbOf,x,y,z){const m=mbOf([x,y,z]),ir=C3('#1a1820'),R=22,N=10;
+ const ring=[];for(let i=0;i<=24;i++){const a=i/24*TAU;ring.push([x+cos(a)*R,y,z+sin(a)*R])}m.tube(ring,ring.map(()=>1.2),4,ir,0,{capEnd:false});
+ const ring2=[];for(let i=0;i<=16;i++){const a=i/16*TAU;ring2.push([x+cos(a)*R*.55,y+10,z+sin(a)*R*.55])}m.tube(ring2,ring2.map(()=>.9),4,ir,0,{capEnd:false});
+ for(let i=0;i<4;i++){const a=i/4*TAU+.4;m.tube([[x+cos(a)*R,y,z+sin(a)*R],[x+cos(a)*R*.55,y+10,z+sin(a)*R*.55],[x,y+34,z]],[.5,.5,.5],3,ir,0,{capEnd:false})}
+ m.tube([[x,y+34,z],[x,NAP-6,z]],[.7,.7],4,ir,0,{capEnd:false});m.push().T(x,y-6,z).cyl(0,3,6,6,IGOLD,.1).pop();
+ for(let i=0;i<N;i++){const a=i/N*TAU,cx=x+cos(a)*R,cz=z+sin(a)*R;m.push().T(cx,y,cz).cyl(1.8,1.2,1.2,6,IGOLD,0).pop();m.push().T(cx,y+1.2,cz).cyl(.8,.8,4,5,'#efe6d2',.25).pop();IN.flames.push({x:cx,y:y+6.6,z:cz,s:.5,ph:i*.7})}}
+function angelAt(mbOf,x,z){const m=mbOf([x,30,z]),c=ISTAT;
+ m.push().T(x,0,z+4).box(26,8,12,rampAt(IST,.4),0,true).pop();
+ m.push().T(x,8,z+4).cyl(7,3.2,30,10,rampAt(c,.55),0).pop();for(let k=0;k<6;k++){const a=k/6*PI+PI;m.push().T(x+cos(a)*5,8,z+4+sin(a)*2).box(.8,26,.8,rampAt(c,.35),0,true).pop()}
+ m.push().T(x,41,z+4.5).sph(4,3,8,rampAt(c,.7),0).pop();m.push().T(x,43.5,z+4).S(1,.5,1).sph(4.6,2,8,rampAt(c,.5),0).pop();
+ m.push().T(x,30,z+8.5).RX(-.3).box(4,6,3,rampAt(c,.75),0).pop();
+ for(const s of[-1,1]){const bp=[x+s*3,34,z+2],wp=[[bp[0],bp[1],bp[2]],[x+s*11,40,z],[x+s*15,28,z-1],[x+s*12,10,z],[x+s*5,6,z+1]];
+  for(let i=1;i<wp.length-1;i++)m.raw(wp[0],wp[i],wp[i+1],[0,0,1],[0,0,1],[0,0,1],rampAt(c,.6),rampAt(c,.45),rampAt(c,.4),0,0,0);
+  for(let k=0;k<4;k++)m.tube([[x+s*4,33-k*2,z+1.2],[x+s*(10+k),35-k*7,z+.6],[x+s*(13-k),24-k*5,z+.4]],[.5,.4,.2],3,rampAt(c,.3),0,{capEnd:false})}
+ m.push().T(x,8,z+11).cyl(1.6,1.6,3,6,'#efe6d2',.25).pop();IN.flames.push({x,y:13.4,z:z+11,s:.5,ph:x*.1})}
+function altarAt(mbOf){const x=240,m=mbOf([x,20,140]),st=IST,cl=C3('#4a2a8a'),cl2=C3('#5a38a8');
+ m.push().T(x,0,138).box(132,4,52,rampAt(st,.35),0,true).pop();m.push().T(x,4,132).box(116,4,40,rampAt(st,.5),0,true).pop();
+ m.push().T(x,8,127).box(92,24,22,rampAt(st,.65),0,true).pop();m.push().T(x,32,127).box(98,3,26,rampAt(st,.8),0,true).pop();
+ for(let k=0;k<4;k++){const px=x-33+k*22;m.push().T(px,11,138.1).box(16,17,.6,rampAt(st,.4),0,true).pop();m.push().T(px,25,138.2).RX(PI/2).cyl(8,8,.6,10,rampAt(st,.4),0).pop();m.push().T(px,12,138.6).box(1.4,15,.4,IGOLD,.2,true).pop()}
+ m.push().T(x,35,127).box(58,.8,27,cl,0).pop();m.push().T(x,22,140.3).box(52,13,.6,cl2,0,true).pop();for(let k=0;k<6;k++)m.push().T(x-22+k*9,22,140.7).box(1,13,.3,C3('#7a58d0'),.1,true).pop();
+ m.push().T(x+2,35.8,127).box(10,1.6,8,C3('#6a1c2c'),0).pop();m.push().T(x+2,37.4,127).box(9,.4,7,C3('#e0d0b0'),0).pop();
+ m.push().T(x-8,35.8,125).cyl(1.6,.5,3,8,IGOLD,.2).pop();m.push().T(x-8,38.8,125).cyl(.5,2,2.4,8,IGOLD,.2).pop();
+ for(const px of[220,262]){m.push().T(px,35.8,124).cyl(2.4,1.2,1.2,8,IGOLD,.1).pop();m.push().T(px,37,124).cyl(.7,.7,10,6,IGOLD,.1).pop();m.push().T(px,47,124).cyl(2,1.4,1,6,IGOLD,.1).pop();m.push().T(px,48,124).cyl(1,1,6,6,'#efe6d2',.25).pop();IN.flames.push({x:px,y:56,z:124,s:.6,ph:px})}
+ // retábulo baixo atrás do altar (três arcos pintados) e a cruz dourada
+ m.push().T(x,8,115).box(96,44,4,rampAt(IWD,.45),0,true).pop();
+ for(let k=0;k<3;k++){const px=x-30+k*30;m.push().T(px,16,117.2).box(22,26,.5,[C3('#3a1430'),C3('#14204a'),C3('#3a1430')][k],0,true).pop();m.push().T(px,42,117.3).RX(PI/2).cyl(11,11,.5,10,[C3('#3a1430'),C3('#14204a'),C3('#3a1430')][k],0).pop();
+  m.push().T(px,24,117.7).box(6,10,.3,IGOLD,.15,true).pop()}
+ m.push().T(x,52,115).box(98,3,6,IGOLD,.15,true).pop();m.push().T(x,55,115).box(2.4,22,2.4,IGOLD,.3,true).pop();m.push().T(x,70,115).box(12,2.4,2.4,IGOLD,.3,true).pop()}
+function organ(mbOf){const m=mbOf([240,90,500]),wd=IWD,pc=C3('#9aa0ad'),pg=C3('#c8a858');
+ m.push().T(240,62,500).box(230,8,24,rampAt(wd,.4),0,true).pop();m.push().T(240,70,488.5).box(230,10,1.6,rampAt(wd,.6),0,true).pop();
+ for(let k=0;k<23;k++)m.push().T(130+k*10,70,488).box(1.2,10,1.2,rampAt(wd,.8),0,true).pop();
+ for(const s of[-1,1])for(let k=0;k<9;k++){const px=240+s*(48+k*7.5),h=86-k*6+(k%2)*4,r=3.2-k*.12;m.push().T(px,72,503).cyl(r,r,h,8,k%3===0?pg:pc,.05,{cap0:false}).pop();m.push().T(px,72,503).cyl(r*.6,r,3,8,C3('#30333a'),0).pop();m.push().T(px,88,503-r*.9).box(r*1.1,1.6,.3,C3('#08080a'),0).pop()}
+ for(const s of[-1,1])m.push().T(240+s*118,0,500).box(10,70,10,rampAt(wd,.4),0,true).pop()}
+function bannerAt(mbOf,x,z,s){const m=mbOf([x,190,z]),c0=C3('#4a1c66'),c1=C3('#3a1452'),g=C3('#d8b25a'),N=6,w=11,top=NSP-14,len=58;
+ const X=x+s*13.5;for(let k=0;k<N;k++){const y0=top-len*k/N,y1=top-len*(k+1)/N,e0=min(14,k*2)*2,e1=min(14,(k+1)*2)*2;
+  const bw=k%2?.86:1,ca=[c0[0]*bw,c0[1]*bw,c0[2]*bw],cb=[c1[0]*bw,c1[1]*bw,c1[2]*bw],za=X+s*sin(k*1.3)*.7,zb=X+s*sin((k+1)*1.3)*.7;
+  m.raw([za,y0,z-w],[za,y0,z+w],[zb,y1,z+w],[s*-1,0,0],[s*-1,0,0],[s*-1,0,0],ca,ca,cb,0,0,0);m.raw([za,y0,z-w],[zb,y1,z+w],[zb,y1,z-w],[s*-1,0,0],[s*-1,0,0],[s*-1,0,0],ca,cb,cb,0,0,0)}
+ const Xe=X+s*sin(N*1.3)*.7;
+ m.raw([Xe,top-len,z-w],[Xe,top-len,z+w],[Xe,top-len-9,z],[s*-1,0,0],[s*-1,0,0],[s*-1,0,0],c1,c1,c1,0,0,0);
+ for(const q of[-1,1])m.tube([[Xe-s*.2,top-len+1,z+q*w],[Xe-s*.2,top-len-6,z+q*(w+1)]],[.5,.3],3,g,.1);
+ m.push().T(X-s*.3,top-22,z).RY(PI/2).cyl(5,5,.3,8,g,.12).pop();m.push().T(X-s*.4,top-22,z).RY(PI/2).box(1.4,9,.3,C3('#2a0c36'),0).pop();
+ m.push().T(X,top+1,z).box(2,2,w*2+4,g,.1).pop()}
+
+// ---------- mais peças: santos nos pilares, púlpito, lâmpada do sacrário, pias de água benta, via-sacra e tapeçarias ----------
+const ISAINT=RAMP(['#46424f','#57525f','#6a6573','#7f7a89','#948f9e']);
+// santo de pedra sobre mísula, com auréola e dossel, preso no pilar e virado para a nave (f = +1 olha para +x, -1 para -x)
+function saintAt(mbOf,x,z,f,v){const m=mbOf([x,50,z]),y0=38,c=ISAINT,st=IST;
+ m.push().T(x,0,z).RY(f>0?PI/2:-PI/2);
+ m.push().T(0,y0-8,-1).cyl(1.8,6.6,8,8,rampAt(st,.55),0,{rot:PI/8}).pop();
+ for(let k=0;k<4;k++){const a=k/4*TAU+PI/4;m.push().T(cos(a)*4.4,y0-3.2,-1+sin(a)*4.4).S(1,1.4,1).sph(1.6,2,5,rampAt(ISTAT,.5),0).pop()}
+ m.push().T(0,y0,-1).cyl(6.6,6.6,1.4,8,rampAt(st,.78),0,{rot:PI/8}).pop();
+ m.push().T(0,y0+1.4,-1).cyl(5,3,18,10,rampAt(c,.5),0,{cs:[rampAt(c,.4),rampAt(c,.6)]}).pop();
+ m.push().T(0,y0+12,-1).cyl(3.4,3.8,5,8,rampAt(c,.62),0).pop();
+ for(const s of[-1,1])m.tube([[s*3.3,y0+16.5,-.6],[s*3,y0+12.5,1.6],[s*1.2,y0+11.5,3.2]],[1.1,1,.9],5,rampAt(c,.55),0);
+ if(v%2===0){m.push().T(0,y0+11.6,3.6).RX(-.5).box(5.2,4,1.2,rampAt(c,.3),0).pop();m.push().T(0,y0+11.8,4.3).RX(-.5).box(4.6,3.4,.3,rampAt(c,.9),0).pop()}
+ else{m.push().T(0,y0+12.5,3.4).RX(-.3).box(1.6,3.2,1.4,rampAt(c,.7),0).pop();m.push().T(0,y0+14,4.2).box(.6,8,.6,IGOLD,.15).pop();m.push().T(0,y0+16,4.2).box(4,.6,.6,IGOLD,.15).pop()}
+ m.push().T(0,y0+20,-.6).sph(2.5,3,8,rampAt(c,.72),0).pop();
+ m.push().T(0,y0+20.6,-3.2).RX(PI/2).cyl(4.4,4.4,.5,14,IGOLD,.3).pop();
+ m.push().T(0,y0+25.5,-1).box(14,1.6,11,rampAt(st,.7),0).pop();
+ m.push().T(0,y0+27.3,-1).cyl(7.6,0,9,4,rampAt(st,.6),0,{rot:PI/4}).pop();
+ for(const s of[-1,1])m.push().T(s*6.2,y0+26.3,4.4).cyl(.9,0,4,4,rampAt(st,.8),0).pop();
+ m.push().T(0,y0+36.3,-1).sph(.9,2,5,IGOLD,.4).pop();
+ m.pop()}
+// púlpito preso no pilar: cuba octogonal de madeira com painéis dourados, base em cone e o dossel (abafa-voz) com agulha
+function pulpitAt(mbOf,x,z,f){const m=mbOf([x,60,z]),wd=IWD,y0=40,R=9.5,zc=R+1.5;m.push().T(x,0,z).RY(f>0?PI/2:-PI/2);
+ m.push().T(0,y0-13,zc).cyl(.3,2.6,5,8,rampAt(wd,.35),0).pop();m.push().T(0,y0-8,zc).cyl(2.6,R,8,8,rampAt(wd,.5),0,{rot:PI/8}).pop();
+ m.push().T(0,y0,zc).cyl(R,R,15,8,rampAt(wd,.55),0,{rot:PI/8,cap0:false,cs:[rampAt(wd,.5),rampAt(wd,.62)]}).pop();
+ for(const y of[y0,y0+14.2])m.push().T(0,y,zc).cyl(R+.7,R+.7,1.4,8,rampAt(wd,.75),0,{rot:PI/8}).pop();
+ const Ri=R*cos(PI/8)+.2,fw=2*R*sin(PI/8)*.78;
+ for(let i=0;i<8;i++){const a=i/8*TAU;if(sin(a)<-.1)continue;const cx=cos(a)*Ri,cz=zc+sin(a)*Ri;
+  m.push().T(cx,y0+7.5,cz).RY(PI/2-a).box(fw,10.4,.3,IGOLD,.12).pop();m.push().T(cx,y0+7.5,cz).RY(PI/2-a).box(fw-1.5,8.9,.42,rampAt(wd,.32),0).pop();
+  m.push().T(cos(a)*(Ri+.25),y0+8,zc+sin(a)*(Ri+.25)).RY(PI/2-a).box(.7,4,.3,IGOLD,.2).pop();m.push().T(cos(a)*(Ri+.25),y0+8.8,zc+sin(a)*(Ri+.25)).RY(PI/2-a).box(2.6,.7,.3,IGOLD,.2).pop()}
+ m.push().T(0,y0,1.2).box(9,52,2,rampAt(wd,.45),0,true).pop();m.push().T(0,y0+30,2.4).box(.9,9,.4,IGOLD,.25).pop();m.push().T(0,y0+32.5,2.4).box(4.4,.9,.4,IGOLD,.25).pop();
+ const yb=y0+52;m.push().T(0,yb,zc-1).cyl(R+3.2,R+3.2,2.4,8,rampAt(wd,.6),0,{rot:PI/8}).pop();
+ for(let i=0;i<16;i++){const a=i/16*TAU;m.push().T(cos(a)*(R+3),yb-1.4,zc-1+sin(a)*(R+3)).cyl(.6,1.1,1.6,4,IGOLD,.1).pop()}
+ m.push().T(0,yb+2.4,zc-1).cyl(R+1,0,16,8,rampAt(wd,.45),0,{rot:PI/8}).pop();m.push().T(0,yb+18.4,zc-1).sph(1.4,2,6,IGOLD,.35).pop();m.push().T(0,yb+19.4,zc-1).box(.7,5,.7,IGOLD,.35,true).pop();m.push().T(0,yb+22.4,zc-1).box(3,.7,.7,IGOLD,.35).pop();
+ m.pop()}
+// lâmpada do sacrário: vidro vermelho pendurado por três correntes (acesa noite e dia)
+function lampAt(mbOf,x,y,z,top){const m=mbOf([x,y,z]),b=C3('#9a7a32'),ir=C3('#1a1820');
+ m.push().T(x,y-3,z).cyl(.4,3.2,3,10,b,.12).pop();m.push().T(x,y,z).cyl(3.2,4.8,3.2,10,b,.12).pop();m.push().T(x,y+3.2,z).cyl(4.8,4.4,.8,10,b,.15).pop();
+ m.push().T(x,y+1.2,z).sph(3.4,3,8,C3('#ff3326'),.95).pop();m.push().T(x,y+4.4,z).cyl(1.2,.6,2.2,6,C3('#ffd0a0'),.9).pop();
+ for(let i=0;i<3;i++){const a=i/3*TAU;m.tube([[x+cos(a)*4.4,y+4,z+sin(a)*4.4],[x,y+22,z]],[.22,.22],3,ir,0,{capEnd:false})}
+ m.tube([[x,y+22,z],[x,top,z]],[.3,.3],3,ir,0,{capEnd:false});m.push().T(x,y+22,z).sph(1,2,5,b,.1).pop()}
+// pia de água benta presa na parede (concha de pedra e a água escura)
+function fontAt(mbOf,x,z){const m=mbOf([x,22,z]),st=IST;
+ m.push().T(x,12,z-2).cyl(1.2,3.4,7,8,rampAt(st,.5),0).pop();m.push().T(x,19,z-5.5).cyl(2.6,6.4,5,12,rampAt(st,.75),0).pop();
+ m.push().T(x,24,z-5.5).cyl(6.9,6.9,.9,12,rampAt(st,.85),0).pop();m.push().T(x,24.5,z-5.5).cyl(5.8,5.8,.3,12,C3('#16283a'),.2).pop();
+ for(let i=0;i<=8;i++){const a=PI*i/8;m.tube([[x,25,z-1.2],[x-cos(a)*9,25+sin(a)*9,z-1.2]],[.9,.5],4,rampAt(st,.62+.12*(i%2)),0)}}
+// estação da via-sacra: quadrinho com moldura dourada, figuras em relevo e a cruz (f = +1 na parede oeste, -1 na leste)
+function stationAt(mbOf,x,z,f,n){const m=mbOf([x,44,z]),fg=rampAt(ISAINT,.7);m.push().T(x,0,z).RY(f>0?PI/2:-PI/2);
+ m.push().T(0,44,.7).box(12,15,1.1,IGOLD,.12).pop();m.push().T(0,44,1.1).box(10.2,13.2,.9,C3('#2a2232'),0).pop();
+ const k=n%3;m.push().T(-2.4,40.2,1.8).box(2.2,6,.6,fg,0).pop();m.push().T(-2.4,44.4,1.8).sph(1.1,2,5,fg,0).pop();
+ if(k!==1){m.push().T(2.2,40,1.8).box(2,5.4,.6,rampAt(ISAINT,.55),0).pop();m.push().T(2.2,43.8,1.8).sph(1,2,5,rampAt(ISAINT,.6),0).pop()}
+ m.push().T(.6+k,42.4,1.9).RZ(.35-k*.2).box(.9,10,.5,rampAt(IWD,.65),0).pop();m.push().T(.6+k,45,1.95).RZ(.35-k*.2).box(5.4,.9,.5,rampAt(IWD,.65),0).pop();
+ m.push().T(0,53.2,.9).box(1,4.2,1,IGOLD,.2).pop();m.push().T(0,54.3,.9).box(3.2,1,1,IGOLD,.2).pop();m.pop()}
+// tapeçaria na parede do fundo das naves laterais (vai na malha de pano, que balança de leve); f = direção para onde ela olha (+1 = +z, -1 = -z)
+function tapestryAt(m,x,z,f){const W=46,H=64,y0=34,NI=9,NJ=12,cr=C3('#5a1426'),cr2=C3('#46101e'),gd=C3('#b08a3a'),gd2=C3('#7a5a22'),bl=C3('#1c2350'),nn=[0,0,f];
+ const P=(i,j)=>{const u=i/NI,v=j/NJ;return[x-W/2+u*W,y0+H-v*H,z+f*(1.2+sin(u*PI*3+v)*.35)]};
+ for(let j=0;j<NJ;j++)for(let i=0;i<NI;i++){const ci=i-(NI-1)/2,cj=j-(NJ-1)/2,bord=i===0||i===NI-1||j===0||j===NJ-1,dia=(abs(ci)+abs(cj*.75))%3<1,emb=abs(ci)<1.6&&abs(cj)<2.2;
+  const c=bord?((i+j)%2?gd:gd2):emb?((abs(ci)+abs(cj))<1.5?gd:bl):dia?cr2:cr,sw=a=>min(28,floor(a*7)*2);
+  const a=P(i,j),b=P(i+1,j),cc=P(i+1,j+1),d=P(i,j+1),ea=sw(j/NJ),eb=sw((j+1)/NJ);
+  m.raw(a,b,cc,nn,nn,nn,c,c,c,0,0,0);m.raw(a,cc,d,nn,nn,nn,c,c,c,0,0,0)}
+ for(let i=0;i<=NI*2;i++){const u=i/(NI*2),px=x-W/2+u*W,pz=z+f*1.3;m.raw([px-.5,y0,pz],[px+.5,y0,pz],[px,y0-4.5,pz],nn,nn,nn,gd,gd,gd2,0,0,0)}
+ m.push().T(x+W/2+4,y0+H+1.2,z+f*1.6).RZ(PI/2).cyl(1,1,W+8,8,gd,.12).pop();m.push().T(x-W/2-4.5,y0+H+1.2,z+f*1.6).sph(1.8,2,6,gd,.15).pop();m.push().T(x+W/2+4.5,y0+H+1.2,z+f*1.6).sph(1.8,2,6,gd,.15).pop()}
+// arandela de ferro com vela, presa na parede (f = para onde sai da parede: +1 = +z, -1 = -z)
+function sconceAt(mbOf,x,y,z,f){const m=mbOf([x,y,z]),ir=C3('#1a1820');
+ m.push().T(x,y-6,z+f*.9).box(2.6,9,1,ir,0).pop();m.tube([[x,y-3,z+f*.8],[x,y-1,z+f*4.5],[x,y+1.2,z+f*5.6]],[.5,.45,.4],4,ir,0,{capEnd:false});
+ m.push().T(x,y+1,z+f*5.6).cyl(1.6,1,.8,6,IGOLD,.1).pop();m.push().T(x,y+1.8,z+f*5.6).cyl(.6,.6,4,6,'#efe6d2',.25).pop();
+ IN.flames.push({x,y:y+7.4,z:z+f*5.6,s:.45,ph:x*.37});return[x,y+8,z+f*9]}
+
+// ---------- montagem do interior ----------
+const archTop=(u,z0,z1)=>ARS+vaultY(u,z0,z1,0,ART-ARS);
+const ARCH=[[134,192],[218,312],[338,432],[458,506]];                 // vãos das arcadas entre as colunas
+function inArch(u,v,m){for(const[a,b]of ARCH){if(u>a-m&&u<b+m&&v<archTop(clp(u,a,b),a,b)+m)return true}return false}
+function inWin(pl,o,u,v,m){for(const w of IWIN){if(w.pl!==pl||w.o!==o)continue;if(w.R){if(hypot(u-w.u,v-w.cy)<w.R+m)return true}else if(inLanE(w,u,v,m))return true}return false}
+const inRoomI=(x,z)=>(x>AX0+4&&x<AX1-4&&z>WWY+4&&z<FBS-4)||(x>NX0+4&&x<NX1-4&&z>WYN+4&&z<FBS-4)||(x>VX0+4&&x<VX1-4&&z>=FBS-4&&z<VZ1-3);
+function* buildInner(gl){
+ IN.ready=false;IN.ms.length=0;IN.L.length=0;IN.flames.length=0;IN.glows.length=0;IN.shafts.length=0;IN.motes.length=0;IN.cry.length=0;
+ const zones=new Map(),zk=p=>{const x=p[0],ix=x<NX0-6?0:x<240?1:x<NX1+6?2:3,iy=p[1]<96?0:p[1]<NSP-10?1:2,iz=p[2]>=FBS?4:clp(floor((p[2]-WYN)/100),0,3);return ix*100+iy*10+iz},
+  mbOf=p=>{const k=zk(p);let m=zones.get(k);if(!m){m=new MB(7700+k);m.jit=.05;zones.set(k,m)}return m};
+ const nN=[0,0,1],nS=[0,0,-1],nE=[-1,0,0],nW=[1,0,0];
+ // paredes da nave: norte (atrás do altar) e sul (porta, rosácea e órgão)
+ const navTop=u=>vaultY(clp(u,NX0+5,NX1-5),NX0+5,NX1-5,NSP,NAP);
+ ashW(mbOf,(u,v,d)=>[u,v,WYN+d],NX0+5,NX1-5,0,NAP+2,(u,v)=>inWin('N',WYN,u,v,1.2),navTop,11,IST,{n:nN});yield .02;
+ ashW(mbOf,(u,v,d)=>[u,v,FBS-d],NX0+5,NX1-5,0,NAP+2,(u,v)=>inWin('S',FBS,u,v,1.2)||(u>VX0+1&&u<VX1-1&&v<60+8*sqrt(max(0,1-((u-240)/32)**2))),navTop,12,IST,{n:nS});yield .04;
+ // naves laterais: paredes de fora (com vitrais), do norte (nicho do anjo) e do sul
+ const aisTop=(x0,x1)=>u=>vaultY(clp(u,x0,x1),x0,x1,ASP,AAP);
+ ashW(mbOf,(u,v,d)=>[AX0+d,v,u],WWY,FBS,0,ASP,(u,v)=>inWin('W',AX0,u,v,1.2),null,13,IST,{n:nW});
+ ashW(mbOf,(u,v,d)=>[AX1-d,v,u],WWY,FBS,0,ASP,(u,v)=>inWin('E',AX1,u,v,1.2),null,14,IST,{n:nE});yield .06;
+ for(const[x0,x1,nx]of[[AX0,NX0-5,80],[NX1+5,AX1,400]]){const top=aisTop(x0,x1),niche=(u,v)=>abs(u-nx)<19&&(v<52||hypot(u-nx,v-52)<19);
+  ashW(mbOf,(u,v,d)=>[u,v,WWY+d],x0,x1,0,AAP+2,niche,top,15+nx,IST,{n:nN});ashW(mbOf,(u,v,d)=>[u,v,FBS-d],x0,x1,0,AAP+2,null,top,16+nx,IST,{n:nS});
+  // nicho: fundo escuro, arco e o anjo
+  const m=mbOf([nx,30,WWY]);m.push().T(nx,0,WWY-6).box(36,52,1,C3('#0c0d12'),0,true).pop();m.push().T(nx,52,WWY-6).RX(PI/2).cyl(18,18,1,12,C3('#0c0d12'),0).pop();
+  for(const s of[-1,1])m.push().T(nx+s*18,0,WWY-3).box(1,52,6,rampAt(IST,.3),0,true).pop();
+  const ap=[];for(let i=0;i<=12;i++){const a=PI*i/12;ap.push([nx-cos(a)*19,52+sin(a)*19,WWY+.9])}m.tube(ap,ap.map(()=>1.8),4,rampAt(IST,.75),0,{capEnd:false});
+  angelAt(mbOf,nx,WWY-6)}
+ yield .08;
+ // arcadas (as duas paredes entre a nave e as laterais): arcos pontudos, a parte de cima com os vitrais do clerestório
+ for(const[xw,sg]of[[NX0,-1],[NX1,1]]){const xn=xw-sg*5,xa=xw+sg*5,pl=sg<0?'W':'E',holeN=(u,v)=>inArch(u,v,.8)||inWin(pl,xn,u,v,1.2),holeA=(u,v)=>inArch(u,v,.8);
+  ashW(mbOf,(u,v,d)=>[xn-sg*d,v,u],WYN,FBS,0,NSP,holeN,null,20+xw,IST,{n:[-sg,0,0]});
+  ashW(mbOf,(u,v,d)=>[xa+sg*d,v,u],WWY,FBS,0,ASP,holeA,null,21+xw,IST,{n:[sg,0,0]});
+  for(const[a,b]of ARCH){const pts=[[a,0],[a,ARS]];for(let i=1;i<=14;i++){const u=lerp(a,b,i/15);pts.push([u,archTop(u,a,b)])}pts.push([b,ARS],[b,0]);
+   const m=mbOf([xw,60,(a+b)/2]),sc=rampAt(IST,.45);
+   for(let i=0;i<pts.length-1;i++){const p=pts[i],q=pts[i+1];m.quad([xn,p[1],p[0]],[xn,q[1],q[0]],[xa,q[1],q[0]],[xa,p[1],p[0]],sc,0)}
+   for(const xf of[xn-sg*.9,xa+sg*.9]){const tp=pts.slice(1,-1).map(p=>[xf,p[1],p[0]]);m.tube(tp,tp.map(()=>2),4,rampAt(IST,.78),0,{capEnd:false})}}
+  for(const z of PIERS)pierAt(mbOf,xw,z,sg);
+  // faixa do trifório (pequenas arcadas cegas) entre os arcos e o clerestório
+  {const m=mbOf([xn,150,300]);m.push().T(xn-sg*1.2,138,(WYN+FBS)/2).box(2.4,2,FBS-WYN,rampAt(IST,.8),0).pop();m.push().T(xn-sg*1.2,168,(WYN+FBS)/2).box(2.4,2,FBS-WYN,rampAt(IST,.8),0).pop();
+   for(let z=WYN+14;z<FBS-8;z+=14){if(PIERS.some(p=>abs(p-z)<12))continue;m.push().T(xn-sg*1.1,140,z).cyl(1,1,26,5,rampAt(IST,.7),0).pop()}}}
+ yield .14;
+ // abóbadas: nave e laterais
+ vault(mbOf,NX0+5,NX1-5,NSP,NAP,WYN,FBS,31,[WYN,205,325,445,FBS]);vault(mbOf,AX0,NX0-5,ASP,AAP,WWY,FBS,32,[WWY,205,325,445,FBS]);vault(mbOf,NX1+5,AX1,ASP,AAP,WWY,FBS,33,[WWY,205,325,445,FBS]);yield .2;
+ // vitrais
+ for(const w of IWIN){const p=w.R?wpt(w,w.u,w.cy,0):wpt(w,w.u,(w.v0+w.top)/2,0);winMesh(mbOf(p),w)}yield .26;
+ // vestíbulo e a porta grande
+ {const m=mbOf([240,30,FBS+10]),st=IST;for(const x of[VX0,VX1])m.push().T(x,0,(FBS+VZ1)/2).box(4,66,VZ1-FBS+2,rampAt(st,.4),0,true).pop();m.push().T(240,66,(FBS+VZ1)/2).box(VX1-VX0+4,4,VZ1-FBS+2,rampAt(st,.35),0).pop();
+  m.push().T(240,0,VZ1-1).box(VX1-VX0,64,2,C3('#2a1712'),0,true).pop();for(const y of[14,34,52])m.push().T(240,y,VZ1-2.2).box(VX1-VX0-6,2,.6,C3('#141218'),0).pop();
+  m.push().T(240,0,VZ1-2.4).box(.8,60,.4,C3('#ffc46a'),.85,true).pop();
+  const ap=[];for(let i=0;i<=12;i++){const a=PI*i/12;ap.push([240-cos(a)*32,58+sin(a)*8,FBS-.9])}m.tube(ap,ap.map(()=>2),4,rampAt(st,.78),0,{capEnd:false});
+  m.push().T(240,0,FBS+1).box(56,1,30,C3('#2a1f3c'),0,true).pop();
+  m.push().T(VX0+4,40,FBS+20).box(3,5,3,C3('#ffb848'),.9).pop();m.push().T(VX1-4,40,FBS+20).box(3,5,3,C3('#ffb848'),.9).pop()}
+ // altar, bancos, candelabros, lustres, órgão, estandartes, teias
+ altarAt(mbOf);const M2=HAL.IM||{};
+ for(const o of(M2.objs||[])){if(o.k==='pew')pewAt(mbOf,o.x,o.y-4);else if(o.k==='cand')candelabraAt(mbOf,o.x,o.y)}
+ for(const z of[232,334,432])chandelierAt(mbOf,240,176,z);
+ organ(mbOf);for(const z of PIERS){bannerAt(mbOf,NX0+5,z,1);bannerAt(mbOf,NX1-5,z,-1)}
+ {const wb=PROTO.web&&PROTO.web[0];if(wb)for(const[x,y,z,ry]of[[NX0+8,NSP-6,WYN+4,0],[NX1-8,NSP-6,WYN+4,0],[NX0+8,NSP-6,FBS-4,PI],[NX1-8,NSP-6,FBS-4,PI],[AX0+5,ASP-8,WWY+5,0],[AX1-5,ASP-8,WWY+5,0]]){
+  const M=M4.trs(new Float32Array(16),x,y-34,z,0,ry,0,2,2,2);mbOf([x,y,z]).inst(wb,M)}}
+ // santos nos pilares (o pilar do meio, a oeste, leva o púlpito), lâmpada do sacrário, pias de água benta, via-sacra e tapeçarias
+ {let v=0;for(const z of PIERS){if(z===325)pulpitAt(mbOf,NX0+13,z,1);else saintAt(mbOf,NX0+19,z,1,v++);saintAt(mbOf,NX1-19,z,-1,v++)}}
+ lampAt(mbOf,240,118,188,NAP-4);fontAt(mbOf,VX0-16,FBS);fontAt(mbOf,VX1+16,FBS);
+ {let n=0;for(const z of[140,198,232,300,345,420,452]){stationAt(mbOf,AX0+.5,z,1,n++);stationAt(mbOf,AX1-.5,z,-1,n++)}}
+ tapestryAt(mbOf([78,60,FBS]),78,FBS,-1);tapestryAt(mbOf([402,60,FBS]),402,FBS,-1);
+ const SCN_=[];for(const x of[46,110,370,434])SCN_.push(sconceAt(mbOf,x,52,FBS,-1));
+ // velas pelo chão (as mesmas do 2D)
+ for(const c of(M2.candles||[])){if(c.k)continue;const m=mbOf([c.x,4,c.y]),h=2.5+hs(c.x,c.y,3)*4;m.push().T(c.x,0,c.y).cyl(.9,.9,h,6,'#e8e0cc',.2).pop();m.push().T(c.x+1.6,0,c.y+.8).cyl(.7,.7,h*.6,5,'#ddd4c0',.2).pop();
+  IN.flames.push({x:c.x,y:h+1.2,z:c.y,s:.35,ph:hs(c.x,c.y,4)*6,sm:1})}
+ yield .32;
+ // ---------- luzes ----------
+ const add=(x,y,z,r,c,k,fl,g)=>{const L={x,y,z,r,cr:c[0],cg:c[1],cb:c[2],k,b:k,fl:fl||0,ph:hs(x|0,z|0,9)*999,g:g!==false};IN.L.push(L);return L};
+ const WM=[1,.68,.38];
+ for(const o of(M2.objs||[]))if(o.k==='cand')add(o.x,48,o.y,96,WM,.95,.16);
+ add(220,58,124,70,WM,.8,.2);add(262,58,124,70,WM,.8,.2);
+ for(const z of[232,334,432])add(240,170,z,200,WM,1.05,.06);
+ for(const c of(M2.candles||[]))if(!c.k)add(c.x,6,c.y,34,WM,.55,.22);
+ for(const a of(M2.angelAt||[]))add(a.x,16,WWY+8,52,WM,.6,.2);
+ add(240,42,FBS+20,60,WM,.6,.1);
+ IN.lamp=add(240,119,188,78,[1,.2,.13],.95,.1);for(const q of SCN_)add(q[0],q[1],q[2],74,WM,.62,.16);
+ for(const z of[180,280,380,470])add(240,300,z,165,[.46,.42,.85],.42,0,false);for(const z of[200,330,460])for(const x of[80,400])add(x,150,z,90,[.42,.4,.78],.3,0,false);
+ const CR=[.55,.62,1];for(const x of[NX0+14,NX1-14])for(const z of PIERS){add(x,104,z,76,CR,.75,.05);IN.cry.push({x,y:104,z,ph:hs(x,z,5)*9})}
+ // vitrais: brilho logo na frente de cada um e, para os que pegam a lua, a mancha colorida no chão
+ for(const w of IWIN){const c=glassAvg(w,w.u),p=w.R?wpt(w,w.u,w.cy,10):wpt(w,w.u,(w.v0+w.top)/2,10);add(p[0],p[1],p[2],w.R?(w.R>40?170:110):(w.cl?110:96),c,w.lit?.95:.38,0);IN.glows.push({x:p[0],y:p[1],z:p[2],c,s:w.R?w.R*2.6:w.w*4.5,a:w.lit?.22:.1})}
+ // fachos de luz (vários por vitral, cada um com a cor daquela parte do vidro) e o ponto onde chegam no chão
+ for(const w of IWIN){if(!w.lit)continue;const L=w.L,n=w.R?5:3,half=w.R?w.R*.62:w.w*.62;
+  for(let i=0;i<n;i++){const off=n>1?lerp(-half,half,i/(n-1)):0,u=w.u+off,vm=w.R?w.cy+(i%2?-.25:.15)*w.R:(w.v0+w.top)/2,c=glassAvg(w,u),a=wpt(w,u,vm,-1);
+   let t=a[1]/-L[1];const b=[a[0]+L[0]*t,0,a[2]+L[2]*t];
+   if(b[2]>FBS-2){const s=(FBS-2-a[2])/(b[2]-a[2]);for(let k=0;k<3;k++)b[k]=a[k]+(b[k]-a[k])*s}
+   if(b[0]<AX0+2){const s=(AX0+2-a[0])/(b[0]-a[0]);for(let k=0;k<3;k++)b[k]=a[k]+(b[k]-a[k])*s}
+   IN.shafts.push({a,b,w:(w.R?w.R*.5:w.w*.95),c:satC(c,1.45),al:w.R?.17:w.cl?.2:.25,ph:i*1.3+w.sd,wide:i===(n>>1)})}
+  const cm=w.R?wpt(w,w.u,w.cy,-1):wpt(w,w.u,(w.v0+w.top)/2,-1),t=cm[1]/-L[1],px=cm[0]+L[0]*t,pz=min(FBS-6,cm[2]+L[2]*t);add(px,14,pz,88,satC(glassAvg(w,w.u),1.3),1.05,0,false)}
+ for(let i=0;i<110;i++){const s=IN.shafts[floor(hs(i,1,77)*IN.shafts.length)];if(!s)break;IN.motes.push({s,t:hs(i,2,77),o:(hs(i,3,77)-.5)*s.w*.8,h:(hs(i,4,77)-.5)*s.w*.6,ph:hs(i,5,77)*TAU,sz:.7+hs(i,6,77)*.9})}
+ yield .38;
+ // ---------- chão: o desenho do chão do 2D (capturado do pintor A.inner) e o mapa de luz com os vitrais projetados ----------
+ let PX=null;{const I=A2.Im,cv0=I&&I.prototype.cv;if(cv0&&A2.inner){let last=null;I.prototype.cv=function(){last=this;return cv0.call(this)};try{A2.inner(20261032)}catch(e){console.error('H3 interior 2D',e)}finally{I.prototype.cv=cv0}if(last&&last.w===IW)PX=last.d}}
+ {const N=512,res=new Uint8Array(N*N*4),sx=IW/N,sz=IH/N,K=1.85;
+  for(let v=0;v<N;v++)for(let u=0;u<N;u++){const x=min(IW-1,floor((u+.5)*sx)),z=min(IH-1,floor((v+.5)*sz)),o=(v*N+u)*4;let c=PX?PX[z*IW+x]:0x28241e;if(!PX||(c>>>24)===0)c=0xff2a2320;
+   res[o]=min(255,(c&255)*K+4);res[o+1]=min(255,((c>>>8)&255)*K+3);res[o+2]=min(255,((c>>>16)&255)*K+6);res[o+3]=0}
+  if(IN.ftex)try{gl.deleteTexture(IN.ftex.t)}catch(e){}IN.ftex=H3.texRaw(N,N,res,{mip:true,aniso:true})}
+ yield .44;
+ {const W=512,H=512,sx=IW/W,sz=IH/H,P=new Float32Array(W*H*3),Q=new Float32Array(W*H*3);
+  const floorOk=(x,z)=>(x>=AX0&&x<AX1&&z>=WWY&&z<FBS)||(x>=NX0&&x<NX1&&z>=WYN&&z<FBS)||(x>=VX0&&x<VX1&&z>=FBS&&z<VZ1);
+  const lit=IWIN.filter(w=>w.lit);
+  for(let j=0;j<H;j++){const z=(j+.5)*sz;for(let i=0;i<W;i++){const x=(i+.5)*sx;if(!floorOk(x,z))continue;let r=0,g=0,b=0;
+    for(const w of lit){const L=w.L;let t,u,v;
+     if(w.pl==='N'){t=(z-w.o)/L[2];if(t<=0)continue;u=x-L[0]*t;v=-L[1]*t}else{t=(x-w.o)/L[0];if(t<=0)continue;u=z-L[2]*t;v=-L[1]*t}
+     const c=glassAt(w,u,v);if(!c)continue;const k=w.R?2.9:w.cl?2.5:3.2;r+=c[0]*k;g+=c[1]*k;b+=c[2]*k}
+    const o=(j*W+i)*3;P[o]=r;P[o+1]=g;P[o+2]=b}if((j&63)===63)yield .44+.12*j/H}
+  // borda macia (a lua não é um ponto e a poeira espalha a luz)
+  for(let pass=0;pass<2;pass++){for(let j=1;j<H-1;j++)for(let i=1;i<W-1;i++){const o=(j*W+i)*3;for(let c=0;c<3;c++){Q[o+c]=(P[o+c]*4+P[o+c-3]+P[o+c+3]+P[o+c-W*3]+P[o+c+W*3]+P[o+c-W*3-3]*.5+P[o+c-W*3+3]*.5+P[o+c+W*3-3]*.5+P[o+c+W*3+3]*.5)/10}}P.set(Q)}
+  for(const l of IN.L){if(!l.g)continue;const r=l.r,h=max(1,l.y),x0=max(0,floor((l.x-r)/sx)),x1=min(W-1,ceil((l.x+r)/sx)),z0=max(0,floor((l.z-r)/sz)),z1=min(H-1,ceil((l.z+r)/sz)),r2=r*r,h2=h*h;
+   for(let j=z0;j<=z1;j++){const dz=(j+.5)*sz-l.z;for(let i=x0;i<=x1;i++){const dx=(i+.5)*sx-l.x,d2=dx*dx+dz*dz+h2;if(d2>=r2)continue;let a=1-d2/r2;a*=a;const wv=a*max(0,h/sqrt(d2)*.62+.38)*l.b,o=(j*W+i)*3;P[o]+=l.cr*wv;P[o+1]+=l.cg*wv;P[o+2]+=l.cb*wv}}}
+  const px=new Uint8Array(W*H*4);for(let i=0;i<W*H;i++){px[i*4]=min(255,round(P[i*3]/LMIS*255));px[i*4+1]=min(255,round(P[i*3+1]/LMIS*255));px[i*4+2]=min(255,round(P[i*3+2]/LMIS*255));px[i*4+3]=255}
+  if(IN.lm)try{gl.deleteTexture(IN.lm.t)}catch(e){}IN.lm=H3.texRaw(W,H,px,{mip:true})}
+ yield .6;
+ // malha do chão (programa do terreno: textura + mapa de luz)
+ {const cells=[];const rect=(x0,z0,x1,z1)=>{for(let z=z0;z<z1;z+=32)for(let x=x0;x<x1;x+=32)cells.push([x,z,min(x1,x+32),min(z1,z+32)])};rect(AX0,WYN,AX1,FBS);rect(VX0,FBS,VX1,VZ1);
+  const buf=new ArrayBuffer(cells.length*6*28),f=new Float32Array(buf),u8=new Uint8Array(buf);let v=0;const put=(x,z)=>{const o=v*7;f[o]=x;f[o+1]=0;f[o+2]=z;f[o+3]=0;f[o+4]=1;f[o+5]=0;const b=v*28+24;u8[b]=u8[b+1]=u8[b+2]=u8[b+3]=0;v++};
+  for(const c of cells){put(c[0],c[1]);put(c[0],c[3]);put(c[2],c[3]);put(c[0],c[1]);put(c[2],c[3]);put(c[2],c[1])}
+  IN.floor=H3.upload(gl,{buf,n:v,cx:240,cy:0,cz:330,rad:330,pk:false});IN.floor.ter=true}
+ // sobe as peças
+ for(const m of zones.values()){if(!m.count)continue;const g=m.build(gl);IN.ms.push(g)}
+ for(const g of IN.ms){const o=[];for(const l of IN.L){const d=max(0,hypot(l.x-g.cx,l.y-g.cy,l.z-g.cz)-g.rad*.6);if(d<l.r){const w=1-d/l.r;o.push([w*w*l.b*(l.cr+l.cg+l.cb+.3),l])}}
+  o.sort((a,b)=>b[0]-a[0]);const N=12;g.L=o.length?o.slice(0,N).map(q=>q[1]):null}
+ if(IN.dyn.cry)try{gl.deleteBuffer(IN.dyn.cry.vbo)}catch(e){}
+ {const c=new MB(77,{pk:true});const pts=[[0,7,0],[4,0,0],[0,0,4],[-4,0,0],[0,0,-4],[0,-7,0]],F=[[0,1,2],[0,2,3],[0,3,4],[0,4,1],[5,2,1],[5,3,2],[5,4,3],[5,1,4]];
+  for(const f of F){const cc=f[0]===0?[180,170,255]:[110,96,230];c.raw(pts[f[0]],pts[f[1]],pts[f[2]],[0,1,0],[0,1,0],[0,1,0],cc,cc,cc,.75,.75,.75)}IN.dyn.cry=c.build(gl)}
+ IN.stats={tris:IN.ms.reduce((s,m)=>s+m.n/3,0),meshes:IN.ms.length,lights:IN.L.length,shafts:IN.shafts.length};
+ IN.ready=true}
+
+// ---------- desenho do interior ----------
+function envIn(){H3.env({fog:[.034,.03,.05,.0017],ambT:[.12,.11,.16],ambB:[.045,.04,.06],sun:MOON,sunC:[0,0,0],skyA:[.085,.075,.11],skyB:[.03,.025,.04],gndA:[.035,.03,.04],wind:[.35,.15],gscale:[1/IW,1/IH],detk:1,lmk:LMIS,fogOff:FO,trs:0,detkL:.8,moonL:[0,0,0]});
+ if(H3.makeSkyTex)H3.makeSkyTex();if(IN.ftex)H3.tex.gnd=IN.ftex;H3.tex.lm=IN.lm||null}
+function flickerIn(t){for(const l of IN.L){if(!l.fl)continue;l.k=max(0,l.b*(1+l.fl*(sin(t*.0087+l.ph)*.6+sin(t*.0231+l.ph*1.7)*.4)))}
+ const S=H3.S,C=S.cam,F=S.foc||C,want=max(0,hypot(C.x-F.x,C.y-F.y,C.z-F.z)-26);FO+=(want-FO)*.25;if(abs(FO-want)<.3)FO=want;H3.fogOff(FO)}
+const MTI=new Float32Array(16);
+function drawIn(t,dyn){if(!IN.ready)return;const C=H3.S.cam,nc=H3.S.mode===2?[4,4.02]:[1.5,1.52];
+ H3.mesh(IN.floor,null,null,dyn);
+ for(const m of IN.ms){if(!H3.vis(m.cx,m.cy,m.cz,m.rad))continue;H3.mesh(m,null,m.L,dyn,{nc})}
+ for(const c of IN.cry){M4.trs(MTI,c.x,c.y+sin(t/700+c.ph)*2.5,c.z,0,t/1400+c.ph,0,1,1,1);H3.mesh(IN.dyn.cry,MTI,IN.L,dyn,{eg:1})}}
+function spritesIn(t){const T=H3.tex,C=H3.S.cam;if(!T||!TX||!IN.ready)return;
+ for(const f of IN.flames){const fr=floor(t/90+f.ph*3)%6,uv=[fr*16/96,.5,(fr*16+16)/96,1],s=f.s;H3.spr(T.flame,f.x,f.y-4*s,f.z,9*s,14*s,uv,[1,1,1,1],true,1);
+  if(!f.sm||((f.x+f.z)|0)%3===0)H3.spr(T.glow,f.x,f.y+1,f.z,20*s,20*s,null,[1,.6,.25,.3],true,0,true)}
+ for(const g of IN.glows)H3.spr(T.glow,g.x,g.y,g.z,g.s,g.s,null,[g.c[0],g.c[1],g.c[2],g.a],true,0,true);
+ for(const c of IN.cry)H3.spr(T.glow,c.x,c.y+sin(t/700+c.ph)*2.5,c.z,26,26,null,[.55,.6,1,.55],true,0,true);
+ // fachos de luz dos vitrais e a poeira dançando dentro deles
+ for(const s of IN.shafts){const p=.82+.18*sin(t/2300+s.ph);if(s.wide)H3.strip(TX.shaft,s.b[0],s.b[1],s.b[2],s.a[0],s.a[1],s.a[2],s.w*4.2,[s.c[0],s.c[1],s.c[2],s.al*.42*p],true);H3.strip(TX.shaft,s.b[0],s.b[1],s.b[2],s.a[0],s.a[1],s.a[2],s.w,[s.c[0],s.c[1],s.c[2],s.al*p],true)}
+ if(IN.lamp){const p=.85+.15*sin(t/300);H3.spr(T.glow,240,119,188,22,22,null,[1,.25,.18,.55*p],true,0,true);H3.spr(T.glow,240,119,188,70,70,null,[1,.2,.12,.12*p],true,0,true)}
+ // morcegos voando lá no alto da nave
+ if(T.dot)for(let i=0;i<6;i++){const a=t/3300*(i%2?1:-1)+i*1.7,rx=40+i*9,rz=110+i*14,x=240+cos(a)*rx,z=318+sin(a)*rz,y=262+sin(t/900+i*2)*22+i*7,fl=sin(t/65+i*3)>0?1:.35;
+  H3.spr(T.dot,x,y,z,6.5,2.6*fl+1,null,[.03,.02,.05,.92],false,0,false)}
+ for(const m of IN.motes){const s=m.s,u=(m.t+t*.000018+sin(t/3000+m.ph)*.03)%1,x=lerp(s.a[0],s.b[0],u)+m.o*.6+sin(t/1700+m.ph)*1.5,y=lerp(s.a[1],s.b[1],u)+m.h+sin(t/1300+m.ph*2)*1.2,z=lerp(s.a[2],s.b[2],u)+m.o*.6;
+  const tw=.55+.45*sin(t/400+m.ph*3);H3.spr(T.glow,x,y,z,m.sz*2.4,m.sz*2.4,null,[s.c[0]*.6+.4,s.c[1]*.6+.4,s.c[2]*.6+.4,.55*tw],true,0,true)}}
+function fadeOv(x,t,C,sc){const a=window.HAL&&HAL.trAlpha?HAL.trAlpha():0;if(a>.002){x.fillStyle='rgba(0,0,0,'+min(1,a).toFixed(3)+')';x.fillRect(0,0,9999,9999)}}
+const IOX=2464;
+(H3.scenes=H3.scenes||{}).halIn={id:'halIn',K:1,OX:IOX,OY:0,eye:25,camD:76,p3:-.06,pl:[[-.95,1.05],[-1.0,.7]],amb:[.36,.32,.46],camLight:[.5,.45,.62],iso:false,
+ get fx(){return typeof fight!=='undefined'&&fight?fight.x+8-IOX:0},get fz(){return typeof fight!=='undefined'&&fight?fight.y+14:0},
+ get lights(){return IN.L},
+ active:()=>world===1&&!!window.HAL&&HAL.ready&&HAL.inside&&!!HAL.IM&&!HV.err&&H3.outOK!==false,
+ built:()=>IN.ready&&HV.ready,build:gl=>HV.buildSync(),stepBuild:ms=>H3.scenes.hal.stepBuild(ms),progress:()=>HV.pct,free:()=>HV.free(),
+ env:()=>envIn(),floorY:()=>0,
+ step:o=>{const ok=(x,z)=>!hit(x-8+IOX,z-14);if(ok(o.x,o.z))return;if(ok(o.x,o.oz)){o.z=o.oz;return}if(ok(o.ox,o.z)){o.x=o.ox;return}o.x=o.ox;o.z=o.oz},
+ camOk:pz=>(x,z)=>inRoomI(x,z),camY:(cy,cz)=>clp(cy,4,cz>484?56:300),           // embaixo do órgão e no vestíbulo o teto é baixo
+ enter(){envIn();document.body.classList.add('h3hal')},leave(){envOff();document.body.classList.remove('h3hal')},clear(){},
+ boss:()=>null,isTgt:e=>!!e,tgt:e=>e?[e.x+8-IOX,16,e.y+14,30,0]:null,bossPlan:()=>null,
+ flicker:flickerIn,draw:drawIn,sprites:spritesIn,frameFx:()=>{},shake:()=>null,flash:()=>0,fbPos:()=>null,overlayExtra:fadeOv};
 
 // ============================================================ desenho de cada quadro ============================================================
 const MT=new Float32Array(16),FCAP=[.74,.0115,.55];
@@ -13442,10 +14005,10 @@ const MT=new Float32Array(16),FCAP=[.74,.0115,.55];
 const NC1={o:[2,2.02],v:[2,2.02],t:[3,3.02],g:[1.5,1.52]},NC3={o:[5,5.02],v:[5,5.02],t:[11,11.02],g:[3,3.02]};let NC=NC3;          // catedral: no máximo 74% de névoa (silhueta), vitrais acesos atravessam mais
 const VEGL=[{grass:0,bush:0,R:0,dens:0},{grass:1,bush:1,R:110,dens:.6},{grass:1,bush:1,R:150,dens:1},{grass:1,bush:1,R:205,dens:1.35}];
 const vegNow=()=>{const G=H3.G3||{};return VEGL[G.veg===undefined?2:clp(G.veg|0,0,3)]};
-let FO=0,frameN=0;
+let FO=0,frameN=0,FDK=1;
 const drawR=()=>FO+205;          // além de ~200 a névoa já cobriu 99%
 // névoa do cartaz na distância d (igual ao shader) e o fator que deixa um brilho atravessar a névoa (halo dos postes)
-const fogF=(d,k)=>{const q=max(0,d-FO)*FOGD*(k||1);return 1-Math.exp(-q*q)};
+const fogF=(d,k)=>{const q=max(0,d-FO)*FOGD*FDK*(k||1);return 1-Math.exp(-q*q)};
 const fogComp=(d,k,cap)=>min(cap||40,(1-fogF(d,k))/max(1e-4,1-fogF(d)));
 function treeLod(d){return d<72?0:d<142?1:2}
 function draw(t,dyn){const C=H3.S.cam,L=HV.lights,R=drawR(),V=vegNow();frameN++;NC=H3.S.mode===2?NC3:NC1;const DS=HV.ds={n:0,tri:0,c:{}},cnt=(m,k)=>{DS.n++;DS.tri+=m.n/3;if(k)DS.c[k]=(DS.c[k]||0)+1};
@@ -13466,7 +14029,7 @@ function draw(t,dyn){const C=H3.S.cam,L=HV.lights,R=drawR(),V=vegNow();frameN++;
  // capim (some em pontinhos na borda)
  if(V.grass){const gr=V.R;for(const c of HV.grass.values()){const m=c.m;if(!m||!vis(m,FO+gr+40))continue;H3.mesh(m,null,c.L,dyn,{tr:.4,nc:NC.g});cnt(m,'g')}}
  // catedral (silhueta enorme na névoa)
- for(const m of HV.cath){if(!H3.vis(m.cx,m.cy,m.cz,m.rad))continue;H3.mesh(m,null,L,dyn,{fc:FCAP});cnt(m,'c')}
+ for(const m of HV.cath){if(!H3.vis(m.cx,m.cy,m.cz,m.rad))continue;H3.mesh(m,null,m.L,dyn,{fc:FCAP});cnt(m,'c')}
  // ponteiros: relógios da catedral e da torre (hora do aparelho)
  {const d=new Date(),mi=d.getMinutes()+d.getSeconds()/60,hh=(d.getHours()%12)+mi/60;
   for(const s of[-1,1]){const x=CX+s*160,z=FZ+1.2;M4.trs(MT,x,128,z,0,0,-hh/12*TAU,1,1,1);H3.mesh(HV.dyn.hour,MT,L,dyn,{fc:FCAP,eg:1});M4.trs(MT,x,128,z+.2,0,0,-mi/60*TAU,1,1,1);H3.mesh(HV.dyn.min,MT,L,dyn,{fc:FCAP,eg:1})}
@@ -13477,7 +14040,9 @@ function draw(t,dyn){const C=H3.S.cam,L=HV.lights,R=drawR(),V=vegNow();frameN++;
 // luzes que tremem (a mesma conta do 2D) e a névoa que começa atrás do personagem na 3ª pessoa
 let shKey='';
 function flicker(t){for(const l of HV.lights){if(!l.fl)continue;l.k=max(0,l.b*(1+l.fl*(sin(t*.0087+l.ph)*.6+sin(t*.0231+l.ph*1.7)*.4)))}
- const S=H3.S,C=S.cam,F=S.foc||C;const want=S.mode===2?max(0,hypot(C.x-F.x,C.y-F.y,C.z-F.z)-14):0;FO+=(want-FO)*.25;if(abs(FO-want)<.3)FO=want;H3.fogOff(FO);
+ const S=H3.S,C=S.cam,F=S.foc||C;const want=max(0,hypot(C.x-F.x,C.y-F.y,C.z-F.z)-26);FO+=(want-FO)*.25;if(abs(FO-want)<.3)FO=want;H3.fogOff(FO);
+ // câmera lá no alto (subindo para a vista do 2D ou descendo dela): a névoa abre aos poucos, como no desenho 2D
+ {const hy=max(0,C.y-(F.y||0)),fk=clp(1-(hy-110)/115,0,1);HV.fk=fk;FDK=.1+.9*fk;const fv=H3.fogv&&H3.fogv();if(fv&&!C.iso)fv[3]=FOGD*FDK}
  // sombras da lua: a névoa fecha em ~200, então a área do mapa de sombras fica menor (mais nítida)
  try{const g=H3.gfx&&H3.gfx.cur();if(g){const k=g.sh+','+(g.res||0)+','+(g.ext||0);if(k!==shKey){shKey=k;if(g.sh){const ext=min(g.ext||170,235);H3.shadowCfg({on:g.sh,res:g.res||1024,ext,f0:min(g.f0||120,ext-38),f1:min(g.f1||160,ext-6)})}}}}catch(e){}}
 // capim: faz as células que faltam (as mais perto primeiro, ~3 ms por quadro) e joga fora as longe
@@ -13531,30 +14096,31 @@ function sprites(t){const T=H3.tex,C=H3.S.cam,F=H3.S.foc||C;if(!T||!TX)return;
   H3.spr(T.dot,x,y,z,7,3*fl+1,null,[.02,.02,.04,.9],false,0,false)}
  const fc=[FOGC[0]*1.55,FOGC[1]*1.55,FOGC[2]*1.5];
  // bancos de névoa (de pé, virados para a câmera)
- for(const b of BANKS){const d=d2c(b.x,b.z),fi=min(1,b.age/4,(b.life-b.age)/4),near=sm(18,60,d);if(fi<=0||near<=0)continue;H3.spr(TX.bank,b.x,hAt(b.x,b.z)+b.y,b.z,b.w,b.h,null,[fc[0],fc[1],fc[2],b.a*fi*near],false,0,false)}
+ const FK=HV.fk===undefined?1:HV.fk;
+ for(const b of BANKS){const d=d2c(b.x,b.z),fi=min(1,b.age/4,(b.life-b.age)/4)*FK,near=sm(18,60,d);if(fi<=0||near<=0)continue;H3.spr(TX.bank,b.x,hAt(b.x,b.z)+b.y,b.z,b.w,b.h,null,[fc[0],fc[1],fc[2],b.a*fi*near],false,0,false)}
  // neblina rasteira: camadas até a cintura do personagem, que andam com o vento
  const fx=F.x,fz=F.z,G=64,RR=min(210,FO+190),wx=t*.004,wz=t*.0022;
- for(let li=0;li<4;li++){const y=1.5+li*3.4,al=.085-li*.013,ox=(wx*(1+li*.25))%G,oz=(wz*(1+li*.2))%G;
+ if(FK>.02)for(let li=0;li<4;li++){const y=1.5+li*3.4,al=(.085-li*.013)*FK,ox=(wx*(1+li*.25))%G,oz=(wz*(1+li*.2))%G;
   const i0=floor((fx-RR)/G),i1=floor((fx+RR)/G),j0=floor((fz-RR)/G),j1=floor((fz+RR)/G);
   for(let j=j0;j<=j1;j++)for(let i=i0;i<=i1;i++){const x=i*G+ox+(li%2)*G*.5,z=j*G+oz+(li%2)*G*.5,dx=x-fx,dz=z-fz;if(dx*dx+dz*dz>RR*RR)continue;
    H3.flat(TX.fog,x,hAt(x,z)+y,z,G*1.9,G*1.9,null,[fc[0],fc[1],fc[2],al],false,hs(i,j,li)*TAU)}}
  // "saia" de névoa na frente de cada personagem: a neblina cobre as pernas
  const L=window.H3C?H3C.list:[];for(const A of L){if(A.h3d)continue;let vx=C.x-A.x,vz=C.z-A.z;const vl=hypot(vx,vz)||1;vx/=vl;vz/=vl;
-  H3.spr(TX.skirt,A.x+vx*3,A.y,A.z+vz*3,36,16,null,[fc[0],fc[1],fc[2],.3],false,1)}}
+  if(FK>.02)H3.spr(TX.skirt,A.x+vx*3,A.y,A.z+vz*3,36,16,null,[fc[0],fc[1],fc[2],.3*FK],false,1)}}
 function hsl(h){const f=(n,k=(n+h/30)%12)=>.5-.5*max(-1,min(k-3,9-k,1));return[f(0),f(8),f(4)]}
 
 // ============================================================ a cena ============================================================
 const SCN=H3.scenes=H3.scenes||{};
 const camBlk=(x,z)=>{const g=HV.cb;if(!g)return false;const i=x>>3,j=z>>3;return i>=0&&j>=0&&i<HV.cbW&&j<HV.cbH&&g[j*HV.cbW+i]===1};
 const blockedCam=(x,z)=>x<4||z<4||x>MW-4||z>MH-4||(x>CX-220&&x<CX+220&&z<FZ-2&&!(abs(x-CX)<36&&z>FZ-38));
-function envOn(){H3.env({fog:FOG,ambT:AMB_T,ambB:AMB_B,sun:MOON,sunC:MOONC,skyA:SKYA,skyB:SKYB,gndA:GNDA,wind:WIND,gscale:GSC,detk:1,lmk:LMS*1.2,fogOff:FO,trs:.75});
+function envOn(){H3.env({fog:FOG,ambT:AMB_T,ambB:AMB_B,sun:MOON,sunC:MOONC,skyA:SKYA,skyB:SKYB,gndA:GNDA,wind:WIND,gscale:GSC,detk:1,lmk:LMS*1.2,fogOff:FO,trs:.75,detkL:.9,moonD:MOON,moonL:[MOONC[0]*.42,MOONC[1]*.42,MOONC[2]*.42]});
  if(H3.makeSkyTex)H3.makeSkyTex();if(HV.gtex)H3.tex.gnd=HV.gtex;H3.tex.lm=HV.lmtex||null}
-function envOff(){H3.env({gscale:GSC_FLD,detk:0,lmk:0,fogOff:0,trs:0});if(H3.fogOff)H3.fogOff(0);H3.tex.lm=null;const f=H3.fld;if(f&&f.gtex)H3.tex.gnd=f.gtex;FO=0;shKey=''}
+function envOff(){H3.env({gscale:GSC_FLD,detk:0,lmk:0,fogOff:0,trs:0,detkL:0,moonL:[0,0,0]});if(H3.fogOff)H3.fogOff(0);H3.tex.lm=null;const f=H3.fld;if(f&&f.gtex)H3.tex.gnd=f.gtex;FO=0;shKey=''}
 {const st=document.createElement('style');st.textContent='body.h3hal #h3ov{background:radial-gradient(ellipse at 50% 46%,rgba(0,0,0,0) 50%,rgba(10,6,20,.38) 80%,rgba(6,3,12,.66) 100%)}';document.head.appendChild(st)}
 SCN.hal={id:'hal',K:1,OX:0,OY:0,eye:25,camD:88,p3:-.16,pl:[[-.95,.9],[-1.0,.45]],amb:[.4,.32,.54],camLight:[.55,.52,.68],iso:false,
  get fx(){return typeof fight!=='undefined'&&fight?fight.x+8:0},get fz(){return typeof fight!=='undefined'&&fight?fight.y+14:0},
  get lights(){return HV.lights},
- active:()=>world===1&&!!window.HAL&&HAL.ready&&!HAL.inside&&!HAL.tr&&!HV.err&&H3.outOK!==false,
+ active:()=>world===1&&!!window.HAL&&HAL.ready&&!HAL.inside&&!HV.err&&H3.outOK!==false,      // (fica no 3D durante a passagem pela porta: a tela escurece e abre lá dentro)
  built:()=>HV.ready,
  build:gl=>HV.buildSync(),
  stepBuild:ms=>{try{return HV.step(max(ms,14))}catch(e){console.error('H3 hal',e);HV.err=true;return true}},progress:()=>HV.pct,
@@ -13568,7 +14134,7 @@ SCN.hal={id:'hal',K:1,OX:0,OY:0,eye:25,camD:88,p3:-.16,pl:[[-.95,.9],[-1.0,.45]]
  leave(){envOff();document.body.classList.remove('h3hal')},
  clear(){},
  boss:()=>null,isTgt:e=>!!e,tgt:e=>e?[e.x+8,hAt(e.x+8,e.y+14)+16,e.y+14,30,hAt(e.x+8,e.y+14)]:null,bossPlan:()=>null,
- flicker,draw,sprites,frameFx,shadow,shake:()=>null,flash:()=>0,
+ flicker,draw,sprites,frameFx,shadow,shake:()=>null,flash:()=>0,overlayExtra:(x,t,C,sc)=>fadeOv(x,t,C,sc),
  fbPos:id=>{const T=16;const at=(x,z,h)=>[x,hAt(x,z)+h,z];if(id==='spinBtn')return at(SX*T+8,SY*T+14,40);if(id==='pasBtn')return at(TOX*T+8,TOY*T+14,30);if(id==='talkBtn')return at(NPC.x+8,NPC.y+14,36);if(id==='gateBtn')return at(GX*T+8,GY*T+14,50);return null}};
 // o campo do primeiro mundo volta com o chão dele (escala, textura) mesmo se a troca de cena pular o leave()
 if(SCN.field&&SCN.field.env){const _e=SCN.field.env;SCN.field.env=function(){try{envOff()}catch(e){}return _e.apply(this,arguments)}}
