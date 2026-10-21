@@ -548,7 +548,7 @@ applyRS();
 let map=[];
 for(let y=0;y<H;y++){map[y]=[];for(let x=0;x<W;x++)map[y][x]=0}
 const SX1=18,SY1=99,TOX1=8,TOY1=99,GX1=13,GY1=95;   // Halloween (mapa novo, 148x112): roleta, totem e portal ficam no cemitério da chegada (canto inferior esquerdo)
-const SX0=29,SY0=22,TOX0=31,TOY0=24,GX0=32,GY0=28,NX0=29,NY0=28;
+const SX0=29,SY0=22,TOX0=31,TOY0=24,GX0=50,GY0=20,NX0=29,NY0=28;   // portal: no campo aberto ao norte da estrada do leste, depois da ponte
 let SX=SX0,SY=SY0,TOX=TOX0,TOY=TOY0,GX=GX0,GY=GY0;
 map[SY][SX]=4;map[TOY][TOX]=5;map[GY][GX]=6;
 const BG=new Image();let BGOK=false;BG.onload=()=>{BGOK=true};BG.src='data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEAAAAALAAAAAABAAEAAAIBAAA=';
@@ -3482,7 +3482,7 @@ drawActors=function(f){if(world!==0)return _daV6(f);if(!MAPOK){loadScreen();retu
 {const _gw=goWorld;goWorld=function(n){const was=world;_gw(n);if(was===0&&world!==0){dmH.style.display='none'}}}
 // ----- ponte para o modo 3D do salão (js/22..26-h3-*.js): só mostra o que é local deste arquivo -----
 window.H3X={inRoom:()=>inRoom(),boss:()=>BOSS(),DM,SK,skOf,wb:()=>WB,DS,ICE,ICEJ,DRG,wbMax:WBMAX,
- w3:()=>W3,mapOk:()=>MAPOK&&!!W3,corr,ringQ,onBridge,GT,PD,TW,DZ,TWS,GTS,MW,MH,MCX,MCY,DY};   // wb/DS/ICE/DRG: o boss mundial (Caverna de Gelo) para js/27-h3-ice.js e js/28-h3-dragon.js
+ w3:()=>W3,mc:()=>MC,mapOk:()=>MAPOK&&!!W3,corr,ringQ,onBridge,GT,PD,TW,DZ,TWS,GTS,MW,MH,MCX,MCY,DY};   // wb/DS/ICE/DRG: o boss mundial (Caverna de Gelo) para js/27-h3-ice.js e js/28-h3-dragon.js
 window.__gen=true;mcStart();{const gi=setInterval(()=>{if(genStep(12))clearInterval(gi)},24)}
 
 })();
@@ -12093,7 +12093,7 @@ SCE.build=function*(gl){
  // chafariz
  {const x=488,z=290,y=baseY(x,z,20)-.4;addSt(mesh(fountainMB()),mat(x,y,z,0),{far:1100,k:'fnt'});SCE.fnt={x,y,z}}
  // portal
- {const x=520,z=460,y=baseY(x,z,14)-.3;addSt(mesh(portalMB()),mat(x,y,z,0),{far:1000,k:'gate'});SCE.portal={x,y,z,lock:mesh(lockMB())}}
+ {const x=GX0*16+8,z=GY0*16+12,y=baseY(x,z,22)-.3;addSt(mesh(portalMB()),mat(x,y,z,0),{far:1000,k:'gate'});SCE.portal={x,y,z,lock:mesh(lockMB())}}
  yield .25;
  // torre e estacas
  {const y=hAt(TWX,TWZ+TWR)-1;addSt(mesh(towerMB()),mat(TWX,y,TWZ,0),{far:2400,k:'tower'});SCE.tower={x:TWX,y,z:TWZ,top:y+3.8+Math.round(TWH/6.4)*6.4}}
