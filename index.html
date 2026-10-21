@@ -7346,29 +7346,92 @@ function applyLights(amb,list,glowK,t){
 function facadeBloom(t){const ob=HAL.cathOb;if(!HAL.bloomF||!ob||!ob.s)return;const s=ob.s,x=Math.round(ob.x-s.ax-cam.x),y=Math.round(ob.y-s.ay-cam.y);if(x>VW||y>VH||x+s.w<0||y+s.h<0)return;
  g.globalCompositeOperation='lighter';g.globalAlpha=.5+.06*Math.sin(t*.003);g.drawImage(HAL.bloomF,x,y);g.globalAlpha=1;g.globalCompositeOperation='source-over'}
 function outside(t){
- const list=visibleLights(t);
- applyLights(NIGHT.amb,list,NIGHT.glow,t);facadeBloom(t);
- fog(t);fireflies(t);spirits(t);bats(t);
- g.fillStyle=NIGHT.haze;g.fillRect(0,0,VW,VH);g.drawImage(vignette(NIGHT.vig,'o'),0,0)}
+ const list=visibleLights(t),k=STORM.k(t);
+ applyLights(k>.004?mixC([126,102,192],[226,228,255],Math.min(1,k*.95)):NIGHT.amb,list,NIGHT.glow,t);facadeBloom(t);
+ fog(t);rain2d(t,k);fireflies(t);spirits(t);bats(t);
+ g.fillStyle=NIGHT.haze;g.fillRect(0,0,VW,VH);
+ if(k>.004){g.globalCompositeOperation='lighter';g.fillStyle='rgba(120,130,255,'+(k*.16).toFixed(3)+')';g.fillRect(0,0,VW,VH);g.globalCompositeOperation='source-over';g.globalAlpha=1-Math.min(.7,k*.8)}
+ g.drawImage(vignette(NIGHT.vig,'o'),0,0);g.globalAlpha=1}
+
+// ---------- chuva fina e tempestade (a mesma para o 2D e o 3D) ----------
+// De vez em quando cai um relâmpago: 2 a 4 piscadas e um clarão que demora um pouco a apagar. O trovão chega depois:
+// relâmpago perto = estalo seco quase junto, longe = só o ronco grave, mais tarde. A chuva tem um chiado baixinho no volume "Efeitos".
+const STORM=HAL.storm={ev:null,next:0,seq:0};
+function newStrike(t){const r=Math.random,dist=r()<.28?r()*.35:.35+r()*.65,fl=[[0,70,1]],n=1+Math.floor(r()*3);let o=0;
+ for(let i=0;i<n;i++){o+=70+r()*130;fl.push([o,50+r()*90,.45+r()*.5])}
+ o+=50+r()*90;fl.push([o,300+r()*240,.22+r()*.2]);
+ STORM.ev={t0:t,dist,fl,amp:1-dist*.6,seed:(r()*1e9)|0,id:++STORM.seq,snd:false,side:r()<.5?-1:1,off:r()}}
+const fenv=(u,d)=>u<0||u>d?0:u<14?u/14:Math.exp(-(u-14)/(d*.33));
+// quanto o céu está clareando agora (0..1)
+STORM.k=function(t){const e=STORM.ev;if(!e)return 0;const dt=t-e.t0;if(dt<0||dt>2200)return 0;let k=0;for(const[o,d,a]of e.fl)k=Math.max(k,a*fenv(dt-o,d));return k*e.amp};
+// o risco do raio só aparece nas piscadas fortes (não no clarão do fim)
+STORM.bolt=function(t){const e=STORM.ev;if(!e)return 0;const dt=t-e.t0;let k=0;for(let i=0;i<e.fl.length-1;i++){const[o,d,a]=e.fl[i];if(a<.4)continue;k=Math.max(k,a*fenv(dt-o,d*.75))}return k};
+STORM.tick=function(t){
+ if(!STORM.next)STORM.next=t+4000+Math.random()*5000;
+ if(t>STORM.next){newStrike(t);STORM.next=t+11000+Math.random()*17000}
+ const e=STORM.ev;if(e&&!e.snd){e.snd=true;thunder(e)}if(e&&t-e.t0>3000)STORM.ev=null;
+ rainSound(t)};
+// trovão: estalo (perto) + três ou quatro "rolos" de ruído grave que vão sumindo; dentro da catedral fica abafado
+function thunder(e){const a=typeof AC!=='undefined'?AC:null;if(!a||a.state!=='running'||typeof nzBuf!=='function'||typeof vBus!=='function')return;
+ try{const out=vBus('fx')||a.destination,ins=HAL.inside,d=e.dist,t0=a.currentTime+.1+d*2.2,vol=(.62-d*.34)*(ins?.7:1),N=nzBuf(a);
+  if(d<.4){const s=a.createBufferSource(),f=a.createBiquadFilter(),q=a.createGain();s.buffer=N;f.type=ins?'lowpass':'highpass';f.frequency.value=ins?700:800;
+   q.gain.setValueAtTime(.0001,t0);q.gain.linearRampToValueAtTime(vol*(ins?.5:.85),t0+.005);q.gain.exponentialRampToValueAtTime(.0001,t0+.38);s.connect(f);f.connect(q);q.connect(out);s.start(t0,Math.random()*1.4);s.stop(t0+.45)}
+  const n=3+(Math.random()*2|0);let o=d<.4?.03:0;
+  for(let i=0;i<n;i++){const s=a.createBufferSource(),f=a.createBiquadFilter(),q=a.createGain(),st=t0+o,dur=1.3+Math.random()*1.5+d*1.3,pk=vol*(i===0?1:.5+Math.random()*.45),f0=(ins?240:560)*(1-d*.4)+Math.random()*140;
+   s.buffer=N;s.loop=true;f.type='lowpass';f.Q.value=.8;f.frequency.setValueAtTime(f0,st);f.frequency.exponentialRampToValueAtTime(Math.max(45,f0*.16),st+dur);
+   q.gain.setValueAtTime(.0001,st);q.gain.linearRampToValueAtTime(pk,st+.04+d*.3);q.gain.exponentialRampToValueAtTime(.0001,st+dur);
+   s.connect(f);f.connect(q);q.connect(out);s.start(st,Math.random()*1.5);s.stop(st+dur+.1);o+=.22+Math.random()*.55}}catch(x){}}
+// chiado da chuva (dois ruídos filtrados em laço); some sozinho quando sai do mapa de Halloween
+let RN=null,RNt=0;
+function rainSound(t){RNt=Date.now();const a=typeof AC!=='undefined'?AC:null;if(!a||a.state!=='running'||typeof nzBuf!=='function'||typeof vBus!=='function')return;
+ try{if(!RN||RN.a!==a){const N=nzBuf(a),m=a.createGain();m.gain.value=0;m.connect(vBus('fx')||a.destination);
+   const s1=a.createBufferSource(),h=a.createBiquadFilter(),l=a.createBiquadFilter(),g1=a.createGain();s1.buffer=N;s1.loop=true;h.type='highpass';h.frequency.value=1200;l.type='lowpass';l.frequency.value=6800;g1.gain.value=.07;
+   s1.connect(h);h.connect(l);l.connect(g1);g1.connect(m);
+   const s2=a.createBufferSource(),b=a.createBiquadFilter(),g2=a.createGain();s2.buffer=N;s2.loop=true;b.type='bandpass';b.frequency.value=420;b.Q.value=.7;g2.gain.value=.035;s2.connect(b);b.connect(g2);g2.connect(m);
+   s1.start(0,.3);s2.start(0,1.1);RN={a,m,h,l,tg:-1,ins:null};
+   if(!RN.wd)RN.wd=setInterval(()=>{if(!RN||RN.a.state!=='running')return;if(Date.now()-RNt>700&&RN.tg!==0){RN.tg=0;RN.m.gain.setTargetAtTime(0,RN.a.currentTime,.35)}},400)}
+  const ins=!!HAL.inside,tg=ins?.55:1;
+  if(RN.ins!==ins){RN.ins=ins;const c=a.currentTime;RN.l.frequency.setTargetAtTime(ins?650:6800,c,.2);RN.h.frequency.setTargetAtTime(ins?160:1200,c,.2)}
+  if(RN.tg!==tg){RN.tg=tg;RN.m.gain.setTargetAtTime(tg,a.currentTime,.5)}}catch(x){}}
+// cor do ambiente clareando (mistura com o branco azulado do relâmpago)
+const mixC=(c,to,k)=>'rgb('+Math.round(c[0]+(to[0]-c[0])*k)+','+Math.round(c[1]+(to[1]-c[1])*k)+','+Math.round(c[2]+(to[2]-c[2])*k)+')';
+// chuva no 2D: riscos finos caindo tortos (vento), presos ao mundo (andar não arrasta a chuva junto), e respingos no chão (maiores na água)
+const RSP=[];let rsT=0;
+function rain2d(t,k){const W2=VW+40,H2=VH+70,M=HAL.M;g.lineWidth=1;g.lineCap='butt';
+ for(const[ly,cnt,len,sp,al,px]of[[0,56,5,170,.17,.94],[1,40,8,250,.26,1.06]]){
+  g.strokeStyle='rgba(206,198,255,'+Math.min(.85,al*(1+k*1.8)).toFixed(3)+')';g.beginPath();
+  for(let i=0;i<cnt;i++){const s=sp*(.85+hs(i,ly*7+3,33)*.3),y=((hs(i,ly*7+2,32)*H2+t*s/1000-cam.y*px)%H2+H2)%H2-36,x=((hs(i,ly*7+1,31)*W2+y*.2-cam.x*px)%W2+W2)%W2-20;
+   g.moveTo(x,y);g.lineTo(x+len*.2,y+len)}
+  g.stroke()}
+ const dt=rsT?Math.min(100,t-rsT):16;rsT=t;let nw=dt*.03;
+ while(nw>0){if(Math.random()<nw){const x=cam.x+Math.random()*VW,y=cam.y+Math.random()*VH,ti=M&&M.ter?M.ter[((y/T)|0)*M.W+((x/T)|0)]:0;RSP.push({x,y,t0:t,w:ti===7})}nw-=1}
+ g.strokeStyle='rgba(214,206,255,.5)';
+ for(let i=RSP.length-1;i>=0;i--){const p=RSP[i],l=p.w?680:300,q=(t-p.t0)/l;if(q>=1){RSP.splice(i,1);continue}const X=p.x-cam.x,Y=p.y-cam.y,r=p.w?1.5+q*6:.8+q*3;
+  g.globalAlpha=(1-q)*(p.w?.55:.6);g.beginPath();g.ellipse(X,Y,r,r*.45,0,0,6.283);g.stroke();
+  if(p.w&&q>.25){const r2=(q-.25)*5;g.globalAlpha=(1-q)*.35;g.beginPath();g.ellipse(X,Y,r2,r2*.45,0,0,6.283);g.stroke()}
+  else if(!p.w&&q<.45){g.globalAlpha=(1-q/.45)*.55;g.fillStyle='#d8d0ff';g.fillRect(Math.round(X-1-q*4),Math.round(Y-2-q*5),1,1);g.fillRect(Math.round(X+1+q*4),Math.round(Y-2-q*4),1,1)}}
+ g.globalAlpha=1}
 const IL=[];
 function inside(t){const m=HAL.IM;if(!m)return;IL.length=0;const ix=HAL.IX0,iy=HAL.IY0;
  const push=(x,y,r,c,a,fl,ph)=>{let aa=a;if(fl)aa*=1+fl*(Math.sin(t*.0087+ph)*.6+Math.sin(t*.0231+ph*1.7)*.4);IL.push({x:ix+x,y:iy+y,r,c},aa)};
  for(const l of m.lights)push(l.x,l.y,l.r*(l.c==='vi'?1.6:1),l.c,l.a==null?.9:l.a,l.c==='cr'?.15:0,l.x);
  // piscinas de luz roxa do céu no piso, embaixo de cada vitral, e no corredor
- for(const w of m.wins){if(w.k==='lan'){push(w.x+22,m.WY+46,98,'vi',.5,.03,w.x);push(w.x,m.WY+12,60,'vi',.5,.03,w.x)}}
+ const sk=STORM.k(t)*.85;
+ for(const w of m.wins){if(w.k==='lan'){push(w.x+22,m.WY+46,98,'vi',.5,.03,w.x);push(w.x,m.WY+12,60,'vi',.5,.03,w.x);if(sk>.01){push(w.x+34,m.WY+70,140,'cr',sk*1.5,0,0);push(w.x,m.WY+16,72,'cr',sk*1.3,0,0)}}}
  push(240,236,150,'vi',.32,.02,5);push(240,m.WY+22,110,'vi',.5,.03,9);
  for(const c of m.candles){if(c.k)push(c.x,c.y,46,'wm',.8,.3,c.x*3+c.y);else push(c.x,c.y,20,'wm',.55,.35,c.x*3+c.y)}
  if(HAL.dynLights)HAL.dynLights(IL,t);
- applyLights(CAVE.amb,IL,.34,t);
- if(HAL.bloomI){g.globalCompositeOperation='lighter';g.globalAlpha=.7+.05*Math.sin(t*.0025);g.drawImage(HAL.bloomI,Math.round(HAL.IX0-cam.x),Math.round(HAL.IY0-cam.y));g.globalAlpha=1;g.globalCompositeOperation='source-over'}
- shafts(t);dust(t);g.drawImage(vignette(CAVE.vig,'i'),0,0)}
+ applyLights(sk>.004?mixC([124,126,150],[186,192,240],Math.min(1,sk*.95)):CAVE.amb,IL,.34,t);
+ if(HAL.bloomI){g.globalCompositeOperation='lighter';const ba=.7+.05*Math.sin(t*.0025)+sk*1.6;for(let q=ba;q>.004;q-=1){g.globalAlpha=Math.min(1,q);g.drawImage(HAL.bloomI,Math.round(HAL.IX0-cam.x),Math.round(HAL.IY0-cam.y))}g.globalAlpha=1;g.globalCompositeOperation='source-over'}
+ shafts(t);dust(t);if(sk>.004){g.globalCompositeOperation='lighter';g.fillStyle='rgba(110,120,255,'+(sk*.1).toFixed(3)+')';g.fillRect(0,0,VW,VH);g.globalCompositeOperation='source-over'}g.drawImage(vignette(CAVE.vig,'i'),0,0)}
 function banner(t){const z=HAL.zone,tx=ZN[z];if(!tx||!HAL.zt)return;const el=t-HAL.zt;if(el>3800)return;const a=Math.max(0,Math.min(1,el/450,(3800-el)/800));
  g.save();g.globalAlpha=a;g.font='bold 10px monospace';g.textAlign='center';g.textBaseline='top';const y=26,w=g.measureText(tx).width;
  g.fillStyle='rgba(8,4,24,.55)';g.fillRect(Math.round(VW/2-w/2-10),y-3,Math.round(w+20),15);
  g.fillStyle='#000';g.fillText(tx,VW/2+1,y+1);g.fillStyle='#e6dcff';g.fillText(tx,VW/2,y);
  g.fillStyle='#8a6cf0';g.fillRect(Math.round(VW/2-w/2-10),y-3,Math.round(w+20),1);g.fillRect(Math.round(VW/2-w/2-10),y+11,Math.round(w+20),1);g.restore();g.textAlign='left';g.textBaseline='top'}
 HAL.night=function(f,t){
- if(!HAL.ready)return;t=Date.now();
+ if(!HAL.ready)return;t=Date.now();STORM.tick(t);
+ if(window.H3C&&H3C.on)return;
  if(HAL.inside)inside(t);else outside(t);
  if(HAL.showMask)HAL.drawMask();
  banner(t);
@@ -8796,7 +8859,7 @@ precision highp float;
 precision mediump float;
 #endif
 varying vec2 vT;varying vec4 vC;varying float vD;uniform sampler2D uTex;uniform vec4 uFog;uniform float uAdd;uniform float uFO;
-void main(){vec4 t=texture2D(uTex,vT);float a=t.a*vC.a;if(a<0.02)discard;vec3 c=t.rgb*vC.rgb;float dF=max(vD-uFO,0.0);float f=1.0-exp(-dF*dF*uFog.a*uFog.a);
+void main(){vec4 t=texture2D(uTex,vT);float nf=vC.a<0.0?1.0:0.0;float a=t.a*abs(vC.a);if(a<0.02)discard;vec3 c=t.rgb*vC.rgb;float dF=max(vD-uFO,0.0);float f=(1.0-exp(-dF*dF*uFog.a*uFog.a))*(1.0-nf);
  if(uAdd>0.5){c*=a*(1.0-f);gl_FragColor=vec4(c,1.0);}else{c=mix(c,uFog.rgb,f);gl_FragColor=vec4(c,a);}}`;
 
 // ---------- ao ar livre (js/31-h3-field.js): sol + céu, vento nas folhas, água, sombras de nuvem, névoa ----------
@@ -13592,6 +13655,10 @@ function mkTex(){const mk=(w,h,fn)=>{const c=document.createElement('canvas');c.
   rune:(()=>{const s=window.HAL&&HAL.SPR&&HAL.SPR.hub;try{return s&&s.c?H3.texNew(s.c,true):null}catch(e){return null}})(),
   shaft:mk(32,128,(x,w,h)=>{for(let y=0;y<h;y++){const t=y/(h-1),a=(1-t)*.75+.18+(t>.9?(t-.9)*2.4:0);const g=x.createLinearGradient(0,0,w,0);g.addColorStop(0,'rgba(255,255,255,0)');g.addColorStop(.3,'rgba(255,255,255,'+(a*.55).toFixed(3)+')');g.addColorStop(.5,'rgba(255,255,255,'+a.toFixed(3)+')');g.addColorStop(.7,'rgba(255,255,255,'+(a*.55).toFixed(3)+')');g.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=g;x.fillRect(0,y,w,1)}
    const r=rng(5);x.globalCompositeOperation='destination-out';for(let i=0;i<10;i++){const xx=r()*w;x.fillStyle='rgba(0,0,0,'+(.15+r()*.25).toFixed(2)+')';x.fillRect(xx,0,1+r()*2,h)}}),
+  // gota de chuva (risco com a ponta de baixo mais forte), anel de respingo e o risco do relâmpago
+  rain:mk(8,64,(x,w,h)=>{for(let y=0;y<h;y++){const t=y/(h-1),a=Math.pow(t,1.7)*.95;const g=x.createLinearGradient(0,0,w,0);g.addColorStop(0,'rgba(255,255,255,0)');g.addColorStop(.5,'rgba(255,255,255,'+a.toFixed(3)+')');g.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=g;x.fillRect(0,y,w,1)}}),
+  ring:mk(32,32,(x,w,h)=>{const g=x.createRadialGradient(16,16,6,16,16,15);g.addColorStop(0,'rgba(255,255,255,0)');g.addColorStop(.55,'rgba(255,255,255,.95)');g.addColorStop(.78,'rgba(255,255,255,.3)');g.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=g;x.fillRect(0,0,w,h)}),
+  bolt:mk(16,8,(x,w,h)=>{const g=x.createLinearGradient(0,0,w,0);g.addColorStop(0,'rgba(255,255,255,0)');g.addColorStop(.32,'rgba(255,255,255,.45)');g.addColorStop(.5,'rgba(255,255,255,1)');g.addColorStop(.68,'rgba(255,255,255,.45)');g.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=g;x.fillRect(0,0,w,h)}),
   cone:mk(64,64,(x,w,h)=>{for(let y=0;y<h;y++){const t=y/(h-1),hw=4+t*28,a=(1-t)*.55+.08;const g=x.createLinearGradient(32-hw,0,32+hw,0);g.addColorStop(0,'rgba(255,255,255,0)');g.addColorStop(.5,'rgba(255,255,255,'+a.toFixed(3)+')');g.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=g;x.fillRect(32-hw,y,hw*2,1)}})}}
 HV.step=function(ms){if(HV.ready)return true;const gl=H3.gl();if(!gl)return true;if(!HV.gen){HV.gen=gen(gl);HV.lastY=0}const t0=performance.now();if(HV.lastY)HV.idle+=t0-HV.lastY;
  while(performance.now()-t0<ms){const r=HV.gen.next();if(r.done){HV.gen=null;return true}HV.pct=r.value||HV.pct}HV.lastY=performance.now();return false};
@@ -13914,7 +13981,7 @@ function* buildInner(gl){
  for(const z of[180,280,380,470])add(240,300,z,165,[.46,.42,.85],.42,0,false);for(const z of[200,330,460])for(const x of[80,400])add(x,150,z,90,[.42,.4,.78],.3,0,false);
  const CR=[.55,.62,1];for(const x of[NX0+14,NX1-14])for(const z of PIERS){add(x,104,z,76,CR,.75,.05);IN.cry.push({x,y:104,z,ph:hs(x,z,5)*9})}
  // vitrais: brilho logo na frente de cada um e, para os que pegam a lua, a mancha colorida no chão
- for(const w of IWIN){const c=glassAvg(w,w.u),p=w.R?wpt(w,w.u,w.cy,10):wpt(w,w.u,(w.v0+w.top)/2,10);add(p[0],p[1],p[2],w.R?(w.R>40?170:110):(w.cl?110:96),c,w.lit?.95:.38,0);IN.glows.push({x:p[0],y:p[1],z:p[2],c,s:w.R?w.R*2.6:w.w*4.5,a:w.lit?.22:.1})}
+ IN.wl=[];for(const w of IWIN){const c=glassAvg(w,w.u),p=w.R?wpt(w,w.u,w.cy,10):wpt(w,w.u,(w.v0+w.top)/2,10);IN.wl.push(add(p[0],p[1],p[2],w.R?(w.R>40?170:110):(w.cl?110:96),c,w.lit?.95:.38,0));IN.glows.push({x:p[0],y:p[1],z:p[2],c,s:w.R?w.R*2.6:w.w*4.5,a:w.lit?.22:.1})}
  // fachos de luz (vários por vitral, cada um com a cor daquela parte do vidro) e o ponto onde chegam no chão
  for(const w of IWIN){if(!w.lit)continue;const L=w.L,n=w.R?5:3,half=w.R?w.R*.62:w.w*.62;
   for(let i=0;i<n;i++){const off=n>1?lerp(-half,half,i/(n-1)):0,u=w.u+off,vm=w.R?w.cy+(i%2?-.25:.15)*w.R:(w.v0+w.top)/2,c=glassAvg(w,u),a=wpt(w,u,vm,-1);
@@ -13922,7 +13989,7 @@ function* buildInner(gl){
    if(b[2]>FBS-2){const s=(FBS-2-a[2])/(b[2]-a[2]);for(let k=0;k<3;k++)b[k]=a[k]+(b[k]-a[k])*s}
    if(b[0]<AX0+2){const s=(AX0+2-a[0])/(b[0]-a[0]);for(let k=0;k<3;k++)b[k]=a[k]+(b[k]-a[k])*s}
    IN.shafts.push({a,b,w:(w.R?w.R*.5:w.w*.95),c:satC(c,1.45),al:w.R?.17:w.cl?.2:.25,ph:i*1.3+w.sd,wide:i===(n>>1)})}
-  const cm=w.R?wpt(w,w.u,w.cy,-1):wpt(w,w.u,(w.v0+w.top)/2,-1),t=cm[1]/-L[1],px=cm[0]+L[0]*t,pz=min(FBS-6,cm[2]+L[2]*t);add(px,14,pz,88,satC(glassAvg(w,w.u),1.3),1.05,0,false)}
+  const cm=w.R?wpt(w,w.u,w.cy,-1):wpt(w,w.u,(w.v0+w.top)/2,-1),t=cm[1]/-L[1],px=cm[0]+L[0]*t,pz=min(FBS-6,cm[2]+L[2]*t);IN.wl.push(add(px,14,pz,88,satC(glassAvg(w,w.u),1.3),1.05,0,false))}
  for(let i=0;i<110;i++){const s=IN.shafts[floor(hs(i,1,77)*IN.shafts.length)];if(!s)break;IN.motes.push({s,t:hs(i,2,77),o:(hs(i,3,77)-.5)*s.w*.8,h:(hs(i,4,77)-.5)*s.w*.6,ph:hs(i,5,77)*TAU,sz:.7+hs(i,6,77)*.9})}
  yield .38;
  // ---------- chão: o desenho do chão do 2D (capturado do pintor A.inner) e o mapa de luz com os vitrais projetados ----------
@@ -13963,22 +14030,26 @@ function* buildInner(gl){
  IN.ready=true}
 
 // ---------- desenho do interior ----------
-function envIn(){H3.env({fog:[.034,.03,.05,.0017],ambT:[.12,.11,.16],ambB:[.045,.04,.06],sun:MOON,sunC:[0,0,0],skyA:[.085,.075,.11],skyB:[.03,.025,.04],gndA:[.035,.03,.04],wind:[.35,.15],gscale:[1/IW,1/IH],detk:1,lmk:LMIS,fogOff:FO,trs:0,detkL:.8,moonL:[0,0,0]});
+function envIn(){SKI=0;IN.sk=0;H3.env({fog:[.034,.03,.05,.0017],ambT:[.12,.11,.16],ambB:[.045,.04,.06],sun:MOON,sunC:[0,0,0],skyA:[.085,.075,.11],skyB:[.03,.025,.04],gndA:[.035,.03,.04],wind:[.35,.15],gscale:[1/IW,1/IH],detk:1,lmk:LMIS,fogOff:FO,trs:0,detkL:.8,moonL:[0,0,0]});
  if(H3.makeSkyTex)H3.makeSkyTex();if(IN.ftex)H3.tex.gnd=IN.ftex;H3.tex.lm=IN.lm||null}
+let SKI=0;
+function stormIn(t){const S=HAL.storm,k=S?S.k(t)*.9:0;if(k<.003&&SKI<.003){IN.sk=0;return}SKI=k;IN.sk=k;
+ H3.env({ambT:[.12+k*.2,.11+k*.21,.16+k*.3],ambB:[.045+k*.07,.04+k*.075,.06+k*.11],lmk:LMIS*(1+k*1.5)})}
 function flickerIn(t){for(const l of IN.L){if(!l.fl)continue;l.k=max(0,l.b*(1+l.fl*(sin(t*.0087+l.ph)*.6+sin(t*.0231+l.ph*1.7)*.4)))}
+ if(IN.wl){const b=1+(IN.sk||0)*2.6;for(const l of IN.wl)l.k=l.b*b}
  const S=H3.S,C=S.cam,F=S.foc||C,want=max(0,hypot(C.x-F.x,C.y-F.y,C.z-F.z)-26);FO+=(want-FO)*.25;if(abs(FO-want)<.3)FO=want;H3.fogOff(FO)}
 const MTI=new Float32Array(16);
 function drawIn(t,dyn){if(!IN.ready)return;const C=H3.S.cam,nc=H3.S.mode===2?[4,4.02]:[1.5,1.52];
  H3.mesh(IN.floor,null,null,dyn);
- for(const m of IN.ms){if(!H3.vis(m.cx,m.cy,m.cz,m.rad))continue;H3.mesh(m,null,m.L,dyn,{nc})}
+ const eg=1+(IN.sk||0)*1.5,o={nc,eg};for(const m of IN.ms){if(!H3.vis(m.cx,m.cy,m.cz,m.rad))continue;H3.mesh(m,null,m.L,dyn,o)}
  for(const c of IN.cry){M4.trs(MTI,c.x,c.y+sin(t/700+c.ph)*2.5,c.z,0,t/1400+c.ph,0,1,1,1);H3.mesh(IN.dyn.cry,MTI,IN.L,dyn,{eg:1})}}
 function spritesIn(t){const T=H3.tex,C=H3.S.cam;if(!T||!TX||!IN.ready)return;
  for(const f of IN.flames){const fr=floor(t/90+f.ph*3)%6,uv=[fr*16/96,.5,(fr*16+16)/96,1],s=f.s;H3.spr(T.flame,f.x,f.y-4*s,f.z,9*s,14*s,uv,[1,1,1,1],true,1);
   if(!f.sm||((f.x+f.z)|0)%3===0)H3.spr(T.glow,f.x,f.y+1,f.z,20*s,20*s,null,[1,.6,.25,.3],true,0,true)}
- for(const g of IN.glows)H3.spr(T.glow,g.x,g.y,g.z,g.s,g.s,null,[g.c[0],g.c[1],g.c[2],g.a],true,0,true);
+ const sk=IN.sk||0;for(const g of IN.glows)H3.spr(T.glow,g.x,g.y,g.z,g.s*(1+sk*.5),g.s*(1+sk*.5),null,[g.c[0]+sk*.4,g.c[1]+sk*.4,g.c[2]+sk*.4,g.a*(1+sk*2.6)],true,0,true);
  for(const c of IN.cry)H3.spr(T.glow,c.x,c.y+sin(t/700+c.ph)*2.5,c.z,26,26,null,[.55,.6,1,.55],true,0,true);
  // fachos de luz dos vitrais e a poeira dançando dentro deles
- for(const s of IN.shafts){const p=.82+.18*sin(t/2300+s.ph);if(s.wide)H3.strip(TX.shaft,s.b[0],s.b[1],s.b[2],s.a[0],s.a[1],s.a[2],s.w*4.2,[s.c[0],s.c[1],s.c[2],s.al*.42*p],true);H3.strip(TX.shaft,s.b[0],s.b[1],s.b[2],s.a[0],s.a[1],s.a[2],s.w,[s.c[0],s.c[1],s.c[2],s.al*p],true)}
+ for(const s of IN.shafts){const p=(.82+.18*sin(t/2300+s.ph))*(1+sk*2);if(s.wide)H3.strip(TX.shaft,s.b[0],s.b[1],s.b[2],s.a[0],s.a[1],s.a[2],s.w*4.2,[s.c[0],s.c[1],s.c[2],s.al*.42*p],true);H3.strip(TX.shaft,s.b[0],s.b[1],s.b[2],s.a[0],s.a[1],s.a[2],s.w,[s.c[0],s.c[1],s.c[2],s.al*p],true)}
  if(IN.lamp){const p=.85+.15*sin(t/300);H3.spr(T.glow,240,119,188,22,22,null,[1,.25,.18,.55*p],true,0,true);H3.spr(T.glow,240,119,188,70,70,null,[1,.2,.12,.12*p],true,0,true)}
  // morcegos voando lá no alto da nave
  if(T.dot)for(let i=0;i<6;i++){const a=t/3300*(i%2?1:-1)+i*1.7,rx=40+i*9,rz=110+i*14,x=240+cos(a)*rx,z=318+sin(a)*rz,y=262+sin(t/900+i*2)*22+i*7,fl=sin(t/65+i*3)>0?1:.35;
@@ -13987,7 +14058,10 @@ function spritesIn(t){const T=H3.tex,C=H3.S.cam;if(!T||!TX||!IN.ready)return;
   const tw=.55+.45*sin(t/400+m.ph*3);H3.spr(T.glow,x,y,z,m.sz*2.4,m.sz*2.4,null,[s.c[0]*.6+.4,s.c[1]*.6+.4,s.c[2]*.6+.4,.55*tw],true,0,true)}}
 function fadeOv(x,t,C,sc){const a=window.HAL&&HAL.trAlpha?HAL.trAlpha():0;if(a>.002){x.fillStyle='rgba(0,0,0,'+min(1,a).toFixed(3)+')';x.fillRect(0,0,9999,9999)}}
 const IOX=2464;
-(H3.scenes=H3.scenes||{}).halIn={id:'halIn',K:1,OX:IOX,OY:0,eye:25,camD:76,p3:-.06,pl:[[-.95,1.05],[-1.0,.7]],amb:[.36,.32,.46],camLight:[.5,.45,.62],iso:false,
+const AMBI=[.36,.32,.46],AMBIK=[0,0,0];
+(H3.scenes=H3.scenes||{}).halIn={id:'halIn',K:1,OX:IOX,OY:0,eye:25,camD:76,p3:-.06,pl:[[-.95,1.05],[-1.0,.7]],camLight:[.5,.45,.62],iso:false,
+ get amb(){const k=IN.sk||0;if(k<.003)return AMBI;AMBIK[0]=AMBI[0]+k*.35;AMBIK[1]=AMBI[1]+k*.37;AMBIK[2]=AMBI[2]+k*.48;return AMBIK},
+
  get fx(){return typeof fight!=='undefined'&&fight?fight.x+8-IOX:0},get fz(){return typeof fight!=='undefined'&&fight?fight.y+14:0},
  get lights(){return IN.L},
  active:()=>world===1&&!!window.HAL&&HAL.ready&&HAL.inside&&!!HAL.IM&&!HV.err&&H3.outOK!==false,
@@ -13997,7 +14071,7 @@ const IOX=2464;
  camOk:pz=>(x,z)=>inRoomI(x,z),camY:(cy,cz)=>clp(cy,4,cz>484?56:300),           // embaixo do órgão e no vestíbulo o teto é baixo
  enter(){envIn();document.body.classList.add('h3hal')},leave(){envOff();document.body.classList.remove('h3hal')},clear(){},
  boss:()=>null,isTgt:e=>!!e,tgt:e=>e?[e.x+8-IOX,16,e.y+14,30,0]:null,bossPlan:()=>null,
- flicker:flickerIn,draw:drawIn,sprites:spritesIn,frameFx:()=>{},shake:()=>null,flash:()=>0,fbPos:()=>null,overlayExtra:fadeOv};
+ flicker:flickerIn,draw:drawIn,sprites:spritesIn,frameFx:()=>{},shake:t=>{try{stormIn(t)}catch(e){}return null},flash:()=>0,fbPos:()=>null,overlayExtra:fadeOv};
 
 // ============================================================ desenho de cada quadro ============================================================
 const MT=new Float32Array(16),FCAP=[.74,.0115,.55];
@@ -14094,7 +14168,7 @@ function sprites(t){const T=H3.tex,C=H3.S.cam,F=H3.S.foc||C;if(!T||!TX)return;
  // morcegos em volta das torres da catedral
  for(let i=0;i<9;i++){const a=t/2600*(i%2?1:-1)+i*.7,rr=70+i*14,x=CX+cos(a)*rr,z=FZ-180+sin(a)*rr*.8,y=280+sin(t/700+i)*30+i*8,fl=sin(t/70+i*3)>0?1:.4;
   H3.spr(T.dot,x,y,z,7,3*fl+1,null,[.02,.02,.04,.9],false,0,false)}
- const fc=[FOGC[0]*1.55,FOGC[1]*1.55,FOGC[2]*1.5];
+ const SKn=HAL.storm?HAL.storm.k(t):0,fc=[(FOGC[0]+SKn*.42)*1.55,(FOGC[1]+SKn*.44)*1.55,(FOGC[2]+SKn*.58)*1.5];
  // bancos de névoa (de pé, virados para a câmera)
  const FK=HV.fk===undefined?1:HV.fk;
  for(const b of BANKS){const d=d2c(b.x,b.z),fi=min(1,b.age/4,(b.life-b.age)/4)*FK,near=sm(18,60,d);if(fi<=0||near<=0)continue;H3.spr(TX.bank,b.x,hAt(b.x,b.z)+b.y,b.z,b.w,b.h,null,[fc[0],fc[1],fc[2],b.a*fi*near],false,0,false)}
@@ -14106,18 +14180,56 @@ function sprites(t){const T=H3.tex,C=H3.S.cam,F=H3.S.foc||C;if(!T||!TX)return;
    H3.flat(TX.fog,x,hAt(x,z)+y,z,G*1.9,G*1.9,null,[fc[0],fc[1],fc[2],al],false,hs(i,j,li)*TAU)}}
  // "saia" de névoa na frente de cada personagem: a neblina cobre as pernas
  const L=window.H3C?H3C.list:[];for(const A of L){if(A.h3d)continue;let vx=C.x-A.x,vz=C.z-A.z;const vl=hypot(vx,vz)||1;vx/=vl;vz/=vl;
-  if(FK>.02)H3.spr(TX.skirt,A.x+vx*3,A.y,A.z+vz*3,36,16,null,[fc[0],fc[1],fc[2],.3*FK],false,1)}}
+  if(FK>.02)H3.spr(TX.skirt,A.x+vx*3,A.y,A.z+vz*3,36,16,null,[fc[0],fc[1],fc[2],.3*FK],false,1)}
+ try{rain3(t,C,F,SKn);splash3(t,C,F,SKn);bolt3(t,C)}catch(e){}}
+
+// ============================================================ chuva fina e relâmpagos (HAL.storm decide quando; aqui só se desenha) ============================================================
+// O clarão sobe tudo junto: a névoa (o "céu"), a luz ambiente, a lua (com as sombras) e a cor da neblina dos cartazes. Roda antes do quadro começar (gancho shake).
+let SK=0;
+function storm3(t){const S=HAL.storm,k=S?S.k(t):0;if(k<.003&&SK<.003)return;SK=k;const f=k;
+ H3.env({fog:[FOGC[0]+f*.42,FOGC[1]+f*.44,FOGC[2]+f*.58,FOGD*FDK],ambT:[AMB_T[0]+f*.7,AMB_T[1]+f*.74,AMB_T[2]+f*.92],ambB:[AMB_B[0]+f*.24,AMB_B[1]+f*.25,AMB_B[2]+f*.34],
+  sunC:[MOONC[0]+f*1.25,MOONC[1]+f*1.35,MOONC[2]+f*1.6],skyA:[SKYA[0]+f*.6,SKYA[1]+f*.62,SKYA[2]+f*.78],skyB:[SKYB[0]+f*.5,SKYB[1]+f*.52,SKYB[2]+f*.66],gndA:[GNDA[0]+f*.28,GNDA[1]+f*.29,GNDA[2]+f*.38],
+  moonL:[MOONC[0]*.42+f*.85,MOONC[1]*.42+f*.9,MOONC[2]*.42+f*1.05]})}
+// gotas: um "cubo" de chuva preso ao mundo em volta da câmera (cada gota tem lugar fixo na grade e cai de 80 de altura até o chão)
+const RN3=300,RR3=62,RH3=80;
+function rain3(t,C,F,k){const RT=TX.rain;if(!RT)return;const t1=t/1000,fwx=sin(C.yaw),fwz=-cos(C.yaw),off=clp((hypot(C.x-F.x,C.z-F.z)-40)/150,0,1),cx=C.x+(F.x-C.x)*off,cz=C.z+(F.z-C.z)*off,
+  wx=WIND[0]*16,wz=WIND[1]*16,al=min(.8,.2*(1+k*2.4)),col=[.74,.76,1,al],S2=RR3*2;
+ for(let i=0;i<RN3;i++){let x=hs(i,1,61)*S2,z=hs(i,2,62)*S2;x+=Math.ceil((cx-RR3-x)/S2)*S2;z+=Math.ceil((cz-RR3-z)/S2)*S2;
+  const dx=x-C.x,dz=z-C.z;if(dx*fwx+dz*fwz<-8)continue;if(dx*dx+dz*dz<12)continue;
+  const sp=235+hs(i,4,64)*70,fall=(t1*sp+hs(i,3,63)*RH3)%RH3,tt=fall/sp,hx=x+wx*tt,hz=z+wz*tt,gy=hAt(x,z),y=gy+RH3-fall,L=6+hs(i,5,65)*4,q=L/sp;
+  H3.strip(RT,hx,y,hz,hx-wx*q,y+L,hz-wz*q,.3,col,true)}}
+// respingos no chão (anelzinho que abre) e, na água, ondinhas maiores que demoram mais
+const SPL=[];let splT=0;
+function splash3(t,C,F,k){const RG=TX.ring;if(!RG)return;const dt=splT?min(100,t-splT):16;splT=t;let nw=dt*.1;const fwx=sin(C.yaw),fwz=-cos(C.yaw),M=HV.M;
+ while(nw>0&&SPL.length<70){if(Math.random()<nw){const a=Math.random()*TAU,r=5+sqrt(Math.random())*46,x=F.x+fwx*18+cos(a)*r,z=F.z+fwz*18+sin(a)*r;
+   if(x>0&&z>0&&x<MW&&z<MH&&!solidAt(x,z)){const w=M&&M.ter[floor(z/16)*M.W+floor(x/16)]===7;SPL.push({x,z,y:hAt(x,z)+.22,t0:t,w})}}nw-=1}
+ for(let i=SPL.length-1;i>=0;i--){const p=SPL[i],l=p.w?720:270,q=(t-p.t0)/l;if(q>=1){SPL.splice(i,1);continue}
+  const sz=p.w?2+q*9:1.1+q*4.4,a=(1-q)*(p.w?.42:.5)*(1+k*1.6);H3.flat(RG,p.x,p.y,p.z,sz,sz,null,[.8,.8,1,a],true,0);
+  if(p.w&&q>.3){const s2=(q-.3)*7;H3.flat(RG,p.x,p.y,p.z,s2,s2,null,[.8,.8,1,(1-q)*.3],true,0)}}}
+// o risco do relâmpago lá longe, na frente da câmera (sem névoa: alfa negativo), com galhos; e o clarão na nuvem em cima dele
+function bolt3(t,C){const S=HAL.storm,e=S&&S.ev,BT=TX.bolt;if(!e||!BT)return;const v=S.bolt(t)*e.amp;if(v<.02)return;
+ if(!e.g3){const r=rng(e.seed),ang=C.yaw+(e.off-.5)*1.4,D=560+e.dist*330,bx=C.x+sin(ang)*D,bz=C.z-cos(ang)*D,top=470+e.dist*170,rx=cos(ang),rz=sin(ang),pts=[];
+  let ox=0;for(let i=0;i<=14;i++){const y=top-(top-70)*i/14;ox+=(r()-.5)*(i?46:0);pts.push([bx+rx*ox,y,bz+rz*ox])}
+  const br=[];for(let b=0;b<3;b++){let p=pts[2+floor(r()*8)].slice();const B=[p],sd=r()<.5?-1:1;for(let j=0;j<4;j++){p=[p[0]+rx*sd*(12+r()*26),p[1]-(24+r()*30),p[2]+rz*sd*(12+r()*26)];B.push(p)}br.push(B)}
+  e.g3={pts,br,top:[bx,top+40,bz]}}
+ const G=e.g3,seg=(P,w,c,al)=>{const n=P.length-1;for(let i=0;i<n;i++){const p=P[i],q=P[i+1],fd=P===G.pts?min(1,(n-i)/(n*.35)):1;H3.strip(BT,p[0],p[1],p[2],q[0],q[1],q[2],w,[c[0],c[1],c[2],-al*fd],true)}};   // a ponta de baixo some na névoa
+ seg(G.pts,52,[.5,.55,1],.26*v);seg(G.pts,15,[.78,.82,1],.6*v);seg(G.pts,5,[1,1,1],v);
+ for(const B of G.br){seg(B,24,[.5,.55,1],.16*v);seg(B,3,[.9,.92,1],.72*v)}
+ H3.spr(H3.tex.glow,G.top[0],G.top[1],G.top[2],1100,700,null,[.5,.52,1,-.32*v],true,0,true)}
 function hsl(h){const f=(n,k=(n+h/30)%12)=>.5-.5*max(-1,min(k-3,9-k,1));return[f(0),f(8),f(4)]}
 
 // ============================================================ a cena ============================================================
 const SCN=H3.scenes=H3.scenes||{};
 const camBlk=(x,z)=>{const g=HV.cb;if(!g)return false;const i=x>>3,j=z>>3;return i>=0&&j>=0&&i<HV.cbW&&j<HV.cbH&&g[j*HV.cbW+i]===1};
 const blockedCam=(x,z)=>x<4||z<4||x>MW-4||z>MH-4||(x>CX-220&&x<CX+220&&z<FZ-2&&!(abs(x-CX)<36&&z>FZ-38));
-function envOn(){H3.env({fog:FOG,ambT:AMB_T,ambB:AMB_B,sun:MOON,sunC:MOONC,skyA:SKYA,skyB:SKYB,gndA:GNDA,wind:WIND,gscale:GSC,detk:1,lmk:LMS*1.2,fogOff:FO,trs:.75,detkL:.9,moonD:MOON,moonL:[MOONC[0]*.42,MOONC[1]*.42,MOONC[2]*.42]});
+function envOn(){SK=0;H3.env({fog:FOG,ambT:AMB_T,ambB:AMB_B,sun:MOON,sunC:MOONC,skyA:SKYA,skyB:SKYB,gndA:GNDA,wind:WIND,gscale:GSC,detk:1,lmk:LMS*1.2,fogOff:FO,trs:.75,detkL:.9,moonD:MOON,moonL:[MOONC[0]*.42,MOONC[1]*.42,MOONC[2]*.42]});
  if(H3.makeSkyTex)H3.makeSkyTex();if(HV.gtex)H3.tex.gnd=HV.gtex;H3.tex.lm=HV.lmtex||null}
 function envOff(){H3.env({gscale:GSC_FLD,detk:0,lmk:0,fogOff:0,trs:0,detkL:0,moonL:[0,0,0]});if(H3.fogOff)H3.fogOff(0);H3.tex.lm=null;const f=H3.fld;if(f&&f.gtex)H3.tex.gnd=f.gtex;FO=0;shKey=''}
 {const st=document.createElement('style');st.textContent='body.h3hal #h3ov{background:radial-gradient(ellipse at 50% 46%,rgba(0,0,0,0) 50%,rgba(10,6,20,.38) 80%,rgba(6,3,12,.66) 100%)}';document.head.appendChild(st)}
-SCN.hal={id:'hal',K:1,OX:0,OY:0,eye:25,camD:88,p3:-.16,pl:[[-.95,.9],[-1.0,.45]],amb:[.4,.32,.54],camLight:[.55,.52,.68],iso:false,
+const AMBH=[.4,.32,.54],AMBK=[0,0,0];
+SCN.hal={id:'hal',K:1,OX:0,OY:0,eye:25,camD:88,p3:-.16,pl:[[-.95,.9],[-1.0,.45]],camLight:[.55,.52,.68],iso:false,
+ get amb(){const k=SK;if(k<.003)return AMBH;AMBK[0]=AMBH[0]+k*.8;AMBK[1]=AMBH[1]+k*.84;AMBK[2]=AMBH[2]+k*.95;return AMBK},       // os personagens também clareiam no relâmpago
+
  get fx(){return typeof fight!=='undefined'&&fight?fight.x+8:0},get fz(){return typeof fight!=='undefined'&&fight?fight.y+14:0},
  get lights(){return HV.lights},
  active:()=>world===1&&!!window.HAL&&HAL.ready&&!HAL.inside&&!HV.err&&H3.outOK!==false,      // (fica no 3D durante a passagem pela porta: a tela escurece e abre lá dentro)
@@ -14134,7 +14246,7 @@ SCN.hal={id:'hal',K:1,OX:0,OY:0,eye:25,camD:88,p3:-.16,pl:[[-.95,.9],[-1.0,.45]]
  leave(){envOff();document.body.classList.remove('h3hal')},
  clear(){},
  boss:()=>null,isTgt:e=>!!e,tgt:e=>e?[e.x+8,hAt(e.x+8,e.y+14)+16,e.y+14,30,hAt(e.x+8,e.y+14)]:null,bossPlan:()=>null,
- flicker,draw,sprites,frameFx,shadow,shake:()=>null,flash:()=>0,overlayExtra:(x,t,C,sc)=>fadeOv(x,t,C,sc),
+ flicker,draw,sprites,frameFx,shadow,shake:t=>{try{storm3(t)}catch(e){}return null},flash:()=>0,overlayExtra:(x,t,C,sc)=>fadeOv(x,t,C,sc),
  fbPos:id=>{const T=16;const at=(x,z,h)=>[x,hAt(x,z)+h,z];if(id==='spinBtn')return at(SX*T+8,SY*T+14,40);if(id==='pasBtn')return at(TOX*T+8,TOY*T+14,30);if(id==='talkBtn')return at(NPC.x+8,NPC.y+14,36);if(id==='gateBtn')return at(GX*T+8,GY*T+14,50);return null}};
 // o campo do primeiro mundo volta com o chão dele (escala, textura) mesmo se a troca de cena pular o leave()
 if(SCN.field&&SCN.field.env){const _e=SCN.field.env;SCN.field.env=function(){try{envOff()}catch(e){}return _e.apply(this,arguments)}}
