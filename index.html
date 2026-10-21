@@ -575,7 +575,7 @@ let EN=[
  [66,55,3],[74,56,3],[70,57,3]
 ].map(([tx,ty,t=0])=>{while(map[ty][tx]!==0)tx=tx+1>=W-2?3:tx+1;const d=TY[t];return {x:tx*T,y:ty*T,t,...d,hp:d.max,dead:false,back:0}});
 EN.push({x:RMX-8,y:RMY-28,t:2,...TY[2],hp:TY[2].max,dead:false,back:0});   // o Demônio da Torre fica por último (dentro do salão da torre)
-const eBlock=(x,y)=>EN.some(e=>!e.dead&&Math.hypot(x+8-(e.x+8),y+12-(e.y+8))<e.r)||Math.hypot(x+8-(NPC.x+8),y+12-(NPC.y+8))<10;
+const eBlock=(x,y)=>EN.some(e=>!e.dead&&!e.fly&&Math.hypot(x+8-(e.x+8),y+12-(e.y+8))<e.r)||Math.hypot(x+8-(NPC.x+8),y+12-(NPC.y+8))<10;
 const R=(c,x,y,w,h)=>{g.fillStyle=c;g.fillRect(x,y,w,h)};
 function tile(t,x,y,tx,ty,f){if(world===3)return;const h=hash(tx,ty);if(!world&&BGOK)return;if(world===1&&tile1(t,x,y,tx,ty,f,h))return;if(world===2&&window.tile2&&tile2(t,x,y,tx,ty,f,h))return;
  if(t===0||t===1||t===4||t===5||t===6){R('#5fb94a',x,y,T,T);if(h%5===0)R('#4a9e3a',x+h%12,y+(h>>3)%12,2,2);if(h%13===0){R('#fff',x+5,y+6,2,2);R('#ffd23f',x+5,y+8,2,1)}}
@@ -15662,6 +15662,33 @@ const me=D.createElement('button');me.className='mi';me.id='mi_ev';me.innerHTML=
 me.onclick=e=>{e.stopPropagation();if(window.mnCloseMod)mnCloseMod();setTimeout(evOpen,50)};
 if(mt)mt.appendChild(me);
 window.openEvents=evOpen;
+})();
+</script>
+<script>
+// ===================== Drácula: voa fazendo um "infinito" na frente do altar, com rastro vermelho (imagens do próprio sprite ficando para trás) =====================
+(function(){
+const PER=7000,AX=44,AY=11,OW=220,OH=200,FX=110,FY=170;   // volta inteira em 7 s · largura e altura do 8 deitado · canvas de trabalho (pés em FX,FY)
+const mk=()=>{const c=document.createElement('canvas');c.width=OW;c.height=OH;const x=c.getContext('2d');x.imageSmoothingEnabled=false;return[c,x]};
+const[OC,OX]=mk(),[RC,RX]=mk();
+let D=null;
+const drac=()=>{if(D&&WD[1].EN.includes(D))return D;D=WD[1].EN.find(e=>e.mon==='dracula')||null;if(D){D.ax=D.x;D.ay=D.y;D.fly=1}return D};
+// movimento: depende só do relógio (todo mundo vê o Drácula no mesmo lugar)
+const _t=tick;tick=function(){_t();if(world!==1)return;const e=drac();if(!e||e.dead)return;const a=(Date.now()%PER)/PER*6.2831853,s=Math.sin(a);
+ e.x=Math.round(e.ax+AX*s);e.y=Math.round(e.ay+AY*s*Math.cos(a)*2);e.dir=Math.cos(a)>0?3:1};
+// desenho: o Drácula vai para um canvas; dele sai a cópia vermelha que fica para trás nas posições antigas
+const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.apply(this,arguments);
+ const tr=e._tr||(e._tr=[]);if(!tr.length||t-tr[tr.length-1].t>=30)tr.push({t,x:e.x,y:e.y});while(tr.length&&t-tr[0].t>760)tr.shift();
+ const sg=g,cx=cam.x,cy=cam.y;OX.setTransform(1,0,0,1,0,0);OX.clearRect(0,0,OW,OH);let r;
+ try{g=OX;cam.x=e.x+8-FX;cam.y=e.y+16-FY;r=_d.call(this,e,t,f)}finally{g=sg;cam.x=cx;cam.y=cy}
+ const X=Math.round(e.x+8-cam.x-FX),Y=Math.round(e.y+16-cam.y-FY);
+ // cópia vermelha (mesmo quadro do sprite)
+ RX.globalCompositeOperation='source-over';RX.clearRect(0,0,OW,OH);RX.drawImage(OC,0,0);RX.globalCompositeOperation='source-atop';RX.fillStyle='rgba(255,24,32,.82)';RX.fillRect(0,0,OW,OH);RX.globalCompositeOperation='source-over';
+ const pulse=.85+.15*Math.sin(t/180);let n=0;
+ for(const ms of[110,230,360,500,650]){let q=null;for(let i=tr.length-1;i>=0;i--){if(t-tr[i].t>=ms){q=tr[i];break}}if(!q)continue;const dx=q.x-e.x,dy=q.y-e.y;if(dx*dx+dy*dy<4)continue;
+  g.globalAlpha=(.5-n*.085)*pulse;g.drawImage(RC,X+dx,Y+dy);n++}
+ // aura colada nele, mesmo parado (um pouco maior, bem fraca)
+ g.globalAlpha=.22*pulse;g.drawImage(RC,X-2,Y-1,OW+4,OH+2);g.globalAlpha=1;
+ g.drawImage(OC,X,Y);return r};
 })();
 </script>
 <script>
