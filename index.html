@@ -576,7 +576,7 @@ let EN=[
  [66,55,3],[74,56,3],[70,57,3]
 ].map(([tx,ty,t=0])=>{while(map[ty][tx]!==0)tx=tx+1>=W-2?3:tx+1;const d=TY[t];return {x:tx*T,y:ty*T,t,...d,hp:d.max,dead:false,back:0}});
 EN.push({x:RMX-8,y:RMY-28,t:2,...TY[2],hp:TY[2].max,dead:false,back:0});   // o Demônio da Torre fica por último (dentro do salão da torre)
-const eBlock=(x,y)=>EN.some(e=>!e.dead&&!e.fly&&Math.hypot(x+8-(e.x+8),y+12-(e.y+8))<e.r)||Math.hypot(x+8-(NPC.x+8),y+12-(NPC.y+8))<10;
+const eBlock=(x,y)=>EN.some(e=>!e.dead&&!e.fly&&!e.ov&&Math.hypot(x+8-(e.x+8),y+12-(e.y+8))<e.r)||Math.hypot(x+8-(NPC.x+8),y+12-(NPC.y+8))<10;
 const R=(c,x,y,w,h)=>{g.fillStyle=c;g.fillRect(x,y,w,h)};
 function tile(t,x,y,tx,ty,f){if(world===3)return;const h=hash(tx,ty);if(!world&&BGOK)return;if(world===1&&tile1(t,x,y,tx,ty,f,h))return;if(world===2&&window.tile2&&tile2(t,x,y,tx,ty,f,h))return;
  if(t===0||t===1||t===4||t===5||t===6){R('#5fb94a',x,y,T,T);if(h%5===0)R('#4a9e3a',x+h%12,y+(h>>3)%12,2,2);if(h%13===0){R('#fff',x+5,y+6,2,2);R('#ffd23f',x+5,y+8,2,1)}}
@@ -1131,7 +1131,7 @@ function updHud(){document.getElementById('hud').textContent=''+coins+(world?'  
 function stepChars(){const now=Date.now();
  equipped=equipped.filter(id=>chars.some(k=>k.id===id));if(!equipped.length)fight=null;
  if(fight&&Math.hypot(P.x-fight.x,P.y-fight.y)>100){fight=null;Object.values(fpos).forEach(q=>q.nx=0)}
- EN.forEach(e=>{if(e.dead&&now>=e.back&&Math.hypot(P.x-e.x,P.y-e.y)>e.r+12){e.dead=false;e.hp=e.max}});
+ EN.forEach(e=>{const pd=Math.hypot(P.x-e.x,P.y-e.y);if(e.ov&&pd>e.r+12)e.ov=0;if(e.dead&&now>=e.back){e.dead=false;e.hp=e.max;e.ov=pd<=e.r+12?1:0}});
  equipped.forEach((id,i)=>{let f=fpos[id];if(!f)f=fpos[id]={x:P.x,y:P.y,dir:2,nx:0,hit:0};
   let tx,ty;
   if(fight){const a=i*6.2832/equipped.length+now/1200;tx=fight.x+Math.cos(a)*fight.orb;ty=fight.y+Math.sin(a)*fight.orb}
@@ -1809,7 +1809,8 @@ stepChars=function(){const t=Date.now();
  if(world===2)wbUpd();
  equipped=equipped.filter(id=>chars.some(k=>k.id===id));if(!equipped.length)fight=null;
  if(fight&&(fight.dead||Math.hypot(P.x-fight.x,P.y-fight.y)>(fight.wb?240:fight.dm?200:100))){fight=null;resetF()}
- EN.forEach(e=>{if(!e.wb&&e.dead&&t>=e.back&&Math.hypot(P.x-e.x,P.y-e.y)>e.r+12){e.dead=false;e.hp=e.max;e.dh=e.max;e.sp=t}});
+ // renasce quando o tempo acaba, mesmo com o jogador parado em cima (AFK). Se nascer encostado nele, não prende o jogador (e.ov) até ele se afastar
+ EN.forEach(e=>{const pd=Math.hypot(P.x-e.x,P.y-e.y);if(e.ov&&pd>e.r+12)e.ov=0;if(!e.wb&&e.dead&&t>=e.back){e.dead=false;e.hp=e.max;e.dh=e.max;e.sp=t;e.ov=pd<=e.r+12?1:0}});
  const slots=fight?formation(fight):null,me=MEK();
  equipped.forEach((id,i)=>{let f=fpos[id];if(!f)f=fpos[id]={x:P.x,y:P.y,dir:2,nx:0,hits:0,sk:null};
   let tx,ty;
@@ -15719,7 +15720,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261021134048;
+const GAME_BUILD=20261021140516;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
