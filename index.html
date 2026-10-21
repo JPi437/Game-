@@ -3766,11 +3766,10 @@ function fragDrop(e){const r=rnd(),n=r<.10?3:r<.25?2:r<.50?1:0;if(!n)return;st.r
  fx.push({x:e.x-8,y:e.y-30,t:Date.now(),s:'+'+n+' fragmento'+(n>1?'s':''),c:'#c9a0ff',lbl:1});try{bp(988,.06,'triangle',.06);bp(1319,.09,'triangle',.05,.06)}catch(x){}save()}
 // ---------- loja da dungeon (no saguão) ----------
 const SHOP=[
- {id:'f1',p:10},{id:'s1',p:10},{id:'d1',p:10},{id:'m1',p:10},
- {id:'f2',p:25},{id:'s2',p:25},{id:'d2',p:25},{id:'m2',p:25},
+ {id:'f1',p:100},{id:'s1',p:100},{id:'d1',p:100},{id:'m1',p:100},
+ {id:'f2',p:500},{id:'s2',p:500},{id:'d2',p:500},{id:'m2',p:500},
  {id:'xp',p:15},
- {k:'ess',n:'Essência do Demônio',t:'+1 essência (para as passivas)',c:'#80d8ff',p:60},
- {k:'gold',n:'Saco de Ouro',t:'+10.000 moedas',c:'#ffd23f',p:30}];
+ {k:'ess',n:'Essência do Demônio',t:'+1 essência (para as passivas)',c:'#80d8ff',p:60}];
 const shB=document.createElement('button');shB.className='btn';shB.id='rdShBtn';shB.textContent='Loja da Dungeon';shB.style.cssText='position:fixed;right:calc(20px + env(safe-area-inset-right,0px));bottom:calc(84px + env(safe-area-inset-bottom,0px));display:none;z-index:3;background:linear-gradient(#b07cff,#5a2a9a);border-radius:999px;padding:10px 18px;border:3px solid #fff';document.body.appendChild(shB);
 function shUi(on){on=on&&!lock;const d=on?'block':'none';if(shB.style.display!==d)shB.style.display=d}
 const rdS=document.createElement('div');rdS.className='modal';rdS.id='rdS';rdS.innerHTML='<div class="box v6box"><h2>Loja da Dungeon</h2><div id="rdSBal" class="bal"></div><div id="rdSL" class="shg"></div><button class="btn" id="rdSClose" style="display:none">Fechar</button></div>';document.body.appendChild(rdS);
