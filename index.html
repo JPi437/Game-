@@ -1746,7 +1746,7 @@ function pText(s,x,y,col,sh){x=Math.round(x);y=Math.round(y);let cx=x;const px=[
  g.fillStyle=sh||'#0b0b12';px.forEach(([a,b])=>g.fillRect(a-1,b-1,3,3));g.fillStyle=col;px.forEach(([a,b])=>g.fillRect(a,b,1,1))}
 let _vt=0,_vtN=1;addEventListener('resize',()=>{_vtN=1});function visTop(){if(_vtN){_vtN=0;const w=innerWidth,h=innerHeight,sc=VFIT(w,h)?Math.max(w/VW,h/VH):Math.min(w/VW,h/VH);_vt=Math.max(0,(VH*sc-h)/2/sc)}return _vt}   // quanto do topo do mundo fica fora da tela (a tela corta as sobras no modo cover)
 function hpBar(e,t){if(e.dh==null||e.dh<e.hp)e.dh=e.hp;else{e.dh+=(e.hp-e.dh)*.07;if(e.dh-e.hp<1)e.dh=e.hp}
- const near=Math.hypot(P.x-e.x,P.y-e.y)<e.eng+30;if(world===3?!(near||fight===e):!(e.hp<e.max||e.t>0||near||fight===e))return;
+ const near=Math.hypot(P.x-e.x,P.y-e.y)<e.eng+30;if(world!==3&&!(e.hp<e.max||e.t>0||near||fight===e))return;   // na dungeon a barra aparece sempre, mesmo de longe
  const cx=Math.round(e.x-cam.x)+8,top=Math.round(e.y-cam.y+16-(e.vh||16*e.s)),w=e.bw||(e.t===2?38:e.mb?34:e.t===1?30:20),h=4,bx=cx-(w>>1);let by=top-(e.t===2?11:8);
  if(cx<-40||cx>VW+40||by<-20||by>VH+10)return;
  if(e.bc)by=Math.max(by,Math.min(Math.ceil(visTop())+9,22));   // e.bc: com o monstro ainda aparecendo, a barra não sobe para fora da tela (Drácula, no topo da catedral)
@@ -10717,7 +10717,15 @@ function overlay(t,C){
   const size=(q.lbl?7:q.big?9:8)*sc*clp(95/p[2],.75,1.5),al=q.lbl?(a>1100?max(0,(1500-a)/400):1):(a>700?1-(a-700)/300:1),yy=p[1]-a/(q.lbl?90:60)*sc*1.25;
   x.font='bold '+size.toFixed(1)+'px "Courier New",monospace';x.globalAlpha=al;x.lineWidth=max(2,size*.28);x.strokeStyle='#000';x.strokeText(q.s,p[0],yy);x.fillStyle=q.c;x.fillText(q.s,p[0],yy)}
  x.globalAlpha=1;
+ // barras de vida dos inimigos que são figurinhas (Halloween): o mesmo desenho do 2D, num canvas pequeno, preso em cima da cabeça
+ if(typeof window.HPBAR==='function'){const bs=C.iso?1:BS,HL=[];for(const A of H3C.list){if(A.h3d||typeof A.k!=='string'||A.k.charAt(0)!=='E')continue;const e=A.q;if(!e||e.dead||e.wb)continue;
+  const vh=e.vh||16*(e.s||1),p=proj(A.x,A.y+(vh+(e.t===2?9:6))*bs,A.z);if(!p||p[2]<1||(!C.iso&&p[2]>230))continue;HL.push([p,e,vh])}
+ HL.sort((a,b)=>b[0][2]-a[0][2]);for(const[p,e,vh]of HL){
+  const sg=g,cx0=cam.x,cy0=cam.y;HBX3.clearRect(0,0,96,30);g=HBX3;cam.x=e.x+8-48;cam.y=e.y+16-vh-(e.t===2?11:8)-22;
+  try{window.HPBAR(e,t)}catch(z){}finally{g=sg;cam.x=cx0;cam.y=cy0}
+  const k=sc*clp(130/p[2],.75,1.25);x.imageSmoothingEnabled=false;x.drawImage(HB3,round(p[0]-48*k),round(p[1]-22*k),round(96*k),round(30*k))}}
  if(SC.overlayExtra)SC.overlayExtra(x,t,C,sc)}
+const HB3=document.createElement('canvas');HB3.width=96;HB3.height=30;const HBX3=HB3.getContext('2d');HBX3.imageSmoothingEnabled=false;
 H3.proj=proj;
 // botões flutuantes (Roletar, Passiva, Conversar, portal...) no 3D: presos ao ponto do mundo 3D de cada coisa (a cena diz onde, SC.fbPos)
 {const _fbt=window.FBT,FBI=['spinBtn','pasBtn','talkBtn','gateBtn','rkBtn'],FBS3={},FBB3=[0,-1,-2,-3,-4,-3,-2,-1];
