@@ -4807,7 +4807,7 @@ const st=D.createElement('style');st.textContent=`
 
 // ---------- janelas ----------
 const M=D.createElement('div');M.className='modal';M.id='admM';
-M.innerHTML='<div class="box"><button class="btn xb" id="admX">✕</button><h2>Painel do ADM</h2><div class="admTabs"><button data-t="pl" class="on">Jogadores</button><button data-t="ch">Personagens</button><button data-t="me">Meu jogo</button><button data-t="bo">Boss</button></div><div id="admBody"></div></div>';
+M.innerHTML='<div class="box"><button class="btn xb" id="admX">✕</button><h2>Painel do ADM</h2><div class="admTabs"><button data-t="pl" class="on">Jogadores</button><button data-t="ch">Personagens</button><button data-t="me">Meu jogo</button><button data-t="bo">Boss</button><button data-t="av">Aviso</button></div><div id="admBody"></div></div>';
 D.body.appendChild(M);
 const PP=D.createElement('div');PP.className='modal';PP.id='admPop';PP.style.zIndex=40;
 PP.innerHTML='<div class="box" style="text-align:center"><h2 id="apT"></h2><div id="apB"></div><button class="btn" id="apOk" style="margin-top:10px">OK</button></div>';D.body.appendChild(PP);
@@ -4843,7 +4843,7 @@ function readEd(id){const p=id||'ae',v=x=>$a(p+'_'+x);let n=v('n').value;if(n===
  return cleanFields({name:n,rar:v('r').value,lvl:v('l').value,spd:v('s').value,pas:v('p').value,sh:v('sh').checked})}
 
 // ---------- abas ----------
-function render(){const B=body();if(!B)return;if(view)return view();if(tab==='pl')return tabPlayers();if(tab==='ch')return tabChars();if(tab==='bo')return tabBoss();tabMe()}
+function render(){const B=body();if(!B)return;if(view)return view();if(tab==='pl')return tabPlayers();if(tab==='ch')return tabChars();if(tab==='bo')return tabBoss();if(tab==='av')return tabAviso();tabMe()}
 function tabChars(){const list=chars.slice().sort((a,b)=>b.rar-a.rar||b.lvl-a.lvl);
  body().innerHTML=`<div class="admS">Criar personagem no seu inventário</div>${editor({rar:4,lvl:10,spd:5})}
  <div style="text-align:center"><button class="admB grn" id="acNew">Criar</button></div><div class="admMsg" id="admMsgL"></div>
@@ -4897,6 +4897,24 @@ function tabBoss(){body().innerHTML=`<div class="admS">Boss Mundial · Veldora (
  $a('abGo').onclick=()=>{closeAdm();try{goWorld(2)}catch(e){}};
  bossStat()}
 setInterval(()=>{if(M.style.display==='flex'&&tab==='bo'&&!view)bossStat()},1000);
+// ---------- Aviso para todos ----------
+// Grava em /broadcast. Quem tem o app recebe como notificação do celular (o app confere a cada ~15 min, mesmo fechado);
+// quem está jogando vê na hora. Regra no Firebase: "broadcast": {".read": true, ".write": "auth != null && root.child('admins').child(auth.uid).val() === true"}
+const AVD=[['1h','1 hora',36e5],['1d','1 dia',864e5],['3d','3 dias',2592e5],['7d','7 dias',6048e5]];
+function tabAviso(){body().innerHTML=`<div class="admS">Aviso para todos os jogadores</div>
+ <div class="admRow" style="flex-direction:column;align-items:stretch;gap:6px"><input class="admIn" id="avT" maxlength="40" placeholder="Título (ex.: Evento de Halloween!)">
+ <textarea class="admIn" id="avM" maxlength="180" rows="3" placeholder="Mensagem" style="resize:vertical"></textarea>
+ <label style="font-size:13px">Vale por <select id="avD">${AVD.map(d=>`<option value="${d[0]}"${d[0]==='1d'?' selected':''}>${d[1]}</option>`).join('')}</select></label></div>
+ <div style="text-align:center"><button class="admB grn" id="avGo">Enviar para todos</button><button class="admB red sm" id="avOff">Apagar aviso atual</button></div>
+ <div class="admMsg" id="admMsgL"></div><div class="admS">Aviso atual</div><div class="admRow" id="avCur" style="white-space:normal">...</div>
+ <div style="font-size:12px;opacity:.7;line-height:1.35">Quem está jogando vê na hora. Quem tem o app instalado recebe uma notificação no celular em até uns 15 minutos, mesmo com o app fechado (o Android pode atrasar um pouco quando a bateria está economizando).</div>`;
+ const cur=async()=>{try{const v=(await db().ref('broadcast').once('value')).val();$a('avCur').textContent=v&&v.id?`${v.t||''} — ${v.m||''} · ${v.exp>now()?when(v.exp):'expirado'}`:'Nenhum aviso.'}catch(e){$a('avCur').textContent='Não deu para ler ('+(e.code||e.message)+'). Confira a regra "broadcast" no Firebase.'}};
+ $a('avGo').onclick=async()=>{const t=String($a('avT').value||'').trim().slice(0,40),m=String($a('avM').value||'').trim().slice(0,180);
+  if(!m){msg('Escreva a mensagem',true);return}if(!MP.db||MP.offline){msg('Entre online para enviar',true);return}
+  const d=AVD.find(x=>x[0]===$a('avD').value)||AVD[1],id=db().ref('broadcast').push().key;
+  try{await db().ref('broadcast').set({id,t:t||'Mundo Pixel',m,s:TS(),exp:Math.round(now()+d[2])});logAct('aviso','todos',(t?t+': ':'')+m);msg('Aviso enviado!');$a('avM').value='';cur()}catch(e){fail(e)}};
+ twoTap($a('avOff'),async()=>{try{await db().ref('broadcast').remove();logAct('aviso','todos','apagou o aviso');msg('Aviso apagado');cur()}catch(e){fail(e)}});
+ cur()}
 
 // ---------- jogadores ----------
 let plCache=null,plQ='';
@@ -15700,7 +15718,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261021132128;
+const GAME_BUILD=20261021133428;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
@@ -15747,6 +15765,24 @@ async function check(){if(busy||document.hidden||Date.now()-lastFail<180000)retu
  const sm=document.getElementById('startM');if(sm&&getComputedStyle(sm).display!=='none'){updateNow(v);return}   // ainda na tela de entrar: atualiza na hora
  startCountdown(v)}}
 setTimeout(boot,300);setInterval(check,60000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)setTimeout(check,1500)});
+})();
+</script>
+<script>
+// ===================== app Android (ponte MPApp) + avisos do ADM =====================
+(function(){
+// 1) diz ao app que esta versão abriu direito. Sem isso, o app volta sozinho para a versão anterior (proteção contra atualização quebrada).
+setTimeout(()=>{try{if(window.MPApp&&MPApp.ok)MPApp.ok()}catch(e){}},4000);
+// 2) aviso do ADM (/broadcast): quem está jogando vê na hora
+let seen='';try{seen=localStorage.getItem('mp_bcast')||''}catch(e){}
+let on=false;
+function show(v){const box=document.createElement('div');box.className='modal';box.style.cssText='display:flex;z-index:60';
+ const e=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ box.innerHTML='<div class="box" style="text-align:center;max-width:400px"><h2>'+e(v.t||'Mundo Pixel')+'</h2><div style="margin:8px 0 14px;white-space:pre-wrap;line-height:1.4">'+e(v.m)+'</div><button class="btn" style="background:#2e7d32">OK</button></div>';
+ document.body.appendChild(box);box.querySelector('button').onclick=()=>box.remove()}
+setInterval(()=>{const MP=window.MP;if(on||!MP||!MP.db||!MP.uid||MP.offline)return;on=true;
+ MP.db.ref('broadcast').on('value',s=>{const v=s.val();if(!v||!v.id||v.id===seen)return;const n=Date.now()+(MP.off||0);
+  if(!(v.exp>n))return;seen=v.id;try{localStorage.setItem('mp_bcast',v.id)}catch(e){}
+  if(n-(+v.s||0)<6*3600e3)show(v)},()=>{})},3000);
 })();
 </script>
 <script>
