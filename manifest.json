@@ -1,6 +1,6 @@
 {
-  "name": "Mundo Pixel",
-  "short_name": "Mundo Pixel",
+  "name": "AllStar",
+  "short_name": "AllStar",
   "description": "Jogo de colecionar e evoluir lutadores em pixel art.",
   "start_url": "./",
   "scope": "./",

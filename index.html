@@ -2,7 +2,8 @@
 <html lang="pt-BR"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="theme-color" content="#1a1c2c"><meta name="screen-orientation" content="landscape"><meta name="x5-orientation" content="landscape"><meta name="x5-fullscreen" content="true">
-<title>Mundo Pixel</title>
+<title>AllStar</title>
+<!-- <title>Mundo Pixel</title> (nome antigo: os APKs antigos conferem este texto antes de aceitar a atualização. Não apague.) -->
 <link rel="manifest" href="manifest.json"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png">
 <script>
 // ===================== CONFIGURAÇÃO DO JOGO =====================
@@ -1603,7 +1604,7 @@ $('saveBtn').onclick=()=>{if(lock)return;renderSv();$('svM').style.display='flex
 $('svClose').onclick=()=>{$('svM').style.display='none';lock=false};
 $('svCopy').onclick=()=>{const t=$('svOut');t.select();let ok=false;try{ok=document.execCommand('copy')}catch(e){}
  if(navigator.clipboard)navigator.clipboard.writeText(t.value).then(()=>$('svMsg').textContent='Código copiado!').catch(()=>{$('svMsg').textContent=ok?'Código copiado!':'Segure no código e copie manualmente'});else $('svMsg').textContent=ok?'Código copiado!':'Segure no código e copie manualmente'};
-$('svDl').onclick=()=>{try{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([$('svOut').value],{type:'text/plain'}));a.download='mundo-pixel-save.txt';document.body.appendChild(a);a.click();a.remove();$('svMsg').textContent='Arquivo baixado'}catch(e){$('svMsg').textContent='Não deu para baixar aqui, use Copiar'}};
+$('svDl').onclick=()=>{try{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([$('svOut').value],{type:'text/plain'}));a.download='allstar-save.txt';document.body.appendChild(a);a.click();a.remove();$('svMsg').textContent='Arquivo baixado'}catch(e){$('svMsg').textContent='Não deu para baixar aqui, use Copiar'}};
 $('svLoad').onclick=()=>{const raw=$('svIn').value.trim(),b=$('svLoad');if(!raw){$('svMsg').textContent='Cole um código primeiro';return}
  let d;try{d=dec(raw.replace(/^MP2:/,''))}catch(e){$('svMsg').textContent='Código inválido';return}
  if(!d||!Array.isArray(d.chars)||!d.chars.length){$('svMsg').textContent='Código inválido';return}
@@ -3820,7 +3821,7 @@ window.__gen=true;mcStart();{const gi=setInterval(()=>{if(genStep(12))clearInter
 })();
 </script>
 
-<div class="modal" id="startM"><div class="box"><div id="stTitle">MUNDO PIXEL</div><div id="stSub">Colecione lutadores, explore e jogue com amigos</div>
+<div class="modal" id="startM"><div class="box"><div id="stTitle">ALLSTAR</div><div id="stSub">Colecione lutadores, explore e jogue com amigos</div>
 <div class="stTabs"><button class="stTab on" id="tbIn">Entrar</button><button class="stTab" id="tbNew">Criar conta</button></div>
 <input id="stNick" maxlength="14" placeholder="Nickname" autocomplete="username" autocapitalize="off" spellcheck="false">
 <input id="stPass" type="password" maxlength="40" placeholder="Senha" autocomplete="current-password">
@@ -4725,7 +4726,7 @@ function rnd(){const pick=a=>a[Math.floor(Math.random()*a.length)],free=c=>E.STY
   c:Math.random()<.45?'nenhum':pick(free('c')),cc:Math.floor(Math.random()*E.CLOTH.length)};t0=Date.now();render()}
 function open(nw){isNew=!!nw;L=E.norm(X.cur);if(L.g==='tv'&&!isAdm())L.g='m';tab='s';dirI=0;t0=Date.now();
  $('lkTitle').textContent=isNew?'Crie seu personagem':'Meu visual';
- $('lkNick').textContent=MP&&MP.nick&&!MP.offline?(isNew?'Bem-vindo(a), '+MP.nick+'! Escolha como você quer ser no Mundo Pixel.':MP.nick):'';
+ $('lkNick').textContent=MP&&MP.nick&&!MP.offline?(isNew?'Bem-vindo(a), '+MP.nick+'! Escolha como você quer ser no AllStar.':MP.nick):'';
  $('lkCancel').style.display=isNew?'none':'';$('lkOk').textContent=isNew?'Começar a aventura':'Salvar';
  M.style.display='flex';try{lock=true;jr()}catch(e){}
  render();if(!raf)raf=requestAnimationFrame(anim)}
@@ -4912,7 +4913,7 @@ function tabAviso(){body().innerHTML=`<div class="admS">Aviso para todos os joga
  $a('avGo').onclick=async()=>{const t=String($a('avT').value||'').trim().slice(0,40),m=String($a('avM').value||'').trim().slice(0,180);
   if(!m){msg('Escreva a mensagem',true);return}if(!MP.db||MP.offline){msg('Entre online para enviar',true);return}
   const d=AVD.find(x=>x[0]===$a('avD').value)||AVD[1],id=db().ref('broadcast').push().key;
-  try{await db().ref('broadcast').set({id,t:t||'Mundo Pixel',m,s:TS(),exp:Math.round(now()+d[2])});logAct('aviso','todos',(t?t+': ':'')+m);msg('Aviso enviado!');$a('avM').value='';cur()}catch(e){fail(e)}};
+  try{await db().ref('broadcast').set({id,t:t||'AllStar',m,s:TS(),exp:Math.round(now()+d[2])});logAct('aviso','todos',(t?t+': ':'')+m);msg('Aviso enviado!');$a('avM').value='';cur()}catch(e){fail(e)}};
  twoTap($a('avOff'),async()=>{try{await db().ref('broadcast').remove();logAct('aviso','todos','apagou o aviso');msg('Aviso apagado');cur()}catch(e){fail(e)}});
  cur()}
 
@@ -14673,7 +14674,7 @@ if(SCN.field&&SCN.field.env){const _e=SCN.field.env;SCN.field.env=function(){try
 // ===================== Minigame: Pizzaria do Pixel — Turno da Noite =====================
 // Sobreviva das 12 AM às 6 AM na sala de segurança de uma pizzaria com animatrônicos que andam à noite (5 noites, cada uma mais difícil).
 //  · portas e luzes dos dois lados (luz mostra quem está na porta), tablet com 11 câmeras e o mapa, bateria que acaba (portas, luzes e câmeras gastam mais);
-//  · os animatrônicos (todos originais do Mundo Pixel):
+//  · os animatrônicos (todos originais do AllStar):
 //     Lata   — robô de lata do palco; vem pelo corredor oeste até a porta ESQUERDA;
 //     Sapão  — sapo cantor do palco; vem pelo lado leste (banheiros/cozinha) até a porta DIREITA;
 //     Croco  — crocodilo do Teatro dos Fantoches: sai de trás da cortina aos poucos SE NINGUÉM OLHAR as câmeras, depois corre até a porta esquerda e bate nela;
@@ -15718,7 +15719,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261021133428;
+const GAME_BUILD=20261021134048;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
@@ -15777,7 +15778,7 @@ let seen='';try{seen=localStorage.getItem('mp_bcast')||''}catch(e){}
 let on=false;
 function show(v){const box=document.createElement('div');box.className='modal';box.style.cssText='display:flex;z-index:60';
  const e=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
- box.innerHTML='<div class="box" style="text-align:center;max-width:400px"><h2>'+e(v.t||'Mundo Pixel')+'</h2><div style="margin:8px 0 14px;white-space:pre-wrap;line-height:1.4">'+e(v.m)+'</div><button class="btn" style="background:#2e7d32">OK</button></div>';
+ box.innerHTML='<div class="box" style="text-align:center;max-width:400px"><h2>'+e(v.t||'AllStar')+'</h2><div style="margin:8px 0 14px;white-space:pre-wrap;line-height:1.4">'+e(v.m)+'</div><button class="btn" style="background:#2e7d32">OK</button></div>';
  document.body.appendChild(box);box.querySelector('button').onclick=()=>box.remove()}
 setInterval(()=>{const MP=window.MP;if(on||!MP||!MP.db||!MP.uid||MP.offline)return;on=true;
  MP.db.ref('broadcast').on('value',s=>{const v=s.val();if(!v||!v.id||v.id===seen)return;const n=Date.now()+(MP.off||0);
