@@ -561,10 +561,10 @@ const solid=(px,py)=>{if(py>=GY*T&&py<GY*T+T&&px>=GX*T-8&&px<GX*T+T+8)return tru
 const hit=(x,y)=>solid(x+3,y+8)||solid(x+12,y+8)||solid(x+3,y+15)||solid(x+12,y+15)||eBlock(x,y);
 // Mundo 1 (floresta): 0 goblin · 1 ciclope · 2 boss (Demônio da Torre) · 3 cavaleiro das chamas (mini boss). O desenho deles está em js/13-monsters.js (e.mon).
 // s e vh = altura do sprite (a barra de vida e os números de dano ficam acima da cabeça) · r = raio que bloqueia o jogador · orb = distância dos lutadores · eng = distância do botão Lutar
-const TY=[{s:1.6,vh:25,mon:'goblin',max:800,coin:[4,6],r:9,orb:20,eng:38,rsp:12000},
- {s:4.1,vh:66,mon:'cyclops',max:6000,coin:[12,18],r:16,orb:36,eng:50,fy:.6,fcy:6,rsp:25000},
- {s:3,max:50000,coin:[80,120],r:12,orb:54,eng:80,fy:.5,fcy:30,rsp:60000,dm:1},
- {s:4.25,vh:68,mon:'knight',mb:1,max:15000,coin:[35,55],r:15,orb:34,eng:48,fy:.6,fcy:6,rsp:45000}];
+const TY=[{s:1.6,vh:25,mon:'goblin',max:800,coin:[4,6],r:9,orb:20,eng:38,rsp:10000},
+ {s:4.1,vh:66,mon:'cyclops',max:6000,coin:[12,18],r:16,orb:36,eng:50,fy:.6,fcy:6,rsp:10000},
+ {s:3,max:50000,coin:[80,120],r:12,orb:54,eng:80,fy:.5,fcy:30,rsp:20000,dm:1},
+ {s:4.25,vh:68,mon:'knight',mb:1,max:15000,coin:[35,55],r:15,orb:34,eng:48,fy:.6,fcy:6,rsp:10000}];
 let EN=[
  // goblins pela floresta (os primeiros ficam logo ao sul da ponte, perto da Lina)
  [30,35],[24,38],[21,34],[37,34],[28,42],[35,45],[15,28],[46,25],[11,39],[23,47],[48,39],[58,23],[42,13],[57,29],[14,8],[62,19],[75,33],[45,52],
@@ -2158,7 +2158,8 @@ drawActors=function(f){if(world===1&&window.HAL&&!HAL.ready)return;const t=Date.
 // ===================== economia: ouro, drops, roleta, abates =====================
 giveDrop=function(e,t){let c;const mm=bm('m');if(world===1){c=Math.max(1,Math.round(ri(...e.coin)*mm));pk+=c}else{c=Math.max(1,Math.round(ri(...e.coin)*goldMul()*mm));coins+=c}
  save();updHud();fx.push({x:e.x-4,y:e.y-12,t,s:'+'+c+(world===1?' abóboras':' moedas'),c:world===1?'#ff9800':'#ffd23f'});coinBurst(e,c,world===1)};
-bossDrop=function(e,t){if(e.t!==2)return;let n=ri(1,3)*bm('d');n=Math.floor(n)+(Math.random()<n%1?1:0);ess+=n;save();updHud();fx.push({x:e.x-4,y:e.y-24,t,s:'+'+n+' essência',c:'#80d8ff'})};
+bossDrop=function(e,t){if(e.t!==2)return;const n=Math.random()<.25*bm('d')?1:0;if(!n)return;ess+=n;   // 25% de chance de 1 essência (a Poção de Drop aumenta a chance)
+ save();updHud();fx.push({x:e.x-4,y:e.y-24,t,s:'+'+n+' essência',c:'#80d8ff'})};
 roll=function(){pity++;const Lk=bm('s'),ch=CH.map((c,i)=>i?c*Lk:0);ch[0]=Math.max(0,100-ch[1]-ch[2]-ch[3]-ch[4]);
  let r=Math.random()*100,k=0;for(;k<4;k++){if((r-=ch[k])<0)break}if(pity>=5000)k=4;if(k===4)pity=0;
  const o={id:nid++,rar:k,sh:Math.random()<.005*Lk?1:0,name:pickN(k),lvl:1,xp:0,spd:ri(1,10)};try{window.chUi&&window.chUi()}catch(e){}
