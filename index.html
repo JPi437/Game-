@@ -3529,7 +3529,7 @@ function hubSolid(lx,ly){if(Math.abs(lx-RKP.x)<14&&ly>RKP.y-12&&ly<RKP.y+4)retur
 function waitSolid(lx,ly){for(const b of[[24,RH-56,64,10],[168,RH-56,64,10]])if(lx>b[0]&&lx<b[0]+b[2]&&ly>b[1]&&ly<b[1]+b[3])return true;return false}
 // ---------- dificuldade ----------
 const mult=n=>1+.25*(n-1)+.05*(n-1)*(n-1);
-const ROLE_HP=[700,3000,7000,24000],ROLE_COIN=[[4,6],[12,18],[35,55],[80,120]];
+const ROLE_HP=[3500,15000,35000,120000],ROLE_COIN=[[4,6],[12,18],[35,55],[80,120]];
 const VAR=[[2,2,1],[3,1,1],[1,3,1],[4,2,0],[2,1,2],[3,2,0],[1,2,2]];
 function mkEn(th,role,x,y,n){let e;
  if(th==='h'&&halOk()){const nm=role===0?(rnd()<.5?'zombie':'skeleton'):role===1?'werewolf':role===2?(rnd()<.5?'spiderA':'spiderB'):'dracula';e=HALMON.mkEn(nm,x,y)}
