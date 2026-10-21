@@ -1201,7 +1201,7 @@ $('feedGo').onclick=()=>{if(!sel.size)return;const t=chars.find(c=>c.id===curId)
  while(t.lvl<10&&t.xp>=need(t.lvl)){t.xp-=need(t.lvl);t.lvl++}if(t.lvl>=10)t.xp=0;
  save();$('feedM').style.display='none';renderInv();openDet(t.id)};
 $('feedBack').onclick=()=>{$('feedM').style.display='none';openDet(curId)};
-const UPS=[{k:'x2',n:'Girar 2 em 2',d:'Abre 2 personagens por giro (custa 20 moedas)',c:100},{k:'x3',n:'Girar 3 em 3',d:'Abre 3 personagens por giro (custa 30 moedas). Requer o 2 em 2',c:1000,req:'x2'},{k:'x4',n:'Girar 4 em 4',d:'Abre 4 personagens por giro (custa 40 moedas). Requer o 3 em 3',c:10000,req:'x3'},{k:'x5',n:'Girar 5 em 5',d:'Abre 5 personagens por giro (custa 50 moedas). Requer o 4 em 4',c:100000,req:'x4'},{k:'auto',n:'Auto Click',d:'Soca automaticamente 1 vez a cada 0,5s durante a luta',c:1000},{k:'autostar',n:'Auto Estrela',d:'Gira a estrela sozinho (botão Auto na roleta)',c:10000},{k:'autopas',n:'Auto Passiva',d:'Roleta passivas sozinho até sair a passiva alvo',c:10000},{k:'slot',n:'Slot extra',d:'+1 personagem equipado (4 no total)',c:5000}];
+const UPS=[{k:'x2',n:'Girar 2 em 2',d:'Abre 2 personagens por giro (custa 20 moedas)',c:100},{k:'x3',n:'Girar 3 em 3',d:'Abre 3 personagens por giro (custa 30 moedas). Requer o 2 em 2',c:1000,req:'x2'},{k:'x4',n:'Girar 4 em 4',d:'Abre 4 personagens por giro (custa 40 moedas). Requer o 3 em 3',c:10000,req:'x3'},{k:'x5',n:'Girar 5 em 5',d:'Abre 5 personagens por giro (custa 50 moedas). Requer o 4 em 4',c:100000,req:'x4'},{k:'auto',n:'Auto Click',d:'Soca automaticamente 1 vez a cada 0,5s durante a luta',c:1000},{k:'autostar',n:'Auto Estrela',d:'Gira a estrela sozinho (botão Auto na roleta)',c:10000},{k:'autopas',n:'Auto Passiva',d:'Roleta passivas sozinho até sair a passiva alvo',c:10000}];   // o 'Slot extra' saiu da loja (quem já comprou continua com ele: ups.slot)
 function maxEq(){let b=0;try{const a=window.XS&&XS().ach;if(a){b=(a.rd15?1:0)+(a.rd50?1:0)}}catch(e){}return 3+(ups.slot?1:0)+b}   // conquistas da dungeon: sala 15 e sala 50 dão +1 cada
 function renderUp(){$('upList').innerHTML=UPS.map(u=>{const own=ups[u.k],blk=u.req&&!ups[u.req];return `<div style="display:flex;align-items:center;gap:8px;background:#111;border-radius:8px;padding:8px;margin-bottom:6px;text-align:left"><div style="flex:1"><b>${u.n}</b><br><span style="font-size:11px;opacity:.7">${u.d}</span></div><button class="btn upb${own||blk||coins<u.c?' dis':''}" data-k="${u.k}" style="padding:6px 10px;font-size:13px">${own?'Comprado':blk?'Bloqueado':u.c.toLocaleString('pt-BR')+' moedas'}</button></div>`}).join('');
  $('upList').querySelectorAll('.upb').forEach(b=>b.onclick=()=>{const u=UPS.find(x=>x.k===b.dataset.k);if(ups[u.k]||coins<u.c||(u.req&&!ups[u.req]))return;coins-=u.c;ups[u.k]=1;save();updHud();renderUp()})}
@@ -15721,7 +15721,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261021150925;
+const GAME_BUILD=20261021151125;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
