@@ -3490,7 +3490,7 @@ drawActors=function(f){if(world!==0)return _daV6(f);if(!MAPOK){loadScreen();retu
 // Cada sala é um pedaço recortado do mapa da Floresta ou do Halloween (tema sorteado a cada bloco de 5; a mesma arena nunca vem duas vezes seguidas).
 // Ao entrar numa sala os inimigos aparecem; limpando todos, a porta da frente abre. Boss nas salas 5, 10, 15... O jogador tem 5 minutos para cada bloco de 5 salas.
 // Depois da sala 5 vem outra sala de espera (igual à primeira): ali as 5 salas de trás somem, o jogador volta "para a sala de espera do começo" sem perceber
-// e mais 5 salas, mais difíceis, aparecem na frente. Acabou o tempo: volta ao saguão com tudo o que juntou (moedas na hora, Fichas da Raid por sala).
+// e mais 5 salas, mais difíceis, aparecem na frente. Acabou o tempo: volta ao saguão com tudo o que juntou (moedas na hora, Fragmentos da Dungeon).
 (function(){
 const RD=window.RAID={st:'off',EN:[],rooms:[],bk:0,tEnd:0,cd:0,run:null,sum:null,ban:null,canv:{},nextB:null,hub:null,wait:null,rankOff:false};
 const RW=512,AW=384,WW=256,RH=240,WL=16,DY0=92,DY1=148,NL=8;   // saguão 512 · salas 384 · espera 256 (altura 240) · parede 16 · abertura das portas
@@ -3524,8 +3524,8 @@ RD.solid=function(px,py){if(px<0||py<0||px>=XE||py>=RH)return true;
  if(r.clr&&r.clr[(ly>>2)*CGW+(lx>>2)])return false;
  return r.th==='h'?!hWalk(r.sx+lx,r.sy+ly):!fWalk(r.sx+lx,r.sy+ly)};
 // saguão: os 4 portões no alto, o portal de saída à esquerda e a pedra do ranking à direita
-const GTX=[128,224,320,416],EXIT={x:56,y:176},RKP={x:462,y:176};
-function hubSolid(lx,ly){if(Math.abs(lx-RKP.x)<14&&ly>RKP.y-12&&ly<RKP.y+4)return true;return false}
+const GTX=[128,224,320,416],EXIT={x:56,y:176},RKP={x:462,y:176},SHP={x:462,y:122};
+function hubSolid(lx,ly){if(Math.abs(lx-SHP.x)<20&&ly>SHP.y-14&&ly<SHP.y+2)return true;if(Math.abs(lx-RKP.x)<14&&ly>RKP.y-12&&ly<RKP.y+4)return true;return false}
 function waitSolid(lx,ly){for(const b of[[24,RH-56,64,10],[168,RH-56,64,10]])if(lx>b[0]&&lx<b[0]+b[2]&&ly>b[1]&&ly<b[1]+b[3])return true;return false}
 // ---------- dificuldade ----------
 const mult=n=>1+.25*(n-1)+.05*(n-1)*(n-1);
@@ -3648,6 +3648,10 @@ function hubCanvas(){const cv=mkcv(RW,RH),x=cv.getContext('2d');x.imageSmoothing
  // tochas entre os portões
  for(const tx of[80,176,272,368,464]){x.fillStyle='#2a2018';x.fillRect(tx-2,40,4,14);x.fillStyle='#5a4028';x.fillRect(tx-4,38,8,3)}
  // pedra do ranking
+ // banca da loja (toldo roxo, balcão e fragmentos brilhando)
+ {const S_=SHP;x.fillStyle='#0006';x.fillRect(S_.x-22,S_.y-1,44,5);x.fillStyle='#4a2c1a';x.fillRect(S_.x-20,S_.y-14,40,14);x.fillStyle='#6a4228';x.fillRect(S_.x-20,S_.y-14,40,3);x.fillStyle='#3a2010';x.fillRect(S_.x-18,S_.y-40,3,26);x.fillRect(S_.x+15,S_.y-40,3,26);
+  for(let i=0;i<6;i++){x.fillStyle=i%2?'#e8dcff':'#7a3cc8';x.fillRect(S_.x-22+i*8,S_.y-44,8,8)}x.fillStyle='#5a2a9a';x.fillRect(S_.x-22,S_.y-36,48,2);
+  for(const[dx,c]of[[-12,'#c9a0ff'],[-4,'#9cf0ff'],[4,'#c9a0ff'],[12,'#ffd27a']]){x.fillStyle=c;x.fillRect(S_.x+dx-1,S_.y-19,3,4);x.fillStyle='#fff';x.fillRect(S_.x+dx,S_.y-19,1,1)}}
  const R_=RKP;x.fillStyle='#0006';x.fillRect(R_.x-15,R_.y-2,30,6);x.fillStyle='#55526a';x.fillRect(R_.x-12,R_.y-30,24,30);x.fillStyle='#6a6782';x.fillRect(R_.x-12,R_.y-30,24,3);x.fillStyle='#ffd23f';x.fillRect(R_.x-6,R_.y-22,12,2);x.fillRect(R_.x-4,R_.y-17,8,2);x.fillRect(R_.x-7,R_.y-12,14,2);
  return cv}
 function waitCanvas(){const cv=mkcv(WW,RH),x=cv.getContext('2d');x.imageSmoothingEnabled=false;
@@ -3694,8 +3698,8 @@ RD.overlay=function(t){
  const li=liOf(P.x+8);
  // saguão: nomes dos portões
  if(li===0){GTX.forEach((gx,i)=>{const X=gx-cam.x,Y=80-cam.y;if(i===0){pill(X-30,Y+2,60,12);txt('RAID',X,Y+3,'#ffd23f',8)}else{pill(X-28,Y+2,56,12);txt('Em breve',X,Y+3,'#aaa',8)}});
-  const X=EXIT.x-cam.x,Y=EXIT.y+14-cam.y;pill(X-18,Y,36,12);txt('Sair',X,Y+1,'#ffb060',8);
-  pill(VW/2-80,4,160,24);txt('Fichas da Raid: '+nf(st.rt),VW/2,7,'#c9a0ff',8);txt('Recorde: sala '+(st.rb||0),VW/2,17,'#ffd23f',8)}
+  const X=EXIT.x-cam.x,Y=EXIT.y+14-cam.y;pill(X-18,Y,36,12);txt('Sair',X,Y+1,'#ffb060',8);{const X=SHP.x-cam.x,Y=SHP.y-58-cam.y;pill(X-20,Y,40,12);txt('Loja',X,Y+1,'#c9a0ff',8)}
+  pill(VW/2-80,4,160,24);txt('Fragmentos da Dungeon: '+nf(st.rt),VW/2,7,'#c9a0ff',8);txt('Recorde: sala '+(st.rb||0),VW/2,17,'#ffd23f',8)}
  // contagem da sala de espera
  if(RD.st==='wait0'){const s=RD.cd-t;pill(VW/2-80,24,160,32);txt('A raid começa em',VW/2,27,'#fff',8);txt(mmss(s),VW/2,37,'#ffd23f',14)}
  if(RD.st==='rest'&&li===1){pill(VW/2-110,24,220,24);txt('Bloco '+(RD.bk)+' concluído! Descanse',VW/2,27,'#9cff8a',8);txt('O tempo volta a contar quando você passar a porta',VW/2,37,'#fff',7)}
@@ -3706,7 +3710,7 @@ RD.overlay=function(t){
  if(RD.ban){const el=t-RD.ban.t;if(el>2600)RD.ban=null;else{const a=Math.min(1,el/250,(2600-el)/500);g.globalAlpha=a;pill(VW/2-70,56,140,30);txt(RD.ban.s,VW/2,59,RD.ban.s.includes('BOSS')?'#ff6a5a':'#ffd23f',12);txt(RD.ban.s2||'',VW/2,73,'#ddd',7);g.globalAlpha=1}}
  // fim da raid
  if(RD.sum){const S=RD.sum;g.fillStyle='rgba(0,0,0,.55)';g.fillRect(0,0,VW,VH);pill(VW/2-110,VH/2-44,220,88);txt(S.title,VW/2,VH/2-38,S.ok?'#9cff8a':'#ff7a6a',12);
-  txt('Salas limpas: '+S.rooms+'  ·  Mais longe: sala '+S.far,VW/2,VH/2-18,'#fff',8);txt('Fichas da Raid: +'+S.tok+'   Moedas: +'+nf(S.coins),VW/2,VH/2-6,'#ffd23f',8);txt(S.rec?'Novo recorde!':'Recorde: sala '+(st.rb||0),VW/2,VH/2+8,S.rec?'#c9a0ff':'#bbb',8);
+  txt('Salas limpas: '+S.rooms+'  ·  Mais longe: sala '+S.far,VW/2,VH/2-18,'#fff',8);txt('Fragmentos: +'+S.tok+'   Moedas: +'+nf(S.coins),VW/2,VH/2-6,'#ffd23f',8);txt(S.rec?'Novo recorde!':'Recorde: sala '+(st.rb||0),VW/2,VH/2+8,S.rec?'#c9a0ff':'#bbb',8);
   txt('Voltando ao saguão...',VW/2,VH/2+24,'#aaa',7)}};
 // ---------- entrar, andar, limpar, acabar ----------
 function setWorld3(px,py){const was=world;world=3;W=MW3;H=MH3;SX=-50;SY=-50;TOX=-50;TOY=-50;GX=-50;GY=-50;NPC.x=-99*T;NPC.y=-99*T;map=map3;EN=RD.EN;qs=QS[3];fight=null;
@@ -3720,9 +3724,9 @@ function startWait(){RD.EN.length=0;RD.rooms=[];RD.bk=0;RD.st='wait0';RD.cd=Date
 function startRaid(){RD.rooms=genBlock(0);RD.bk=0;RD.st='run';RD.tEnd=Date.now()+BLK;try{sWin(1)}catch(e){}RD.ban={t:Date.now(),s:'A raid começou!',s2:'5 minutos para 5 salas'}}
 function roomCleared(i){const r=RD.rooms[i];r.cleared=true;const b=Math.floor((r.n-1)/5),boss=r.n%5===0,tk=(1+b)*(boss?4:1);st.rt=(st.rt||0)+tk;RD.run.rooms++;RD.run.tok+=tk;RD.run.far=Math.max(RD.run.far,r.n);
  if(r.n>(st.rb||0)){st.rb=r.n;RD.run.rec=true;rankPush()}
- fx.push({x:P.x-10,y:P.y-24,t:Date.now(),s:'Sala limpa! +'+tk+' fichas',c:'#c9a0ff',lbl:1});try{bp(523,.1,'triangle',.07);bp(784,.14,'triangle',.07,.09);bp(1047,.2,'triangle',.06,.18)}catch(e){}updHud();save()}
+ fx.push({x:P.x-10,y:P.y-24,t:Date.now(),s:'Sala limpa! +'+tk+' fragmentos',c:'#c9a0ff',lbl:1});try{bp(523,.1,'triangle',.07);bp(784,.14,'triangle',.07,.09);bp(1047,.2,'triangle',.06,.18)}catch(e){}updHud();save()}
 function blockDone(){RD.bk++;const bonus=2*RD.bk;st.rt=(st.rt||0)+bonus;RD.run.tok+=bonus;try{sWin(3)}catch(e){}
- RD.EN.length=0;fight=null;RD.rooms=genBlock(RD.bk);RD.st='rest';shiftAll(XO[1]-XO[7]);updHud();save();toast('Bloco concluído! +'+bonus+' fichas. Mais 5 salas na frente')}
+ RD.EN.length=0;fight=null;RD.rooms=genBlock(RD.bk);RD.st='rest';shiftAll(XO[1]-XO[7]);updHud();save();toast('Bloco concluído! +'+bonus+' fragmentos. Mais 5 salas na frente')}
 function fail(){RD.st='over';const R=RD.run||{rooms:0,tok:0,coins0:coins,far:0};fight=null;
  RD.sum={title:'Tempo esgotado!',ok:false,rooms:R.rooms,far:R.far,tok:R.tok,coins:Math.max(0,coins-R.coins0),rec:!!R.rec,t:Date.now()};try{bp(300,.3,'sawtooth',.05);bp(200,.4,'sawtooth',.05,.25)}catch(e){}save()}
 RD.tick=function(){const t=Date.now();if(world!==3)return;
@@ -3731,8 +3735,8 @@ RD.tick=function(){const t=Date.now();if(world!==3)return;
  const fx_=P.x+8,fy_=P.y+15,li=liOf(fx_),lx=fx_-XO[li];
  if(RD.st==='hub'&&li===0){if(fy_<92&&Math.abs(lx-GTX[0])<20)startWait();else if(fy_<92){for(let i=1;i<4;i++)if(Math.abs(lx-GTX[i])<20&&!(t-(RD.soonT||0)<2500)){RD.soonT=t;fx.push({x:P.x-12,y:P.y-18,t,s:'Em breve',c:'#ddd',lbl:1})}}
   if(Math.hypot(lx-EXIT.x,fy_-EXIT.y)<20){goWorld(0);return}
-  rkUi(Math.hypot(lx-RKP.x,fy_-RKP.y)<34);return}
- rkUi(false);
+  const dS=Math.hypot(lx-SHP.x,fy_-SHP.y-4),dR=Math.hypot(lx-RKP.x,fy_-RKP.y);rkUi(dR<34&&dR<=dS);shUi(dS<34&&dS<dR);return}
+ rkUi(false);shUi(false);
  {const nb=RD.rooms.find(r=>!r.cv);if(nb)nb.cv=roomCanvas(nb)}
  if(RD.st==='wait0'){if(t>=RD.cd)startRaid();return}
  if(RD.st==='run'||RD.st==='rest'){
@@ -3740,7 +3744,7 @@ RD.tick=function(){const t=Date.now();if(world!==3)return;
    if(r&&r.spawned&&!r.cleared&&!RD.EN.some(e=>e.rs===i&&!e.dead))roomCleared(i)}
   if(li===7&&lx>WL+24&&RD.rooms[4]&&RD.rooms[4].cleared){blockDone();return}
   if(RD.st==='run'&&t>RD.tEnd)fail()}};
-RD.leave=function(){RD.st='off';RD.EN.length=0;RD.rooms=[];RD.sum=null;RD.ban=null;rkUi(false)};
+RD.leave=function(){RD.st='off';RD.EN.length=0;RD.rooms=[];RD.sum=null;RD.ban=null;rkUi(false);shUi(false)};
 // ---------- ranking (quem foi mais longe) ----------
 const rkB=document.createElement('button');rkB.className='btn';rkB.id='rdRkBtn';rkB.textContent='Ranking da Raid';rkB.style.cssText='position:fixed;right:calc(20px + env(safe-area-inset-right,0px));bottom:calc(84px + env(safe-area-inset-bottom,0px));display:none;z-index:3;background:linear-gradient(#8e5cd6,#4a2a8a);border-radius:999px;padding:10px 18px;border:3px solid #fff';document.body.appendChild(rkB);
 function rkUi(on){on=on&&!lock;const d=on?'block':'none';if(rkB.style.display!==d)rkB.style.display=d}
@@ -3750,13 +3754,37 @@ $('rdClose').onclick=()=>{rdM.style.display='none';lock=false};
 rkB.onclick=()=>openRk();
 const rkOk=()=>!!(window.MP&&MP.uid&&!MP.offline&&MP.db);
 function rankPush(){if(!rkOk()||RD.rankOff)return;try{MP.db.ref('raidrank/'+MP.uid).set({n:MP.nick||'?',r:st.rb|0,t:firebase.database.ServerValue.TIMESTAMP}).catch(e=>{if(e&&String(e.code||e.message).includes('PERMISSION'))RD.rankOff=true})}catch(e){}}
-async function openRk(){show('rdM');const L=$('rdL'),I=$('rdInfo');I.textContent='Seu recorde: sala '+(st.rb||0)+' · Fichas da Raid: '+nf(st.rt||0);
+async function openRk(){show('rdM');const L=$('rdL'),I=$('rdInfo');I.textContent='Seu recorde: sala '+(st.rb||0)+' · Fragmentos da Dungeon: '+nf(st.rt||0);
  if(!rkOk()){L.innerHTML='<div class="emp">Entre na sua conta (online) para ver o ranking.</div>';return}
  L.innerHTML='<div class="emp">Carregando...</div>';
  try{if(st.rb)rankPush();const s=await MP.db.ref('raidrank').orderByChild('r').limitToLast(50).once('value'),a=[];s.forEach(c=>{const v=c.val()||{};a.push({uid:c.key,n:cleanNick?cleanNick(v.n):v.n,r:+v.r||0})});a.sort((x,y)=>y.r-x.r);
   if(rdM.style.display!=='flex')return;
   L.innerHTML=a.length?'<table class="rk">'+a.map((r,i)=>`<tr class="${r.uid===MP.uid?'me':''}"><td>${i+1}</td><td>${esc(r.n||'?')}</td><td class="d">Sala ${r.r}</td></tr>`).join('')+'</table>':'<div class="emp">Ninguém no ranking ainda. Seja o primeiro!</div>'}
  catch(e){L.innerHTML='<div class="emp">'+(String(e&&(e.code||e.message)).includes('PERMISSION')?'O ranking da raid ainda não foi liberado no servidor.':'Não deu para carregar o ranking agora.')+'</div>'}}
+// ---------- fragmentos da dungeon: cada inimigo tem 25% de soltar 1, 15% de soltar 2 e 10% de soltar 3 ----------
+function fragDrop(e){const r=rnd(),n=r<.10?3:r<.25?2:r<.50?1:0;if(!n)return;st.rt=(st.rt||0)+n;if(RD.run)RD.run.tok+=n;
+ fx.push({x:e.x-8,y:e.y-30,t:Date.now(),s:'+'+n+' fragmento'+(n>1?'s':''),c:'#c9a0ff',lbl:1});try{bp(988,.06,'triangle',.06);bp(1319,.09,'triangle',.05,.06)}catch(x){}save()}
+// ---------- loja da dungeon (no saguão) ----------
+const SHOP=[
+ {id:'f1',p:10},{id:'s1',p:10},{id:'d1',p:10},{id:'m1',p:10},
+ {id:'f2',p:25},{id:'s2',p:25},{id:'d2',p:25},{id:'m2',p:25},
+ {id:'xp',p:15},
+ {k:'ess',n:'Essência do Demônio',t:'+1 essência (para as passivas)',c:'#80d8ff',p:60},
+ {k:'gold',n:'Saco de Ouro',t:'+10.000 moedas',c:'#ffd23f',p:30}];
+const shB=document.createElement('button');shB.className='btn';shB.id='rdShBtn';shB.textContent='Loja da Dungeon';shB.style.cssText='position:fixed;right:calc(20px + env(safe-area-inset-right,0px));bottom:calc(84px + env(safe-area-inset-bottom,0px));display:none;z-index:3;background:linear-gradient(#b07cff,#5a2a9a);border-radius:999px;padding:10px 18px;border:3px solid #fff';document.body.appendChild(shB);
+function shUi(on){on=on&&!lock;const d=on?'block':'none';if(shB.style.display!==d)shB.style.display=d}
+const rdS=document.createElement('div');rdS.className='modal';rdS.id='rdS';rdS.innerHTML='<div class="box v6box"><h2>Loja da Dungeon</h2><div id="rdSBal" class="bal"></div><div id="rdSL" class="shg"></div><button class="btn" id="rdSClose" style="display:none">Fechar</button></div>';document.body.appendChild(rdS);
+try{xbtn('rdS','rdSClose')}catch(e){}
+$('rdSClose').onclick=()=>{rdS.style.display='none';lock=false};
+shB.onclick=()=>{renderRdS();show('rdS')};
+function renderRdS(){$('rdSBal').innerHTML='Seus fragmentos: <b style="color:#c9a0ff">'+nf(st.rt||0)+'</b> · ganhe derrotando inimigos e limpando salas da dungeon';
+ $('rdSL').innerHTML=SHOP.map((o,i)=>{const it=o.id?IT[o.id]:o,ok=(st.rt||0)>=o.p,sub=o.id?it.t+' · '+durTxt(it.d):it.t,own=o.id?'<span class="ow">No inventário: '+(items[o.id]||0)+'</span>':'';
+  return `<div class="sc" style="--c:${it.c}"><canvas data-i="${i}"></canvas><div class="si"><b>${it.n}</b><span>${sub}</span>${own}</div><button class="btn buy${ok?'':' dis'}" data-i="${i}">${o.p} frag.</button></div>`}).join('');
+ $('rdSL').querySelectorAll('canvas').forEach(c=>{const o=SHOP[+c.dataset.i];if(o.id)potIco(c,o.id);else{c.width=12;c.height=16;const x=c.getContext('2d');if(o.k==='ess'){x.fillStyle='#1a3a5a';x.fillRect(4,1,4,14);x.fillRect(2,4,8,8);x.fillStyle='#80d8ff';x.fillRect(5,2,2,12);x.fillRect(3,5,6,6);x.fillStyle='#fff';x.fillRect(5,5,1,2)}else{x.fillStyle='#6a4a1a';x.fillRect(2,5,8,10);x.fillRect(4,3,4,2);x.fillStyle='#ffd23f';x.fillRect(3,7,6,7);x.fillStyle='#fff3b0';x.fillRect(4,8,2,2)}}});
+ $('rdSL').querySelectorAll('.buy').forEach(b=>b.onclick=()=>buyRd(+b.dataset.i))}
+function buyRd(i){const o=SHOP[i];if(!o)return;if((st.rt||0)<o.p){toast('Fragmentos insuficientes');return}st.rt-=o.p;
+ if(o.id){addItem(o.id,1);toast(IT[o.id].n+' foi para o inventário')}else if(o.k==='ess'){ess+=1;toast('+1 Essência do Demônio')}else{coins+=10000;try{lastCoins=coins}catch(e){}toast('+10.000 moedas')}
+ try{bp(880,.08,'triangle',.08);bp(1320,.12,'triangle',.08,.07)}catch(e){}updHud();save();renderRdS()}
 // ---------- ganchos no jogo ----------
 // ---------- o Demônio na raid (mesmo desenho do salão da torre, mas preso ao inimigo da sala) ----------
 {const _de=drawEnemy;drawEnemy=function(e,t,f){if(!e.rdm)return _de(e,t,f);demonInit();const cx=Math.round(e.x+8-cam.x),fy=Math.round(e.y+16-cam.y),H_=DMS.H;
@@ -3766,14 +3794,14 @@ async function openRk(){show('rdM');const L=$('rdL'),I=$('rdInfo');I.textContent
   if(hit){tmx.globalCompositeOperation='source-atop';tmx.fillStyle='rgba(255,255,255,.75)';tmx.fillRect(0,0,64,72);tmx.globalCompositeOperation='source-over'}
   const jx=hit?(Math.random()<.5?-1:1):0;g.drawImage(TMP,cx-32+jx,fy-H_-2);g.globalAlpha=.45+.35*Math.sin(t/240);g.drawImage(fr.g,cx-28+jx,fy-H_+2);g.globalAlpha=1}}
 {const _dd=drawDying;drawDying=function(d,t){if(!d.rdm)return _dd(d,t);const el=t-d.t0,cx=Math.round(d.x+8-cam.x),fy=Math.round(d.y+16-cam.y),k=DM.done1;DM.done1=d.db;try{demonDeath(d,t,cx,fy,el)}catch(x){}d.db=DM.done1;DM.done1=k}}
-{const _od=window.onEnemyDeath;window.onEnemyDeath=function(e){if(e&&e.rdm){DY.push({x:e.x,y:e.y,rdm:1,t0:Date.now(),life:3400,db:0});try{bp(70,.9,'sawtooth',.09,0,35)}catch(x){}return}return _od(e)}}
+{const _od=window.onEnemyDeath;window.onEnemyDeath=function(e){if(e&&e.rd&&world===3)try{fragDrop(e)}catch(x){}if(e&&e.rdm){DY.push({x:e.x,y:e.y,rdm:1,t0:Date.now(),life:3400,db:0});try{bp(70,.9,'sawtooth',.09,0,35)}catch(x){}return}return _od(e)}}
 {const _g=goWorld;goWorld=function(n){if(n===3){if(world===3)return;enter();return}if(world===3){RD.leave()}return _g(n)}}
 {const _b=bgDraw;bgDraw=function(){if(world===3){RD.bg(Date.now());return}return _b()}}
 {const _r=render;render=function(){_r();if(world===3)try{RD.overlay(Date.now())}catch(e){console.error('raid',e)}}}
 {const _t=tick;tick=function(){_t();if(world===3)try{RD.tick()}catch(e){console.error('raid',e)}}}
 // botão no menu Mapas
 {const _rw=renderW;renderW=function(){_rw();const L=$('wList');if(!L)return;const b=document.createElement('button');b.className='btn wb';b.style.cssText='display:block;width:100%;margin-bottom:8px;background:linear-gradient(#8e5cd6,#3a1a6a)';
-  b.innerHTML='Raid'+(world===3?' (aqui)':'')+'<br><small style="font-size:11px">Recorde: sala '+(st.rb||0)+' · '+nf(st.rt||0)+' fichas</small>';b.onclick=()=>{goWorld(3);$('wM').style.display='none';lock=false};L.appendChild(b)}}
+  b.innerHTML='Raid'+(world===3?' (aqui)':'')+'<br><small style="font-size:11px">Recorde: sala '+(st.rb||0)+' · '+nf(st.rt||0)+' fragmentos</small>';b.onclick=()=>{goWorld(3);$('wM').style.display='none';lock=false};L.appendChild(b)}}
 RD._dbg={planClear,genBlock,roomCanvas,halCrop,AR,startRaid,startWait,spawnRoom,roomCleared,blockDone,fail,toHub,mult};
 })();
 
