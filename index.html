@@ -510,7 +510,7 @@ const pcol=r=>COL[r]||'#f0f',pct=x=>Math.round(x*100);
 const pdesc=p=>[p.as?'+'+pct(p.as)+'% vel. de ataque':'',p.dm?'+'+pct(p.dm)+'% dano':'',p.gold?'+'+pct(p.gold)+'% ouro':''].filter(Boolean).join(' · ');
 const pname=key=>{const p=PAS[key];return `<b style="color:${pcol(p.r)}">${p.n}</b>`};
 const asOf=k=>(PAS[k.pas]||{}).as||0;
-const goldMul=()=>1+equipped.reduce((a,id)=>{const k=chars.find(c=>c.id===id);return a+((k&&PAS[k.pas]&&PAS[k.pas].gold)||0)},0);
+const goldMul=()=>1+(window.XS&&XS().ach.dex0?.1:0)+equipped.reduce((a,id)=>{const k=chars.find(c=>c.id===id);return a+((k&&PAS[k.pas]&&PAS[k.pas].gold)||0)},0);
 const pasTxt=k=>PAS[k.pas]?`<br>${pname(k.pas)}<br><span style="font-size:11px;opacity:.8">${pdesc(PAS[k.pas])}</span>`:'<br>Sem passiva';
 const dmgOf=k=>Math.round((D1[k.rar]+(D10[k.rar]-D1[k.rar])*(k.lvl-1)/9)*(1+((PAS[k.pas]||{}).dm||0))*(k.sh?1.5:1)),need=l=>25*l;
 // ===== Luffy comum: folha de sprites (4 quadros x 4 direções, célula 20x30) =====
@@ -1479,7 +1479,7 @@ function doSpin(){if(spinning)return;ac();const n=spinN,cost=(world===1?40:10)*n
  pay(cost);updHud();spinning=true;spinUi();sm('Girando...');
  const ws=Array.from({length:n},roll);
  starReveal(ws,()=>{
-  chars.push(...ws);autoProc(ws);save();updHud();spinning=false;spinUi();
+  chars.push(...ws);try{window.dexUp&&dexUp()}catch(e){}autoProc(ws);save();updHud();spinning=false;spinUi();try{window.achCheck&&window.achCheck()}catch(e){}
   sm(ws.map(x=>`<b>${escH(x.name)}</b> ${badge(x)}${x._a==='v'?' (vendido)':x._a==='f'?' (alimentado)':''}`).join(' · '));
   const my=ws.filter(x=>x.rar===4);if(my.length)mythFx(my.map(x=>x.name).join(', '));
   if(autoOn)setTimeout(()=>{if(autoOn&&$('spinM').style.display==='flex')doSpin()},my.length?3700:1000)})}
@@ -2230,8 +2230,8 @@ function msCheck(){const t=sNow(),d=dayKey(t),w=weekKey(t);if(ms.d!==d){ms.d=d;m
 function prog(k,n){msCheck();MSD.forEach((m,i)=>{if(m.k===k&&!ms.dc[i])ms.dp[i]=Math.min(m.g,ms.dp[i]+n)});MSW.forEach((m,i)=>{if(m.k===k&&!ms.wc[i])ms.wp[i]=Math.min(m.g,ms.wp[i]+n)});
  if($('msM').style.display==='flex')renderMis()}
 function claimable(){msCheck();let n=0;MSD.forEach((m,i)=>{if(ms.dp[i]>=m.g&&!ms.dc[i])n++});MSW.forEach((m,i)=>{if(ms.wp[i]>=m.g&&!ms.wc[i])n++});return n}
-function grant(rw){const out=[];if(rw.c){coins+=rw.c;lastCoins=coins;out.push(nf(rw.c)+' moedas')}if(rw.e){ess+=rw.e;out.push(rw.e+' essência')}if(rw.i){addItem(rw.i,rw.n||1);out.push((rw.n>1?rw.n+'x ':'')+IT[rw.i].n)}updHud();save();return out.join(' + ')}
-const rwTxt=rw=>[rw.c?nf(rw.c)+' moedas':'',rw.e?rw.e+' essência':'',rw.i?(rw.n>1?rw.n+'x ':'')+IT[rw.i].n+' ('+durTxt(IT[rw.i].d)+')':''].filter(Boolean).join(' + ');
+function grant(rw){const out=[];if(rw.gb)out.push('+'+Math.round(rw.gb*100)+'% de ouro para sempre');if(rw.c){coins+=rw.c;lastCoins=coins;out.push(nf(rw.c)+' moedas')}if(rw.e){ess+=rw.e;out.push(rw.e+' essência')}if(rw.i){addItem(rw.i,rw.n||1);out.push((rw.n>1?rw.n+'x ':'')+IT[rw.i].n)}updHud();save();return out.join(' + ')}
+const rwTxt=rw=>[rw.gb?'+'+Math.round(rw.gb*100)+'% de ouro para sempre':'',rw.c?nf(rw.c)+' moedas':'',rw.e?rw.e+' essência':'',rw.i?(rw.n>1?rw.n+'x ':'')+IT[rw.i].n+' ('+durTxt(IT[rw.i].d)+')':''].filter(Boolean).join(' + ');
 function claim(tp,i){msCheck();const L=tp==='d'?MSD:MSW,p=tp==='d'?ms.dp:ms.wp,c=tp==='d'?ms.dc:ms.wc,m=L[i];if(!m||c[i]||p[i]<m.g)return;
  c[i]=1;st.mis++;toast('Missão concluída! +'+grant(m.rw));sWin(2);renderMis();mnUi();achCheck();save()}
 function renderMis(){msCheck();const t=sNow(),nd=(dayKey(t)+1)*DAY+BRT,nw=((weekKey(t)+1)*7-3)*DAY+BRT;
@@ -2261,10 +2261,14 @@ const ACH=[
  {id:'lv10',n:'Mestre',d:'Tenha um lutador no nível 10',s:'maxlv',g:10,rw:{e:2}},
  {id:'hw',n:'Explorador',d:'Visite o mundo Halloween',s:'hw',g:1,rw:{c:300}},
  {id:'h10',n:'Dedicado',d:'Jogue por 10 horas',s:'pt',g:36000,rw:{i:'f2'}},
- {id:'ms20',n:'Missionário',d:'Complete 20 missões',s:'mis',g:20,rw:{i:'d2'}}];
-const stv=s=>s==='maxlv'?chars.reduce((a,k)=>Math.max(a,k.lvl||1),0):num(st[s]);
+ {id:'ms20',n:'Missionário',d:'Complete 20 missões',s:'mis',g:20,rw:{i:'d2'}},
+ {id:'dex0',n:'Colecionador da Floresta',d:'Libere todos os personagens do primeiro mundo',s:'dex0',g:NAMES.flat().length,rw:{gb:.1}}];
+// personagens do primeiro mundo já liberados (ficam marcados mesmo depois de vender): ach['dx:Nome'] = 1
+window.dexUp=()=>dexUp();window.achCheck=()=>achCheck();
+function dexUp(){let n=0;for(const k of chars){if(k&&k.name&&NAMES.some(r=>r.includes(k.name))&&!ach['dx:'+k.name]){ach['dx:'+k.name]=1;n++}}return n}
+const stv=s=>s==='dex0'?NAMES.flat().filter(n=>ach['dx:'+n]).length:s==='maxlv'?chars.reduce((a,k)=>Math.max(a,k.lvl||1),0):num(st[s]);
 let achOk=false;
-function achCheck(){if(!achOk)return;let nw=0;ACH.forEach(a=>{if(ach[a.id]||stv(a.s)<a.g)return;ach[a.id]=Date.now();nw++;qToast('Conquista: '+a.n+' (+'+grant(a.rw)+')');if(window.MP&&MP.pfDirty)MP.pfDirty()});
+function achCheck(){if(!achOk)return;let nw=0;if(dexUp())save();ACH.forEach(a=>{if(ach[a.id]||stv(a.s)<a.g)return;ach[a.id]=Date.now();nw++;qToast('Conquista: '+a.n+' (+'+grant(a.rw)+')');if(window.MP&&MP.pfDirty)MP.pfDirty()});
  if(nw){sWin(3);save();if($('acM').style.display==='flex')renderAch()}}
 function renderAch(){const n=ACH.filter(a=>ach[a.id]).length;$('acInfo').textContent=n+' de '+ACH.length+' conquistas desbloqueadas';
  $('acBody').innerHTML=ACH.map(a=>{const u=!!ach[a.id],v=Math.min(a.g,stv(a.s)),sv=a.s==='pt'?Math.floor(v/3600)+'h/'+Math.floor(a.g/3600)+'h':fk(v)+'/'+fk(a.g);
