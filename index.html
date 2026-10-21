@@ -1744,7 +1744,7 @@ function pText(s,x,y,col,sh){x=Math.round(x);y=Math.round(y);let cx=x;const px=[
  g.fillStyle=sh||'#0b0b12';px.forEach(([a,b])=>g.fillRect(a-1,b-1,3,3));g.fillStyle=col;px.forEach(([a,b])=>g.fillRect(a,b,1,1))}
 let _vt=0,_vtN=1;addEventListener('resize',()=>{_vtN=1});function visTop(){if(_vtN){_vtN=0;const w=innerWidth,h=innerHeight,sc=VFIT(w,h)?Math.max(w/VW,h/VH):Math.min(w/VW,h/VH);_vt=Math.max(0,(VH*sc-h)/2/sc)}return _vt}   // quanto do topo do mundo fica fora da tela (a tela corta as sobras no modo cover)
 function hpBar(e,t){if(e.dh==null||e.dh<e.hp)e.dh=e.hp;else{e.dh+=(e.hp-e.dh)*.07;if(e.dh-e.hp<1)e.dh=e.hp}
- const near=Math.hypot(P.x-e.x,P.y-e.y)<e.eng+30;if(!(e.hp<e.max||e.t>0||near||fight===e))return;
+ const near=Math.hypot(P.x-e.x,P.y-e.y)<e.eng+30;if(world===3?!(near||fight===e):!(e.hp<e.max||e.t>0||near||fight===e))return;
  const cx=Math.round(e.x-cam.x)+8,top=Math.round(e.y-cam.y+16-(e.vh||16*e.s)),w=e.bw||(e.t===2?38:e.mb?34:e.t===1?30:20),h=4,bx=cx-(w>>1);let by=top-(e.t===2?11:8);
  if(cx<-40||cx>VW+40||by<-20||by>VH+10)return;
  if(e.bc)by=Math.max(by,Math.min(Math.ceil(visTop())+9,22));   // e.bc: com o monstro ainda aparecendo, a barra não sobe para fora da tela (Drácula, no topo da catedral)
@@ -3500,7 +3500,7 @@ const MW3=XE/T,MH3=RH/T,BLK=300000,WAIT=60000;
 const map3=[];for(let y=0;y<MH3;y++)map3.push(new Array(MW3).fill(0));
 WD[3]={map:map3,EN:RD.EN};QS[3]={st:4,n:0};
 // arenas (canto superior esquerdo do recorte de 512x288 no mapa de origem)
-const AR={f:[[176,616],[752,232],[720,456],[656,648],[848,712]],h:[[464,264],[144,584],[1712,808],[144,1448],[912,1288]]};
+const AR={f:[[176,616],[752,232],[720,456],[656,648],[24,144]],h:[[464,264],[144,584],[1712,808],[144,1448],[912,1288]]};
 const THN={f:'Floresta',h:'Halloween'};
 const mkcv=(w,h)=>{const c=document.createElement('canvas');c.width=w;c.height=h;return c};
 const rnd=Math.random,ri_=(a,b)=>a+Math.floor(rnd()*(b-a+1));
@@ -3521,6 +3521,7 @@ RD.solid=function(px,py){if(px<0||py<0||px>=XE||py>=RH)return true;
  if(li===1||li===7)return waitSolid(lx,ly);
  const r=RD.rooms[li-2];if(!r)return true;
  if(ly>=DY0-4&&ly<DY1+4&&(lx<WL+28||lx>=AW-WL-28))return false;      // a entrada e a saída da sala ficam sempre livres
+ if(r.clr&&r.clr[(ly>>2)*CGW+(lx>>2)])return false;
  return r.th==='h'?!hWalk(r.sx+lx,r.sy+ly):!fWalk(r.sx+lx,r.sy+ly)};
 // saguão: os 4 portões no alto, o portal de saída à esquerda e a pedra do ranking à direita
 const GTX=[128,224,320,416],EXIT={x:56,y:176},RKP={x:462,y:176};
@@ -3552,18 +3553,62 @@ function spawnRoom(i){const r=RD.rooms[i];if(!r||r.spawned)return;r.spawned=true
  roles.forEach((ro,k)=>{const p=sp[k];if(!p)return;const e=mkEn(r.th,ro,Math.round(p[0]),Math.round(p[1]),n);e.rs=i;RD.EN.push(e)});
  RD.ban={t:Date.now(),s:'Sala '+n+(boss?' · BOSS':''),s2:THN[r.th]};try{bp(boss?220:440,.12,'square',.06);bp(boss?165:660,.16,'square',.05,.1)}catch(e){}}
 // ---------- blocos de 5 salas ----------
+// ---------- menos obstáculos: em cada sala, alguns objetos do meio (árvores, pedras, túmulos...) são tirados (desenho e colisão) ----------
+const CGW=AW>>2,CGH=RH>>2,NRM=7;
+const HRM=new Set(['deadTree','pine','oak','thorn','tomb','bones','crate','rock','pillar','statue','bench','barrel','mushroom','log','coffin','scarecrow','gibbet']);
+const cScore=(lx,ly)=>Math.abs(ly-RH/2)+Math.abs(lx-AW/2)*.3+rnd()*18;
+function planClear(r){r.clr=new Uint8Array(CGW*CGH);r.rmD=new Set();r.rmO=new Set();r.er=[];const sx=r.sx,sy=r.sy;
+ const inner=(lx,ly)=>lx>=36&&lx<AW-36&&ly>=30&&ly<RH-22;
+ if(r.th==='h'){if(!halOk())return;const M=HAL.M,c=[];
+  for(const ob of M.objs){if(!ob.fp||!HRM.has(ob.k))continue;const lx=ob.x-sx,ly=ob.y-sy;if(!inner(lx,ly))continue;c.push([cScore(lx,ly),ob])}
+  c.sort((a,b)=>a[0]-b[0]);for(const[,ob]of c.slice(0,NRM)){r.rmO.add(ob);const f=ob.fp;
+   for(let y=ob.y+f[1]-3;y<=ob.y+f[3]+3;y+=2)for(let x=ob.x+f[0]-3;x<=ob.x+f[2]+3;x+=2){const lx=x-sx,ly=y-sy;if(lx<0||ly<0||lx>=AW||ly>=RH)continue;r.clr[(ly>>2)*CGW+(lx>>2)]=1}}
+  if(r.rmO.size){const rm=r.rmO;r.OB=HAL.OB.map(l=>l&&l.some(o=>rm.has(o))?l.filter(o=>!rm.has(o)):l)}return}
+ if(!W3||!W3.L)return;const L=W3.L,all=[],c=[];
+ const add=(lst,k)=>{for(const e of lst||[]){const x=e[0],y=e[1];if(typeof x!=='number')continue;if(x<sx-40||y<sy-40||x>sx+AW+40||y>sy+RH+40)continue;all.push([x,y]);
+   const lx=x-sx,ly=y-sy;if(k&&inner(lx,ly)&&(!fWalk(x,y-2)||!fWalk(x,y-5)||!fWalk(x-3,y-3)||!fWalk(x+3,y-3)))c.push([cScore(lx,ly),x,y,k])}};
+ add(L.trees,'t');add(L.rocks,'r');add(L.bushes,'b');add(L.stakes,'s');add(L.pillars,0);
+ for(const e of L.ruins||[])if(typeof e[1]==='number')all.push([e[1],e[2]]);
+ c.sort((a,b)=>a[0]-b[0]);
+ const near=(x,y)=>{let b=null,bd=1e9;for(const p of all){const d=(p[0]-x)**2+((p[1]-y)*1.4)**2;if(d<bd){bd=d;b=p}}return b};
+ for(const[,wx,wy,k]of c.slice(0,NRM)){const own=near(wx,wy);
+  // tira a colisão: as células sólidas em volta da base que são "deste" objeto
+  const q=[],seen=new Set(),st0=[];for(let dy=-8;dy<=2;dy+=2)for(let dx=-6;dx<=6;dx+=2)st0.push([wx+dx,wy+dy]);
+  for(const[x,y]of st0){if(!fWalk(x,y)){const key=(x>>2)+','+(y>>2);if(!seen.has(key)){seen.add(key);q.push([x>>2,y>>2])}}}
+  let bx0=1e9,by0=1e9,bx1=-1e9,by1=-1e9;
+  while(q.length){const[cx,cy]=q.pop();const px=cx*4+2,py=cy*4+2;if(Math.hypot(px-wx,(py-wy)*1.3)>26)continue;const nb=near(px,py);if(nb!==own&&Math.hypot(nb[0]-px,nb[1]-py)<Math.hypot(wx-px,wy-py)-2)continue;
+   const lx=px-sx,ly=py-sy;if(lx<0||ly<0||lx>=AW||ly>=RH)continue;r.clr[(ly>>2)*CGW+(lx>>2)]=1;bx0=Math.min(bx0,lx-2);by0=Math.min(by0,ly-2);bx1=Math.max(bx1,lx+2);by1=Math.max(by1,ly+2);
+   for(const[a,b]of[[1,0],[-1,0],[0,1],[0,-1]]){const X=cx+a,Y=cy+b,key=X+','+Y;if(seen.has(key))continue;seen.add(key);if(!fWalk(X*4+2,Y*4+2))q.push([X,Y])}}
+  // e o desenho: a árvore inteira (sprite) ou um retângulo em volta da pedra/arbusto
+  let tr=null;for(const d of DEPS_W0){if(Math.abs(d.x+d.w/2-wx)<10&&Math.abs(d.by-wy)<10){tr=d;break}}
+  if(tr){r.rmD.add(tr);r.er.push([tr.x-sx-1,tr.y-sy-1,tr.w+2,tr.h+2,wx-sx,wy-sy,Math.max(12,tr.w*.5)])}
+  else{const x0=Math.min(bx0,wx-sx-12),y0=Math.min(by0,wy-sy-20),x1=Math.max(bx1,wx-sx+12),y1=Math.max(by1,wy-sy+6);r.er.push([x0-3,y0-3,x1-x0+6,y1-y0+6,wx-sx,wy-sy,14])}}}
+// chão sem objetos (o mesmo do 3D): 1024x1024 para o mapa inteiro; tira também a sombra pintada
+function gndPx(wx,wy,o){const G=W3.gnd,S=W3.sb,N=W3.gn,u=Math.max(0,Math.min(N-1.001,wx*N/(W0*T)-.5)),v=Math.max(0,Math.min(N-1.001,wy*N/(H0*T)-.5)),x0=u|0,y0=v|0,fx=u-x0,fy=v-y0;
+ for(let ch=0;ch<3;ch++){const a=G[(y0*N+x0)*4+ch],b=G[(y0*N+x0+1)*4+ch],c=G[((y0+1)*N+x0)*4+ch],d=G[((y0+1)*N+x0+1)*4+ch];o[ch]=(a*(1-fx)+b*fx)*(1-fy)+(c*(1-fx)+d*fx)*fy}
+ o[3]=S?S[y0*N+x0]:0;return o}
+function unshade(o,s,k){if(!s||k<=0)return;const f=1-.52*s/255,w=k;o[0]=o[0]*(1-w)+Math.min(255,o[0]/(f*.9))*w;o[1]=o[1]*(1-w)+Math.min(255,o[1]/(f*.95))*w;o[2]=o[2]*(1-w)+Math.min(255,Math.max(0,(o[2]-(1-f)*26)/f))*w}
+function eraseF(x,r){if(!W3||!W3.gnd)return;const tmp=[0,0,0,0];
+ for(const[ex,ey,ew,eh,bx,by,rx]of r.er){const X0=Math.max(WL,Math.floor(ex)),Y0=Math.max(WL,Math.floor(ey)),X1=Math.min(AW-WL,Math.ceil(ex+ew)),Y1=Math.min(RH-WL,Math.ceil(ey+eh));if(X1<=X0||Y1<=Y0)continue;
+  const w=X1-X0,h=Y1-Y0,id=x.getImageData(X0,Y0,w,h),d=id.data,mk=new Uint8Array(w*h),gp=new Float32Array(w*h*4);
+  for(let j=0;j<h;j++)for(let i=0;i<w;i++){gndPx(r.sx+X0+i,r.sy+Y0+j,tmp);const k=(j*w+i)*4;gp[k]=tmp[0];gp[k+1]=tmp[1];gp[k+2]=tmp[2];gp[k+3]=tmp[3];if(Math.abs(d[k]-tmp[0])+Math.abs(d[k+1]-tmp[1])+Math.abs(d[k+2]-tmp[2])>54)mk[j*w+i]=1}
+  for(let j=0;j<h;j++)for(let i=0;i<w;i++){let m=mk[j*w+i];if(!m)for(let b=-1;b<=1&&!m;b++)for(let a=-1;a<=1;a++){const I=i+a,J=j+b;if(I>=0&&J>=0&&I<w&&J<h&&mk[J*w+I]===1){m=1;break}}
+   const k=(j*w+i)*4,o=m?[gp[k],gp[k+1],gp[k+2]]:[d[k],d[k+1],d[k+2]];
+   const qx=(X0+i-bx)/(rx+6),qy=(Y0+j-by+2)/11,q=qx*qx+qy*qy;unshade(o,gp[k+3],q<1?Math.min(1,(1-q)*2.5):0);d[k]=o[0];d[k+1]=o[1];d[k+2]=o[2]}
+  x.putImageData(id,X0,Y0)}}
 function genBlock(b){const prevArena=RD.rooms.length?RD.rooms[4]:null;let th=halOk()&&rnd()<.5?'h':'f';const rooms=[];let last=prevArena&&prevArena.th===th?prevArena.a:-1;
  for(let i=0;i<5;i++){const L=AR[th];let a;do{a=Math.floor(rnd()*L.length)}while(a===last&&L.length>1);last=a;
   rooms.push({n:b*5+i+1,th,a,sx:L[a][0],sy:L[a][1],v:Math.floor(rnd()*VAR.length),spawned:false,cleared:false,cv:null})}
+ for(const r of rooms)try{planClear(r)}catch(e){console.error('raid: obstáculos',e)}
  return rooms}
 // ---------- desenho das salas ----------
 const LCm={wm:[255,184,104],gl:[150,255,120],lp:[196,120,255],or:[255,148,56],cy:[86,228,255],pk:[255,104,214],v:[158,118,255],vi:[136,116,255],cr:[150,176,255],rd:[255,70,54],yl:[255,214,110]};
-function halCrop(sx,sy){const out=mkcv(AW,RH),ox=out.getContext('2d'),tmp=mkcv(VW,VH),tx=tmp.getContext('2d');tx.imageSmoothingEnabled=false;
- const sg=g,cx=cam.x,cy=cam.y,fr=HAL.frame,bf=HAL.bgFx2,ins=HAL.inside,ppx=P.x,ppy=P.y;HAL.frame=()=>{};HAL.bgFx2=null;HAL.inside=false;P.x=-1e5;P.y=-1e5;
+function halCrop(sx,sy,OBf){const out=mkcv(AW,RH),ox=out.getContext('2d'),tmp=mkcv(VW,VH),tx=tmp.getContext('2d');tx.imageSmoothingEnabled=false;
+ const sg=g,cx=cam.x,cy=cam.y,fr=HAL.frame,bf=HAL.bgFx2,ins=HAL.inside,ppx=P.x,ppy=P.y;const ob0=HAL.OB;if(OBf)HAL.OB=OBf;HAL.frame=()=>{};HAL.bgFx2=null;HAL.inside=false;P.x=-1e5;P.y=-1e5;
  try{g=tx;for(let oy=0;oy<RH;oy+=VH)for(let ox_=0;ox_<AW;ox_+=VW){cam.x=sx+ox_;cam.y=sy+oy;tx.setTransform(1,0,0,1,0,0);tx.globalAlpha=1;tx.globalCompositeOperation='source-over';tx.clearRect(0,0,VW,VH);
    HAL.bg();const L=[];HAL.push(L,0,Date.now());L.sort((a,b)=>a[0]-b[0]).forEach(a=>{try{a[1]()}catch(e){}});ox.drawImage(tmp,ox_,oy)}}
  catch(e){console.error('raid: recorte do Halloween',e)}
- finally{g=sg;cam.x=cx;cam.y=cy;HAL.frame=fr;HAL.bgFx2=bf;HAL.inside=ins;P.x=ppx;P.y=ppy}
+ finally{g=sg;cam.x=cx;cam.y=cy;HAL.frame=fr;HAL.bgFx2=bf;HAL.inside=ins;HAL.OB=ob0;P.x=ppx;P.y=ppy}
  // noite roxa e as luzes do mapa
  ox.globalCompositeOperation='multiply';ox.fillStyle='rgb(146,124,206)';ox.fillRect(0,0,AW,RH);ox.globalCompositeOperation='lighter';
  const BK=HAL.BK||128,BW=HAL.BW;for(let by=Math.floor((sy-140)/BK);by<=Math.floor((sy+RH+140)/BK);by++)for(let bx=Math.floor((sx-140)/BK);bx<=Math.floor((sx+AW+140)/BK);bx++){
@@ -3583,8 +3628,8 @@ function walls(x,pal,th,leftDoor,rightDoor,topH){const RW=x.canvas.width;stone(x
  if(th==='h'){for(let X=WL+6;X<RW-WL;X+=14){x.fillStyle='#14101c';x.fillRect(X,-1,2,7);x.fillStyle='#6a5a86';x.fillRect(X,-2,2,2)}}
  else{for(let X=WL+4;X<RW-WL;X+=10+((X*7)%6)){x.fillStyle=(X%3)?'#3f6a2c':'#2f5622';x.fillRect(X,WL-3,4,3);x.fillRect(X+1,RH-WL-1,3,2)}}}
 function roomCanvas(r){const cv=mkcv(AW,RH),x=cv.getContext('2d');x.imageSmoothingEnabled=false;
- if(r.th==='h'&&halOk())x.drawImage(halCrop(r.sx,r.sy),0,0);
- else{const MC=window.__MC;if(MC&&MC.width>=r.sx+AW)x.drawImage(MC,r.sx,r.sy,AW,RH,0,0,AW,RH);else{x.fillStyle='#4f8f3a';x.fillRect(0,0,AW,RH)}}
+ if(r.th==='h'&&halOk())x.drawImage(halCrop(r.sx,r.sy,r.OB),0,0);
+ else{const MC=window.__MC;if(MC&&MC.width>=r.sx+AW){x.drawImage(MC,r.sx,r.sy,AW,RH,0,0,AW,RH);if(r.er&&r.er.length)try{eraseF(x,r)}catch(e){console.error('raid: apagar',e)}}else{x.fillStyle='#4f8f3a';x.fillRect(0,0,AW,RH)}}
  walls(x,r.th==='h'?PALH:PALF,r.th,true,true);return cv}
 function hubCanvas(){const cv=mkcv(RW,RH),x=cv.getContext('2d');x.imageSmoothingEnabled=false;
  // piso de lajes
@@ -3631,10 +3676,10 @@ RD.bg=function(t){if(!RD.hub)RD.hub=hubCanvas();if(!RD.wait)RD.wait=waitCanvas()
 // ---------- árvores e objetos das arenas na frente/atrás dos personagens (como no mapa de origem) ----------
 function clipRoom(li,fn){g.save();g.beginPath();g.rect(Math.round(XO[li]+WL-cam.x),Math.round(WL-cam.y),AW-2*WL,RH-2*WL);g.clip();try{fn()}catch(e){}g.restore()}
 RD.pushDeps=function(L,f,t){for(let li=2;li<=6;li++){const r=RD.rooms[li-2];if(!r)continue;const X0=XO[li];if(X0-cam.x>VW||X0+AW-cam.x<0)continue;const ox=X0-r.sx,oy=-r.sy;
-  if(r.th==='f'){for(const tr of DEPS_W0){if(!tr.cv||tr.x+tr.w<r.sx||tr.x>r.sx+AW||tr.y+tr.h<r.sy||tr.y>r.sy+RH)continue;const wx=tr.x+ox,wy=tr.y+oy,x=Math.round(wx-cam.x),y=Math.round(wy-cam.y);if(x>VW||y>VH||x+tr.w<0||y+tr.h<0)continue;const by=tr.by+oy;
+  if(r.th==='f'){for(const tr of DEPS_W0){if(!tr.cv||(r.rmD&&r.rmD.has(tr))||tr.x+tr.w<r.sx||tr.x>r.sx+AW||tr.y+tr.h<r.sy||tr.y>r.sy+RH)continue;const wx=tr.x+ox,wy=tr.y+oy,x=Math.round(wx-cam.x),y=Math.round(wy-cam.y);if(x>VW||y>VH||x+tr.w<0||y+tr.h<0)continue;const by=tr.by+oy;
     L.push([by-16,()=>clipRoom(li,()=>{const beh=P.y+15<by&&P.x+13>wx&&P.x+3<wx+tr.w&&P.y+16>wy;g.globalAlpha=beh?.8:1;g.drawImage(tr.cv,x,y);g.globalAlpha=1})])}}
   else if(halOk()){const cx=cam.x,cy=cam.y,fr=HAL.frame,ins=HAL.inside,tmp=[];HAL.frame=()=>{};HAL.inside=false;
-   try{cam.x=cx-ox;cam.y=cy-oy;HAL.push(tmp,f,t)}catch(e){}finally{cam.x=cx;cam.y=cy;HAL.frame=fr;HAL.inside=ins}
+   const ob0=HAL.OB;if(r.OB)HAL.OB=r.OB;try{cam.x=cx-ox;cam.y=cy-oy;HAL.push(tmp,f,t)}catch(e){}finally{cam.x=cx;cam.y=cy;HAL.frame=fr;HAL.inside=ins;HAL.OB=ob0}
    for(const a of tmp){const fn=a[1];L.push([a[0]+oy,()=>clipRoom(li,fn)])}}}};
 {const _pt=pushTrees;pushTrees=function(L){if(world===3){try{RD.pushDeps(L,frame,Date.now())}catch(e){}return}return _pt(L)}}
 // ---------- por cima de tudo: tinta da noite nas salas do Halloween, cronômetro, avisos ----------
@@ -3718,7 +3763,7 @@ async function openRk(){show('rdM');const L=$('rdL'),I=$('rdInfo');I.textContent
 // botão no menu Mapas
 {const _rw=renderW;renderW=function(){_rw();const L=$('wList');if(!L)return;const b=document.createElement('button');b.className='btn wb';b.style.cssText='display:block;width:100%;margin-bottom:8px;background:linear-gradient(#8e5cd6,#3a1a6a)';
   b.innerHTML='Raid'+(world===3?' (aqui)':'')+'<br><small style="font-size:11px">Recorde: sala '+(st.rb||0)+' · '+nf(st.rt||0)+' fichas</small>';b.onclick=()=>{goWorld(3);$('wM').style.display='none';lock=false};L.appendChild(b)}}
-RD._dbg={genBlock,roomCanvas,halCrop,AR,startRaid,startWait,spawnRoom,roomCleared,blockDone,fail,toHub,mult};
+RD._dbg={planClear,genBlock,roomCanvas,halCrop,AR,startRaid,startWait,spawnRoom,roomCleared,blockDone,fail,toHub,mult};
 })();
 
 // ----- ponte para o modo 3D do salão (js/22..26-h3-*.js): só mostra o que é local deste arquivo -----
