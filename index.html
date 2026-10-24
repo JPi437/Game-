@@ -1923,7 +1923,7 @@ function drawRemoteBody(r,f){const sv=[P.x,P.y,P.dir,P.moving,P.step],sm=mounted
 function pushRemotes(L,f,t,SF){if(!window.MP||!MP.me||!MP.live)return;
  for(const id in MP.others){const r=MP.others[id];if(!MP.live(r))continue;
   const dx=r.tx-r.x,dy=r.ty-r.y,dist=Math.hypot(dx,dy);if(dist>160){r.x=r.tx;r.y=r.ty}else{r.x+=dx*.25;r.y+=dy*.25}r.mv=dist>.6;if(r.mv)r.st++;
-  const vis=(window.H3C&&H3C.on&&world===2)||!(r.x-cam.x<-70||r.x-cam.x>VW+70||r.y-cam.y<-70||r.y-cam.y>VH+70),fe=r.f>=0&&EN[r.f]&&!EN[r.f].dead?EN[r.f]:null,sl=fe?formation(fe):null;
+  const vis=(window.H3C&&H3C.on&&(world===2||(window.LICH&&LICH.in)))||!(r.x-cam.x<-70||r.x-cam.x>VW+70||r.y-cam.y<-70||r.y-cam.y>VH+70),fe=r.f>=0&&EN[r.f]&&!EN[r.f].dead?EN[r.f]:null,sl=fe?formation(fe):null;
   r.fp=r.fp||[];
   r.k.forEach((c,i)=>{const q=r.fp[i]||(r.fp[i]={x:r.x,y:r.y,dir:2}),o=OFF[i]||[0,0];let tx=r.x+o[0],ty=r.y+o[1];const s=sl&&sl.get(id+':'+i);if(s){tx=s.x;ty=s.y}
    q.x+=(tx-q.x)*.1;q.y+=(ty-q.y)*.1;q.dir=fe?(Math.abs(fe.x-q.x)>Math.abs(fe.y+(fe.fcy||0)-q.y)?(fe.x>q.x?3:1):(fe.y+(fe.fcy||0)>q.y?2:0)):r.d;
@@ -15933,7 +15933,7 @@ function overlay(x,t,Cm,sc){
 
  else if(!fight)msg='Chegue perto do poço e toque em Lutar';
  x.font='bold '+round(bh*.85)+'px "Courier New",monospace';x.textAlign='center';x.fillStyle='#000';x.fillText(msg,W/2+1,by+bh*2.3+1);x.fillStyle=col;x.fillText(msg,W/2,by+bh*2.3);
- x.textAlign='right';x.font=round(bh*.7)+'px "Courier New",monospace';x.fillStyle='rgba(200,230,200,.55)';x.fillText(NET.on?'● compartilhado':'○ só neste aparelho',bx+bw,by+bh*3.6);
+ x.textAlign='right';x.font=round(bh*.7)+'px "Courier New",monospace';x.fillStyle='rgba(200,230,200,.55)';x.fillText(NET.on?'● compartilhado':NET.denied?'○ só neste aparelho · faltam as regras "lich" no Firebase':'○ só neste aparelho (sem conexão)',bx+bw,by+bh*3.6);
  x.restore()}
 // números de dano dos nossos inimigos: no Lich, saem em volta da cabeça; nos esqueletos, em cima de cada um
 function numPos(q){if(!LICH.in)return null;const L=LE.lich;
@@ -17084,7 +17084,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261024081300;
+const GAME_BUILD=20261024082259;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
