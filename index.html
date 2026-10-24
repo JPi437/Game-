@@ -15536,7 +15536,7 @@ function skTick(now,sn){const S=H3.S||{},px=S.px||0,pz=S.pz||0,dt=.016;
  for(let i=0;i<BO.NSK;i++){const v=SKV[i],p=SKP[i];if(!skVisible(i,sn))continue;
   let tx=px,tz=pz;if(fight===LE.sk[i]){const q=Object.values(fpos)[0];if(q){tx=q.x+8-OX;tz=q.y+14-OY}}
   const want=atan2(tx-p[0],tz-p[1]);v.yaw+=clp(angd(v.yaw,want),-.06,.06);
-  const near=hypot(px-p[0],pz-p[1])<48||fight===LE.sk[i];if(near&&!v.att)v.att=now;else if(!near)v.att=0}}
+  const near=hypot(px-p[0],pz-p[1])<48||fight===LE.sk[i];v.att=0}}   // eles não atacam: só ficam parados
 
 // ============================================================ desenho dos modelos ============================================================
 const GC=[.62,1.18,.66],AMBL=[.15,.18,.16],AMBK=[.22,.2,.26],ZF=[0,0,0,0];
@@ -16832,7 +16832,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261024064725;
+const GAME_BUILD=20261024065319;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
