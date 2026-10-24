@@ -10460,8 +10460,8 @@ FX.heroSkill=function(q,t0,t,h,b,dir,cp){
  // Ghast: o chamador desenha o modelo com este estado; a boca fica à frente dele (na direção do inimigo)
  // o Ghast fica ao lado e atrás do inimigo, do jeito que a câmera de quando a habilidade começou enxerga (fixo durante a habilidade), olhando para o inimigo
  if(!I.gp){let vx=cp?cp.x-b.x:-dir[0],vz=cp?cp.z-b.z:-dir[1];const vl=Math.hypot(vx,vz)||1;vx/=vl;vz/=vl;
-  const wx=-vz,wz=vx,sd=(wx*(h.x-b.x)+wz*(h.z-b.z))>=0?-1:1;let gx=b.x-vx*24+wx*sd*52,gz=b.z-vz*24+wz*sd*52;const gr=Math.hypot(gx,gz);if(gr>112){gx*=112/gr;gz*=112/gr}
-  I.gp={x:gx,y:b.y0+64,z:gz}}
+  const wx=-vz,wz=vx,sd=(wx*(h.x-b.x)+wz*(h.z-b.z))>=0?-1:1;const ge=b.gr||0;let gx=b.x-vx*(24+ge*.3)+wx*sd*(52+ge),gz=b.z-vz*(24+ge*.3)+wz*sd*(52+ge);const gr=Math.hypot(gx,gz),gm=112+ge*.5;if(gr>gm){gx*=gm/gr;gz*=gm/gr}
+  I.gp={x:gx,y:b.y0+64+(b.gr||0)*.5,z:gz}}
  const fw=Math.hypot(b.x-I.gp.x,b.z-I.gp.z)||1,gp={x:I.gp.x,y:I.gp.y,z:I.gp.z,yaw:Math.atan2(b.x-I.gp.x,b.z-I.gp.z)},G=FX.ghastState(el,t,gp);
  let mouth=null,fb=null;
  if(G){const fwd=[(b.x-I.gp.x)/fw,(b.z-I.gp.z)/fw];mouth=[G.x+fwd[0]*11*G.sc,G.y-2*G.sc,G.z+fwd[1]*11*G.sc];fb=FX.fireball(el,mouth,[b.x,b.y,b.z],I);
@@ -10782,7 +10782,7 @@ function heroPlan(A,t,draws){const q=A.q,sk=q.sk&&fight?q.sk:null,pose=sk?FX.her
 function skillsPlan(t,draws){
  for(const sf of H3C.SF){const A=H3C.list.find(a=>a.q===sf.q);if(!A)continue;const hand=[A.x+A.fx*5,A.y+14,A.z+A.fz*5],e=sf.e,tgt=SC.tgt(e);
   if(!tgt)continue;
-  if(A.h3d){const dx=tgt[0]-A.x,dz=tgt[2]-A.z,l=hypot(dx,dz)||1,r=FX.heroSkill(sf.q,sf.t0,t,{x:A.x,y:A.y,z:A.z},{x:tgt[0],y:tgt[1],z:tgt[2],y0:tgt[4]||0},[dx/l,dz/l],S.cam);
+  if(A.h3d||(A.m&&(A.m.nm==='Herobrine'))){const dx=tgt[0]-A.x,dz=tgt[2]-A.z,l=hypot(dx,dz)||1,r=FX.heroSkill(sf.q,sf.t0,t,{x:A.x,y:A.y,z:A.z},{x:tgt[0],y:tgt[1],z:tgt[2],y0:tgt[4]||0,gr:(SC.ghR&&SC.ghR(e))||0},[dx/l,dz/l],S.cam);
    if(r&&r.G)GL.push(r.G)}
   else FX.skillGeneric(sf.S,sf.q,t-sf.t0,hand,tgt,t)}}
 
@@ -14873,7 +14873,7 @@ const OX=3400,OY=400,X0=3100;                                      // centro da 
 const RR=176,WH=104,DH=92,                                          // sala: raio, altura da parede, altura da cúpula acima da parede
  PIN=60,PRIM=72,PPL=82,RIMY=13,PLY=3.5,LIQY=8,                     // poço: líquido até r 60 · borda até 72 (altura 13) · degrau até 82 (3,5)
  CW=17,STZ0=RR+18,STZ1=RR+86,STH=32,NST=8,CZ1=RR+170,DOORH=52,            // corredor: meia-largura · escada (z inicial, z final, altura, degraus) · fim · altura da porta
- LS=105,LLQ=0.30;                                                  // escala do Lich · altura do líquido no modelo (0 = base, 1 = topo dos chifres)
+ LK=1.45,LS=105*LK,LLQ=0.30;                                                  // escala do Lich · altura do líquido no modelo (0 = base, 1 = topo dos chifres)
 const RUN=(STZ1-STZ0)/NST,RISE=STH/NST;
 const SPAWN=[0,RR+94];                                               // chegada: no alto da escada, olhando para a sala
 const NICH=[];for(let k=1;k<12;k++)NICH.push(PI/2+k*PI/6);         // 11 nichos de ossadas (um em cada vão entre as pilastras; o vão da porta fica livre)
@@ -15302,13 +15302,13 @@ function free(){const gl=G.gl;G.ok=false;LICH.ready=false;if(gl&&!gl.isContextLo
  G.rooms=[];G.tex=G.stex=null;G.vb=G.ib=G.qb=null;G.sprS=G.sprF=G.sprR=G.tR=G.tS=G.sprC=null;G.sk=G.ski=G.skTex=G.bk=G.bki=G.bkTex=G.pw=G.wb=null}
 
 // ============================================================ a luta: estado compartilhado (Firebase) ou local ============================================================
-// Vida 10.000.000. A cada 60 s de luta o Lich faz o feitiço do livro:
+// Vida 10.000.000. Cada vez que perde 20% da vida (80%, 60%, 40%, 20%) o Lich faz o feitiço do livro:
 //  0–3 s   mergulha as duas mãos no líquido
 //  3 s     puxão rápido: o líquido sobe na borda do poço (muralha), empurra todo mundo para longe e ele fica INTANGÍVEL;
 //          o livro sai do poço e flutua na frente dele (ele o controla com magia) — 3–9 s recitando o encantamento
 //  9 s     10 círculos mágicos acendem no chão e ele começa a se curar (25.000/s) recitando outro encantamento
 //  10,2 s  os 10 esqueletos (100.000 de vida cada) sobem do chão; os círculos apagam
-//  matar os 10 → a muralha cai e ele fica tangível (ainda se curando) · o 1º golpe nele interrompe a cura, o livro cai no poço e os 60 s recomeçam.
+//  matar os 10 → a muralha cai e ele fica tangível (ainda se curando) · o 1º golpe nele interrompe a cura e o livro cai no poço.
 // Online, o estado mora em lich/s no banco: todos veem a mesma vida, o mesmo feitiço e os mesmos esqueletos; cada jogador manda o próprio dano
 // numa transação a cada ~0,5 s (quem chega primeiro na hora do feitiço é quem o dispara). Sem as regras de lich/ publicadas no Firebase
 // (ou jogando offline) tudo funciona igual, só que cada aparelho tem o seu próprio Lich.
@@ -15317,10 +15317,10 @@ const NET={ref:null,on:false,denied:false,st:null,pd:0,fl:0,ps:new Array(BO.NSK)
 let LOC=null;
 const srvNow=()=>Date.now()+((window.MP&&+MP.off)||0);                    // hora do servidor (mesma conta do resto do jogo)
 const nowB=()=>NET.frz?NET.frz:NET.on?srvNow():Date.now();
-function fresh(now,ep){return{hp:BO.MAX,t:now,a:now,c0:0,h:0,nx:0,sk:0,k:0,ep:ep||0}}
+function fresh(now,ep){return{hp:BO.MAX,t:now,a:now,c0:0,h:0,nx:0,sk:0,k:0,ep:ep||0,g:0}}
 function skArr(v){if(!v||typeof v!=='object')return 0;const a=[];for(let i=0;i<BO.NSK;i++){const x=v[i]!==undefined?v[i]:v[''+i];a.push(max(0,+x||0))}return a}
 function norm(s,now){if(!s||typeof s!=='object')return fresh(now,0);
- s={hp:+s.hp||0,t:+s.t||now,a:+s.a||+s.t||now,c0:+s.c0||0,h:+s.h||0,nx:+s.nx||0,sk:skArr(s.sk),k:+s.k||0,ep:+s.ep||0};
+ s={hp:+s.hp||0,t:+s.t||now,a:+s.a||+s.t||now,c0:+s.c0||0,h:+s.h||0,nx:+s.nx||0,sk:skArr(s.sk),k:+s.k||0,ep:+s.ep||0,g:+s.g||0};
  if(s.k)return now>=s.k+BO.RESP?fresh(now,s.ep+1):s;                 // morto: renasce 5 min depois
  if(now-s.a>BO.IDLE)return fresh(now,s.ep+1);                        // ninguém mexeu nele por 5 min: volta tudo ao começo
  return s}
@@ -15332,9 +15332,10 @@ function apply(s0,op,now){let s=norm(s0,now),ch=!s0||s!==s0;if(s.k)return ch?s:n
  if(op.cast&&!s.c0&&s.nx&&now>=s.nx){s.hp=hpAt(s,now);s.t=now;s.c0=now;s.h=1;s.sk=new Array(BO.NSK).fill(BO.SKHP);ch=true}
  if(op.sk&&s.c0&&s.sk&&now>=s.c0+BO.UP)for(let i=0;i<BO.NSK;i++){const d=op.sk[i]||0;if(d>0&&s.sk[i]>0){s.sk[i]=max(0,round(s.sk[i]-d));ch=true}}
  if(op.d>0&&!intang(s,now)){let hp=hpAt(s,now);
-  if(s.c0&&now>=s.c0+BO.UP&&!skAlive(s)){s.c0=0;s.h=0;s.sk=0;s.nx=now+BO.CYCLE}            // 1º golpe depois dos esqueletos: a cura para
-  if(!s.c0&&!s.nx)s.nx=now+BO.CYCLE;                                                        // começou a luta: o feitiço vem em 60 s
-  hp=max(0,round(hp-op.d));s.hp=hp;s.t=now;ch=true;if(hp<=0){s.k=now;s.c0=0;s.h=0;s.sk=0}}
+  if(s.c0&&now>=s.c0+BO.UP&&!skAlive(s)){s.c0=0;s.h=0;s.sk=0}                              // 1º golpe depois dos esqueletos: a cura para
+  hp=max(0,round(hp-op.d));s.hp=hp;s.t=now;ch=true;if(hp<=0){s.k=now;s.c0=0;s.h=0;s.sk=0}
+  else if(!s.c0){const g=min(4,floor((BO.MAX-hp)/(BO.MAX*.2)));                             // passou de mais um degrau de 20%: feitiço na hora
+   if(g>s.g){s.g=g;s.c0=now;s.h=1;s.sk=new Array(BO.NSK).fill(BO.SKHP);s.nx=0}}}
  if(ch){s.a=now;return s}return null}
 const netOk=()=>!!(window.MP&&MP.db&&MP.uid&&!MP.offline&&!NET.denied);
 function netStart(){if(NET.ref||!netOk())return;try{NET.ref=MP.db.ref('lich/s');NET.ref.on('value',v=>{NET.st=v.val();NET.on=true},e=>netFail(e))}catch(e){netFail(e)}}
@@ -15357,7 +15358,7 @@ const LE={lich:null,sk:[]};
 function enList(){return typeof WD!=='undefined'&&WD[1]&&WD[1].EN?WD[1].EN:null}
 function mkEN(){const L=enList();if(!L||(LE.lich&&L.indexOf(LE.lich)>=0))return;
  LE.lich={x:OX-8,y:OY-14,t:2,s:1,vh:90,max:BO.MAX,hp:BO.MAX,dh:BO.MAX,coin:[1500,2500],r:0,orb:86,eng:0,rsp:BO.RESP,dead:true,back:Infinity,lk:'lich',m3:1,fly:1,fxt:-400};L.push(LE.lich);LE.sk=[];
- for(let i=0;i<BO.NSK;i++){const p=SKP[i],e={x:p[0]-8+OX,y:p[1]-14+OY,t:1,s:1.2,vh:30,max:BO.SKHP,hp:BO.SKHP,dh:BO.SKHP,coin:[40,70],r:0,orb:20,eng:38,rsp:BO.RESP,dead:true,back:Infinity,lk:'sk',si:i,m3:1,fly:1,fxt:-30};LE.sk.push(e);L.push(e)}}
+ for(let i=0;i<BO.NSK;i++){const p=SKP[i],e={x:p[0]-8+OX,y:p[1]-14+OY,t:1,s:1.2,vh:30,max:BO.SKHP,hp:BO.SKHP,dh:BO.SKHP,coin:[40,70],r:0,orb:26,eng:44,rsp:BO.RESP,dead:true,back:Infinity,lk:'sk',si:i,m3:1,fly:1,fxt:-30};LE.sk.push(e);L.push(e)}}
 mkEN();
 let hintT=0;const hint=m=>{const n=Date.now();if(n-hintT<4000)return;hintT=n;try{if(typeof toast==='function')toast(m)}catch(e){}};
 const stopFight=()=>{fight=null;try{Object.values(fpos).forEach(q=>{q.nx=0;q.sk=null})}catch(e){}};
@@ -15380,7 +15381,7 @@ LICH.form=function(e){if(e._ff===frame&&e._fm)return e._fm;const m=new Map(),par
  try{if(fight===e)equipped.forEach((id,i)=>parts.push({k:me+':'+i,o:me,i}));
   if(window.MP&&MP.me&&MP.live){const idx=EN.indexOf(e);for(const id in MP.others){const r=MP.others[id];if(MP.live(r)&&r.f===idx)(r.k||[]).forEach((c,i)=>parts.push({k:id+':'+i,o:id,i}))}}}catch(x){}
  parts.sort((a,b)=>a.o<b.o?-1:a.o>b.o?1:a.i-b.i);
- const N=parts.length,R=N>1?max(90,9.5/sin(PI/N)):90,cx=OX-8,cy=OY-14;
+ const N=parts.length,R=N>1?max(112,9.5/sin(PI/N)):112,cx=OX-8,cy=OY-14;
  parts.forEach((p,j)=>{const a=N===1?PI/2:PI/2+PI/N+2*PI*j/N;m.set(p.k,{x:cx+cos(a)*R,y:cy+sin(a)*R})});
  e._ff=frame;e._fm=m;return m};
 
@@ -15415,7 +15416,7 @@ function bossTick(){
  if(KB.t0){const u=clp((Date.now()-KB.t0)/480,0,1),e=1-(1-u)*(1-u)*(1-u),x=lerp(KB.fx,KB.tx,e),z=lerp(KB.fz,KB.tz,e),ox=P.x,oy=P.y;P.x=x-8+OX;P.y=z-14+OY;
   try{for(const k in fpos){fpos[k].x+=P.x-ox;fpos[k].y+=P.y-oy}}catch(e){}if(u>=1)KB.t0=0}
  // hora do feitiço (qualquer jogador na sala pede; o banco garante que só um começa)
- if(LICH.in&&!st.k&&!st.c0&&st.nx&&now>=st.nx)NET.want=1;
+ // o feitiço sai sozinho a cada 20% de vida perdida (no apply)
  flush()}
 // testes (console): LICH.dbg.at(ms) põe o feitiço naquele instante · só no modo local
 LICH.dbg={BS,LE,BO,cur,NET,loc:()=>LOC,tick:()=>bossTick(),flush:()=>flush(),ff(){NET.lastF=0;flush();bossTick();return JSON.stringify(cur())},unfrz(){NET.frz=0},at(ms,frz){if(NET.on)return'online';NET.frz=0;LOC=norm(LOC,Date.now());LOC.c0=Date.now()-ms;NET.frz=frz?Date.now():0;LOC.h=1;if(!LOC.sk)LOC.sk=new Array(BO.NSK).fill(BO.SKHP);LOC.a=Date.now();return LOC},soon(){LOC=norm(LOC,Date.now());LOC.nx=Date.now()+500;LOC.a=Date.now();return LOC}};
@@ -15481,7 +15482,7 @@ function anim(now){const t=now/1000,dt=A.last?clp(t-A.last,0,.1):.016;A.last=t;A
  const B3=mul(new Float32Array(16),B2,axP(TA,J.Lw,AXL,O.lc));BM.set(B3,48);
  const B4=mul(new Float32Array(16),B0,rotP(TA,J.Re,O.rfx,0,O.rfz));BM.set(B4,64);
  axP(TA,J.Rw,AXR,O.rc);axP(TB,J.Rw,HR,O.rt);const B5=mul(new Float32Array(16),B4,mul(new Float32Array(16),TA,TB));BM.set(B5,80);
- M4.trs(MW,0,BASEY-sink*82,0,0,0,0,LS,LS,LS);
+ M4.trs(MW,0,BASEY-sink*82*LK,0,0,0,0,LS,LS,LS);
  // olhos/boca, brilho do poço, redemoinho, muralha e o centro do líquido
  const rec=wCast*(.5+.5*sin(t*9)*sin(t*3.7));
  A.eye=(.55+.12*(br*.5+.5)+1.1*flare+(vis?.12:0))*(1-wS)+(.9+.5*rec+.6*wPull)*wS+(LV.dieT?1.6:0);
@@ -15495,17 +15496,18 @@ const toW=p=>xf(MW,xf(A.B1,p)),handW=(B,p)=>xf(MW,xf(B,p));
 
 // ---------- o livro: sai do poço com as mãos, flutua na frente dele, cai de volta quando a cura é interrompida ----------
 const BK={M:new Float32Array(16),vis:false,pos:[0,0,0]};
-function bookPose(){BK.vis=false;const st=BS.st,sn=nowB(),el=st&&st.c0?sn-st.c0:-1,by=A.by,fx=sin(by),fz=cos(by),H=[fx*50,BASEY+.62*LS+2,fz*50];
+const BKR=50*LK,BKS=20*LK;
+function bookPose(){BK.vis=false;const st=BS.st,sn=nowB(),el=st&&st.c0?sn-st.c0:-1,by=A.by,fx=sin(by),fz=cos(by),H=[fx*BKR,BASEY+.62*LS+2,fz*BKR];
  let p,rx=-.12,rz=0;const T0=BO.PULL;
- if(el>=T0&&el<T0+300){const u=ease((el-T0)/300);p=[fx*34,lerp(LIQY-14,LIQY+16,u),fz*34];rx=lerp(-1.5,-.5,u)}
- else if(el>=T0+300&&el<T0+1250){const u=ease((el-T0-300)/950);p=[lerp(fx*34,H[0],u),lerp(LIQY+16,H[1],u)+sin(u*PI)*8,lerp(fz*34,H[2],u)];rx=lerp(-.5,-.12,u);rz=sin(u*PI)*.5}
+ if(el>=T0&&el<T0+300){const u=ease((el-T0)/300);p=[fx*34*LK,lerp(LIQY-14,LIQY+16,u),fz*34*LK];rx=lerp(-1.5,-.5,u)}
+ else if(el>=T0+300&&el<T0+1250){const u=ease((el-T0-300)/950);p=[lerp(fx*34*LK,H[0],u),lerp(LIQY+16,H[1],u)+sin(u*PI)*8,lerp(fz*34*LK,H[2],u)];rx=lerp(-.5,-.12,u);rz=sin(u*PI)*.5}
  else if(el>=T0+1250){const s=sn/1000;p=[H[0],H[1]+sin(s*1.9)*1.6,H[2]];rx=-.12+sin(s*1.3)*.05;rz=sin(s*.9)*.06}
  else if(SV.endT){const u=(Date.now()-SV.endT)/800;if(u>=1)return;p=[H[0],lerp(H[1],LIQY-18,u*u),H[2]];rx=-.12+u*1.9;rz=u*.9}
  else return;
- BK.vis=true;BK.pos=p;M4.trs(BK.M,p[0],p[1],p[2],rx,by,rz,20,20,20)}
+ BK.vis=true;BK.pos=p;M4.trs(BK.M,p[0],p[1],p[2],rx,by,rz,BKS,BKS,BKS)}
 
 // ============================================================ os esqueletos (modelo 3D com esqueleto próprio) ============================================================
-const SKD=window.SKEL_DATA,BKD=window.BOOK_DATA,SJ=SKD?SKD.joints:null,SBM=new Float32Array(192),SMW=new Float32Array(16),SKS=25;
+const SKD=window.SKEL_DATA,BKD=window.BOOK_DATA,SJ=SKD?SKD.joints:null,SBM=new Float32Array(192),SMW=new Float32Array(16),SKS=25*1.5;
 const PX={};function pv(k){return PX[k]||(PX[k]=new Float32Array(16))}
 function skBones(i,now,sn){const v=SKV[i],st=BS.st,el=sn-st.c0,t=now/1000+i*1.37,e=LE.sk[i];
  const ru=clp((el-BO.RISE)/1600,0,1),rise=1-ru;
@@ -15562,7 +15564,7 @@ function drawBoss(t){const gl=G.gl;if(!G.ok||!gl)return;const VP=H3.gl_frame().V
   gl.bindTexture(gl.TEXTURE_2D,G.bkTex);bindSkin(gl,G.bk,G.bki);gl.drawElements(gl.TRIANGLES,BKD.ni,gl.UNSIGNED_SHORT,0)}
  // os esqueletos
  if(G.sk&&G.skTex){skTick(now,sn);let bound=false;
-  for(let i=0;i<BO.NSK;i++){if(!skVisible(i,sn))continue;const p=SKP[i];if(!H3.vis(p[0],15,p[1],22))continue;skBones(i,now,sn);
+  for(let i=0;i<BO.NSK;i++){if(!skVisible(i,sn))continue;const p=SKP[i];if(!H3.vis(p[0],22,p[1],33))continue;skBones(i,now,sn);
    if(!bound){bound=true;gl.uniform3fv(u.uMin,SKD.min);gl.uniform3fv(u.uSz,SKD.size);gl.uniform1f(u.uDef,0);gl.uniform1f(u.uEye,0);gl.uniform1f(u.uK,1);gl.uniform3fv(u.uAmb,AMBK);gl.bindTexture(gl.TEXTURE_2D,G.skTex);bindSkin(gl,G.sk,G.ski)}
    const v=SKV[i],el=sn-BS.st.c0,lh=Date.now()-(LE.sk[i].lh||0),ri=clp((el-BO.RISE)/400,0,1);
    gl.uniformMatrix4fv(u.uM,false,SMW);gl.uniformMatrix4fv(u.uB,false,SBM);
@@ -15590,8 +15592,8 @@ function sprites(t){const T=H3.tex;if(!T||!G.ok)return;const s=t/1000,K=A.K||1,f
  if(!A.hide)H3.spr(T.glow,0,LIQY+34,0,190,170,null,[.25,.9,.3,.06+.05*fl],true,0,true);
  if(T.beam)for(let i=0;i<7;i++){const a=i/7*TAU+s*.05,r=22+((i*13)%17),x=cos(a)*r,z=sin(a)*r,al=(.035+.02*sin(s*.9+i*2.3))*(1+fl*1.5+(A.wHeal||0));H3.strip(T.beam,x,LIQY,z,x*.8,LIQY+150,z*.8,20+(i%3)*8,[.35,1,.4,al],true)}
  // olhos e boca do Lich
- if(A.B1&&!A.hide){const e=A.eye;for(const p of D.eyes){const w=toW([p[0],p[1],p[2]+.012]);H3.spr(T.glow,w[0],w[1],w[2],2.8+e*1.3,2.8+e*1.3,null,[.75,1,.75,min(1,.55+e*.4)],true,0,true);H3.spr(T.glow,w[0],w[1],w[2],9+e*7,9+e*7,null,[.3,1,.35,.22*e],true,0,true)}
-  const m=toW(D.mouth);H3.spr(T.glow,m[0],m[1],m[2]+.5,10,8,null,[.3,1,.3,.18*e],true,0,true)}
+ if(A.B1&&!A.hide){const e=A.eye;for(const p of D.eyes){const w=toW([p[0],p[1],p[2]+.012]);H3.spr(T.glow,w[0],w[1],w[2],(2.8+e*1.3)*LK,(2.8+e*1.3)*LK,null,[.75,1,.75,min(1,.55+e*.4)],true,0,true);H3.spr(T.glow,w[0],w[1],w[2],(9+e*7)*LK,(9+e*7)*LK,null,[.3,1,.35,.22*e],true,0,true)}
+  const m=toW(D.mouth);H3.spr(T.glow,m[0],m[1],m[2]+.5,10*LK,8*LK,null,[.3,1,.3,.18*e],true,0,true)}
  // partículas e almas que tentam fugir
  for(let i=0;i<46;i++){const sp=.045+hs(i,1)*.05,ph=(s*sp+hs(i,2))%1,a=hs(i,3)*TAU+ph*1.6,r=8+hs(i,4)*50,y=LIQY+ph*140,x=cos(a)*r*(1+ph*.4),z=sin(a)*r*(1+ph*.4),al=sin(ph*PI)*(.55+.4*fl),sz=1.4+hs(i,5)*1.8;H3.spr(T.glow,x,y,z,sz*2.2,sz*2.2,null,[.45,1,.5,al],true,0,true)}
  if(G.sprS)for(let i=0;i<7;i++){const P_=6+hs(i,7)*4,u0=s/P_+hs(i,8),cy=floor(u0),u=u0-cy,a0=hs(i,cy*7+9)*TAU,r=24+hs(i,cy+11)*26,a=a0+u*(2.2+fl*2+(A.wCast||0)*2)*(i%2?1:-1),
@@ -15618,13 +15620,13 @@ function sprites(t){const T=H3.tex;if(!T||!G.ok)return;const s=t/1000,K=A.K||1,f
    H3.spr(T.glow,c[0],c[1],c[2],60,60,null,[.3,1,.4,.12*A.wHeal],true,0,true)}
   // círculos mágicos no chão (acendem, giram e somem quando os esqueletos sobem)
   if(el>=BO.SPAWN&&el<BO.UP+1200&&G.sprC)for(let i=0;i<BO.NSK;i++){const p=SKP[i],a=clp((el-BO.SPAWN)/450,0,1)*(1-clp((el-BO.RISE-900)/1300,0,1)),gy=floorY(p[0],p[1])+1.7;if(a<=0)continue;
-   H3.flat(G.sprC,p[0],gy,p[1],38,38,null,[.35,1,.45,.95*a],true,s*.9+i);H3.flat(G.sprC,p[0],gy+.05,p[1],26,26,null,[.6,1,.65,.5*a],true,-s*1.3);H3.flat(T.glow,p[0],gy+.1,p[1],56,56,null,[.25,1,.35,.35*a],true,0);
-   if(el>=BO.RISE-300&&el<BO.RISE+1700&&T.beam){const k=sin(clp((el-BO.RISE+300)/2000,0,1)*PI);H3.strip(T.beam,p[0],gy,p[1],p[0],gy+60,p[1],18,[.4,1,.5,.5*k],true)}}}
+   H3.flat(G.sprC,p[0],gy,p[1],52,52,null,[.35,1,.45,.95*a],true,s*.9+i);H3.flat(G.sprC,p[0],gy+.05,p[1],36,36,null,[.6,1,.65,.5*a],true,-s*1.3);H3.flat(T.glow,p[0],gy+.1,p[1],76,76,null,[.25,1,.35,.35*a],true,0);
+   if(el>=BO.RISE-300&&el<BO.RISE+1700&&T.beam){const k=sin(clp((el-BO.RISE+300)/2000,0,1)*PI);H3.strip(T.beam,p[0],gy,p[1],p[0],gy+80,p[1],26,[.4,1,.5,.5*k],true)}}}
  // esqueletos: olhos e lanterna acesos, alma verde subindo quando caem
  for(let i=0;i<BO.NSK;i++){const v=SKV[i];if(!skVisible(i,sn)||!v.B2)continue;const W2=p=>xf(SMW,xf(v.B2,p)),W5=p=>xf(SMW,xf(v.B5,p)),dk=v.die?1-clp((Date.now()-v.die)/700,0,1):1;
-  for(const sx of[-.035,.035]){const w=W2([sx,.885,.1]);H3.spr(T.glow,w[0],w[1],w[2],2.4,2.4,null,[1,.6,.2,.9*dk],true,0,true)}
-  const l=W5([-.215,.44,.2]);H3.spr(T.glow,l[0],l[1],l[2],12,12,null,[1,.55,.15,.35*dk],true,0,true);
-  if(v.die&&G.sprS){const u=clp((Date.now()-v.die)/1300,0,1),p=SKP[i];H3.spr(G.sprS,p[0],v.gy+18+u*40,p[1],8,12,null,[.65,1,.7,sin(u*PI)*.9],true,0,false)}}}
+  for(const sx of[-.035,.035]){const w=W2([sx,.885,.1]);H3.spr(T.glow,w[0],w[1],w[2],3.6,3.6,null,[1,.6,.2,.9*dk],true,0,true)}
+  const l=W5([-.215,.44,.2]);H3.spr(T.glow,l[0],l[1],l[2],18,18,null,[1,.55,.15,.35*dk],true,0,true);
+  if(v.die&&G.sprS){const u=clp((Date.now()-v.die)/1300,0,1),p=SKP[i];H3.spr(G.sprS,p[0],v.gy+40+u*60,p[1],12,18,null,[.65,1,.7,sin(u*PI)*.9],true,0,false)}}}
 
 // ---------- sons ----------
 const au=()=>typeof AC!=='undefined'&&AC&&typeof vBus==='function'&&AC.state==='running'&&LICH.in?AC:null;
@@ -15655,7 +15657,7 @@ function overlay(x,t,Cm,sc){
  if(LICH.armed&&S.pz>RR+10&&abs(angd(S.yaw,PI))<1.3){const p=H3.proj(0,STH+40,CZ1-2);if(p&&p[2]>4){const al=clp((S.pz-RR-10)/30,0,1)*.9;
   x.save();x.globalAlpha=al;x.textAlign='center';x.font='bold '+round(clp(sc*9,10,20))+'px "Courier New",monospace';x.lineWidth=3;x.strokeStyle='#000';x.strokeText('▲ SAÍDA',p[0],p[1]);x.fillStyle='#d8c8ff';x.fillText('▲ SAÍDA',p[0],p[1]);x.restore()}}
  // vida dos esqueletos (em cima da cabeça)
- for(let i=0;i<BO.NSK;i++){const e=LE.sk[i];if(!e||e.dead||!skVisible(i,sn))continue;const p=SKP[i],q=H3.proj(p[0],floorY(p[0],p[1])+34,p[1]);if(!q||q[2]<3||q[2]>260)continue;
+ for(let i=0;i<BO.NSK;i++){const e=LE.sk[i];if(!e||e.dead||!skVisible(i,sn))continue;const p=SKP[i],q=H3.proj(p[0],floorY(p[0],p[1])+50,p[1]);if(!q||q[2]<3||q[2]>260)continue;
   const k=clp(110/q[2],.6,1.4),w=46*k,h=5*k,r=clp(e.hp/e.max,0,1);x.fillStyle='rgba(0,0,0,.75)';x.fillRect(q[0]-w/2-1,q[1]-1,w+2,h+2);x.fillStyle='#2b1640';x.fillRect(q[0]-w/2,q[1],w,h);
   x.fillStyle=fight===e?'#b8ff7a':'#7dd35a';x.fillRect(q[0]-w/2,q[1],w*r,h);if(fight===e){x.strokeStyle='#e8ffd0';x.lineWidth=1;x.strokeRect(q[0]-w/2-1.5,q[1]-1.5,w+3,h+3)}}
  // números de cura em cima do Lich
@@ -15691,12 +15693,12 @@ function overlay(x,t,Cm,sc){
 function numPos(q){if(!LICH.in)return null;const L=LE.lich;
  if(L&&q.y<OY-250){const a=((q.x*7.13)%1)*TAU;return[cos(a)*14,BASEY+.95*LS+((q.x*3.7)%1)*10,sin(a)*14+8]}
  let best=null,bd=26;for(let i=0;i<BO.NSK;i++){const e=LE.sk[i],d=hypot(q.x-4-e.x,q.y+30-e.y);if(d<bd){bd=d;best=i}}
- if(best!==null){const p=SKP[best];return[p[0],floorY(p[0],p[1])+30,p[1]]}return null}
+ if(best!==null){const p=SKP[best];return[p[0],floorY(p[0],p[1])+45,p[1]]}return null}
 
 // alvo 3D das habilidades da equipe: [x, y do meio, z, raio, chão]
 function lichTgt(e){if(!e||!e.lk)return null;
  if(e.lk==='lich'){const k=A.K||1;return[0,BASEY+.66*LS*k,0,20*k,LIQY]}
- const p=SKP[e.si];if(!p)return null;const g=floorY(p[0],p[1]);return[p[0],g+17,p[1],12,g]}
+ const p=SKP[e.si];if(!p)return null;const g=floorY(p[0],p[1]);return[p[0],g+25,p[1],18,g]}
 // ============================================================ a cena ============================================================
 const AMBS=[.30,.38,.32];
 function envOn(){H3.env({ambT:[.085,.07,.11],ambB:[.035,.03,.05],fog:[.006,.014,.012,.0024],detkL:.85,moonL:[0,0,0],fogOff:0});if(H3.makeSkyTex)H3.makeSkyTex()}
@@ -15709,7 +15711,7 @@ const SC=SCN.lich={id:'lich',K:1,OX,OY,eye:25,camD:70,p3:-.08,pl:[[-.95,1.1],[-1
  env:()=>envOn(),floorY,step,camOk,camY:(cy,cz,cx)=>clp(cy,floorY(cx||0,cz)+4,ceilY(cx||0,cz)),
  enter(){envOn();A.last=0;A.pulse.t0=-99;A.pulse.next=(performance.now()/1000)+9;LICH.t0=Date.now();document.body.classList.add('h3lich')},
  leave(){envOff();document.body.classList.remove('h3lich')},clear(){},
- boss:()=>null,isTgt:e=>!!(e&&e.lk),tgt:lichTgt,
+ boss:()=>null,isTgt:e=>!!(e&&e.lk),tgt:lichTgt,ghR:e=>e&&e.lk==='lich'?62:0,
  bossPlan:(t)=>{anim(performance.now());return()=>drawBoss(t)},numPos,
  flicker,draw:drawRoom,sprites,frameFx:()=>{},shake:t=>{const el=A.el,su=el>=BO.PULL&&el<BO.PULL+700?1-(el-BO.PULL)/700:0,dk=LV.dieT?max(0,1-(Date.now()-LV.dieT)/3200):0,p=max(A.pin||0,su*2.2,dk*1.4,(A.wHeal||0)*.15);if(p<.05)return null;const k=p*.35;return[(Math.random()-.5)*k,(Math.random()-.5)*k,(Math.random()-.5)*k,0,0]},
  flash:()=>0,fbPos:()=>null,overlayExtra:overlay};
@@ -16830,7 +16832,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261024054816;
+const GAME_BUILD=20261024064725;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
