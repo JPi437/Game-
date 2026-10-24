@@ -10619,12 +10619,12 @@ H3.onRestore=()=>{S.built=false;MOD.free();FX.free();for(const k in SCN)if(SCN[k
 // ============================================================ arrastar para olhar · tocar para bater ============================================================
 let lp=null,glcLock=null;
 function pd(e){if(!S.mode||lp)return;
- if(e.pointerType==='mouse'&&S.mode!==3&&document.pointerLockElement!==glc&&glc.requestPointerLock){try{glc.requestPointerLock()}catch(x){}e.preventDefault();return}      // PC: o primeiro clique prende o mouse (ESC solta)
+ if(e.pointerType==='mouse'&&S.mode!==3&&!S.mfree&&document.pointerLockElement!==glc&&glc.requestPointerLock){try{glc.requestPointerLock()}catch(x){}e.preventDefault();return}      // PC: o primeiro clique prende o mouse (ESC solta)
 lp={id:e.pointerId,x:e.clientX,y:e.clientY,x0:e.clientX,y0:e.clientY,t:Date.now(),mv:0};try{glc.setPointerCapture(e.pointerId)}catch(x){}e.preventDefault()}
 function pm(e){if(!lp||e.pointerId!==lp.id)return;const dx=e.clientX-lp.x,dy=e.clientY-lp.y;lp.x=e.clientX;lp.y=e.clientY;lp.mv=max(lp.mv,hypot(e.clientX-lp.x0,e.clientY-lp.y0));
  if(S.mode===3||!SC)return;const pl=SC.pl[S.mode-1];S.yaw+=dx*.0056;S.pitch=clp(S.pitch-dy*.0046,pl[0],pl[1]);e.preventDefault()}
 document.addEventListener('mousemove',e=>{if(!S.mode||S.mode===3||!glc||document.pointerLockElement!==glc||!SC)return;const pl=SC.pl[S.mode-1];S.yaw+=e.movementX*.0026;S.pitch=clp(S.pitch-e.movementY*.0022,pl[0],pl[1])});
-glcLock=()=>{if(S.mode!==3&&glc&&glc.requestPointerLock&&matchMedia('(pointer:fine)').matches){try{glc.requestPointerLock()}catch(x){}}};
+glcLock=()=>{S.mfree=false;if(S.mode!==3&&glc&&glc.requestPointerLock&&matchMedia('(pointer:fine)').matches){try{glc.requestPointerLock()}catch(x){}}};
 function pu(e){if(!lp||e.pointerId!==lp.id)return;const tap=lp.mv<14&&Date.now()-lp.t<500;lp=null;try{glc.releasePointerCapture(e.pointerId)}catch(x){}
  if(tap&&SC&&SC.tap&&!lock){try{if(SC.tap(e.clientX,e.clientY))return}catch(x){}}                       // tocar no quadro de ranking (Caverna de Gelo)
  if(tap&&fight&&!lock){try{punch()}catch(x){}}}
@@ -10634,7 +10634,7 @@ addEventListener('keydown',e=>{const t=e.target,tg=t&&t.tagName;if(tg==='INPUT'|
 // no 3D: espaço pula · F bate (o clique também bate)
 addEventListener('keydown',e=>{if(!S.mode||lock)return;const t=e.target,tg=t&&t.tagName;if(tg==='INPUT'||tg==='TEXTAREA')return;
  if(e.key===' '){e.preventDefault();if(!e.repeat)jump()}
- else if((e.key==='f'||e.key==='F')&&fight&&!e.repeat){e.preventDefault();try{punch()}catch(x){}}});
+ else if((e.key==='f'||e.key==='F')&&!e.repeat&&S.mode!==3){e.preventDefault();if(document.pointerLockElement===glc){S.mfree=true;try{document.exitPointerLock()}catch(x){}toastS('Mouse solto · F para prender de novo')}else{S.mfree=false;try{glc.requestPointerLock()}catch(x){}}}});
 {const _p=punch;punch=function(){const r=_p.apply(this,arguments);if(S.mode&&fight)S.punchT=Date.now();return r}}
 {const _rw=rsWatch;rsWatch=function(dt){if(S.mode)return;return _rw(dt)}}                  // o 3D é mais pesado: não deixa o jogo baixar a resolução do 2D por causa dele
 
@@ -16826,7 +16826,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261024051318;
+const GAME_BUILD=20261024052648;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
