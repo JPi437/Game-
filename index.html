@@ -4258,482 +4258,114 @@ stat();load();
 // ===================== VISUAL DO PERSONAGEM (criação de personagem + cosméticos) =====================
 // ---- motor do visual: monta o boneco por partes (cabeça, tronco, braços, pernas) e anima cada quadro ----
 const LKE=(function(){
-const ART=// tons: O contorno · s pele · l luz · d sombra · '.' vazio
-{
-// ---------- cabeças (linhas 0..10) ----------
-hf:[ // frente (olhos desenhados pelo código nas colunas 3-4 e 8-9, linhas 6-8)
-"....OOOOO....",
-"..OOlllllOO..",
-".OslllllllsO.",
-".OssslllsssO.",
-".OsssssssssO.",
-"OdOOOsssOOOdO",
-"OdOsssssssOdO",
-"OdOsssssssOdO",
-".OdsslllssdO.",
-"..OsdllldsO..",
-"...OOOOOOO..."],
-hb:[ // costas
-"....OOOOO....",
-"..OOsllllOO..",
-".OslllllllsO.",
-".OsslllllssO.",
-".OsssssssssO.",
-"OdOsssssssOdO",
-"OdOsssssssOdO",
-"OdOdsssssdOdO",
-".OddsssssddO.",
-"..OdsssssdO..",
-"...OOOOOOO..."],
-hs:[ // lado, olhando para a direita (olho nas colunas 8-9, linhas 6-8)
-"....OOOOO....",
-"..OOlllllOO..",
-".OsllllllllO.",
-".OssslllllsO.",
-".OsssssssssO.",
-".OdsOsssOOsO.",
-".OdOlOsssssO.",
-".OdOdOsssssO.",
-"..OdOssdssO..",
-"...OdsssllO..",
-"....OOOOOO..."],
-// ---------- skin exclusiva TV (cabeça de televisão; tons: O contorno, K carcaça, k luz, D sombra, V grade; tela: W Y C G M R B N) ----------
-tvf:[
-".OOOOOOOOOOO.",
-"OkkkkkkkkkkKO",
-"OkOOOOOOOOOKO",
-"OkOWYCGMRBOKO",
-"OkOWYCGMRBOKO",
-"OkOWYCGMRBOKO",
-"OkOBNMNCNWOKO",
-"OkOOOOOOOOODO",
-"ODDDDDDDDDDDO",
-".OOOOOOOOOOO.",
-"....ODDDO...."],
-tvb:[
-".OOOOOOOOOOO.",
-"OkkkkkkkkkkKO",
-"OkKKKKKKKKKDO",
-"OkKKVVVVVKKDO",
-"OkKKKKKKKKKDO",
-"OkKKVVVVVKKDO",
-"OkKKKKKKKKKDO",
-"OkKKVVVVVKKDO",
-"ODDDDDDDDDDDO",
-".OOOOOOOOOOO.",
-"....ODDDO...."],
-tvs:[
-"..OOOOOOOOO..",
-".OkkkkkkkkOO.",
-"OkKKKKKKKOWO.",
-"OKKKVVVKKOYO.",
-"OkKKKKKKKOCO.",
-"OKKKVVVKKOGO.",
-"OkKKKKKKKOMO.",
-"OKKKVVVKKORO.",
-".ODDDDDDDOOO.",
-"..OOOOOOOOO..",
-"....ODDDO...."],
-// ---------- troncos (linhas 10..20; braços e pernas são peças separadas) ----------
-tfm:[ // frente, masculino (tronco liso, sem peito nem marcas)
-"..OsssssssO..",
-".OsssssssssO.",
-".OsssssssssO.",
-"...OlsssdO...",
-"...OlsssdO...",
-"...OlsssdO...",
-"...OlsssdO...",
-"...OlsssdO...",
-"...OlsssdO...",
-"...OdsssdO...",
-"..OdssOssdO.."],
-tff:[ // frente, feminino (busto e cintura)
-"..OsssssssO..",
-".OsssssssssO.",
-".OssllsllssO.",
-"...OlldllO...",
-"...OddsddO...",
-"...OsslssO...",
-"...OslllsO...",
-"...OsslssO...",
-"...OsssssO...",
-"...OdsssdO...",
-"..OdssOssdO.."],
-tb:[ // costas
-"..OsssssssO..",
-".OsssssssssO.",
-".OssdsssdssO.",
-"...OdslsdO...",
-"...OsslssO...",
-"...OssdssO...",
-"...OssdssO...",
-"...OsssssO...",
-"...OsssssO...",
-"...OdsssdO...",
-"..OdssOssdO.."],
-tsm:[ // lado, masculino (magro e reto)
-"....OsssO....",
-"...OssssO....",
-"...OssssO....",
-"...OssssO....",
-"...OssssO....",
-"...OssssO....",
-"...OssssO....",
-"...OssssO....",
-"...OssssO....",
-"...OdsssO....",
-"...OdssdO...."],
-tsf:[ // lado, feminino (busto leve, cintura e quadril proporcionais)
-"....OsssO....",
-"...OssssssO..",
-"...OsssssslO.",
-"...OssssssdO.",
-"...OssssssO..",
-"...OssssssO..",
-"...OsssssO...",
-"...OssssssO..",
-"..OsssssssO..",
-"..OdsssssdO..",
-"...OdssssdO.."],
-// ---------- braço de frente/costas (lado esquerdo da tela; o direito é espelhado) linhas 12..19 ----------
-af:[
-".Os.",
-"OssO",
-"OlsO",
-"OldO",
-"OldO",
-"OssO",
-"OsOO",
-"OOO."],
-// ---------- perna de frente (esquerda da tela) linhas 21..27, colunas 1..5 ----------
-lf:[
-".OdsO",
-".OlsO",
-".OldO",
-".OssO",
-"OOdsO",
-"OlssO",
-"OOOOO"],
-// ---------- braço de lado: poses (x = coluna do topo-esquerdo, linhas a partir da 12) ----------
-as:{
- "-2":{x:0,r:["...OssO","..OlsO.","..OldO.",".OldO..",".OssO..","OssO...",".OO...."]},
- "-1":{x:2,r:[".OssO",".OlsO",".OldO","OldO.","OssO.","OssO.",".OO.."]},
- "0":{x:3,r:["OssO","OlsO","OldO","OldO","OssO","OssO",".OO."]},
- "1":{x:3,r:["OssO.","OlsO.","OldO.",".OldO",".OssO",".OssO","..OO."]},
- "2":{x:3,r:["OssO...",".OlsO..",".OldO..","..OldO.","..OssO.","...OssO","....OO."]}},
-// ---------- perna de lado: poses (x = coluna do topo-esquerdo, a partir da linha 21; f = linha onde começa o pé) ----------
-ls:{
- FWD:{x:4,f:4,r:["OssO......",".OssO.....","..OsdO....","..OsdO....","...OslOO..","...OssssO.","...OOOOOO."]},
- FW1:{x:4,f:4,r:["OssO....","OssO....",".OsdO...",".OsdO...","..OslOO.","..OssssO","..OOOOOO"]},
- STR:{x:4,f:4,r:["OssO..","OssO..","OsdO..","OsdO..","OslOO.","OssssO","OOOOOO"]},
- BK1:{x:2,f:4,r:["..OssO..","..OssO..",".OsdO...",".OsdO...","OslOO...","OssssO..","OOOOOO.."]},
- BACK:{x:0,f:4,r:["....OssO","...OssO.","..OsdO..","..OsdO..",".OslOO..",".OssssO.",".OOOOOO."]},
- PASS:{x:4,f:3,r:["OssO...","OsssO..",".OsdsO.",".OslOO.",".OssssO",".OOOOOO"]}},
-// ---------- pernas cruzadas (sentado de frente) linhas 22..27 ----------
-sit:{x:-1,r:[ // pernas cruzadas (linhas 22..27); no meio de baixo ficam os pés
-".OOO.......OOO.",
-"OssdO.....OdssO",
-"OlssdOOOOOdsslO",
-"OsssssOsOsssssO",
-".OdssOsssOssdO.",
-"..OOOOOOOOOOO.."]},
-};
-const FW=23,FH=38,PX=5,PY=9; // arte de 13 colunas (centro 6) colocada em PX; pés na linha PY+27
-const SKIN=['#f7cfa8','#efbd8f','#d99f6c','#bf8350','#9a6238','#6f4425','#4b2c18'];
-const HAIRC=['#8a5530','#4a2c18','#1c1c1c','#e8c25a','#f3ead0','#c2461f','#a0a0a0','#e86aa6','#3f7fe0','#45b04f','#8e4fc4','#ffffff'];
-const EYEC=['#1e88e5','#6d4c2f','#2b2b2b','#2e9d4a','#7b8c96','#8e44ad','#d32f2f','#d4a017'];
-const CLOTH=['#df220f','#10a4e0','#1f3f99','#2e8b3a','#ffd23f','#ff8f00','#8e44ad','#ec6aa8','#f4f4f4','#8d8d8d','#2a2a2a','#753007','#14a3a3','#a0522d'];
-// cabelos: [id, nome, gênero sugerido]
-const HAIR=[['curto','Curto','m'],['lateral','Franja de lado','m'],['espetado','Espetado','m'],['topete','Topete','m'],['moicano','Moicano','m'],['raspado','Raspado','m'],
- ['samurai','Samurai','m'],['afro','Black power','u'],['careca','Careca','m'],
- ['longo','Longo','f'],['franja','Franjinha','f'],['chanel','Chanel','f'],['rabo','Rabo de cavalo','f'],['maria','Maria-chiquinha','f'],
- ['coque','Coque','f'],['coques','Coque duplo','f'],['tranca','Trança','f'],['cacheado','Cacheado','f']];
-const STY={
- g:[['m','Masculino'],['f','Feminino'],['tv','TV (exclusivo)',{adm:1}]],
- h:HAIR.map(a=>[a[0],a[1]]),
- t:[['camiseta','Camiseta'],['longa','Manga longa'],['regata','Regata'],['listrada','Listrada'],['jaqueta','Jaqueta']],   // sem a opção "sem camisa": quem salvou assim volta com camiseta (norm)
- b:[['calca','Calça'],['bermuda','Bermuda'],['saia','Saia']],
- f:[['sapato','Sapato'],['bota','Bota'],['descalco','Descalço']],
- c:[['nenhum','Nenhum'],['bone','Boné'],['gorro','Gorro'],['cartola','Cartola'],['bruxa','Bruxa'],['faixa','Faixa'],['coroa','Coroa',{loja:1,cor:0}],['chifres','Chifres',{loja:1,cor:0}],['quepe','Quepe de segurança',{loja:1,cor:0,premio:'Noite 5'}]]};
-const DEF={g:'m',s:0,h:'curto',hc:0,e:0,t:'camiseta',tc:0,b:'calca',bc:1,f:'sapato',fc:11,c:'nenhum',cc:2};
-const ok=(cat,id)=>STY[cat].some(a=>a[0]===id);
-function norm(o){o=o&&typeof o==='object'?o:{};const L={};
- const n=(k,max)=>{if(o[k]==null)return DEF[k];const v=o[k]|0;return v>=0&&v<max?v:DEF[k]};
- L.s=n('s',SKIN.length);L.hc=n('hc',HAIRC.length);L.e=n('e',EYEC.length);L.tc=n('tc',CLOTH.length);L.bc=n('bc',CLOTH.length);L.fc=n('fc',CLOTH.length);L.cc=n('cc',CLOTH.length);
- L.g=ok('g',o.g)?o.g:'m';
- for(const k of['h','t','b','f','c'])L[k]=ok(k,o[k])?o[k]:(k==='h'&&L.g==='f'?'longo':DEF[k]);return L}
-const hex=h=>{h=h.replace('#','');if(h.length===3)h=h.split('').map(c=>c+c).join('');return[parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)]};
-const mix=(a,b,t)=>a.map((v,i)=>Math.round(v+(b[i]-v)*t)),WH=[255,255,255],BK=[0,0,0];
-const lum=c=>.3*c[0]+.59*c[1]+.11*c[2];
-const flip=r=>r.map(s=>s.split('').reverse().join(''));
-
-// ============ montagem do corpo ============
-// spec: {d:'f'|'b'|'s', by: balanço do corpo, hy: deslocamento extra da cabeça, eyes, aL, aR (front: dy dos braços), lL, lR (pose da perna de frente),
-//        an, af (pose do braço de lado perto/longe), ln, lf (pose da perna de lado), sit}
-function body(sp,L){
- const G=[];for(let y=0;y<FH;y++)G.push(new Array(FW).fill(null));
- const fem=L.g==='f',tv=L.g==='tv',d=sp.d;
- const at=(x,y)=>{y+=PY;x+=PX;return y>=0&&y<FH&&x>=0&&x<FW?G[y][x]:null};
- const set=(x,y,c)=>{y+=PY;x+=PX;if(y>=0&&y<FH&&x>=0&&x<FW)G[y][x]=c};
- // carimba um desenho; lab(linha, coluna, char) devolve a parte do corpo
- const stamp=(rows,ox,oy,lab,o)=>{o=o||{};rows.forEach((r,y)=>{for(let x=0;x<r.length;x++){const t=r[x];if(t==='.')continue;
-   set(ox+x,oy+y,{t,m:o.m||'skin',p:lab(y,x,t),far:o.far?1:0,ry:y,bot:o.bot&&y===rows.length-1?1:0})}})};
- const by=sp.by||0,sit=!!sp.sit;
- const tY=10+by+(sit?5:0),hY=tY+(sp.hy||0)-10;
- // pernas
- if(d!=='s'){
-  if(!sit){const legRows=(pose)=>{const R=ART.lf;let idx=[0,1,2,3,4,5,6];
-    if(pose==='up1')idx=[0,1,3,4,5,6];else if(pose==='up2')idx=[0,1,4,5,6];else if(pose==='fwd')idx=[0,1,2,3,3,4,5,6];
-    return idx.map(i=>[R[i],i])};
-   const leg=(pose,right)=>{const rr=legRows(pose||'stand');rr.forEach(([r,i],k)=>{const s=right?r.split('').reverse().join(''):r;
-     for(let x=0;x<s.length;x++){const t=s[x];if(t==='.')continue;set((right?7:1)+x,21+k,{t,m:'skin',p:i<=1?'thigh':i<=3?'shin':'foot',far:0,ry:i,bot:i===6?1:0})}})};
-   leg(sp.lL,0);leg(sp.lR,1)}
- }else{
-  const sleg=(pose,far)=>{const P=ART.ls[pose]||ART.ls.STR;P.r.forEach((r,y)=>{for(let x=0;x<r.length;x++){const t=r[x];if(t==='.')continue;
-    set(P.x+x,21+y,{t,m:'skin',p:y<2?'thigh':y<P.f?'shin':'foot',far:far?1:0,ry:y,bot:y===P.r.length-1?1:0})}})};
-  const sarm=(pose,far)=>{const P=ART.as[String(pose)]||ART.as['0'];P.r.forEach((r,y)=>{for(let x=0;x<r.length;x++){const t=r[x];if(t==='.')continue;
-    set(P.x+x,12+by+y,{t,m:'skin',p:y<2?'armU':y<4?'armL':'hand',far:far?1:0,ry:y})}})};
-  sarm(sp.af,1);sleg(sp.lf,1);
-  stamp(fem?ART.tsf:ART.tsm,0,tY,(y)=>y===0?'neck':y>=10?'hip':'torso');
-  sleg(sp.ln,0);sarm(sp.an,0);
- }
- if(d!=='s'){
-  stamp(d==='b'?ART.tb:fem?ART.tff:ART.tfm,0,tY,(y)=>y===0?'neck':y>=10?'hip':'torso');
-  if(sit)stamp(ART.sit.r,ART.sit.x,22,(y,x)=>y===4&&x>=6&&x<=8?'foot':y>=3?'shin':'thigh',{bot:1});
-  const arm=(dy,right)=>{const R=right?flip(ART.af):ART.af;stamp(R,right?9:0,12+(tY-10)+(dy||0)-(sit?1:0),(y)=>y<=2?'armU':y<=4?'armL':'hand')};
-  arm(sp.aL,0);arm(sp.aR,1);
- }
- // cabeça
- if(tv){const H=d==='f'?ART.tvf:d==='b'?ART.tvb:ART.tvs;stamp(H,0,hY,()=>'tv',{m:'tv'});tvScreen();return {G,at,set,hY,tY,d,fem}}
- const H=d==='f'?ART.hf:d==='b'?ART.hb:ART.hs;
- stamp(H,0,hY,(y,x)=>(d==='s'?(x>=3&&x<=5&&y>=5&&y<=8):(x<=1||x>=11)&&y>=5&&y<=7)?'ear':'head');
- // tela da TV: barras de cor com linha de varredura; piscar = chiado; olhar = barras deslizam; dormir = tela apagada com luz de espera
- function tvScreen(){const SC='WYCGMRBN',k=sp.col||0,st=sp.eyes||'open',H=d==='f'?ART.tvf:ART.tvs;if(d==='b')return;
-  const cells=[];for(let y=0;y<11;y++)for(let x=0;x<13;x++){const c=at(x,hY+y);if(c&&c.m==='tv'&&SC.includes(H[y][x]))cells.push([x,y,c])}
-  const ys=[...new Set(cells.map(q=>q[1]))],y0=Math.min(...ys),y1=Math.max(...ys);
-  cells.forEach(([x,y,c])=>{
-   if(sp.sit&&st==='closed'){c.t='N';if(y===y1&&x===(d==='f'?9:10))c.t='R';return}
-   if(st==='closed'){const h=(x*7+y*13+k*5)%5;c.t=h===0?'W':h===1?'N':h===2?'k':h===3?'W':'D';return}
-   if(st==='lookL'||st==='lookR'){const row=H[y],xs=[];for(let i=0;i<13;i++)if(SC.includes(row[i]))xs.push(i);const p=xs.indexOf(x),q=(p+(st==='lookL'?1:-1)+xs.length)%xs.length;c.t=row[xs[q]];return}
-   if(y===y0+(k%(y1-y0+1)))c.sl=1})}
- // olhos
- const eye=(x,y,k)=>{const c=at(x,hY+y);if(c){c.t=k;c.m='eye'}};
- const st=sp.eyes||'open';
- if(d==='f'){
-  if(st==='closed'){for(const x of[3,4,8,9]){const a=at(x,hY+5);if(a){a.t='s';a.m='skin'}const b=at(x,hY+7);if(b){b.t='O';b.m='skin'}}if(fem){const a=at(2,hY+7),b=at(10,hY+7);if(a)a.t='O';if(b)b.t='O'}}
-  else{const Lx=[3,4],Rx=[8,9],li=st==='lookL'?0:1,ri=st==='lookR'?1:0;
-   for(let r=0;r<3;r++){eye(Lx[li],6+r,'I'+r);eye(Lx[1-li],6+r,'W'+r);eye(Rx[ri],6+r,'I'+r);eye(Rx[1-ri],6+r,'W'+r)}
-   if(fem){const a=at(2,hY+4),b=at(10,hY+4);if(a)a.t='O';if(b)b.t='O'}}
- }else if(d==='s'){
-  if(st==='closed'){for(const x of[8,9]){const a=at(x,hY+5);if(a)a.t='s';const b=at(x,hY+7);if(b)b.t='O'}}
-  else{for(let r=0;r<3;r++){eye(8,6+r,'W'+r);eye(9,6+r,'I'+r)}if(fem){const a=at(10,hY+4);if(a)a.t='O'}}
- }
- return {G,at,set,hY,tY,d,fem}}
-
-// ============ roupas, cabelo e chapéu ============
-const HSTY={ // cada cabelo = franja + comprimento + extras
- curto:{f:'jag',l:'short'},lateral:{f:'side',l:'short'},espetado:{f:'jag',l:'short',x:['spikes']},topete:{f:'up',l:'short',x:['quiff']},
- moicano:{buzz:'shave',x:['mohawk']},raspado:{buzz:1},samurai:{f:'part',l:'short',x:['topknot']},afro:{afro:1},careca:{none:1},
- longo:{f:'part',l:'long'},franja:{f:'full',l:'long'},chanel:{f:'full',l:'bob'},rabo:{f:'jag',l:'short',x:['ponytail']},
- maria:{f:'full',l:'short',x:['twintails']},coque:{f:'part',l:'short',x:['bun']},coques:{f:'full',l:'short',x:['spacebuns']},
- tranca:{f:'part',l:'short',x:['braid']},cacheado:{f:'part',l:'long',x:['curls']}};
-function dress(B,L){
- const {G,at,set,hY,tY,d}=B,sit=B.sit;
- const added=new Set();
- const put=(x,y,m,t,o)=>{const c=at(x,y);if(c&&c.m==='eye')return;if(o&&o.under&&c)return;
-  set(x,y,{t:t||'s',m,p:'x',far:0});added.add(x+','+y)};
- const each=fn=>{for(let y=-PY;y<FH-PY;y++)for(let x=-PX;x<FW-PX;x++){const c=at(x,y);if(c)fn(c,x,y)}};
- // ---- roupas ----
- const TOP={camiseta:['neck','torso','armU'],longa:['neck','torso','armU','armL'],regata:['torso'],listrada:['neck','torso','armU'],jaqueta:['neck','torso','armU','armL'],nenhuma:[]}[L.t];
- const BOT={calca:['hip','thigh','shin'],bermuda:['hip','thigh'],saia:['hip','thigh']}[L.b];
- const SHO={sapato:['foot'],bota:['foot','shin'],descalco:[]}[L.f];
- each((c,x,y)=>{if(c.m!=='skin')return;
-  if(SHO.includes(c.p))c.m='shoe';
-  else if(BOT.includes(c.p))c.m='pants';
-  else if(TOP.includes(c.p)){c.m='top';
-   if(L.t==='listrada'&&c.t!=='O'&&((y-tY)%2===1))c.m='top2';
-   if(L.t==='jaqueta'&&d==='f'&&c.p==='torso'&&c.t!=='O'&&x>=5&&x<=7&&y>tY)c.m='inner'}});
- if(L.g==='tv'){each((c,x,y)=>{if(c.m==='shoe'&&(c.bot||c.t==='l')){c.m='sole';return}
-  if(c.p!=='torso'||c.m!=='top')return;const ry=y-tY;
-  if(d==='b'){if(x>=3&&x<=9&&ry>=1)c.m='vest';return}
-  if(d==='s'){if(x>=3&&x<=9&&ry>=1){c.m='vest';if(x===7&&ry>=2&&ry<=4&&c.t!=='O')c.m='tie'}return}
-  if(x<3||x>9)return;const open=[[],[4,8],[5,7],[5,7],[6,6]][ry];
-  if(open&&x>=open[0]&&x<=open[1]){if(x===6&&ry>=1&&c.t!=='O')c.m='tie';return}
-  if(x===6&&ry>=1&&ry<=5&&c.t!=='O'){c.m='tie';return}
-  c.m=(x===6&&(ry===6||ry===8)&&c.t!=='O')?'btn':'vest'})}
- if(L.b==='saia'&&!sit){const y0=tY+11,w=d==='s'?[[3,10],[2,11]]:[[2,10],[1,11]];
-  w.forEach(([a,b],k)=>{for(let x=a;x<=b;x++){const c=at(x,y0+k);put(x,y0+k,'pants',x===a||x===b?'O':k===1&&(x===a+1||x===b-1)?'d':'s')}});
-  for(let x=w[1][0];x<=w[1][1];x++)put(x,y0+2,'pants','O')}
- // ---- cabelo ----
- const hs=L.g==='tv'?{none:1}:HSTY[L.h]||HSTY.curto,ex=hs.x||[];
- const hc=(x,y)=>at(x,hY+y),isH=(x,y)=>{const c=hc(x,y);return c&&(c.p==='head')&&c.m==='skin'};
- const hp=(x,y,t)=>put(x,hY+y,'hair',t),hairCell=(x,y,m)=>{const c=hc(x,y);if(c&&c.m!=='eye'&&(c.p==='head'||c.p==='ear')){c.m=m||'hair';return true}return false};
- const cap=m=>{ // cobre o crânio
-  for(let y=0;y<=10;y++)for(let x=-1;x<=13;x++){if(!isH(x,y))continue;
-   if(d==='b'?y<=8:d==='s'?(y<=3||(y<=8&&x<=2)||(y===4&&x<=7)):y<=3)hairCell(x,y,m)}};
- if(!hs.none){
-  if(hs.buzz){cap(hs.buzz==='shave'?'shave':'buzz')}
-  else if(hs.afro){const cx=d==='s'?5:6;for(let y=-4;y<=(d==='b'?10:8);y++)for(let x=-3;x<=15;x++){const dx=(x-cx)/(d==='s'?7.6:8.2),dy=(y-2.6)/6.2;if(dx*dx+dy*dy>1)continue;
-    if(d==='f'&&y>=4&&x>=2&&x<=10)continue;if(d==='s'&&y>=4&&x>=4)continue;const c=hc(x,y);if(c&&c.m==='eye')continue;if(c&&(c.p==='head'||c.p==='ear'))hairCell(x,y);else hp(x,y,(x+y)%3===0?'l':'s')}}
-  else{cap();
-   // franja (frente e lado)
-   const f=hs.f;
-   if(d==='f'){const r4=x=>{if(isH(x,4))hairCell(x,4)};
-    if(f==='jag'){for(let x=1;x<=11;x++)if(x!==4&&x!==8)r4(x)}
-    if(f==='full'){for(let x=1;x<=11;x++)r4(x);for(let x=5;x<=7;x++)hairCell(x,5)}
-    if(f==='side'){for(let x=1;x<=11;x++)r4(x);for(let x=2;x<=5;x++)hairCell(x,5);hairCell(2,6)}
-    if(f==='part'){for(let x=1;x<=11;x++)if(x<5||x>7)r4(x);for(const y of[1,2,3]){const c=hc(6,y);if(c&&c.m==='hair')c.m='skin'}const c5=hc(5,3),c7=hc(7,3);if(c5)c5.m='skin';if(c7)c7.m='skin'}
-    if(f==='up'){r4(1);r4(2);r4(10);r4(11)}
-    // costeletas sobre a orelha
-    hairCell(0,5);hairCell(1,5);hairCell(11,5);hairCell(12,5)}
-   if(d==='s'){if(f==='full'||f==='side'){for(let x=4;x<=10;x++)if(isH(x,4))hairCell(x,4);hairCell(8,5);hairCell(9,5)}
-    else if(f==='jag'){for(let x=4;x<=10;x++)if(x!==8&&isH(x,4))hairCell(x,4)}
-    else if(f==='part'){for(let x=4;x<=9;x++)if(isH(x,4))hairCell(x,4)}
-    hairCell(3,5);hairCell(4,5)}
-   // comprimento
-   const len=hs.l==='bob'?9:hs.l==='long'?17:0;
-   if(len){
-    if(d==='f'){for(let y=4;y<=len;y++){const w=y>=10?3:2;for(let k=0;k<w;k++){const xl=1-k,xr=11+k;
-       if(y===len&&k===w-1)continue;
-       if(!hairCell(xl,y))hp(xl,y,k===0?'d':'s');if(!hairCell(xr,y))hp(xr,y,k===0?'d':'s')}}
-     if(hs.l==='bob'){for(let y=5;y<=9;y++){hp(-1,y,'s');hp(13,y,'s')}hp(2,9,'s');hp(10,9,'s');hp(1,10,'d');hp(11,10,'d')}}
-    else if(d==='b'){const ln=hs.l==='bob'?10:len;for(let y=4;y<=ln;y++){const a=(y>=10||(hs.l==='bob'&&y>=5))?0:1,b=(y>=10||(hs.l==='bob'&&y>=5))?12:11,t=y===ln?1:0;for(let x=a+t;x<=b-t;x++){if(!hairCell(x,y))hp(x,y,(x===a+t||x===b-t)?'d':(x===6&&y>8&&hs.l!=='bob')?'d':'s')}}}
-    else{for(let y=3;y<=len;y++){const a=(y>=10||hs.l==='bob')?-1:0,b=hs.l==='bob'?3:2;for(let x=a;x<=b;x++){if(y===len&&x===a)continue;if(!hairCell(x,y))hp(x,y,x===b?'d':'s')}}}
-   }
-  }
-  // extras
-  const topY=x=>{for(let y=-2;y<=10;y++){const c=hc(x,y);if(c&&(c.p==='head'))return y}return 0};
-  if(ex.includes('spikes')){const S=d==='s'?[[1,2,-1],[3,3,-1],[5,3,-1],[7,2,-1],[9,1,0]]:[[1,1,0],[3,2,0],[5,3,0],[7,3,0],[9,2,0],[11,1,0]];
-   S.forEach(([x,h,lean])=>{const t=topY(x);for(let i=1;i<=h;i++){hp(x+Math.round(lean*i*0.6),t-i,i===h?'l':'s');if(i<h&&d!=='s')hp(x+1,t-i,'s')}})}
-  if(ex.includes('quiff')){const Q=d==='f'?[[-3,5,8],[-2,4,9],[-1,3,9]]:d==='s'?[[-3,6,9],[-2,5,11],[-1,4,12],[0,3,11]]:[[-2,5,7],[-1,4,8]];
-   Q.forEach(([y,a,b])=>{for(let x=a;x<=b;x++){if(!hairCell(x,y))hp(x,y,y===Q[0][0]?'l':'s')}})}
-  if(ex.includes('mohawk')){if(d!=='s'){for(let y=-3;y<=(d==='b'?8:4);y++)for(let x=5;x<=7;x++){if(y<0&&x!==6&&y===-3)continue;if(!hairCell(x,y))hp(x,y,x===6?'l':'s')}}
-   else{for(let x=0;x<=9;x++){const t=topY(x);for(let i=0;i<=(x%3===1?3:2);i++){if(!hairCell(x,t-i+1))hp(x,t-i,i>=2?'l':'s')}}}}
-  if(ex.includes('topknot')){const c0=d==='s'?3:5;for(let y=-3;y<=-1;y++)for(let x=c0;x<=c0+2;x++){if(y===-3&&x!==c0+1)continue;hp(x,y,'s')}put(c0+1,hY,'tie','s')}
-  if(ex.includes('bun')){const c0=d==='s'?2:4;for(let y=-4;y<=0;y++)for(let x=c0;x<=c0+4;x++){if((y===-4||y===0)&&(x===c0||x===c0+4))continue;if(!hairCell(x,y))hp(x,y,y===-4?'l':'s')}}
-  if(ex.includes('spacebuns')){const B2=d==='s'?[3]:[0,9];B2.forEach(c0=>{for(let y=-3;y<=0;y++)for(let x=c0;x<=c0+3;x++){if((y===-3||y===0)&&(x===c0||x===c0+3))continue;if(!hairCell(x,y))hp(x,y,y===-3?'l':'s')}})}
-  if(ex.includes('ponytail')){if(d==='b'){put(5,hY+6,'tie');put(6,hY+6,'tie');put(7,hY+6,'tie');for(let y=7;y<=15;y++)for(let x=5;x<=7;x++){if(y>=14&&x!==6)continue;hp(x,y,x===7?'d':'s')}}
-   else if(d==='s'){put(0,hY+3,'tie');put(1,hY+3,'tie');for(let y=3;y<=13;y++)for(let x=-2;x<=0;x++){if(y<=4&&x===-2)continue;if(y>=12&&x!==-1)continue;hp(x,y,x===0?'d':'s')}}
-   else{for(let y=6;y<=11;y++)hp(13,y,'d');hp(13,5,'tie')}}
-  if(ex.includes('twintails')){const T2=d==='s'?[[-2,0]]:[[-2,0],[12,14]];T2.forEach(([a,b])=>{for(let y=2;y<=12;y++)for(let x=a;x<=b;x++){if(y>=11&&x!==a+1)continue;if(y<=2&&x!==a+1)continue;if(!hairCell(x,y))hp(x,y,x===a+1?'s':'d')}
-    put(a+1,hY+2,'tie')})}
-  if(ex.includes('braid')){if(d==='b'){for(let y=9;y<=17;y++){const z=(y%2)?0:1;hp(5+z,y,'s');hp(6+z,y,'l');hp(5+(1-z)*2,y,'d')}put(6,hY+18,'tie')}
-   else if(d==='s'){for(let y=4;y<=15;y++){hp(-1,y,y%2?'s':'l');hp(0,y,y%2?'d':'s')}put(-1,hY+16,'tie');put(0,hY+16,'tie')}
-   else{for(let y=6;y<=15;y++){hp(11,y,y%2?'s':'l');hp(12,y,y%2?'d':'s')}put(11,hY+16,'tie');put(12,hY+16,'tie')}}
-  if(ex.includes('curls')){const adds=[];each((c,x,y)=>{if(c.m!=='hair')return;const hy=y-hY;if(hy<5)return;for(const[dx,dy]of[[1,0],[-1,0],[0,1]]){if(!at(x+dx,y+dy)&&((x+y)%2===0))adds.push([x+dx,y+dy])}});
-   adds.forEach(([x,y])=>{const c=at(x,y);if(!c)put(x,y,'hair','s')})}
- }
- // ---- chapéus ----
- const HATS=['bone','gorro','cartola','bruxa','quepe'];
- if(HATS.includes(L.c)){added.forEach(k=>{const[x,y]=k.split(',').map(Number);const c=at(x,y);if(c&&c.m==='hair'&&y<=hY+2){set(x,y,null);added.delete(k)}})}
- const span=(y,a,b,m,t)=>{for(let x=a;x<=b;x++)put(x,hY+y,m||'hat',t||'s')};
- const sR=d==='s';
- if(L.c==='bone'){span(0,3,9,'hat','l');span(1,2,10);span(2,1,11);span(3,1,11);
-  if(d==='f')span(4,0,12,'hat','d');else if(sR)span(4,5,13,'hat','d');else span(4,4,8,'hat','d')}
- if(L.c==='gorro'){span(-1,4,8,'hat','l');span(0,2,10);span(1,1,11);span(2,1,11);span(3,0,12,'hat','d');span(4,0,12,'hat','d');span(-3,5,7,'white');span(-2,5,7,'white')}
- if(L.c==='cartola'){for(let y=-7;y<=1;y++)span(y,3,9);span(-7,4,8,'hat','l');span(0,3,9,'red');span(1,3,9,'red');span(2,-1,13,'hat','d')}
- if(L.c==='bruxa'){const C=[[2,1,11],[1,2,10],[0,2,10],[-1,3,9],[-2,3,9],[-3,4,8],[-4,4,8],[-5,5,7],[-6,5,7]];C.forEach(([y,a,b])=>span(y,a,b));span(1,2,10,'gold');
-  const k=sR?-1:1;put(6+k,hY-7);put(6+2*k,hY-8);put(6+3*k,hY-8);span(3,-3,15,'hat','d')}
- if(L.c==='faixa'){span(3,sR?1:1,sR?11:11);if(d==='b'){put(5,hY+4,'hat','d');put(7,hY+4,'hat','d');put(4,hY+5,'hat','d');put(8,hY+5,'hat','d')}else if(sR){put(0,hY+3,'hat','d');put(-1,hY+4,'hat','d');put(-1,hY+5,'hat','d')}}
- // quepe de segurança (prêmio da noite 5 da Pizzaria do Pixel): copa azul-marinho, faixa preta, aba e distintivo dourado
- if(L.c==='quepe'){span(-2,3,9,'navy','l');span(-1,2,10,'navy','l');span(0,1,11,'navy');span(1,1,11,'navy');span(2,1,11,'navy','d');span(3,1,11,'vest');
-  if(d==='f'){span(4,1,11,'vest','d');put(6,hY-1,'gold','l');put(6,hY,'gold');put(5,hY,'gold','d');put(7,hY,'gold','d')}
-  else if(sR){span(4,6,14,'vest','d');put(10,hY,'gold');put(10,hY-1,'gold','l')}
-  else{span(3,3,9,'navy','d')}}
- if(L.c==='coroa'){for(let y=-1;y<=1;y++)span(y,3,9,'gold');span(1,3,9,'gold','d');[3,6,9].forEach(x=>{put(x,hY-2,'gold');put(x,hY-3,'gold','l')});[4,8].forEach(x=>put(x,hY-2,'gold'));
-  if(d!=='b'){put(sR?8:6,hY,'red');if(d==='f'){put(4,hY,'blue');put(8,hY,'blue')}}}
- if(L.c==='chifres'){const horn=(x0,k)=>{put(x0,hY+1,'red','d');put(x0,hY,'red');put(x0-k,hY-1,'red');put(x0-k,hY-2,'red','l');put(x0-2*k,hY-3,'red','l')};
-  if(sR)horn(8,-1);else{horn(3,1);horn(9,-1)}}
- // contorno em volta do que foi acrescentado (na cor escura do próprio material)
- const edge=[];added.forEach(k=>{const[x,y]=k.split(',').map(Number),c=at(x,y);if(!c||c.t==='O')return;
-  for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]])if(!at(x+dx,y+dy))edge.push([x+dx,y+dy,c.m])});
- edge.forEach(([x,y,m])=>{if(!at(x,y))set(x,y,{t:'O',m,p:'x',far:0})});
- return G}
-// ============ cores ============
-function palette(L){
- const skin=hex(SKIN[L.s]),hair=hex(HAIRC[L.hc]),eye=hex(EYEC[L.e]);
- const tone=(c,dk)=>({s:c,l:mix(c,WH,.35),d:mix(c,BK,.2),O:mix(c,BK,dk||.6)});
- const top=hex(CLOTH[L.tc]),top2=lum(top)>200?mix(top,BK,.25):mix(top,WH,.55);
- const P={skin:{s:skin,l:mix(skin,WH,.45),d:mix(skin,[150,70,40],.3),O:mix(skin,[45,14,4],.78)},hair:tone(hair,.55),buzz:tone(mix(hair,skin,.3),.5),shave:{s:mix(skin,hair,.28),l:mix(mix(skin,hair,.28),WH,.3),d:mix(skin,BK,.15),O:mix(skin,[45,14,4],.78)},
-  top:tone(top),top2:tone(top2),inner:tone([236,236,236],.55),pants:tone(hex(CLOTH[L.bc])),shoe:tone(hex(CLOTH[L.fc])),hat:tone(hex(CLOTH[L.cc])),
-  tie:tone([214,40,40]),white:tone([250,250,250],.45),gold:tone([255,200,40],.55),red:tone([210,35,35]),blue:tone([50,140,230])};
- P.tv={O:[23,20,27],K:[70,66,77],k:[103,98,111],D:[46,43,52],V:[28,25,33],W:[244,244,244],Y:[242,213,68],C:[111,219,232],G:[79,209,107],M:[224,90,180],R:[224,36,44],B:[74,63,224],N:[16,15,20],s:[70,66,77]};
- if(L.g==='tv')P.top={s:[246,246,248],l:WH,d:[214,214,222],O:[128,126,138]};
- P.vest=tone([38,33,42],.55);P.navy=tone([30,46,112],.6);P.btn=tone([96,92,102],.5);P.sole={s:[246,246,246],l:WH,d:[206,206,212],O:[110,108,116]};
- P.eye={I0:mix(eye,BK,.45),I1:eye,I2:mix(eye,WH,.25),W0:mix(eye,WH,.62),W1:mix(eye,WH,.84),W2:[255,255,255]};
- return P}
-const FLAT=['top','top2','inner','pants','shoe','hat','tie','white','gold','red','blue','vest','btn','navy'];
-function paint(G,P,out,W,ox,oy,mirror){
- for(let y=0;y<FH;y++)for(let x=0;x<FW;x++){const c=G[y][x];if(!c)continue;const M=P[c.m]||P.skin;let t=c.t;
-  if(FLAT.includes(c.m)&&t!=='O'){const nb=[[1,0],[-1,0],[0,1],[0,-1]].some(([a,b])=>{const n=G[y+b]&&G[y+b][x+a];return !n||n.t==='O'});t=t==='l'&&!nb?'s':nb&&t!=='l'?'d':t==='l'?'l':'s'}
-  let col=M[t]||M.s;if(c.sl)col=mix(col,WH,.35);if(c.far)col=mix(col,BK,.24);
-  const X=ox+(mirror?FW-1-x:x),i=((oy+y)*W+X)*4;out[i]=col[0];out[i+1]=col[1];out[i+2]=col[2];out[i+3]=255}}
-// skin TV: roupa fixa (camisa branca, colete, gravata, calça e tênis pretos)
-const eff=L=>L.g==='tv'?Object.assign({},L,{t:'longa',tc:8,b:'calca',bc:10,f:'sapato',fc:10,h:'careca',c:'nenhum'}):L;
-function frame(L,row,col){L=eff(L);const sp=spec(row,col);sp.col=col;const B=body(sp,L);B.sit=!!sp.sit;return dress(B,L)}
-// folha completa: 4 linhas (frente, costas, esquerda, direita) x NCOL quadros
-function build(look){const L=norm(look),P=palette(eff(L)),W=FW*NCOL,out=new Uint8ClampedArray(W*FH*4*4);
- for(let col=0;col<NCOL;col++){const F=frame(L,0,col);paint(F,P,out,W,col*FW,0,0);
-  const B=col>=12?F:frame(L,1,col);paint(B,P,out,W,col*FW,FH,0);
-  const S=col>=12?F:frame(L,3,col);paint(S,P,out,W,col*FW,FH*2,col<12);paint(S,P,out,W,col*FW,FH*3,0)}
- return out}
-// um quadro só (para as miniaturas da tela)
-function one(look,row,col){const L=norm(look),P=palette(eff(L)),out=new Uint8ClampedArray(FW*FH*4);const F=frame(L,row===2?3:row,col);paint(F,P,out,FW,0,0,row===2);return out}
-// ============ quadros de animação ============
+// ============ personagem: só os dois modelos (masculino e feminino) ============
+// Os desenhos (frente, costas e lado) vêm das imagens dos modelos novos, 46x76 pixels cada (o dobro da grade 23x38 das imagens).
+// O código só move as partes (cabeça, tronco, braços, pernas) para andar, respirar, piscar, olhar, sentar e dormir.
+const FW=23,FH=38,SC=2,HW=46,HH=76,PX=5,PY=9,NCOL=18;
+const SKIN=['#f6b888','#f6bd9b'],CLOTH=['#ffffff'];   // tom de pele de cada modelo (usado pelo braço em primeira pessoa)
+const STY={g:[['m','Masculino'],['f','Feminino']]};
+const DEF={g:'m'};
+function norm(o){const g=o&&o.g==='f'?'f':'m';return {g,s:g==='f'?1:0,t:'regata',tc:0}}
+const key=l=>norm(l).g;
+// vai junto com a posição do jogador (vira 1 letra do modelo + zeros: aparelhos antigos ainda entendem)
+const pack=l=>(norm(l).g==='f'?'1':'0')+'0000000000000';
+const unpack=s=>typeof s==='string'&&s.length>=1&&s.length<=40?norm({g:s[0]==='1'?'f':'m'}):null;
+const SP={"mfront":["..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..................OO..........................","................OO022211OOO...................","...............O25555555552O..................","..............O1556555555552O.................","..............O3555555555553O.................",".............OO55555555555551O................","..............154345555534343.................",".............O253643534566523.................","............OO044000555500053.O...............","...........O4403OOOO5555OOO3235O..............","...........O600OOOII5556IIOOO05O..............","...........O61OO0wII6556IIOOO16O..............","............O42O6wJJ6565JKK3O4OO..............",".............OOO5wJJ6456JJw6OO................","...............O555542255553O.................","................O3655655551O..................","..................OOOOOOOOO...................","..................O100000O....................","................2OO053340..3..................","...............O5OOO4440...5O.................",".............OO55OOfa00af.O65O................",".............OO50OffefefffO354O...............","............O345OfffffffffOO545...............","............O556OfffeeffffOO545O..............","............O550ObcbdddebcOO135...............","............06601ObeefffebO0135O..............","...........O2550OObfffefebOO025O..............","............4550OOcfffffebOO025O..............","............5510OOaaaaabaaOO026O..............","............5500OaeffffffeaO115O..............","...........O351OOcdffffffebOO113O.............","...........05400ObbfeefeebbO0054O.............","...........O451OOfdaffffcffOO164O.............","...........OO30OOffeaccacffOO230O.............","............OOOOcfffbaOaeffbOOO...............","...............OffffdOOdfffeOO................","...............ObbdebOOedfbcO.................","................dfcaa.ObbcfeO.................","...............O1210O..O1131O.................","...............O1210O..O0131O.................","...............O2550O..O0553..................","................3451O..O1543..................","...............04521O..O13540.................","..............O45444....05555O................","..............O65654....05565O................","..............O65543....05555O................","..............O5555O....O2556.................","..............O3523O....O0554.................","..............O2323O.....0332.................",".............O11411......01412O...............","..............25511O....O01553O...............","............O4545412O...3415556...............","............O5162451....3261624...............",".............OOOOOOO....OOOOOOO...............","..............................................","..............................................","..............................................",".............................................."],"mback":["..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................",".................OO...........................","...............OO434422OO.....................","..............O5555555554O....................",".............03555555555541...................",".............24555555555542...................","............O55555555555555OO.................","............2555555555555541..................","............2555555555555542O.................","...........O3555555555555550O.................",".........O1504555555555555404O................",".........O3422555555555555234O................",".........O2431555565555555055O................","..........OO50256555556555051O................","...........OOO256555555553OOO.................","..............O3555555552O....................","...............O223352200O....................",".................O00110O......................","...............O.O54444O.O....................","..............01..15551..2O...................","..............54...5550..51...................","............O5551.faaaef0553..................","............O5530fffffff1554O.................","...........O2542OfffffffO5554O................","...........O6510OfffffffO0155O................","...........O5521OcffffecO1155O................","..........O15200ObffffecO00353O...............","..........O251OOOaffeddaOO0253O...............","..........O551OOObfffefaOOO254O...............","..........O650OOOabaabbaOOO056................","..........O541OOafffffffaOO035................","..........251OOOcefffffebOOO261O..............","..........550O0OcefeeeedaO0O153...............","..........561OOafdcffffdeOOO065O..............","..........164OOaffcababfeOOO550O..............","...........OOOOcffbaaabffdaOOO................","..............aefffeOadfeeeO..................","..............OabfbdOaaaaaaO..................","..............OdfcbbOabcdcbO..................","..............O0420O..O1230...................","..............O0510O..O0240...................","..............O1550O..O3354...................","...............3540O..O3451...................",".............O05550O..O4555O..................",".............O2555OO..O45554O.................",".............O5565O...O66555O.................",".............O5553O...O35556O.................",".............O555OO....O5555O.................",".............O454O.....O4553..................",".............O253O.....O2352..................","............O0152O.....O13521.................","............O2555O.....O12550.................","..........O4545552O...O1225546................","..........O1451511O...O2125254................","...........OOOOOOO.....OOOOOOO................","..............................................","..............................................","..............................................",".............................................."],"mside":["..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................",".................O1221110OO...................","................15555555554O..................","..............O25555555565550O................","..............O25555555555552O................","..............045555555565555OO...............","..............2455555555552252O...............",".............O3455555555236446O...............",".............O34565455535OOO66O...............","..............12550000564OOO55................","..............02533560155OKI65O...............","...............5506011065wKI66O...............","................405104056wKJ65O...............","................O2O560556w6J66O...............",".................O1OO24555566O................","..................O.0O114444O.................","....................10OOOO.O..................","....................O0O1O.....................","...................00O43O.....................","..................O220OOO.....................","..................3555OOOO....................","..................1552Ofef....................",".................O5451OfeffO..................",".................O554OcefffO..................",".................O641OcccffO..................","................O152OObbdd....................","................O352Oacce.....................","................O552Obdde.....................","................O563OaaaaO....................","................O252OcefeO....................",".................051OfffeO....................",".................O312Ofed.....................","................O56544defO....................","................O2640OdfeO....................",".................OOOOcfecO....................","..................OOOffeaO....................","..................OOOdeca.....................","..................OO3aaa......................","..................O0232O......................","..................O0351O......................","..................O3353O......................","..................O3443O......................","..................15552O......................",".................O45550.......................",".................O65551.......................",".................O65541.......................",".................O4553O.......................",".................O0552O.......................","..................O552........................","..................O552OO......................","..................O25111OO....................",".................O01455555O...................",".................O01545441O...................","..................OOOOOOOO....................","..............................................","..............................................","..............................................",".............................................."],"ffront":["..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..................OOOOOOOO....................","..............OOOO55555555OOO.................","..............012255555555110.................","..............345556666666543.................",".............O556666666665555.................",".............O455566666666555O................",".............O344446655554544O................",".............O444445545555444O................","............OO344444555454444OO...............","............0344OOO05555OOOO533O..............","...........O55OOOOOO5555OOOOO55O..............","...........O32OOOOII5555IIOOO33O..............","...........O42OOOKIJ5555IIKOO34O..............","...........O041OOKJK5655JJKKO44O..............","............OOO3wKKK6656KJK63OO...............",".............OO075K56566KK74OO................","...............O435555555430O.................","................OO0021110OO...................","..................OOOOOOO.....................","................O.OO3322O.O...................","...............OO..555550OOO..................","..............O4400555540044O.................","..............O55024555300553O................","..............2530fffefef0355O................",".............O56OfffffffffO450................",".............O55OdfffefffeO451................","............O454OacbcdcbcbO355O...............","............O443OO1232220OO354O...............","............O551OO2553553OOO45O...............","............2541OO4562554OOO353...............","...........O553OOO35605540OO465O..............","...........O542ObcdaaaaaccaO345O..............","...........O542OeefffffffffO344O..............","...........554OafefffefffeeaO453..............","..........O555OefffffffefffcO655O.............","..........O505OdffeceedcfffcO504O.............","..........O261OaddfeaObeffbaO552O.............","............O.O455421O245552O.O...............","..............O566541O256653O.................","..............O55652O.O46653O.................","..............O56652O.O46653O.................","..............O56651O.O46662O.................","..............O45651O.O3665OO.................","..............O433OO..OO333O..................","..............O433OO...O433O..................","..............56660O...O5566O.................","..............5666OO...O5666O.................",".............O5663OO...O35664O................",".............O5663OO...O36664O................",".............O565OO.....O4565O................",".............O555O......O4554.................",".............O554O......O4553O................",".............O554O......O3553.................","............O4555O......O45554O...............","............O4555O......O45553O...............","...........O555655O....O2566651O..............","...........O556555O....O1554661O..............",".......................O....O.O...............","..............................................","..............................................",".............................................."],"fback":["..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..................OOOOOO......................","...............OO55555555O....................","...............11455555542O...................","..............O555666655550O..................","..............55656666665640..................",".............O55566666665552..................","............O044555565554544O.................","............O045556655665444O.................","............O044455555544444OO................","............204445555555454440................","..........O041O555555555550O55O...............","..........O020O555555555450O34O...............","..........O021O455555555450O34O...............","..........OO42O455555555440O50O...............","............OO33355555554420OO................","............OO0435555554342OO.................","..............O33334333322O...................","...............OO0021110OO....................",".................OO000OO......................","...............O..O333OO.O....................","...............O..5555503OO...................","..............O501555550154O..................",".............O55035545500553..................",".............4550feefeee0445O.................","............O555OfffffffdO560.................","............O552OfffffffcO46O.................","............O563OceffffdaO454O................","............O541OO211111OO355O................","............453OOO351440OO246O................","...........O453OOO551554OO135O................","...........1543OO25615530OO355O...............","...........2522ObdaaaaabcbO344O...............","...........1532OefffffffeeO345O...............","...........443OaefffffffeeaO450...............","..........O434OeffffffffffaO655O..............","..........O305OeffceeecffeaO424O..............","..........O463OadfeaOaefedaO562...............","...........OOOO55542O135442O.O................","..............O56542O045553O..................","..............O5653O.O45553O..................","..............O6653O.O46553O..................","..............O6653..O35553O..................","..............O5663O.O33562O..................","..............O334O...O3220O..................","..............O333O...O2230O..................","..............5565O...O4555O..................",".............O5665O...O5566O..................","............O46664O...O34666..................","............O46654O...O34665..................","............O5554O.....O3554O.................","............O5554O.....O3554..................","............O4454O.....O3444O.................","............O4554O.....O2544O.................","............35552O.....O45554O................","............25552O.....O45552.................","..........O155554OO...O4455552O...............","..........O254444OO...O4354562O...............","......................O.......................","..............................................","..............................................",".............................................."],"fside":["..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","....................O.OOO.....................",".................O4454555OO...................","................O0445454420O..................","................O45555555555O.................","................4555656666654.................","...............O5455655666655.................","...............23355545555555O................","..............O34344555665555O................","..............O33344445445554O................","..............O3434444550OOO5O................","..............O333O04455OOOO5O................","..............O342OOO3555OII5O................","..............O34O55OO555KII4O................","..............O33O52OO555KJJ5O................","...............O4O440O65wKJJ6O................","................OO01025557K16O................",".................0OO045455550O................","..................OO30445555O.................","....................22OOOOOO..................","....................442O......................","..................O2223O......................","..................O5415O......................",".................O556300O.....................",".................O555400eO....................",".................O566O0fffO...................",".................O454OddfeO...................",".................0553Oddcb....................","................O05420010.....................","................O455O0334O....................","................O555O3554O....................","................O565O3554O....................","................O455OO010.....................",".................O66OOffeO....................",".................O54OOfef.....................","................O3555OffeO....................","................O3554Ofec.....................","................O3555OcfbO....................",".................OOOO254O.....................","..................OO3455OO....................","...................04564O.....................","..................O05563O.....................","..................O05554O.....................","..................O05552O.....................","...................O454OO.....................","..................O0434O......................","..................O5643O......................","..................O5643O......................",".................O5565O.......................",".................O5564O.......................",".................O4354O.......................","..................3354O.......................","..................O353O.......................","..................O354O.......................","..................O4555OO.....................","..................O45433OO....................",".................O33344555O...................",".................O33334454O...................","..............................................","..............................................","..............................................",".............................................."]};
+const LB={"mfront":["..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..................HH..........................","................HHHHHHHHHHH...................","...............HHHHHHHHHHHHH..................","..............HHHHHHHHHHHHHHH.................","..............HHHHHHHHHHHHHHH.................",".............HHHHHHHHHHHHHHHHH................","..............HHHHHHHHHHHHHHH.................",".............HHHHHHHHHHHHHHHH.................","............HHHHHHHHHHHHHHHHH.H...............","...........HHHHHHHHHHHHHHHHHHHHH..............","...........HHHHHHHHHHHHHHHHHHHHH..............","...........HHHHHHHHHHHHHHHHHHHHH..............","............HHHHHHHHHHHHHHHHHHHH..............",".............HHHHHHHHHHHHHHHHH................","...............HHHHHHHHHHHHHH.................","................HHHHHHHHHHHH..................","..................HHHHHHHHH...................","..................HHHHHHHH....................","................HHHHHHHHH..H..................","...............HHHHHHHHH...HH.................",".............TTTHHHHHHHHH.HHHH................",".............TTTHHHHHHHHHHHHHHT...............","............TTTTTTTTTTTTTTTTTTT...............","............TTTTTTTTTTTTTTTTTTTT..............","............aaaaTTTTTTTTTTTTTTb...............","............aaaaTTTTTTTTTTTTTTbb..............","...........aaaaaaaTTTTTTTTTTbbbb..............","............aaaaaaTTTTTTTTTTbbbb..............","............aaaaaaTTTTTTTTTTbbbb..............","............aaaaaaTTTTTTTTTTbbbb..............","...........aaaaaaaTTTTTTTTTTbbbbb.............","...........aaaaaaaTTTTTTTTTTbbbbb.............","...........aaaaaaaTTTTTTTTTTbbbbb.............","...........aaaaaaaTTTTTTTTTTbbbbb.............","............aaaaaaTTTTTTTTTTbbb...............","...............aaaTTTTTTTTTTbb................","...............aaaTTTTTTTTTTb.................","................aaTTT.TTTTTTb.................","...............aTTTTT..TTTTTT.................","...............aTTTTT..TTTTTT.................","...............TTTTTT..TTTTT..................","................TTTTT..TTTTT..................","...............llllll..rrrrrr.................","..............llllll....rrrrrr................","..............llllll....rrrrrr................","..............llllll....rrrrrr................","..............llllll....rrrrr.................","..............llllll....rrrrr.................","..............llllll.....rrrr.................",".............llllll......rrrrrr...............","..............llllll....rrrrrrr...............","............lllllllll...rrrrrrr...............","............llllllll....rrrrrrr...............",".............lllllll....rrrrrrr...............","..............................................","..............................................","..............................................",".............................................."],"mback":["..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................",".................HH...........................","...............HHHHHHHHHH.....................","..............HHHHHHHHHHHH....................",".............HHHHHHHHHHHHHH...................",".............HHHHHHHHHHHHHH...................","............HHHHHHHHHHHHHHHHH.................","............HHHHHHHHHHHHHHHH..................","............HHHHHHHHHHHHHHHHH.................","...........HHHHHHHHHHHHHHHHHH.................",".........HHHHHHHHHHHHHHHHHHHHH................",".........HHHHHHHHHHHHHHHHHHHHH................",".........HHHHHHHHHHHHHHHHHHHHH................","..........HHHHHHHHHHHHHHHHHHHH................","...........HHHHHHHHHHHHHHHHHH.................","..............HHHHHHHHHHHH....................","...............HHHHHHHHHHH....................",".................HHHHHHH......................","...............H.HHHHHHH.H....................","..............HH..HHHHH..HH...................","..............HH...HHHH..HH...................","............TTTTH.HHHHHHHHHH..................","............TTTTHHHHHHHHHHHHH.................","...........TTTTTTTTTTTTTTTTTTT................","...........TTTTTTTTTTTTTTTTTTT................","...........aaaaaTTTTTTTTTTTTTT................","..........aaaaaaTTTTTTTTTTTTTTb...............","..........aaaaaaaaTTTTTTTTTTbbb...............","..........aaaaaaaaTTTTTTTTTTbbb...............","..........aaaaaaaaTTTTTTTTTTbb................","..........aaaaaaaaTTTTTTTTTTbb................","..........aaaaaaaaTTTTTTTTTTbbbb..............","..........aaaaaaaaTTTTTTTTTTbbb...............","..........aaaaaaaaTTTTTTTTTTbbbb..............","..........aaaaaaaaTTTTTTTTTTbbbb..............","...........aaaaaaaTTTTTTTTTTbb................","..............aaaaTTTTTTTTTT..................","..............aaaaTTTTTTTTTT..................","..............aaaaTTTTTTTTTT..................","..............aaTTTT..TTTTT...................","..............aaTTTT..TTTTT...................","..............TTTTTT..TTTTT...................","...............TTTTT..TTTTT...................",".............lllllll..lrrrrr..................",".............lllllll..lrrrrrr.................",".............llllll...lrrrrrr.................",".............llllll...lrrrrrr.................",".............llllll....rrrrrr.................",".............lllll.....rrrrr..................",".............lllll.....rrrrr..................","............llllll.....rrrrrr.................","............llllll.....rrrrrr.................","..........lllllllll...lrrrrrrr................","..........lllllllll...lrrrrrrr................","...........lllllll.....rrrrrrr................","..............................................","..............................................","..............................................",".............................................."],"mside":["..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................",".................HHHHHHHHHH...................","................HHHHHHHHHHHH..................","..............HHHHHHHHHHHHHHHH................","..............HHHHHHHHHHHHHHHH................","..............HHHHHHHHHHHHHHHHH...............","..............HHHHHHHHHHHHHHHHH...............",".............HHHHHHHHHHHHHHHHHH...............",".............HHHHHHHHHHHHHHHHHH...............","..............HHHHHHHHHHHHHHHH................","..............HHHHHHHHHHHHHHHHH...............","...............HHHHHHHHHHHHHHHH...............","................HHHHHHHHHHHHHHH...............","................HHHHHHHHHHHHHHH...............",".................HHHHHHHHHHHHH................","..................H.HHHHHHHHH.................","....................HHHHHH.H..................","....................HHHHH.....................","...................HHHHHH.....................","..................HHHHHHH.....................","..................HHHHHHHH....................","..................HHHHHHHH....................",".................TTTTTTTTTTT..................",".................TTTTTTTTTTT..................",".................AAAAAAATTTT..................","................AAAAAAAATT....................","................AAAAAAAAT.....................","................AAAAAAAAT.....................","................AAAAAAAATT....................","................AAAAAAAATT....................",".................AAAAAAATT....................",".................AAAAAAAT.....................","................AAAAAAAATT....................","................AAAAAAAATT....................",".................AAAAAAATT....................","..................AAAAAATT....................","..................AAAATTT.....................","..................AAAATT......................","..................TTTTTT......................","..................TTTTTT......................","..................TTTTTT......................","..................TTTTTT......................","..................NNNNNN......................",".................NNNNNN.......................",".................NNNNNN.......................",".................NNNNNN.......................",".................NNNNNN.......................",".................NNNNNN.......................","..................NNNN........................","..................NNNNNN......................","..................NNNNNNNN....................",".................NNNNNNNNNN...................",".................NNNNNNNNNN...................","..................NNNNNNNN....................","..............................................","..............................................","..............................................",".............................................."],"ffront":["..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..................HHHHHHHH....................","..............HHHHHHHHHHHHHHH.................","..............HHHHHHHHHHHHHHH.................","..............HHHHHHHHHHHHHHH.................",".............HHHHHHHHHHHHHHHH.................",".............HHHHHHHHHHHHHHHHH................",".............HHHHHHHHHHHHHHHHH................",".............HHHHHHHHHHHHHHHHH................","............HHHHHHHHHHHHHHHHHHH...............","............HHHHHHHHHHHHHHHHHHHH..............","...........HHHHHHHHHHHHHHHHHHHHH..............","...........HHHHHHHHHHHHHHHHHHHHH..............","...........HHHHHHHHHHHHHHHHHHHHH..............","...........HHHHHHHHHHHHHHHHHHHHH..............","............HHHHHHHHHHHHHHHHHHH...............",".............HHHHHHHHHHHHHHHHH................","...............HHHHHHHHHHHHHH.................","................HHHHHHHHHHH...................","..................HHHHHHH.....................","................H.HHHHHHH.H...................","...............HH..HHHHHHHHH..................","..............HHHHHHHHHHHHHHH.................","..............HHHHHHHHHHHHHHHH................","..............TTHHHHHHHHHHHHHH................",".............TTTHHHHHHHHHHHHHH................",".............TTTTTTTTTTTTTTTTT................","............TTTTTTTTTTTTTTTTTTT...............","............aaaaTTTTTTTTTTTTTTb...............","............aaaaTTTTTTTTTTTTTTb...............","............aaaaaaTTTTTTTTTTbbb...............","...........aaaaaaaTTTTTTTTTTbbbb..............","...........aaaaaaaTTTTTTTTTTbbbb..............","...........aaaaaaaTTTTTTTTTTbbbb..............","...........aaaaaaaTTTTTTTTTTbbbb..............","..........aaaaaaaaTTTTTTTTTTbbbbb.............","..........aaaaaaaaTTTTTTTTTTbbbbb.............","..........aaaaaaaaTTTTTTTTTTbbbbb.............","............a.aaaaTTTTTTTTTTb.b...............","..............aaaaTTTTTTTTTTb.................","..............aaaaTTT.TTTTTTb.................","..............aaaaTTT.TTTTTTb.................","..............aaTTTTT.TTTTTTT.................","..............aaTTTTT.TTTTTTT.................","..............TTTTTT..TTTTTT..................","..............TTTTTT...TTTTT..................","..............llllll...rrrrrr.................","..............llllll...rrrrrr.................",".............lllllll...rrrrrrr................",".............lllllll...rrrrrrr................",".............llllll.....rrrrrr................",".............lllll......rrrrr.................",".............lllll......rrrrrr................",".............lllll......rrrrr.................","............llllll......rrrrrrr...............","............llllll......rrrrrrr...............","...........llllllll....rrrrrrrrr..............","...........llllllll....rrrrrrrrr..............",".......................r....r.r...............","..............................................","..............................................",".............................................."],"fback":["..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..................HHHHHH......................","...............HHHHHHHHHHH....................","...............HHHHHHHHHHHH...................","..............HHHHHHHHHHHHHH..................","..............HHHHHHHHHHHHHH..................",".............HHHHHHHHHHHHHHH..................","............HHHHHHHHHHHHHHHHH.................","............HHHHHHHHHHHHHHHHH.................","............HHHHHHHHHHHHHHHHHH................","............HHHHHHHHHHHHHHHHHH................","..........HHHHHHHHHHHHHHHHHHHHH...............","..........HHHHHHHHHHHHHHHHHHHHH...............","..........HHHHHHHHHHHHHHHHHHHHH...............","..........HHHHHHHHHHHHHHHHHHHHH...............","............HHHHHHHHHHHHHHHHHH................","............HHHHHHHHHHHHHHHHH.................","..............HHHHHHHHHHHHH...................","...............HHHHHHHHHHH....................",".................HHHHHHH......................","...............H..HHHHHH.H....................","...............H..HHHHHHHHH...................","..............HHHHHHHHHHHHHH..................",".............HHHHHHHHHHHHHHH..................",".............TTTHHHHHHHHHHHHH.................","............TTTTHHHHHHHHHHHHH.................","............TTTTTTTTTTTTTTTTT.................","............TTTTTTTTTTTTTTTTTT................","............aaaaTTTTTTTTTTTTTT................","............aaaaTTTTTTTTTTTTTT................","...........aaaaaaaTTTTTTTTTTbb................","...........aaaaaaaTTTTTTTTTTbbb...............","...........aaaaaaaTTTTTTTTTTbbb...............","...........aaaaaaaTTTTTTTTTTbbb...............","...........aaaaaaaTTTTTTTTTTbbb...............","..........aaaaaaaaTTTTTTTTTTbbbb..............","..........aaaaaaaaTTTTTTTTTTbbbb..............","..........aaaaaaaaTTTTTTTTTTbbb...............","...........aaaaaaaTTTTTTTTTT.b................","..............aaaaTTTTTTTTTT..................","..............aaaaTT.TTTTTTT..................","..............aaaaTT.TTTTTTT..................","..............aaTTT..TTTTTTT..................","..............aaTTTT.TTTTTTT..................","..............TTTTT...TTTTTT..................","..............TTTTT...TTTTTT..................","..............lllll...lrrrrr..................",".............llllll...lrrrrr..................","............lllllll...lrrrrr..................","............lllllll...lrrrrr..................","............llllll.....rrrrrr.................","............llllll.....rrrrr..................","............llllll.....rrrrrr.................","............llllll.....rrrrrr.................","............llllll.....rrrrrrr................","............llllll.....rrrrrr.................","..........lllllllll...lrrrrrrrr...............","..........lllllllll...lrrrrrrrr...............","......................l.......................","..............................................","..............................................",".............................................."],"fside":["..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","..............................................","....................H.HHH.....................",".................HHHHHHHHHH...................","................HHHHHHHHHHHH..................","................HHHHHHHHHHHHH.................","................HHHHHHHHHHHHH.................","...............HHHHHHHHHHHHHH.................","...............HHHHHHHHHHHHHHH................","..............HHHHHHHHHHHHHHHH................","..............HHHHHHHHHHHHHHHH................","..............HHHHHHHHHHHHHHHH................","..............HHHHHHHHHHHHHHHH................","..............HHHHHHHHHHHHHHHH................","..............HHHHHHHHHHHHHHHH................","..............HHHHHHHHHHHHHHHH................","...............HHHHHHHHHHHHHHH................","................HHHHHHHHHHHHHH................",".................HHHHHHHHHHHHH................","..................HHHHHHHHHHH.................","....................HHHHHHHH..................","....................HHHH......................","..................HHHHHH......................","..................HHHHHH......................",".................HHHHHHHH.....................",".................HHHHHHHHH....................",".................HHHHHHHHHH...................",".................TTTTTTTTTT...................",".................TTTTTTTTT....................","................AAAAAAAAT.....................","................AAAAAAAATT....................","................AAAAAAAATT....................","................AAAAAAAATT....................","................AAAAAAAAT.....................",".................AAAAAAATT....................",".................AAAAAAAT.....................","................AAAAAAAATT....................","................AAAAAAAAT.....................","................AAAAAAAATT....................",".................AAAAAAAT.....................","..................AAAAAATT....................","...................AAATTT.....................","..................AAAATTT.....................","..................TTTTTTT.....................","..................TTTTTTT.....................","...................TTTTTT.....................","..................TTTTTT......................","..................NNNNNN......................","..................NNNNNN......................",".................NNNNNN.......................",".................NNNNNN.......................",".................NNNNNN.......................","..................NNNNN.......................","..................NNNNN.......................","..................NNNNN.......................","..................NNNNNNN.....................","..................NNNNNNNN....................",".................NNNNNNNNNN...................",".................NNNNNNNNNN...................","..............................................","..............................................","..............................................",".............................................."]};
+const DEL={"mfront":[[[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]],[[0,0.09,0,0.09],[0,1,0,1],[0,1,0,1],[0,1,0,1],[0,0,0,0],[0,0,0,0]],[[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]],[[0,0.09,0,0.09],[0,1,0,1],[0,1,0,1],[0,1,0,1],[0,0,0,0],[0,0,0,0]],[[0.22,-0.04,0.22,-0.04],[0,0,0,0],[0,-1,0,-1],[0,1,0,1],[0.03,0.52,0,1],[0.04,-0.53,0,-1]],[[0.22,0.96,0.22,0.96],[0,1,0,1],[0,0,0,0],[0,2,0,2],[0,1,0,1],[0.15,-0.61,0,-2]],[[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0.04,-0.53,0,-1]],[[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]],[[-0.22,-0.04,-0.22,-0.04],[0,0,0,0],[0,1,0,1],[0,-1,0,-1],[-0.04,-0.53,0,-1],[-0.03,0.52,0,1]],[[-0.22,0.96,-0.22,0.96],[0,1,0,1],[0,2,0,2],[0,0,0,0],[-0.15,-0.61,0,-2],[0,1,0,1]],[[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[-0.04,-0.53,0,-1],[0,0,0,0]],[[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]],"mback":[[[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]],[[0,0.09,0,0.09],[0,1,0,1],[0,1,0,1],[0,1,0,1],[0,0,0,0],[0,0,0,0]],[[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]],[[0,0.09,0,0.09],[0,1,0,1],[0,1,0,1],[0,1,0,1],[0,0,0,0],[0,0,0,0]],[[-0.22,-0.04,-0.22,-0.04],[0,0,0,0],[0,1,0,1],[0,-1,0,-1],[0.03,0.52,0,1],[0.04,-0.53,0,-1]],[[-0.22,0.96,-0.22,0.96],[0,1,0,1],[0,2,0,2],[0,0,0,0],[0,1,0,1],[0.15,-0.61,0,-2]],[[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0.04,-0.53,0,-1]],[[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]],[[0.22,-0.04,0.22,-0.04],[0,0,0,0],[0,-1,0,-1],[0,1,0,1],[-0.04,-0.53,0,-1],[-0.03,0.52,0,1]],[[0.22,0.96,0.22,0.96],[0,1,0,1],[0,0,0,0],[0,2,0,2],[-0.15,-0.61,0,-2],[0,1,0,1]],[[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[-0.04,-0.53,0,-1],[0,0,0,0]],[[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]],"mside":[[[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],null],[[0.05,0.87,0.05,0.87],[0,1,0,1],[0,0,0,0],[0,0,0,0],null],[[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],null],[[0.05,0.87,0.05,0.87],[0,1,0,1],[0,0,0,0],[0,0,0,0],null],[[-0.24,-0.01,-0.24,-0.01],[0,0,0,0],[-1.62,0,-2.6,0],[2.15,0,3,0],[-2.53,0.67,-3,0]],[[0.13,0.52,0.13,0.52],[0,1,0,1],[-0.54,1,-1,1],[1.27,0,2,0],[-2.44,1.04,-2.85,-0.06]],[[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[2.94,-0.33,2.85,-1.26]],[[-0.41,0,-0.41,0],[0,0,0,0],[0.54,0,1,0],[-1.27,0,-2,0],[3.2,0.8,3.31,-0.06]],[[-1.12,0.03,-1.12,0.03],[0,0,0,0],[1.62,0,2.6,0],[-2.15,0,-3,0],[2.73,0.67,3,0]],[[-0.36,0.47,-0.36,0.47],[0,1,0,1],[0.54,1,1,1],[0.9,-0.62,1,-1],[2.92,2.52,2.5,0.8]],[[0,0,0,0],[0,0,0,0],[0,0,0,0],[0.9,-0.62,1,-1],[-0.44,1.67,-0.48,0.57]],[[0.03,0,0.03,0],[0,0,0,0],[-0.54,0,-1,0],[1.27,0,2,0],[-2.44,1.04,-2.85,-0.06]]],"ffront":[[[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]],[[0,0.09,0,0.09],[0,1,0,1],[0,1,0,1],[0,1,0,1],[0,0,0,0],[0,0,0,0]],[[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]],[[0,0.09,0,0.09],[0,1,0,1],[0,1,0,1],[0,1,0,1],[0,0,0,0],[0,0,0,0]],[[0.22,-0.04,0.22,-0.04],[0,0,0,0],[0,-1,0,-1],[0,1,0,1],[0.03,0.52,0,1],[0.04,-0.53,0,-1]],[[0.22,0.96,0.22,0.96],[0,1,0,1],[0,0,0,0],[0,2,0,2],[0,1,0,1],[0.15,-0.61,0,-2]],[[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0.04,-0.53,0,-1]],[[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]],[[-0.22,-0.04,-0.22,-0.04],[0,0,0,0],[0,1,0,1],[0,-1,0,-1],[-0.04,-0.53,0,-1],[-0.03,0.52,0,1]],[[-0.22,0.96,-0.22,0.96],[0,1,0,1],[0,2,0,2],[0,0,0,0],[-0.15,-0.61,0,-2],[0,1,0,1]],[[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[-0.04,-0.53,0,-1],[0,0,0,0]],[[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]],"fback":[[[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]],[[0,0.09,0,0.09],[0,1,0,1],[0,1,0,1],[0,1,0,1],[0,0,0,0],[0,0,0,0]],[[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]],[[0,0.09,0,0.09],[0,1,0,1],[0,1,0,1],[0,1,0,1],[0,0,0,0],[0,0,0,0]],[[-0.22,-0.04,-0.22,-0.04],[0,0,0,0],[0,1,0,1],[0,-1,0,-1],[0.03,0.52,0,1],[0.04,-0.53,0,-1]],[[-0.22,0.96,-0.22,0.96],[0,1,0,1],[0,2,0,2],[0,0,0,0],[0,1,0,1],[0.15,-0.61,0,-2]],[[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0.04,-0.53,0,-1]],[[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]],[[0.22,-0.04,0.22,-0.04],[0,0,0,0],[0,-1,0,-1],[0,1,0,1],[-0.04,-0.53,0,-1],[-0.03,0.52,0,1]],[[0.22,0.96,0.22,0.96],[0,1,0,1],[0,0,0,0],[0,2,0,2],[-0.15,-0.61,0,-2],[0,1,0,1]],[[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[-0.04,-0.53,0,-1],[0,0,0,0]],[[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]],"fside":[[[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],null],[[0.1,0.57,0.1,0.57],[0,1,0,1],[0,0,0,0],[0,0,0,0],null],[[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],null],[[0.1,0.57,0.1,0.57],[0,1,0,1],[0,0,0,0],[0,0,0,0],null],[[-0.26,0,-0.26,0],[0,0,0,0],[-1.62,0,-2.6,0],[2.15,0,3,0],[-2.53,0.67,-3,0]],[[0.1,0.71,0.1,0.71],[0,1,0,1],[-0.54,1,-1,1],[1.27,0,2,0],[-2.44,1.04,-2.85,-0.06]],[[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[2.94,-0.33,2.85,-1.26]],[[-0.25,0,-0.25,0],[0,0,0,0],[0.54,0,1,0],[-1.27,0,-2,0],[3.2,0.8,3.31,-0.06]],[[-0.74,0,-0.74,0],[0,0,0,0],[1.62,0,2.6,0],[-2.15,0,-3,0],[2.73,0.67,3,0]],[[-0.12,0.68,-0.12,0.68],[0,1,0,1],[0.54,1,1,1],[0.9,-0.62,1,-1],[2.92,2.52,2.5,0.8]],[[0,0,0,0],[0,0,0,0],[0,0,0,0],[0.9,-0.62,1,-1],[-0.44,1.67,-0.48,0.57]],[[-0.03,0.01,-0.03,0.01],[0,0,0,0],[-0.54,0,-1,0],[1.27,0,2,0],[-2.44,1.04,-2.85,-0.06]]]};
+const PAL={"m":{"O":[32,9,11],"I":[2,34,119],"w":[249,251,250],"J":[7,161,252],"K":[167,204,251],"f":[222,229,240],"a":[163,158,167],"e":[209,217,230],"b":[175,174,184],"c":[186,186,196],"d":[199,201,212],"0":[202,116,76],"2":[234,145,100],"1":[226,131,86],"5":[252,189,147],"6":[252,197,154],"3":[241,159,112],"4":[246,176,134]},"f":{"O":[44,16,18],"I":[4,82,156],"K":[174,192,228],"J":[3,140,226],"w":[244,240,239],"f":[237,243,252],"e":[218,224,238],"d":[200,205,219],"a":[142,140,145],"c":[184,190,205],"b":[168,170,182],"5":[250,195,160],"0":[160,124,103],"1":[196,144,120],"2":[218,155,124],"3":[235,167,130],"4":[242,180,146],"6":[252,203,170],"7":[248,220,204]}};
+const mix=(a,b,t)=>a.map((v,i)=>Math.round(v+(b[i]-v)*t)),BK=[0,0,0];
+const HSP={},HLB={},HEYE={};
+const spr=(g,v)=>HSP[g+v]||(HSP[g+v]=SP[g+v].map(r=>r.split('')));
+const lbl=(g,v)=>HLB[g+v]||(HLB[g+v]=LB[g+v].map(r=>r.split('')));
+// olhos: piscar (linha escura) e olhar de lado (a íris desliza)
+function heye(s0,state,k0){if(state==='open')return s0;const key=k0+state;if(HEYE[key])return HEYE[key];
+ const R=s0.map(r=>r.slice()),E='IJKw',seen=new Set();
+ for(let y=0;y<40;y++)for(let x=0;x<HW;x++){if(!E.includes(R[y][x])||seen.has(x+','+y))continue;
+  const cl=[],q=[[x,y]];seen.add(x+','+y);
+  while(q.length){const[a,b]=q.pop();cl.push([a,b]);for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const u=a+dx,w=b+dy;if(u<0||w<0||u>=HW||w>=HH||seen.has(u+','+w)||!E.includes(R[w][u]))continue;seen.add(u+','+w);q.push([u,w])}}
+  if(cl.length<3)continue;
+  if(state==='closed'){const yb=Math.max(...cl.map(c=>c[1]));cl.forEach(([a,b])=>{R[b][a]=b===yb?'O':'3'})}
+  else{const dir=state==='lookL'?-1:1,rows={};cl.forEach(([a,b])=>(rows[b]=rows[b]||[]).push(a));
+   for(const b in rows){const xs=rows[b].sort((p,q2)=>p-q2),x0=xs[0],x1=xs[xs.length-1],ir=xs.filter(a=>'IJK'.includes(s0[b][a]));if(!ir.length)continue;
+    const nx=ir.map(a=>Math.max(x0,Math.min(x1,a+dir)));ir.forEach(a=>{R[b][a]='w'});ir.forEach((a,i)=>{R[b][nx[i]]=s0[b][a]})}}}
+ return HEYE[key]=R}
 // colunas da folha: 0-1 parado (respira) · 2-3 piscando · 4-11 andando · 12-13 olhando para os lados · 14-15 sentado · 16-17 dormindo
-const NCOL=18;
-const WALKF=[ // frente/costas: perna esquerda, perna direita, braço esq, braço dir, balanço
- ['fwd','up1',-1,1,0],['fwd','up2',-1,1,1],['stand','up1',0,0,0],['stand','stand',0,0,0],
- ['up1','fwd',1,-1,0],['up2','fwd',1,-1,1],['up1','stand',0,0,0],['stand','stand',0,0,0]];
-const WALKS=[ // lado: perna perto, perna longe, braço perto, braço longe, balanço
- ['FWD','BACK',-2,2,0],['FW1','BK1',-1,1,1],['STR','PASS',0,0,0],['BK1','FWD',1,-1,0],
- ['BACK','FWD',2,-2,0],['PASS','FW1',1,-1,1],['PASS','STR',0,0,0],['FW1','BK1',-1,1,0]];
-function spec(row,col){const d=row===0?'f':row===1?'b':'s';
- if(col<=3){const ex=col&1;return {d,by:0,hy:ex,aL:ex,aR:ex,eyes:col>=2?'closed':'open',an:0,af:0,ln:'STR',lf:'STR'}}
- if(col<=11){const k=col-4;if(d==='s'){const w=WALKS[k];return {d,by:w[4],ln:w[0],lf:w[1],an:w[2],af:w[3]}}
-  const w=WALKF[k];return {d,by:w[4],lL:w[0],lR:w[1],aL:d==='b'?w[3]:w[2],aR:d==='b'?w[2]:w[3]}}
- if(col<=13)return {d:'f',eyes:col===12?'lookL':'lookR',hy:0};
- const sl=col>=16,ex=col&1;return {d:'f',sit:1,hy:(sl?1:0)+ex,aL:ex,aR:ex,eyes:sl?'closed':'open'}}
-// visual em 13 letras (vai junto com a posição do jogador, então todo mundo recebe)
-const PK=[['g','g'],['s',null],['h','h'],['hc',null],['e',null],['t','t'],['tc',null],['b','b'],['bc',null],['f','f'],['fc',null],['c','c'],['cc',null]];
-function pack(look){const L=norm(look);return PK.map(([k,cat])=>{const v=cat?STY[cat].findIndex(a=>a[0]===L[k]):L[k];return Math.max(0,v).toString(36)}).join('')}
-function unpack(str){const o={};if(typeof str!=='string'||str.length!==PK.length)return null;
- PK.forEach(([k,cat],i)=>{const v=parseInt(str[i],36);if(isNaN(v))return;if(cat){const it=STY[cat][v];if(it)o[k]=it[0]}else o[k]=v});return norm(o)}
-return {pack,unpack,FW,FH,PX,PY,NCOL,SKIN,HAIRC,EYEC,CLOTH,HAIR,STY,DEF,norm,hex,mix,body,spec,frame,build,one,key:l=>JSON.stringify(norm(l))};
+function eyesOf(col){return col<=1?'open':col<=3?'closed':col<=11?'open':col===12?'lookL':col===13?'lookR':col>=16?'closed':'open'}
+// monta um quadro do corpo: {c:[HH][HW] letras do desenho, f: pixel de membro mais longe (escurecido)}
+function hbody(g,view,col){
+ const sit=col>=14,v=sit?'front':view,sp=heye(spr(g,v),eyesOf(col),g+v),lb=lbl(g,v);
+ const out=[],far=[];for(let y=0;y<HH;y++){out.push(new Array(HW).fill('.'));far.push(new Array(HW).fill(0))}
+ const put=(x,y,ch,fr)=>{if(x>=0&&y>=0&&x<HW&&y<HH){out[y][x]=ch;far[y][x]=fr?1:0}};
+ const ext={};for(let y=0;y<HH;y++)for(let x=0;x<HW;x++){const n=lb[y][x];if(n==='.')continue;const e=ext[n]||(ext[n]={y0:999,y1:-1});e.y0=Math.min(e.y0,y);e.y1=Math.max(e.y1,y)}
+ const soft=col<=3||(col>=12&&col<=13);
+ const tb=DEL[g+v][sit?0:Math.min(col,11)]||[],sc=a=>a?[Math.round(a[0]*SC*(soft?.5:1)),Math.round(a[1]*SC*(soft?.5:1)),Math.round(a[2]*SC*(soft?.5:1)),Math.round(a[3]*SC*(soft?.5:1))]:[0,0,0,0];
+ const order=v==='side'?['T','H','A','N','n']:['T','H','a','b','l','r'];   // n = perna de longe (cópia da perna de perto)
+ const D={};(v==='side'?['T','H','A','N','n']:['T','H','a','b','l','r']).forEach((k,i)=>D[k]=sc(tb[i]));
+ let dT=[D.T[0],D.T[1]],dH=[D.H[0],D.H[1]];
+ // peça rígida (cabeça, tronco)
+ const solid=(n,d2)=>{for(let y=0;y<HH;y++)for(let x=0;x<HW;x++){if(lb[y][x]!==n||sp[y][x]==='.')continue;put(x+d2[0],y+d2[1],sp[y][x],0)}};
+ // membro: do ombro/quadril (acompanha o tronco) até a ponta (mão/pé), com cisalhamento
+ const limb=(n,src,dE,fr)=>{const e=ext[src];if(!e)return;const h=Math.max(1,e.y1-e.y0);
+  for(let y=Math.max(0,e.y0-14);y<Math.min(HH,e.y1+14);y++){const t=Math.max(0,Math.min(1,(y-e.y0)/h));
+   const dx=dT[0]+(dE[0]-dT[0])*t,dy=dT[1]+(dE[1]-dT[1])*t;
+   for(let x=0;x<HW;x++){const sx=Math.round(x-dx),sy=Math.round(y-dy);if(sx<0||sy<0||sx>=HW||sy>=HH||lb[sy][sx]!==src||sp[sy][sx]==='.')continue;put(x,y,sp[sy][sx],fr)}}};
+ if(sit){ // sentado: tira o meio das pernas (ficam curtas, com os pés para fora) e o resto do corpo desce
+  const ex=col&1,sl=col>=16?1:0,l=ext.l,r=ext.r;if(!l||!r){return {c:out,f:far}}
+  const y0=Math.min(l.y0,r.y0),y1=Math.max(l.y1,r.y1),K1=3,K2=7,n=K1+K2,top=y1-n+1,SD=Math.max(0,top-y0);
+  for(const[ch,sh]of[['l',-2],['r',2]])for(let i=0;i<n;i++){const sy=i<K1?y0+i:y1-(n-1-i);for(let x=0;x<HW;x++)if(lb[sy][x]===ch&&sp[sy][x]!=='.')put(x+sh,top+i,sp[sy][x],0)}
+  dT=[0,SD];dH=[0,SD+sl+ex];const ea=[0,SD+ex];
+  solid('T',dT);limb('a','a',ea);limb('b','b',ea);solid('H',dH)}
+ else if(v==='side'){
+  if(ext.N){const nf=D.n[0]||D.n[1]||D.n[2]||D.n[3]?D.n:D.N;limb('n','N',[nf[2],nf[3]],1);limb('N','N',[D.N[2],D.N[3]],0)}
+  solid('T',dT);if(ext.A)limb('A','A',[D.A[2],D.A[3]],0);solid('H',dH)}
+ else{limb('l','l',[D.l[2],D.l[3]],0);limb('r','r',[D.r[2],D.r[3]],0);solid('T',dT);limb('a','a',[D.a[2],D.a[3]],0);limb('b','b',[D.b[2],D.b[3]],0);solid('H',dH)}
+ // buracos no tronco (onde um braço/mão cobria o corpo no desenho e depois saiu do lugar): preenche com a cor vizinha
+ const eT=ext.T;if(eT){const sil=(x,y)=>x>=0&&y>=0&&x<HW&&y<HH&&sp[y][x]!=='.',ty0=eT.y0+dT[1],ty1=eT.y1+dT[1];
+  for(let y=Math.max(0,ty0);y<=Math.min(HH-1,ty1);y++)for(let x=0;x<HW;x++){if(out[y][x]!=='.'||!sil(x-dT[0],y-dT[1]))continue;
+   let ch=null;for(let k=1;k<=6&&!ch;k++)for(const sgn of[-1,1]){const u=x+sgn*k;if(u>=0&&u<HW&&out[y][u]!=='.'&&out[y][u]!=='O'){ch=out[y][u];break}}
+   if(ch)out[y][x]=ch}}
+ return {c:out,f:far}}
+function paint(g,view,col,out,W,ox,oy,mirror){const B=hbody(g,view,col),P=PAL[g];
+ for(let y=0;y<HH;y++)for(let x=0;x<HW;x++){const ch=B.c[y][x];if(ch==='.')continue;let c=P[ch];if(!c)continue;if(B.f[y][x])c=mix(c,BK,.24);
+  const X=ox+(mirror?HW-1-x:x),i=((oy+y)*W+X)*4;out[i]=c[0];out[i+1]=c[1];out[i+2]=c[2];out[i+3]=255}}
+// folha completa: 4 linhas (frente, costas, esquerda, direita) x NCOL quadros, cada quadro HW x HH
+function build(look){const g=norm(look).g,W=HW*NCOL,out=new Uint8ClampedArray(W*HH*4*4);
+ for(let col=0;col<NCOL;col++){const f=col>=12;
+  paint(g,'front',col,out,W,col*HW,0,0);
+  paint(g,f?'front':'back',col,out,W,col*HW,HH,0);
+  paint(g,f?'front':'side',col,out,W,col*HW,HH*2,!f);
+  paint(g,f?'front':'side',col,out,W,col*HW,HH*3,0)}
+ return out}
+return {pack,unpack,FW,FH,SC,HW,HH,PX,PY,NCOL,SKIN,CLOTH,STY,DEF,norm,key,build}
 })();
-// ---- estado do visual, animações no mapa, sincronização e tela de criação ----
+// ---- estado do personagem, animações no mapa, sincronização e tela de escolha ----
 (function(){
 const D=document,E=LKE,$=id=>D.getElementById(id),MP=window.MP;
 const LSg=k=>{try{return localStorage.getItem(k)}catch(e){return null}},LSs=(k,v)=>{try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(e){}};
-// visual salvo junto com o progresso (vai para a nuvem com o resto do save)
+// o personagem escolhido (masculino ou feminino) é salvo junto com o progresso (vai para a nuvem com o resto do save)
 let sv0={};try{sv0=JSON.parse(LSg('mp')||'{}')||{}}catch(e){}
 // O visual tem hora (t) e DUAS cópias no aparelho: dentro do save ('mp') e à parte ('mp_look'). Vale sempre a mais nova.
-// Assim um save da nuvem atrasado (a nuvem só aceita 1 gravação a cada 3 s) não desfaz a roupa que a pessoa acabou de salvar.
+// Assim um save da nuvem atrasado (a nuvem só aceita 1 gravação a cada 3 s) não desfaz a escolha que a pessoa acabou de salvar.
 let ml=null;try{ml=JSON.parse(LSg('mp_look')||'null')}catch(e){}
 const svT=+sv0.lookT||(sv0.look?1:0),useML=!!(ml&&typeof ml==='object'&&ml.look&&+ml.t>svT);
-const ownOf=a=>Array.isArray(a)?a.filter(s=>typeof s==='string').slice(0,200):[];
-const X={cur:E.norm(useML?ml.look:sv0.look),own:ownOf(useML?ml.own:sv0.lookOwn),t:useML?+ml.t:svT,remote:{},subs:{},tall:10};
+const X={cur:E.norm(useML?ml.look:sv0.look),own:[],t:useML?+ml.t:svT,remote:{},subs:{},tall:10};
 const keep=()=>LSs('mp_look',JSON.stringify({look:X.cur,own:X.own,t:X.t}));   // cópia à parte (não passa pelo save da nuvem)
 const stamp=()=>{X.t=Math.max(X.t+1,Date.now()+((MP&&+MP.off)||0))};
 window.LOOKX=X;
 {const _xs=window.XS;window.XS=()=>Object.assign(_xs?_xs():{},{look:X.cur,lookOwn:X.own,lookT:X.t})}
-// itens de loja: ficam com cadeado até a pessoa ganhar/comprar (X.give)
-const item=(cat,id)=>E.STY[cat].find(a=>a[0]===id),locked=(cat,id)=>{const it=item(cat,id);return !!(it&&it[2]&&it[2].loja&&!X.own.includes(cat+':'+id))};
-X.give=(cat,id)=>{if(!item(cat,id))return false;const k=cat+':'+id;if(!X.own.includes(k))X.own.push(k);stamp();keep();try{save()}catch(e){}return true};
-X.has=(cat,id)=>!locked(cat,id);
-// ---- folhas de sprite prontas (cache) ----
+// não há mais roupas, chapéus nem acessórios: só os dois modelos
+X.give=()=>false;X.has=()=>false;
+// ---- folhas de sprite prontas (cache): cada quadro tem o dobro de pixels da grade 23x38, então é desenhado na metade do tamanho ----
 const cache=new Map(),DEFL=E.norm({});
 function sheet(look){const k=E.key(look);let c=cache.get(k);if(c)return c;
- try{const px=E.build(look),W=E.FW*E.NCOL,H=E.FH*4;c=D.createElement('canvas');c.width=W;c.height=H;c.getContext('2d').putImageData(new ImageData(px,W,H),0,0);
-  // centro da arte (coluna PX+6) alinhado ao centro do boneco antigo (x+8); sola (linha PY+27) na mesma altura de antes
-  c.fw=E.FW;c.fh=E.FH;c.px=E.PX+6-8;c.py=E.PY+27-17;c.tv=E.norm(look).g==='tv'}catch(e){return null}
- if(cache.size>60)cache.delete(cache.keys().next().value);cache.set(k,c);return c}
+ try{const px=E.build(look),W=E.HW*E.NCOL,H=E.HH*4;c=D.createElement('canvas');c.width=W;c.height=H;c.getContext('2d').putImageData(new ImageData(px,W,H),0,0);
+  // pés centralizados no mesmo ponto do boneco antigo (x+8) e sola na mesma altura de antes
+  c.fw=E.HW;c.fh=E.HH;c.sc=E.SC;c.px=E.PX+6-8;c.py=E.PY+27-17}catch(e){return null}
+ cache.set(k,c);return c}
 X.sheet=sheet;
-// quem está sendo desenhado agora: null = eu; objeto = outro jogador online (sem visual ainda = visual padrão)
-// skin TV: só a conta JPi437 (ADM) usa; em qualquer outra conta aparece o boneco padrão
-const isAdm=()=>{try{return !!(window.ADM&&ADM.isAdm&&ADM.isAdm())}catch(e){return false}};
-const canTV=who=>who?!!(who.__id&&window.ADMUID&&who.__id===window.ADMUID):isAdm();
-X.img=who=>{let lk=who?(who.lk||DEFL):X.cur;if(lk.g==='tv'&&!canTV(who))lk=Object.assign({},lk,{g:'m'});return sheet(lk)};
+// quem está sendo desenhado agora: null = eu; objeto = outro jogador online (sem visual ainda = masculino)
+X.img=who=>sheet(who?(who.lk||DEFL):X.cur);
 // ---- animação de cada boneco: andar, respirar, piscar, olhar em volta (1 min) e dormir sentado (5 min) ----
 const ROWD={2:0,0:1,1:2,3:3};
 const stOf=who=>who?(who.__lk||(who.__lk={seed:Math.random()*4000|0})):(X.me||(X.me={seed:Math.random()*4000|0}));
@@ -4759,26 +4391,10 @@ function zz(g,x,y,n){const px=[];for(let k=0;k<n;k++){px.push([x+k,y]);px.push([
  g.fillStyle='#fff';px.forEach(([a,b])=>g.fillRect(a,b,1,1))}
 function zzz(g,x,y,t){for(let i=0;i<3;i++){const p=(t/2400+i/3)%1,n=3+Math.floor(p*3.5),a=p<.12?p/.12:p>.7?1-(p-.7)/.3:1;
   g.globalAlpha=Math.max(0,Math.min(1,a));zz(g,Math.round(x+p*11+Math.sin(p*9)*1.5),Math.round(y-p*20)-n,n)}g.globalAlpha=1}
-// ---- efeito de glitch da skin TV: de vez em quando a imagem treme, separa as cores e corta em faixas ----
-function tinted(c,col){c.__t=c.__t||{};if(c.__t[col])return c.__t[col];const t=D.createElement('canvas');t.width=c.width;t.height=c.height;const x=t.getContext('2d');
- x.drawImage(c,0,0);x.globalCompositeOperation='source-atop';x.fillStyle=col;x.fillRect(0,0,t.width,t.height);return c.__t[col]=t}
-const hr=(n,s)=>{const v=Math.sin(n*12.9898+s*78.233)*43758.5453;return v-Math.floor(v)};
-function glitchOn(now,S){if(!S.gn)S.gn=now+1200+Math.random()*2500;
- if(now>=S.gn){S.gu=now+140+Math.random()*300;S.gn=S.gu+(Math.random()<.25?250:2000+Math.random()*4500)}
- return S.gu>now}
-function glitchPaint(g,LI,sx,sy,dx,dy,now,S){const fw=LI.fw,fh=LI.fh,k=Math.floor(now/45),sd=(S.seed||1)%997;
- const o=1+Math.floor(hr(k,sd)*2);g.globalAlpha=.6;
- g.drawImage(tinted(LI,'#ff2a6d'),sx,sy,fw,fh,dx+o,dy,fw,fh);g.drawImage(tinted(LI,'#21e6ff'),sx,sy,fw,fh,dx-o,dy+(hr(k,sd+2)<.3?1:0),fw,fh);g.globalAlpha=1;
- let y=0;while(y<fh){const hh=Math.min(fh-y,2+Math.floor(hr(k+y,sd+3)*6)),off=hr(k*3+y,sd)<.45?Math.round((hr(k+y*7,sd+9)-.5)*7):0;
-  g.drawImage(LI,sx,sy+y,fw,hh,dx+off,dy+y,fw,hh);y+=hh}
- for(let i=0;i<4;i++){if(hr(k+i*11,sd)<.45)continue;const ly=6+Math.floor(hr(k*5+i,sd)*(fh-8)),lx=3+Math.floor(hr(k+i,sd+5)*9),lw=3+Math.floor(hr(k+i*3,sd)*9);
-  g.globalAlpha=.85;g.fillStyle=['#ffffff','#21e6ff','#ff2a6d','#111'][Math.floor(hr(k+i*2,sd)*4)];g.fillRect(dx+lx,dy+ly,lw,1)}g.globalAlpha=1}
-X.draw=function(g,who,x,fy){const LI=X.img(who);if(!LI)return false;const s=X.pose(who),now=Date.now();let c=s.c;
- const dx=x-LI.px,dy=fy-2-LI.py;
- if(LI.tv&&!s.z){const S=stOf(who);if(glitchOn(now,S)){if(c<=1)c+=2;glitchPaint(g,LI,c*LI.fw,s.r*LI.fh,dx,dy,now,S)}else g.drawImage(LI,c*LI.fw,s.r*LI.fh,LI.fw,LI.fh,dx,dy,LI.fw,LI.fh)}
- else g.drawImage(LI,c*LI.fw,s.r*LI.fh,LI.fw,LI.fh,dx,dy,LI.fw,LI.fh);
+X.draw=function(g,who,x,fy){const LI=X.img(who);if(!LI)return false;const s=X.pose(who);
+ g.drawImage(LI,s.c*LI.fw,s.r*LI.fh,LI.fw,LI.fh,x-LI.px,fy-2-LI.py,LI.fw/LI.sc,LI.fh/LI.sc);
  if(s.z)zzz(g,x+12,fy-7,Date.now()+stOf(who).seed);return true};
-// ---- online: publico o meu visual e leio o dos outros (nó looks/<uid>) ----
+// ---- online: publico o meu personagem e leio o dos outros (nó looks/<uid>) ----
 let pubLast='';
 X.code=()=>E.pack(X.cur);
 X.pub=force=>{if(!MP||!MP.uid||MP.offline||!MP.db)return;const s=JSON.stringify(Object.assign(E.norm(X.cur),{lt:X.t}));if(!force&&s===pubLast)return;pubLast=s;MP.db.ref('looks/'+MP.uid).set(s).catch(()=>{pubLast=''})};
@@ -4788,118 +4404,74 @@ setInterval(()=>{if(!MP||!MP.db)return;const ids=MP.others||{};
  for(const id in X.subs)if(!ids[id]){const s=X.subs[id];try{s.ref.off('value',s.cb)}catch(e){}delete X.subs[id];delete X.remote[id]}
  for(const id in ids){const r=ids[id];if(!r)continue;r.__id=id;if(!r.lk&&X.remote[id])r.lk=X.remote[id]}
  X.pub(false)},2000);
-// chamado depois que o save da nuvem foi conferido: se a conta acabou de ser criada, abre a criação
-// Antes de publicar o meu visual, confiro o que a nuvem tem: se lá estiver um mais novo (salvo em outro aparelho, ou
+// chamado depois que o save da nuvem foi conferido: se a conta acabou de ser criada, abre a escolha do personagem
+// Antes de publicar, confiro o que a nuvem tem: se lá estiver um mais novo (salvo em outro aparelho, ou
 // o save da nuvem chegou atrasado), eu uso o da nuvem em vez de apagá-lo.
 X.ready=async uid=>{const nk=String(MP.nick||'').toLowerCase(),nw=!!(nk&&LSg('look_new')===nk);
  if(!nw&&MP&&MP.db&&uid){try{const v=(await MP.db.ref('looks/'+uid).once('value')).val();
   if(uid===MP.uid&&typeof v==='string'&&v.length<400){const o=JSON.parse(v);if(o&&+o.lt>X.t){X.cur=E.norm(o);X.t=+o.lt;keep();try{save()}catch(e){}}}}catch(e){}}
  X.pub(true);if(nw&&$('lkM').style.display!=='flex')open(true)};
 
-// =================== TELA DE CRIAÇÃO ===================
+// =================== TELA DE ESCOLHA DO PERSONAGEM ===================
 const css=D.createElement('style');css.textContent=`
 #lkM{z-index:38;background:radial-gradient(ellipse at 30% 40%,#2b3a6e 0,#141629 75%)}
-#lkBox{max-width:780px;width:100%;max-height:96vh;padding:8px 10px;display:flex;flex-direction:column;gap:6px;text-align:left}
+#lkBox{max-width:620px;width:100%;max-height:96vh;padding:8px 10px;display:flex;flex-direction:column;gap:6px;text-align:left}
 #lkHead{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}#lkHead b{color:#ffd23f;font-size:17px}#lkNick{font-size:12px;opacity:.75}
-#lkMain{display:flex;gap:10px;min-height:0;flex:1}
+#lkMain{display:flex;gap:14px;min-height:0;flex:1;align-items:flex-start}
 #lkLeft{display:flex;flex-direction:column;align-items:center;gap:6px;flex:0 0 auto}
 #lkStage{width:132px;height:160px;border:3px solid #fff;border-radius:10px;background:#4f8a3c;background-image:linear-gradient(45deg,#58963f 25%,transparent 25%,transparent 75%,#58963f 75%),linear-gradient(45deg,#58963f 25%,transparent 25%,transparent 75%,#58963f 75%);background-size:24px 24px;background-position:0 0,12px 12px;position:relative;overflow:hidden;touch-action:none}
 #lkCv{position:absolute;z-index:1;left:20px;top:4px;width:92px;height:152px;image-rendering:pixelated}
 #lkStage:after{content:'';position:absolute;left:44px;bottom:6px;width:44px;height:9px;border-radius:50%;background:#0004}
 #lkMode{position:absolute;z-index:2;left:4px;top:4px;font-size:10px;background:#0008;border-radius:6px;padding:1px 5px;color:#fff}
 .lkSm{padding:6px 10px;font-size:15px;min-width:40px}
-#lkRight{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px;overflow:auto}
-#lkTabs{display:flex;gap:4px;overflow-x:auto;padding-bottom:2px;flex:0 0 auto}
-.lkTab{flex:0 0 auto;background:#1a1c2c;border:2px solid #555b80;border-radius:8px;color:#fff;font:inherit;font-size:10px;padding:4px 6px;min-width:52px;text-align:center;line-height:1.15}
-.lkTab i{display:block;font-style:normal;font-size:18px}
-.lkTab.on{border-color:#ffd23f;background:#3b3f63;color:#ffd23f}
-.lkLbl{font-size:11px;opacity:.7;margin-top:2px}
-#lkSty{display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:5px}
-.lkIt{position:relative;background:#111;border:2px solid #444;border-radius:8px;padding:3px 2px 2px;text-align:center;font-size:9px;color:#ddd;font-family:inherit;cursor:pointer}
-.lkIt canvas{display:block;margin:0 auto 1px;image-rendering:pixelated;width:58px;height:51px}
+#lkRight{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.lkLbl{font-size:12px;opacity:.75}
+#lkSty{display:flex;gap:10px}
+.lkIt{position:relative;background:#111;border:3px solid #444;border-radius:10px;padding:6px 8px 4px;text-align:center;font-size:12px;color:#ddd;font-family:inherit;cursor:pointer}
+.lkIt canvas{display:block;margin:0 auto 3px;image-rendering:pixelated;width:68px;height:120px}
 .lkIt.on{border-color:#ffd23f;color:#ffd23f;background:#2a2410}
-.lkIt.lk canvas{opacity:.45}.lkIt .lkLock{position:absolute;top:2px;right:3px;font-size:11px}
-.lkIt .lkShop{display:block;color:#ffb74d;font-size:8px}
-.lkSep{grid-column:1/-1;font-size:10px;opacity:.6;margin-top:2px}
-#lkCol{display:flex;flex-wrap:wrap;gap:6px;padding:3px}
-.lkC{width:30px;height:30px;border-radius:50%;border:3px solid #fff3;padding:0;cursor:pointer}
-.lkC.on{border-color:#ffd23f;box-shadow:0 0 0 2px #000,0 0 8px #ffd23f}
 #lkFoot{display:flex;gap:8px;justify-content:flex-end;align-items:center}
 #lkFoot .btn{padding:8px 14px}#lkOk{background:#2e7d32}
 #lkTip{font-size:10px;opacity:.6;margin-right:auto}
-@media (max-height:420px){#lkStage{width:112px;height:128px}#lkCv{left:21px;top:5px;width:69px;height:114px}#lkStage:after{left:36px;bottom:5px;width:40px}.lkIt canvas{width:42px;height:36px}.lkC{width:26px;height:26px}}`;
+@media (max-height:420px){#lkStage{width:112px;height:128px}#lkCv{left:21px;top:5px;width:69px;height:114px}#lkStage:after{left:36px;bottom:5px;width:40px}.lkIt canvas{width:34px;height:60px}}`;
 D.head.appendChild(css);
 const M=D.createElement('div');M.className='modal';M.id='lkM';
 M.innerHTML=`<div class="box" id="lkBox"><div id="lkHead"><b id="lkTitle"></b><span id="lkNick"></span></div>
-<div id="lkMain"><div id="lkLeft"><div id="lkStage"><span id="lkMode"></span><canvas id="lkCv" width="${E.FW}" height="${E.FH}"></canvas></div>
-<div style="display:flex;gap:4px"><button class="btn lkSm" id="lkRotL" aria-label="Girar">⟲</button><button class="btn lkSm" id="lkRnd" style="background:#8e44ad" aria-label="Aleatório">Sortear</button><button class="btn lkSm" id="lkRotR" aria-label="Girar">⟳</button></div></div>
-<div id="lkRight"><div id="lkTabs"></div><div class="lkLbl" id="lkL1">Estilo</div><div id="lkSty"></div><div class="lkLbl" id="lkL2">Cor</div><div id="lkCol"></div></div></div>
-<div id="lkFoot"><span id="lkTip">Mais roupas e chapéus chegam na loja</span><button class="btn" id="lkCancel" style="background:#555">Cancelar</button><button class="btn" id="lkOk"></button></div></div>`;
+<div id="lkMain"><div id="lkLeft"><div id="lkStage"><span id="lkMode"></span><canvas id="lkCv" width="${E.HW}" height="${E.HH}"></canvas></div>
+<div style="display:flex;gap:4px"><button class="btn lkSm" id="lkRotL" aria-label="Girar">⟲</button><button class="btn lkSm" id="lkRotR" aria-label="Girar">⟳</button></div></div>
+<div id="lkRight"><div class="lkLbl">Escolha seu personagem</div><div id="lkSty"></div></div></div>
+<div id="lkFoot"><span id="lkTip">Toque no boneco para ver: parado, andando e dormindo</span><button class="btn" id="lkCancel" style="background:#555">Cancelar</button><button class="btn" id="lkOk"></button></div></div>`;
 D.body.appendChild(M);
-const TABS=[['s','','Corpo','g','s'],['h','','Cabelo','h','hc'],['e','','Olhos',null,'e'],['t','','Camisa','t','tc'],['b','','Calça','b','bc'],['f','','Sapatos','f','fc'],['c','','Chapéu','c','cc']];
-const PALS={s:E.SKIN,hc:E.HAIRC,e:E.EYEC,tc:E.CLOTH,bc:E.CLOTH,fc:E.CLOTH,cc:E.CLOTH};
-let L=null,tab='s',isNew=false,dirI=0,raf=0,t0=0;
+let L=null,isNew=false,dirI=0,raf=0,t0=0;
 const DIRS=[0,2,1,3]; // frente, esquerda, costas, direita (linhas da folha)
-// miniaturas: um quadro só, recortado (cabeça para cabelo/chapéu, corpo para roupas, busto para o modelo)
-const CROP={head:[1,4,21,17],body:[3,18,17,20],torso:[3,7,17,24]};
-const tmp=D.createElement('canvas');tmp.width=E.FW;tmp.height=E.FH;const tctx=tmp.getContext('2d');
-function mini(cv,look,crop){const x=cv.getContext('2d');x.imageSmoothingEnabled=false;x.clearRect(0,0,cv.width,cv.height);
- try{tctx.putImageData(new ImageData(E.one(look,0,0),E.FW,E.FH),0,0)}catch(e){return}
- const[a,b,w,h]=crop,k=Math.max(1,Math.floor(Math.min(cv.width/w,cv.height/h))),dw=w*k,dh=h*k;x.drawImage(tmp,a,b,w,h,Math.round((cv.width-dw)/2),Math.round((cv.height-dh)/2),dw,dh)}
-const GEN=id=>{const h=E.HAIR.find(a=>a[0]===id);return h?h[2]:'u'};
 function render(){
- if(L.g==='tv')tab='s';const T=TABS.find(t=>t[0]===tab);
- const tabs=L.g==='tv'?TABS.filter(t=>t[0]==='s'):TABS;if(!tabs.some(t=>t[0]===tab))tab='s';
- $('lkTabs').innerHTML=tabs.map(t=>`<button class="lkTab${t[0]===tab?' on':''}" data-t="${t[0]}">${t[2]}</button>`).join('');
- $('lkTabs').querySelectorAll('.lkTab').forEach(b=>b.onclick=()=>{tab=b.dataset.t;render()});
- const sc=T[3],st=$('lkSty');
- $('lkL1').style.display=st.style.display=sc?'':'none';$('lkL1').textContent=sc==='g'?'Modelo':'Estilo';
- if(sc){const crop=sc==='g'?CROP.torso:['h','c'].includes(sc)?CROP.head:CROP.body;
-  const tile=a=>{const lk=locked(sc,a[0]);return `<button class="lkIt${L[sc]===a[0]?' on':''}${lk?' lk':''}" data-v="${a[0]}"><canvas width="96" height="84"></canvas>${a[1]}${lk?'<span class="lkLock">'+GI.svg('lock')+'</span><span class="lkShop">'+(a[2]&&a[2].premio?a[2].premio:'na loja')+'</span>':''}</button>`};
-  if(sc==='h'){// cabelos: primeiro os do modelo escolhido, depois os outros
-   const mine=E.STY.h.filter(a=>{const g=GEN(a[0]);return g==='u'||g===L.g}),other=E.STY.h.filter(a=>!mine.includes(a));
-   st.innerHTML=mine.map(tile).join('')+`<div class="lkSep">Mais estilos</div>`+other.map(tile).join('')}
-  else st.innerHTML=E.STY[sc].filter(a=>!(a[2]&&a[2].adm)||isAdm()).map(tile).join('')+(sc==='g'&&L.g==='tv'?'<div class="lkSep">Skin exclusiva do ADM: cabeça de TV, camisa, colete, gravata e tênis já vêm prontos. Só você pode usar.</div>':'');
-  st.querySelectorAll('.lkIt').forEach(b=>{const v=b.dataset.v;mini(b.querySelector('canvas'),Object.assign({},L,{[sc]:v}),crop);
-   b.onclick=()=>{if(locked(sc,v)){const it=item(sc,v);toast(it[2]&&it[2].premio?it[1]+': vença a noite 5 da Pizzaria do Pixel (menu) para ganhar!':it[1]+' vai estar na loja em breve!');return}
-    if(sc==='g'&&v!==L.g&&v!=='tv'){const g=GEN(L.h);if(g!=='u'&&g!==v)L.h=v==='f'?'longo':'curto'}
-    L[sc]=v;t0=Date.now();render()}})}
- // cor: some quando não faz sentido (careca, descalço, sem chapéu ou item de cor fixa)
- const ck=T[4],it=sc?item(sc,L[sc]):null,noCol=(sc==='h'&&L.h==='careca')||(sc==='f'&&L.f==='descalco')||(sc==='c'&&(L.c==='nenhum'||(it&&it[2]&&it[2].cor===0)));
- $('lkL2').textContent=tab==='s'?(L.g==='tv'?'Cor das mãos':'Tom de pele'):tab==='e'?'Cor dos olhos':'Cor';
- $('lkL2').style.display=$('lkCol').style.display=noCol?'none':'';
- $('lkCol').innerHTML=PALS[ck].map((c,i)=>`<button class="lkC${L[ck]===i?' on':''}" data-i="${i}" style="background:${c}" aria-label="Cor ${i+1}"></button>`).join('');
- $('lkCol').querySelectorAll('.lkC').forEach(b=>b.onclick=()=>{L[ck]=+b.dataset.i;t0=Date.now();render()})}
-// prévia: fica parado (respira e pisca) e depois anda, sem parar
-function anim(){if(M.style.display!=='flex'){raf=0;return}const s=sheet(L),cv=$('lkCv'),x=cv.getContext('2d');x.imageSmoothingEnabled=false;x.clearRect(0,0,E.FW,E.FH);
- const now=Date.now(),ph=Math.floor((now-t0)/3400)%2;let c;
- if(ph===1)c=4+Math.floor(now/110)%8;else c=((now%2900)<130?2:0)+Math.floor(now/650)%2;
- const m=ph===1?'andando':'parado';if($('lkMode').textContent!==m)$('lkMode').textContent=m;
- if(s){if(s.tv&&glitchOn(now,PV)){if(c<=1)c+=2;glitchPaint(x,s,c*E.FW,DIRS[dirI]*E.FH,0,0,now,PV)}else x.drawImage(s,c*E.FW,DIRS[dirI]*E.FH,E.FW,E.FH,0,0,E.FW,E.FH)}raf=requestAnimationFrame(anim)}
-const PV={seed:7};
-function rnd(){const pick=a=>a[Math.floor(Math.random()*a.length)],free=c=>E.STY[c].filter(a=>!locked(c,a[0])).map(a=>a[0]),g=L&&L.g||'m';
- const hs=free('h').filter(h=>{const k=GEN(h);return k==='u'||k===g||g==='tv'});
- L={g,s:Math.floor(Math.random()*E.SKIN.length),h:pick(hs),hc:Math.floor(Math.random()*E.HAIRC.length),e:Math.floor(Math.random()*E.EYEC.length),
-  t:pick(free('t')),tc:Math.floor(Math.random()*E.CLOTH.length),b:pick(free('b')),bc:Math.floor(Math.random()*E.CLOTH.length),f:pick(free('f')),fc:Math.floor(Math.random()*E.CLOTH.length),
-  c:Math.random()<.45?'nenhum':pick(free('c')),cc:Math.floor(Math.random()*E.CLOTH.length)};t0=Date.now();render()}
-function open(nw){isNew=!!nw;L=E.norm(X.cur);if(L.g==='tv'&&!isAdm())L.g='m';tab='s';dirI=0;t0=Date.now();
- $('lkTitle').textContent=isNew?'Crie seu personagem':'Meu visual';
+ $('lkSty').innerHTML=E.STY.g.map(a=>`<button class="lkIt${L.g===a[0]?' on':''}" data-v="${a[0]}"><canvas width="34" height="60"></canvas>${a[1]}</button>`).join('');
+ $('lkSty').querySelectorAll('.lkIt').forEach(b=>{const v=b.dataset.v,cv=b.querySelector('canvas'),s=sheet({g:v});
+  if(s){const x=cv.getContext('2d');x.imageSmoothingEnabled=false;x.drawImage(s,6,16,34,60,0,0,34,60)}
+  b.onclick=()=>{L=E.norm({g:v});t0=Date.now();render()}})}
+// prévia: fica parado (respira e pisca), depois anda e depois dorme, sem parar
+const MODES=['parado','andando','dormindo'];
+function anim(){if(M.style.display!=='flex'){raf=0;return}const s=sheet(L),cv=$('lkCv'),x=cv.getContext('2d');x.imageSmoothingEnabled=false;x.clearRect(0,0,E.HW,E.HH);
+ const now=Date.now(),ph=Math.floor((now-t0)/3400)%3;let c,row=DIRS[dirI];
+ if(ph===1)c=4+Math.floor(now/110)%8;else if(ph===2){c=16+Math.floor(now/1100)%2;row=0}else c=((now%2900)<130?2:0)+Math.floor(now/650)%2;
+ const m=MODES[ph];if($('lkMode').textContent!==m)$('lkMode').textContent=m;
+ if(s)x.drawImage(s,c*E.HW,row*E.HH,E.HW,E.HH,0,0,E.HW,E.HH);
+ raf=requestAnimationFrame(anim)}
+function open(nw){isNew=!!nw;L=E.norm(X.cur);dirI=0;t0=Date.now();
+ $('lkTitle').textContent=isNew?'Escolha seu personagem':'Meu personagem';
  $('lkNick').textContent=MP&&MP.nick&&!MP.offline?(isNew?'Bem-vindo(a), '+MP.nick+'! Escolha como você quer ser no AllStar.':MP.nick):'';
  $('lkCancel').style.display=isNew?'none':'';$('lkOk').textContent=isNew?'Começar a aventura':'Salvar';
  M.style.display='flex';try{lock=true;jr()}catch(e){}
  render();if(!raf)raf=requestAnimationFrame(anim)}
 function close(){M.style.display='none';try{lock=false}catch(e){}}
 X.open=()=>open(false);
-$('lkRotL').onclick=()=>{dirI=(dirI+3)%4};$('lkRotR').onclick=()=>{dirI=(dirI+1)%4};$('lkRnd').onclick=rnd;
-// arrastar o boneco para girar; tocar alterna entre parado e andando
+$('lkRotL').onclick=()=>{dirI=(dirI+3)%4};$('lkRotR').onclick=()=>{dirI=(dirI+1)%4};
+// arrastar o boneco para girar; tocar muda entre parado, andando e dormindo
 {let sx=null;const st=$('lkStage');st.addEventListener('pointerdown',e=>{sx=e.clientX});st.addEventListener('pointerup',e=>{if(sx==null)return;const d=e.clientX-sx;sx=null;if(Math.abs(d)>18)dirI=(dirI+(d>0?3:1))%4;else t0-=3400})}
 $('lkCancel').onclick=close;
 $('lkOk').onclick=()=>{X.cur=E.norm(L);stamp();keep();if(isNew)LSs('look_new',null);try{save()}catch(e){}try{MP&&MP.saveNow&&MP.saveNow()}catch(e){}X.pub(true);close();
- if(X.me)X.me.idle=Date.now();if(isNew&&typeof toast==='function')toast('Visual pronto! Boa aventura!')};
+ if(X.me)X.me.idle=Date.now();if(isNew&&typeof toast==='function')toast('Personagem pronto! Boa aventura!')};
 M.addEventListener('keydown',e=>e.stopPropagation());
-// botão para trocar o visual depois (fica junto da conta, no chat)
-{const ab=null;if(ab){const b=D.createElement('button');b.className='btn';b.id='lkBtn';b.textContent='Visual';b.style.cssText='padding:4px 10px;font-size:12px;background:#8e44ad;margin-left:auto;margin-right:6px';
- ab.parentNode.insertBefore(b,ab);b.onclick=()=>{$('chM').style.display='none';lock=false;open(false)}}}
 })();
 </script>
 <script>
@@ -5199,7 +4771,7 @@ const M=D.createElement('div');M.className='modal';M.id='cfgM';
 const ROWS=[['g','Geral'],['mu','Música'],['fx','Efeitos'],['sk','Habilidades']];
 M.innerHTML=`<div class="box"><button class="btn xb" id="cfgX">✕</button><h2>Configurações</h2>
 ${ROWS.map(([k,l])=>`<div class="vRow"><span class="lb">${l}</span><input type="range" min="0" max="100" step="1" id="vol_${k}"><span class="pc" id="vp_${k}"></span></div>`).join('')}
-<button class="btn" id="cfgLook" style="display:block;width:100%;margin:2px 0 10px;background:#8e44ad;font-weight:900">🎨 Customizar personagem</button>
+<button class="btn" id="cfgLook" style="display:block;width:100%;margin:2px 0 10px;background:#8e44ad;font-weight:900">🧍 Trocar personagem</button>
 <div class="vBtns"><button class="btn" id="vTest" style="background:#6a1b9a">Testar habilidade</button><button class="btn" id="vMus" style="background:#37474f"></button></div>
 <div style="font-size:11px;opacity:.6;text-align:center;margin-top:8px">"Habilidades" controla os sons dos especiais de todos os lutadores. "Efeitos" controla roleta, moedas, golpes e menus.</div></div>`;
 D.body.appendChild(M);
@@ -16678,7 +16250,7 @@ function poutTick(dt){const p=S.pout;
 function jump(who){if(S.mode!=='play')return;S.mode='jump';S.jw=who;S.jt=0;S.cam=false;loopSet(false,false,false);musicStop();if(!(who==='sapo'&&smp('fjs',1)))SND.scream();try{navigator.vibrate&&navigator.vibrate([300,80,300])}catch(e){}}
 function winNight(){S.mode='win';S.wt=0;loopSet(false,false,false);musicStop();SND.chime();
  const p=prog();if(S.night>=p.u&&S.night<5)p.u=S.night+1;p.w=max(p.w,S.night);progSet(p);
- if(S.night===5){S.reward=true;try{if(window.LOOKX&&LOOKX.give('c','quepe'))toastS('Você ganhou o Quepe de segurança! Use em Visual → Chapéu.')}catch(e){}}}
+ if(S.night===5){S.reward=true;}}
 
 // ============================================================ desenho ============================================================
 let NZ=null;
@@ -16763,8 +16335,6 @@ function drawMenu(t){R('#05030a',0,0,W,H);staticFx(.06);
    'PC: A/D portas · Q/E luzes · Espaço câmeras.'];
   L.forEach((s,i)=>txt(s,40,64+i*15,i===3?'#ff8a7a':'#fff',7));btn(150,198,100,16,'Voltar');return}
  btn(130,62,140,20,'Continuar · Noite '+p.u);btn(130,88,140,20,'Nova partida');btn(130,114,140,20,'Como jogar');btn(130,140,140,20,'Sair','#aaa');
- const has=window.LOOKX&&LOOKX.has&&LOOKX.has('c','quepe');
- txt(has?'✓ Quepe de segurança conquistado':'Vença a noite 5 para ganhar o Quepe de segurança',W/2,170,has?'#7fff8f':'#ccc',7,'center');
  if(p.w)txt('Melhor: noite '+p.w+' vencida',W/2,182,'#aaa',7,'center')}
 function drawIntro(t){R('#000',0,0,W,H);const a=min(1,max(0,S.introT-250)/300),b=S.introT>2400?1-(S.introT-2400)/500:1;X.globalAlpha=max(0,a*b);
  t2('12:00 AM',W/2,86,'#fff',16,'center');t2(S.night===6?'6ª Noite':'Noite '+S.night,W/2,110,'#fff',12,'center');X.globalAlpha=1}
@@ -16777,7 +16347,6 @@ function drawOver(t){R('#000',0,0,W,H);staticFx(.35);txt('FIM DE JOGO',W/2,60,'#
 function drawWin(t){R('#000',0,0,W,H);const el=S.wt;const k=min(1,el/2500);
  txt((k<1?'5:59':'6:00')+' AM',W/2,80,'#fff',22,'center');
  if(el>2500){txt('Você sobreviveu à noite '+S.night+'!',W/2,112,'#ffd23f',10,'center');
-  if(S.reward)txt('PRÊMIO: Quepe de segurança (Visual → Chapéu)',W/2,130,'#7fff8f',8,'center');
   UI=[];if(S.night<5)btn(140,150,120,20,'Próxima noite');btn(140,176,120,20,'Menu','#aaa')}}
 function drawPause(){R('rgba(0,0,0,.7)',0,0,W,H);txt('PAUSA',W/2,60,'#fff',16,'center');UI=[];btn(140,90,120,20,'Continuar');btn(140,116,120,20,'Desistir da noite','#aaa')}
 
@@ -17243,7 +16812,7 @@ function menuOverlay(t){R('#000',0,0,W,H);
  for(const[l,y,sz]of it){t2(l,44,y,'#fff',sz,'left');X.font='bold '+sz+'px '+F;UI.push({x:40,y:y-2,w:X.measureText(l).width+12,h:sz+6,label:l});if(S.msel===l)t2('>>',18,y,'#fff',sz,'left')}
  t2('Noite '+p.u,46,115,'#fff',8,'left');
  for(const[l,x]of[['Como jogar',18],['Sair',96]]){t2(l,x,205,'#bbb',8,'left');X.font='bold 8px '+F;UI.push({x:x-3,y:201,w:X.measureText(l).width+6,h:16,label:l})}
- const has=window.LOOKX&&LOOKX.has&&LOOKX.has('c','quepe');t2(has?'✓ Quepe de segurança':'Vença a noite 5: Quepe de segurança',18,188,has?'#7fff8f':'#999',6.5,'left','s')}
+}
 
 // ============================================================ laço ============================================================
 function frame(now){if(!open_)return;raf=requestAnimationFrame(frame);
@@ -17346,8 +16915,8 @@ EM.innerHTML=`<div class="box"><button class="btn xb" id="evX">✕</button><h2>E
 <div class="evN">Novos eventos aparecem aqui.</div></div>`;
 D.body.appendChild(EM);
 try{if(typeof MBG!=='undefined')$('evPz').style.backgroundImage='url('+MBG.src+')';$('evPz').style.backgroundPosition='right center'}catch(e){}
-function evOpen(){const p=prog(),has=window.LOOKX&&LOOKX.has&&LOOKX.has('c','quepe');
- $('evTags').innerHTML=`<span>Noite ${p.u}</span>${p.w>=5?'<span>6th Night liberada</span>':''}<span class="${has?'ok':''}">${has?'✓ Quepe de segurança':'Prêmio: Quepe de segurança'}</span>`;
+function evOpen(){const p=prog();
+ $('evTags').innerHTML=`<span>Noite ${p.u}</span>${p.w>=5?'<span>6th Night liberada</span>':''}`;
  EM.style.display='flex';try{lock=true;jr()}catch(e){}}
 function evClose(){EM.style.display='none';try{lock=false}catch(e){}}
 $('evX').onclick=evClose;$('evGo').onclick=()=>{evClose();setTimeout(openG,60)};
@@ -17391,7 +16960,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261024171641;
+const GAME_BUILD=20261024175008;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
