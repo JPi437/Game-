@@ -16425,7 +16425,7 @@ function sample(a,time,Q,P){const A=ANIM[a];let u=(A.loop?time%A.d:min(time,A.d)
   Q[k*4]=x*l;Q[k*4+1]=y*l;Q[k*4+2]=z*l;Q[k*4+3]=w*l}
  const p=A.pel,j0=i0*3,j1=j0+3;for(let c=0;c<3;c++)P[c]=p[j0+c]+(p[j1+c]-p[j0+c])*f}
 // ---------- estado de cada personagem ----------
-function state(q,A){let s=q._hero;if(!s){s=q._hero={yaw:A.yaw,cur:'Idle_Loop',t:0,prev:null,tp:0,bl:1,bd:.16,mv:0,x:A.x,z:A.z,last:performance.now(),spd:0,air:false,landT:0,airT:0};}return s}
+function state(q,A){let s=q._hero;if(!s){s=q._hero={yaw:A.yaw,cur:'Idle_Loop',t:0,prev:null,tp:0,bl:1,bd:.16,mv:0,x:A.x,z:A.z,last:performance.now(),spd:0,air:false,landT:0,airT:0,vx:0,vz:0};}return s}
 function pick(s,want,bd){if(s.cur!==want){s.prev=s.cur;s.tp=s.t;s.cur=want;s.t=0;s.bl=0;s.bd=bd||.16}}
 // ---------- WebGL ----------
 const HP='#ifdef GL_FRAGMENT_PRECISION_HIGH\nprecision highp float;\n#else\nprecision mediump float;\n#endif\n';
@@ -16462,10 +16462,15 @@ HERO3.on=()=>{const gl=ensure();return !!(gl&&G.ok&&G.tex&&!HERO3.fail)};
 const W=new Float32Array(NN*16),LM=new Float32Array(16),MD=(()=>{const v=[.28,.7,-.6],l=hypot(v[0],v[1],v[2]);return new Float32Array([v[0]/l,v[1]/l,v[2]/l])})();
 const BM=new Float32Array(NB*16),TMP=new Float32Array(16),MODEL=new Float32Array(16),QQ=new Float32Array(NN*4),TT=new Float32Array(3),LT=[1,1,1],TV=[0,0,0];
 function place(A,s,dt){
- // direção: gira devagar até a direção que o jogo pede
- s.yaw+=clp(angd(s.yaw,A.yaw),-dt*13,dt*13);
- // andando? (o quadro 2D marca A.mv; a velocidade vem da posição real)
- const d=hypot(A.x-s.x,A.z-s.z);s.x=A.x;s.z=A.z;const v=dt>0?d/dt:0;s.spd+=(min(v,200)-s.spd)*min(1,dt*10);
+ // velocidade e direção reais (pela posição): o jogador anda para onde o joystick manda, não só para onde a câmera olha
+ const dx=A.x-s.x,dz=A.z-s.z,d=hypot(dx,dz);s.x=A.x;s.z=A.z;const v=dt>0?d/dt:0;s.spd+=(min(v,200)-s.spd)*min(1,dt*10);
+ if(d>40){s.vx=s.vz=0}else if(dt>0){const k=min(1,dt*12);s.vx+=(dx/dt-s.vx)*k;s.vz+=(dz/dt-s.vz)*k}
+ // direção do corpo: andando de lado ou de costas (em relação à câmera) o personagem vira para onde está indo; parado fica virado para onde parou;
+ // lutando ou socando, olha para onde a câmera olha (é para lá que o jogo mira)
+ let tg=A.yaw;
+ if(A.k==='P'){const JS0=H3.S||{},fgt=(typeof fight!=='undefined'&&fight)||(JS0.punchT&&Date.now()-JS0.punchT<600);
+  if(hypot(s.vx,s.vz)>16&&!fgt){tg=Math.atan2(s.vx,s.vz);s.face=tg}else if(fgt||s.face===undefined){tg=A.yaw;s.face=tg}else tg=s.face}
+ s.yaw+=clp(angd(s.yaw,tg),-dt*16,dt*16);
  const mv=A.mv>.5||s.spd>14;
  // pulo (só o jogador pula; H3.S.jv = velocidade vertical, A.jh = altura): subindo → Jump_Start, no ar/caindo → Jump_Loop, chegando no chão → Jump_Land
  const air=A.k==='P'&&(A.jh||0)>.05,JS=H3.S||{};
@@ -17556,7 +17561,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261024201452;
+const GAME_BUILD=20261024203437;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
