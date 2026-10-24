@@ -10751,9 +10751,9 @@ function prep(m){const q=m.q;if(!q||q.x===undefined)return null;
 function capture(a,A,idx){const q=A.q,dk=A.dk,col=idx%COLS,row=(idx/COLS)|0,cx=col*CW,cy=row*CH;
  const big=(q.vh||0)>70;A.big=big;   // personagens altos (Drácula): usa a célula inteira (96x96), mais para cima, senão a cabeça sai cortada
  ATX.save();ATX.setTransform(CS,0,0,CS,0,0);ATX.beginPath();ATX.rect(cx,cy,CW,CH);ATX.clip();ATX.clearRect(cx,cy,CW,CH);
- const sg=g,scx=cam.x,scy=cam.y,od=q[dk];g=ATX;q[dk]=A.dir;
+ const sg=g,scx=cam.x,scy=cam.y,od=q[dk];g=ATX;q[dk]=A.dir;const kd=A.k.charAt(0),fe0=kd==='F'?fight:kd==='R'?q.rfe:null,sF=fight,sR=q.rfe,sgE=q.gE,shE=q.hE;if(fe0&&!fe0.dead){let ex=SC.fx,ez=SC.fz;try{const tg=SC.tgt&&SC.tgt(fe0);if(tg){ex=tg[0];ez=tg[2]}}catch(x){}const C=S.cam;let vx=A.x-C.x,vz=A.z-C.z;const vl=hypot(vx,vz)||1;vx/=vl;vz/=vl;const sd=(ex-A.x)*(-vz)+(ez-A.z)*vx,sg2=Math.abs(sd)>2?(sd>0?1:-1):(A.dir===1?-1:1),fk=Object.create(fe0);fk.x=q.x+sg2*22;fk.y=q.y-4;fk.ty=0;fk.fcy=0;fk.dead=false;if(kd==='F')fight=fk;else q.rfe=fk;if(q.gE)q.gE=[fk.x+8,fk.y+8,q.gE[2]];if(q.hE)q.hE=[fk.x+8,fk.y+8,q.hE[2]];if(q.sk||q.skOn||q.ga)q[dk]=sg2>0?3:1}
  ATX.setTransform(CS,0,0,CS,cx*CS,cy*CS);cam.x=q.x-40;cam.y=big?q.y-84:q.y-66;
- try{a[1]()}catch(e){if(S.err++<3)console.error('H3 figurinha',A.k,e)}finally{q[dk]=od;g=sg;cam.x=scx;cam.y=scy;ATX.restore()}
+ try{a[1]()}catch(e){if(S.err++<3)console.error('H3 figurinha',A.k,e)}finally{q[dk]=od;g=sg;cam.x=scx;cam.y=scy;ATX.restore();if(fight!==sF)fight=sF;q.rfe=sR;q.gE=sgE;q.hE=shE}
  A.uv=big?[cx/(COLS*CW),cy/(rowsNow*CH),(cx+CW)/(COLS*CW),(cy+CH)/(rowsNow*CH)]:[(cx+16)/(COLS*CW),(cy+8)/(rowsNow*CH),(cx+80)/(COLS*CW),(cy+80)/(rowsNow*CH)];A.tex=true}
 H3C.run=function(L,f,t,SF){H3C.SF=SF;const list=H3C.list;list.length=0;let any=false,nn=0;
  for(const a of L){const m=a[2];if(m&&nn<SLN&&!(m.k==='P'&&S.mode===1&&!S.ctrOn))nn++}
@@ -15682,8 +15682,8 @@ function overlay(x,t,Cm,sc){
  else if(it&&el<BO.SPAWN){msg='INTANGÍVEL · ele está recitando um encantamento...';col='#c4b8ff'}
  else if(it){msg='INTANGÍVEL · derrote os esqueletos ('+(BO.NSK-n)+'/'+BO.NSK+') · ele se cura +25.000/s';col='#c4b8ff'}
  else if(st.c0){msg='Ele está se curando! Acerte o Lich para interromper';col='#9dff9a'}
- else if(st.nx){msg='Próximo feitiço em '+max(0,Math.ceil((st.nx-sn)/1000))+' s';col='#cfe9cf'}
- else msg='Chegue perto do poço e toque em Lutar';
+
+ else if(!fight)msg='Chegue perto do poço e toque em Lutar';
  x.font='bold '+round(bh*.85)+'px "Courier New",monospace';x.textAlign='center';x.fillStyle='#000';x.fillText(msg,W/2+1,by+bh*2.3+1);x.fillStyle=col;x.fillText(msg,W/2,by+bh*2.3);
  x.textAlign='right';x.font=round(bh*.7)+'px "Courier New",monospace';x.fillStyle='rgba(200,230,200,.55)';x.fillText(NET.on?'● compartilhado':'○ só neste aparelho',bx+bw,by+bh*3.6);
  x.restore()}
@@ -15693,19 +15693,23 @@ function numPos(q){if(!LICH.in)return null;const L=LE.lich;
  let best=null,bd=26;for(let i=0;i<BO.NSK;i++){const e=LE.sk[i],d=hypot(q.x-4-e.x,q.y+30-e.y);if(d<bd){bd=d;best=i}}
  if(best!==null){const p=SKP[best];return[p[0],floorY(p[0],p[1])+30,p[1]]}return null}
 
+// alvo 3D das habilidades da equipe: [x, y do meio, z, raio, chão]
+function lichTgt(e){if(!e||!e.lk)return null;
+ if(e.lk==='lich'){const k=A.K||1;return[0,BASEY+.66*LS*k,0,20*k,LIQY]}
+ const p=SKP[e.si];if(!p)return null;const g=floorY(p[0],p[1]);return[p[0],g+17,p[1],12,g]}
 // ============================================================ a cena ============================================================
 const AMBS=[.30,.38,.32];
 function envOn(){H3.env({ambT:[.085,.07,.11],ambB:[.035,.03,.05],fog:[.006,.014,.012,.0024],detkL:.85,moonL:[0,0,0],fogOff:0});if(H3.makeSkyTex)H3.makeSkyTex()}
 function envOff(){H3.env({detkL:0,fogOff:0,moonL:[0,0,0]});if(H3.fogOff)H3.fogOff(0);FO=0}
 const SC=SCN.lich={id:'lich',K:1,OX,OY,eye:25,camD:70,p3:-.08,pl:[[-.95,1.1],[-1.0,.62]],camLight:[.05,.11,.06],iso:false,only3d:true,
- get amb(){return AMBS},fx:0,fz:0,
+ get amb(){return AMBS},get fx(){return fight&&fight.lk==='sk'?fight.x+8-OX:0},get fz(){return fight&&fight.lk==='sk'?fight.y+14-OY:0},   // a equipe olha sempre para quem está apanhando
  get lights(){return LT},
  active:()=>world===1&&LICH.in&&HAL.ready,
  built:()=>G.ok,build:gl=>build(gl),free:()=>free(),
  env:()=>envOn(),floorY,step,camOk,camY:(cy,cz,cx)=>clp(cy,floorY(cx||0,cz)+4,ceilY(cx||0,cz)),
  enter(){envOn();A.last=0;A.pulse.t0=-99;A.pulse.next=(performance.now()/1000)+9;LICH.t0=Date.now();document.body.classList.add('h3lich')},
  leave(){envOff();document.body.classList.remove('h3lich')},clear(){},
- boss:()=>null,isTgt:()=>false,tgt:()=>null,
+ boss:()=>null,isTgt:e=>!!(e&&e.lk),tgt:lichTgt,
  bossPlan:(t)=>{anim(performance.now());return()=>drawBoss(t)},numPos,
  flicker,draw:drawRoom,sprites,frameFx:()=>{},shake:t=>{const el=A.el,su=el>=BO.PULL&&el<BO.PULL+700?1-(el-BO.PULL)/700:0,dk=LV.dieT?max(0,1-(Date.now()-LV.dieT)/3200):0,p=max(A.pin||0,su*2.2,dk*1.4,(A.wHeal||0)*.15);if(p<.05)return null;const k=p*.35;return[(Math.random()-.5)*k,(Math.random()-.5)*k,(Math.random()-.5)*k,0,0]},
  flash:()=>0,fbPos:()=>null,overlayExtra:overlay};
@@ -16826,7 +16830,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261024052648;
+const GAME_BUILD=20261024054816;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
