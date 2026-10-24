@@ -8377,7 +8377,7 @@ HS.Herobrine={d:HB.d,end:HB.end,hit:'p',hc:['#fff3e0','#ff9800'],
   // ---------- trilha laranja ----------
   function anchors(Q, S) {
     const sx = P.x + 8, sy = P.y - LIFT + 10, a = AN[S.view], m = S.view === 0 && S.fl ? -1 : 1;
-    Q.tx = sx + a.tail[0] * m; Q.ty = sy + a.tail[1]; Q.lx = sx + a.lan[0] * m; Q.ly = sy + a.lan[1]; Q.lp = 1;
+    Q.tx = sx + a.tail[0] * m * .8; Q.ty = sy + a.tail[1] * .8; Q.lx = sx + a.lan[0] * m * .8; Q.ly = sy + a.lan[1] * .8; Q.lp = 1;
   }
   function trailStep(Q, t) {
     const T = Q.tr; let k = 0;
@@ -8417,16 +8417,15 @@ HS.Herobrine={d:HB.d,end:HB.end,hit:'p',hc:['#fff3e0','#ff9800'],
     g.save();
     try {
       g.fillStyle = 'rgba(0,0,0,.3)'; g.beginPath();
-      if (S.view === 0) g.ellipse(S.cx + (S.fl ? 3 : -3), y + 15.5, 17, 3.4, 0, 0, TAU);
-      else g.ellipse(S.cx, y + 15.5, 13, 3.3, S.view === 1 ? -.22 : .22, 0, TAU);
+      if (S.view === 0) g.ellipse(S.cx + (S.fl ? 2.4 : -2.4), y + 15.5, 13.6, 2.8, 0, 0, TAU);
+      else g.ellipse(S.cx, y + 15.5, 10.4, 2.7, S.view === 1 ? -.22 : .22, 0, TAU);
       g.fill();
     } finally { g.restore() }
   }
   function layer(S, front) {
     const row = S.view === 0 ? 0 : S.view === 1 ? (front ? 2 : 1) : (front ? 4 : 3), sx = S.col * CW, sy = row * CH, dy = S.hy - SY;
     g.imageSmoothingEnabled = false;
-    if (S.view === 0 && S.fl) { g.save(); try { g.translate(S.cx, 0); g.scale(-1, 1); g.drawImage(IM, sx, sy, CW, CH, -SXV[0], dy, CW, CH) } finally { g.restore() } }
-    else g.drawImage(IM, sx, sy, CW, CH, S.cx - SXV[S.view], dy, CW, CH);
+    const BK = .8; g.save(); try { g.translate(S.cx, S.hy); g.scale(S.view === 0 && S.fl ? -BK : BK, BK); g.drawImage(IM, sx, sy, CW, CH, -SXV[S.view], -SY, CW, CH) } finally { g.restore() }
   }
 
   // corpo da vassoura, atrás do cavaleiro (trilha, sombra e camada de trás)
@@ -14873,7 +14872,7 @@ const OX=3400,OY=400,X0=3100;                                      // centro da 
 const RR=176,WH=104,DH=92,                                          // sala: raio, altura da parede, altura da cúpula acima da parede
  PIN=60,PRIM=72,PPL=82,RIMY=13,PLY=3.5,LIQY=8,                     // poço: líquido até r 60 · borda até 72 (altura 13) · degrau até 82 (3,5)
  CW=17,STZ0=RR+18,STZ1=RR+86,STH=32,NST=8,CZ1=RR+170,DOORH=52,            // corredor: meia-largura · escada (z inicial, z final, altura, degraus) · fim · altura da porta
- LK=1.45,LS=105*LK,LLQ=0.30;                                                  // escala do Lich · altura do líquido no modelo (0 = base, 1 = topo dos chifres)
+ LK=1.25,LS=105*LK,LLQ=0.30;                                                  // escala do Lich · altura do líquido no modelo (0 = base, 1 = topo dos chifres)
 const RUN=(STZ1-STZ0)/NST,RISE=STH/NST;
 const SPAWN=[0,RR+94];                                               // chegada: no alto da escada, olhando para a sala
 const NICH=[];for(let k=1;k<12;k++)NICH.push(PI/2+k*PI/6);         // 11 nichos de ossadas (um em cada vão entre as pilastras; o vão da porta fica livre)
@@ -17084,7 +17083,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261024082259;
+const GAME_BUILD=20261024083623;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
