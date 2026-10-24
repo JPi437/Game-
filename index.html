@@ -10545,7 +10545,7 @@ function mkBtn(){if(btn)return;css();btn=document.createElement('button');btn.cl
 // pulo: só visual (o jogo 2D continua no chão), com gravidade; a câmera e o boneco sobem juntos
 function jump(){if(!S.mode||lock||(window.STUN&&STUN())||S.jh>.01||S.jv>0)return;S.jv=3.15;S.jh=.01;try{bp(520,.07,'triangle',.05,0,760)}catch(e){}}
 function jumpTick(){if(S.jh<=0&&S.jv<=0)return;S.jv-=.19;S.jh+=S.jv;if(S.jh<=0){S.jh=0;S.jv=0;S.land=Date.now();try{bp(140,.06,'square',.03,0,90)}catch(e){}}}
-H3.jump=jump;H3.setMode=m=>setMode(m);
+H3.jump=jump;H3.setMode=m=>setMode(m);H3.setModeQ=m=>{S.quiet=1;try{setMode(m)}finally{S.quiet=0}};
 function mkCanvases(){if(glc)return;const cv0=$$('c');
  glc=document.createElement('canvas');glc.id='h3gl';ovc=document.createElement('canvas');ovc.id='h3ov';cv0.parentNode.insertBefore(glc,cv0.nextSibling);glc.parentNode.insertBefore(ovc,glc.nextSibling);
  ovx=ovc.getContext('2d');JG=document.createElement('canvas');JG.width=VW;JG.height=VH;JG.getContext('2d').imageSmoothingEnabled=false;JG=JG.getContext('2d');
@@ -10610,7 +10610,7 @@ function setMode(m){
  else if(was===3){H3.setIso(null);H3.setPix(null);if(glc)glc.classList.remove('pix');H3.setQ(S.qs0)}
  if(m&&m!==3){S.cam.yaw=S.yaw;if(was!==m)S.pitch=m===2?(SC&&SC.p3!==undefined?SC.p3:-.26):0}
  if(m&&!S.hint){S.hint=1;toastS(matchMedia('(pointer:fine)').matches?'Mouse: olhar · WASD: andar · clique/F: bater · espaço: pular · R: perspectiva · E: interagir · ESC solta o mouse':'Arraste a tela para olhar · joystick para andar · toque para bater · botão azul para pular')}
- else if(m!==was)toastS('Perspectiva: '+LABEL[m])}
+ else if(m!==was&&!S.quiet)toastS('Perspectiva: '+LABEL[m])}
 function isoQ(){H3.setQ(clp(VH/max(1,innerHeight),.05,1));if(glc)glc.classList.add('pix')}
 addEventListener('resize',()=>{if(S.mode===3)isoQ()});
 H3.onLost=()=>{if(S.mode){setMode(0);toastS('Os gráficos 3D foram interrompidos. Voltei para o 2D.')}};
@@ -15263,6 +15263,8 @@ function zoneMesh(gl){const RS=[ZR0,ZR0+3,76,79,PPL-2,PPL-1,PPL,PPL+1,PPL+2.5,90
  const buf=new ArrayBuffer(v.length*28),f=new Float32Array(buf);v.forEach((p,i)=>{f[i*7]=p[0];f[i*7+1]=p[1];f[i*7+2]=p[2];f[i*7+4]=1});
  G.zb=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,G.zb);gl.bufferData(gl.ARRAY_BUFFER,buf,gl.STATIC_DRAW);G.zn=v.length}
 // círculo mágico (anéis, heptagramas, runas e círculos pequenos), branco: a cor vem na hora de desenhar
+function discTex(){const N=128,c=document.createElement('canvas');c.width=c.height=N;const x=c.getContext('2d'),m=N/2,g=x.createRadialGradient(m,m,0,m,m,m-1);
+ g.addColorStop(0,'rgba(255,255,255,.55)');g.addColorStop(.82,'rgba(255,255,255,.8)');g.addColorStop(.93,'rgba(255,255,255,1)');g.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=g;x.fillRect(0,0,N,N);return c}
 function circleTex(){const N=256,c=document.createElement('canvas');c.width=c.height=N;const x=c.getContext('2d'),m=N/2,R=rng(909);x.strokeStyle='#fff';x.lineCap='round';x.lineJoin='round';
  const ring=(r,w)=>{x.lineWidth=w;x.beginPath();x.arc(m,m,r,0,TAU);x.stroke()};ring(124,4);ring(110,3);ring(84,2.5);ring(60,3);ring(51,1.6);
  const star=(r,n,k,rot,w)=>{x.lineWidth=w;x.beginPath();for(let i=0;i<=n;i++){const a=rot+((i*k)%n)/n*TAU,px=m+cos(a)*r,py=m+sin(a)*r;i?x.lineTo(px,py):x.moveTo(px,py)}x.stroke()};
@@ -15325,7 +15327,7 @@ function build(gl){
  const vbuf=s=>{const b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,b64(s),gl.STATIC_DRAW);return b},ibuf=s=>{const b=gl.createBuffer();gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,b);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,b64(s),gl.STATIC_DRAW);return b};
  if(SKD){G.sk=vbuf(SKD.vb);G.ski=ibuf(SKD.ib);texURL(gl,SKD.tex,'skTex')}
  if(BKD){G.bk=vbuf(BKD.vb);G.bki=ibuf(BKD.ib);texURL(gl,BKD.tex,'bkTex')}
- if(!G.T.circ)G.T.circ=circleTex();G.sprC=H3.texNew(G.T.circ,true);
+ if(!G.T.circ)G.T.circ=circleTex();G.sprC=H3.texNew(G.T.circ,true);if(!G.T.disc)G.T.disc=discTex();G.sprD=H3.texNew(G.T.disc,true);
  G.pw=prog(gl,VS_W,FS_W,['aP','aN','aC']);G.uw=un(gl,G.pw,['uVP','uTw','uH','uT','uA','uCam','uS']);wallMesh(gl);
  G.pz=prog(gl,VS_Z,FS_Z,['aP','aN','aC']);G.uz=un(gl,G.pz,['uVP','uLift','uWv','uTz','uS','uT','uQ','uMode','uProg','uA','uE','uCam','uFog','uFO','uSeed']);zoneMesh(gl);
  waterline();
@@ -15337,7 +15339,7 @@ function waterline(){const u=b64(D.vb),dv=new DataView(u.buffer),n=D.n;let x0=1e
   if(x<x0)x0=x;if(x>x1)x1=x;if(z<z0)z0=z;if(z>z1)z1=z}
  if(x1>x0)G.LE=[(x0+x1)/2*LS,(z0+z1)/2*LS,(x1-x0)/2*LS+1,(z1-z0)/2*LS+1]}
 function free(){const gl=G.gl;G.ok=false;LICH.ready=false;if(gl&&!gl.isContextLost()){try{for(const m of G.rooms)gl.deleteBuffer(m.vbo);[G.vb,G.ib,G.qb,G.zb,G.wb].forEach(b=>b&&gl.deleteBuffer(b));[G.tex,G.stex].forEach(t=>t&&gl.deleteTexture(t))}catch(e){}}
- G.rooms=[];G.tex=G.stex=null;G.vb=G.ib=G.qb=null;G.sprS=G.sprF=G.sprR=G.tR=G.tS=G.sprC=null;G.sk=G.ski=G.skTex=G.bk=G.bki=G.bkTex=G.pw=G.wb=G.pz=G.zb=null}
+ G.rooms=[];G.tex=G.stex=null;G.vb=G.ib=G.qb=null;G.sprS=G.sprF=G.sprR=G.tR=G.tS=G.sprC=G.sprD=null;G.sk=G.ski=G.skTex=G.bk=G.bki=G.bkTex=G.pw=G.wb=G.pz=G.zb=null}
 
 // ============================================================ a luta: estado compartilhado (Firebase) ou local ============================================================
 // Vida 10.000.000. Cada vez que perde 20% da vida (80%, 60%, 40%, 20%) o Lich faz o feitiço do livro:
@@ -15357,9 +15359,16 @@ const srvNow=()=>Date.now()+((window.MP&&+MP.off)||0);                    // hor
 const nowB=()=>NET.frz?NET.frz:NET.on?srvNow():Date.now();
 // Névoa das Almas (70%, 50% e 10% da vida): 3 s de aviso vermelho no chão, a névoa sai pelos quartos marcados, fica 9 s e some.
 // Quem estiver na névoa fica 10 s atordoado (não anda, a equipe para de bater) e o Lich se cura 5% da vida máxima por jogador atordoado.
-const MS={WARN:3000,FRONT:700,LING:9000,FADE:1500,STUN:10000,HEAL:.05};MS.END=MS.WARN+MS.LING;MS.BUSY=MS.END+MS.FADE;
+const MS={WARN:1000,FRONT:700,LING:9000,FADE:1500,STUN:10000,HEAL:.05};MS.END=MS.WARN+MS.LING;MS.BUSY=MS.END+MS.FADE;
 const QY=[PI/4,-PI/4,-3*PI/4,3*PI/4];                                  // centro de cada quarto da sala (0 = frente-direita, 1 = frente-esquerda, 2 = fundo-esquerda, 3 = fundo-direita; frente = lado da porta)
 const QPAIR=[[0,1],[1,2],[2,3],[3,0],[0,2],[1,3]];
+// Explosões de Almas (90% e 30% da vida): 15 s jogando 20 almas no chão; cada uma leva 1 s para aparecer (círculo vermelho crescendo),
+// fica 1 s piscando e explode em verde. Quem estiver no círculo fica 10 s atordoado e o Lich se cura 10% da vida máxima.
+const BX={DUR:15000,N:20,GROW:1000,WAIT:1000,R:20,HEAL:.10};BX.BUSY=BX.DUR+1200;
+const blastT=i=>round(i*(BX.DUR-BX.GROW-BX.WAIT)/(BX.N-1));
+function blastPos(seed,i){const v=hs(seed,i*3+2),ring=hs(seed,i*3+3)<.6,r=ring?lerp(104,132,v):lerp(PRIM+32,RR-22,v);let a=hs(seed,i*3+1)*TAU;
+ if(cos(a)*r>RR-48&&abs(sin(a)*r)<CW+14)a+=PI*.6;return[sin(a)*r,cos(a)*r]}
+const blastLv=hp=>(hp<=BO.MAX*.9?1:0)|(hp<=BO.MAX*.3?2:0);
 const quarterOf=(X,Z)=>X>=0?(Z>=0?0:3):(Z>=0?1:2);
 const inQ=(mq,X,Z)=>!!((mq>>quarterOf(X,Z))&1);
 // tipo de golpe e para onde ele se vira: 0 = um quarto (as duas mãos para a frente) · 1 = dois quartos vizinhos (braços abertos) · 2 = dois opostos (braços para os lados)
@@ -15369,18 +15378,19 @@ function mistInfo(mq){const L=[];for(let q=0;q<4;q++)if((mq>>q)&1)L.push(q);
  return{k:1,fy:angd(0,a+d/2)}}
 const bookLv=hp=>min(4,floor((BO.MAX-hp)/(BO.MAX*.2)+1e-9));
 const mistLv=hp=>(hp<=BO.MAX*.7?1:0)|(hp<=BO.MAX*.5?2:0)|(hp<=BO.MAX*.1?4:0);
-const busy=(s,now)=>!!(s.c0||(s.m0&&now<s.m0+MS.BUSY));
-const pend=(s,now)=>{if(s.k||busy(s,now))return false;const hp=hpAt(s,now);return bookLv(hp)>s.g||(mistLv(hp)&~s.mg)!==0};
+const busy=(s,now)=>!!(s.c0||(s.m0&&now<s.m0+MS.BUSY)||(s.b0&&now<s.b0+BX.BUSY));
+const pend=(s,now)=>{if(s.k||busy(s,now))return false;const hp=hpAt(s,now);return bookLv(hp)>s.g||(mistLv(hp)&~s.mg)!==0||(blastLv(hp)&~s.bg)!==0};
 // dispara o próximo golpe pendente (nunca dois ao mesmo tempo; o do livro tem prioridade)
 function trig(s,now){if(s.k||busy(s,now))return false;const hp=hpAt(s,now),g=bookLv(hp);
  if(g>s.g){s.hp=hp;s.t=now;s.g=g;s.c0=now;s.h=1;s.sk=new Array(BO.NSK).fill(BO.SKHP);s.bo=s.bk?1:0;s.bk=1;s.nx=0;return true}
- const nw=mistLv(hp)&~s.mg;if(!nw)return false;
+ const nw=mistLv(hp)&~s.mg;
+ if(!nw){const nb=blastLv(hp)&~s.bg;if(!nb)return false;s.bg|=nb;s.b0=now;s.bu=0;return true}
  const r=hs(now%2147483647|0,s.ep+7);s.mg|=nw;s.m0=now;s.mu=0;
  s.mq=(nw&6)?QPAIR[min(5,floor(r*6))].reduce((a,q)=>a|(1<<q),0):1<<min(3,floor(r*4));return true}
-function fresh(now,ep){return{hp:BO.MAX,t:now,a:now,c0:0,h:0,nx:0,sk:0,k:0,ep:ep||0,g:0,bk:0,bo:0,mg:0,m0:0,mq:0,mu:0}}
+function fresh(now,ep){return{hp:BO.MAX,t:now,a:now,c0:0,h:0,nx:0,sk:0,k:0,ep:ep||0,g:0,bk:0,bo:0,mg:0,m0:0,mq:0,mu:0,bg:0,b0:0,bu:0}}
 function skArr(v){if(!v||typeof v!=='object')return 0;const a=[];for(let i=0;i<BO.NSK;i++){const x=v[i]!==undefined?v[i]:v[''+i];a.push(max(0,+x||0))}return a}
 function norm(s,now){if(!s||typeof s!=='object')return fresh(now,0);
- s={hp:+s.hp||0,t:+s.t||now,a:+s.a||+s.t||now,c0:+s.c0||0,h:+s.h||0,nx:+s.nx||0,sk:skArr(s.sk),k:+s.k||0,ep:+s.ep||0,g:+s.g||0,bk:+s.bk||0,bo:+s.bo||0,mg:+s.mg||0,m0:+s.m0||0,mq:+s.mq||0,mu:s.mu&&typeof s.mu==='object'?Object.assign({},s.mu):0};
+ s={hp:+s.hp||0,t:+s.t||now,a:+s.a||+s.t||now,c0:+s.c0||0,h:+s.h||0,nx:+s.nx||0,sk:skArr(s.sk),k:+s.k||0,ep:+s.ep||0,g:+s.g||0,bk:+s.bk||0,bo:+s.bo||0,mg:+s.mg||0,m0:+s.m0||0,mq:+s.mq||0,mu:s.mu&&typeof s.mu==='object'?Object.assign({},s.mu):0,bg:+s.bg||0,b0:+s.b0||0,bu:s.bu&&typeof s.bu==='object'?Object.assign({},s.bu):0};
  if(s.k)return now>=s.k+BO.RESP?fresh(now,s.ep+1):s;                 // morto: renasce 5 min depois
  if(now-s.a>BO.IDLE)return fresh(now,s.ep+1);                        // ninguém mexeu nele por 5 min: volta tudo ao começo
  return s}
@@ -15391,10 +15401,11 @@ const intang=(s,now)=>!!(s.c0&&!s.k&&now>=s.c0+BO.PULL&&(now<s.c0+BO.UP||skAlive
 function apply(s0,op,now){let s=norm(s0,now),ch=!s0||s!==s0;if(s.k)return ch?s:null;
  if(op.sk&&s.c0&&s.sk&&now>=s.c0+BO.UP)for(let i=0;i<BO.NSK;i++){const d=op.sk[i]||0;if(d>0&&s.sk[i]>0){s.sk[i]=max(0,round(s.sk[i]-d));ch=true}}
  if(op.d>0&&!intang(s,now)){let hp=hpAt(s,now);
-  if(s.c0&&now>=s.c0+BO.UP&&!skAlive(s)){if(hp>=BO.MAX){s.g=0;s.mg=0;s.bk=0}s.c0=0;s.h=0;s.sk=0}   // 1º golpe depois dos esqueletos: a cura para (se ele chegou a ficar com a vida cheia, o livro volta para o poço)
-  hp=max(0,round(hp-op.d));s.hp=hp;s.t=now;ch=true;if(hp<=0){s.k=now;s.c0=0;s.h=0;s.sk=0;s.bk=0;s.m0=0;s.mq=0;s.mu=0}}
- if(op.sn&&op.u&&s.m0===op.sn&&!s.k){const mu=s.mu||{};if(!mu[op.u]){mu[op.u]=now;s.mu=mu;s.hp=min(BO.MAX,round(hpAt(s,now)+BO.MAX*MS.HEAL));s.t=now;ch=true}}   // cada atordoado cura 5%
- if(!s.k&&!s.c0&&hpAt(s,now)>=BO.MAX&&(s.g||s.mg||s.bk)){s.g=0;s.mg=0;s.bk=0;ch=true}   // vida cheia de novo: o livro volta para o poço e os golpes recomeçam do 80%
+  if(s.c0&&now>=s.c0+BO.UP&&!skAlive(s)){if(hp>=BO.MAX){s.g=0;s.mg=0;s.bk=0;s.bg=0}s.c0=0;s.h=0;s.sk=0}   // 1º golpe depois dos esqueletos: a cura para (se ele chegou a ficar com a vida cheia, o livro volta para o poço)
+  hp=max(0,round(hp-op.d));s.hp=hp;s.t=now;ch=true;if(hp<=0){s.k=now;s.c0=0;s.h=0;s.sk=0;s.bk=0;s.m0=0;s.mq=0;s.mu=0;s.b0=0;s.bu=0}}
+ if(op.sn&&op.u&&op.sq==='b'&&s.b0===op.sn&&!s.k){const bu=s.bu||{};if(!bu[op.u]||now-bu[op.u]>MS.STUN-500){bu[op.u]=now;s.bu=bu;s.hp=min(BO.MAX,round(hpAt(s,now)+BO.MAX*BX.HEAL));s.t=now;ch=true}}   // explosão: cura 10%
+ if(op.sn&&op.u&&op.sq!=='b'&&s.m0===op.sn&&!s.k){const mu=s.mu||{};if(!mu[op.u]){mu[op.u]=now;s.mu=mu;s.hp=min(BO.MAX,round(hpAt(s,now)+BO.MAX*MS.HEAL));s.t=now;ch=true}}   // cada atordoado cura 5%
+ if(!s.k&&!s.c0&&hpAt(s,now)>=BO.MAX&&(s.g||s.mg||s.bk||s.bg)){s.g=0;s.mg=0;s.bk=0;s.bg=0;ch=true}   // vida cheia de novo: o livro volta para o poço e os golpes recomeçam do 80%
  if(trig(s,now))ch=true;
  if(ch){s.a=now;return s}return null}
 const netOk=()=>!!(window.MP&&MP.db&&MP.uid&&!MP.offline&&!NET.denied);
@@ -15404,12 +15415,12 @@ function netFail(e){if(!NET.denied)console.warn('Lich: o banco não aceitou lich
  NET.denied=true;if(!LOC)LOC=NET.st?norm(NET.st,Date.now()):null;netStop()}
 function cur(){const now=nowB();if(NET.on)return norm(NET.st,now);LOC=norm(LOC,now);return LOC}
 function flush(){const now=Date.now();if(now-NET.lastF<450)return;NET.lastF=now;
- const d=NET.pd,ps=NET.ps.slice(),cast=NET.want,sn=NET.sn,u=(window.MP&&MP.uid)||'~eu';if(!(d>0)&&!ps.some(v=>v>0)&&!cast&&!sn)return;
+ const d=NET.pd,ps=NET.ps.slice(),cast=NET.want,sn=NET.sn,sq=NET.sq,u=(window.MP&&MP.uid)||'~eu';if(!(d>0)&&!ps.some(v=>v>0)&&!cast&&!sn)return;
  if(NET.on&&NET.ref){if(NET.busy&&now-NET.busy<8000)return;                             // uma transação por vez (o resto espera a próxima)
-  NET.pd=0;NET.ps.fill(0);NET.want=0;NET.sn=0;NET.fl+=d;for(let i=0;i<BO.NSK;i++)NET.fls[i]+=ps[i];NET.busy=now;const op={d,sk:ps,cast,sn,u};
+  NET.pd=0;NET.ps.fill(0);NET.want=0;NET.sn=0;NET.fl+=d;for(let i=0;i<BO.NSK;i++)NET.fls[i]+=ps[i];NET.busy=now;const op={d,sk:ps,cast,sn,sq,u};
   NET.ref.transaction(v=>{const r=apply(v,op,srvNow());return r===null?undefined:r},err=>{NET.busy=0;NET.fl=max(0,NET.fl-d);for(let i=0;i<BO.NSK;i++)NET.fls[i]=max(0,NET.fls[i]-ps[i]);
    if(err){netFail(err);LOC=apply(LOC,op,Date.now())||LOC}},false)}
- else{NET.pd=0;NET.ps.fill(0);NET.want=0;NET.sn=0;LOC=apply(LOC,{d,sk:ps,cast,sn,u},Date.now())||norm(LOC,Date.now())}}
+ else{NET.pd=0;NET.ps.fill(0);NET.want=0;NET.sn=0;LOC=apply(LOC,{d,sk:ps,cast,sn,sq,u},Date.now())||norm(LOC,Date.now())}}
 
 // ---------- o Lich e os esqueletos na lista de inimigos do jogo (para Lutar, a equipe, os golpes e as recompensas funcionarem como sempre) ----------
 // m3 = desenhados só por esta cena 3D (o 2D não faz figurinha deles) · lk = 'lich' | 'sk'
@@ -15462,10 +15473,21 @@ function mistFade(sn){const el=mistEl(sn);if(el<0||el>=MS.BUSY)return 0;let a=el
 // eu estou na névoa? (na saída ela avança da borda do poço até a parede; depois fica parada até sumir)
 function inMist(sn,X,Z){const el=mistEl(sn);if(el<MS.WARN||el>=MS.END||MV.kill)return false;if(Z>RR-14&&abs(X)<CW)return false;
  const r=hypot(X,Z),fr=ZR0+(ZR1-ZR0)*ease((el-MS.WARN)/MS.FRONT);return r>=ZR0-4&&r<=fr&&r<=RR-2&&inQ(MV.mq,X,Z)}
-function stunMe(m){ST.until=Date.now()+MS.STUN;ST.t0=Date.now();NET.sn=m;NET.lastF=0;sfxStun();hint('Você e a sua equipe foram atordoados pela Névoa das Almas!');
- try{jx=0;jy=0}catch(e){}try{for(const k in fpos){fpos[k].sk=null;fpos[k].nx=0}}catch(e){}}
+const XV={b0:0,kill:0,fired:{},seed:0,shT:0,shK:0};                      // explosões vistas aqui
+function stunMe(m,kind){ST.until=Date.now()+MS.STUN;ST.t0=Date.now();ST.nb=Date.now()+700;NET.sn=m;NET.sq=kind||'m';NET.lastF=0;sfxStun();
+ hint(kind==='b'?'Uma Explosão de Almas atordoou você e a sua equipe!':'Você e a sua equipe foram atordoados pela Névoa das Almas!');
+ try{jx=0;jy=0}catch(e){}try{for(const k in fpos){fpos[k].sk=null;fpos[k].nx=0}}catch(e){}
+ try{const S=H3.S;if(S&&S.mode===2&&H3.setModeQ){ST.prev=2;H3.setModeQ(1)}else if(!ST.prev)ST.prev=0}catch(e){}}      // atordoado: vê em 1ª pessoa (volta depois)
+// atordoado: respiração ofegante, tela meio preto e branco e borrada (filtro no canvas do 3D); no fim volta para a 3ª pessoa
+function stunTick(){const on=LICH.stunned();
+ if(on&&Date.now()>=(ST.nb||0)){ST.nb=Date.now()+1300;sfxPant()}
+ const cv=document.getElementById('h3gl');if(cv){let f='';if(on){const e0=Date.now()-ST.t0,k=min(1,e0/400)*min(1,(ST.until-Date.now())/700),b=(1.3+1.5*(.5+.5*sin(Date.now()/480)))*k;
+   f='grayscale('+(.85*k).toFixed(2)+') blur('+b.toFixed(1)+'px) brightness('+(1-.18*k).toFixed(2)+')'}
+  if((ST.fs||'')!==f&&(f===''||Date.now()-(ST.fT||0)>70)){cv.style.filter=f;ST.fs=f;ST.fT=Date.now()}}
+ if(!on&&ST.prev){const S=H3.S;if(S&&S.mode===1&&H3.setModeQ&&LICH.in)H3.setModeQ(ST.prev);ST.prev=0}}
 function bossTick(){
  if(LICH.in)netStart();else if(NET.ref&&Date.now()-NET.leftT>15000)netStop();
+ try{stunTick()}catch(e){}
  const st=cur(),now=nowB(),pv=BS.pv;BS.st=st;BS.sn=now;
  if(st.ep!==MY.ep){MY.ep=st.ep;MY.d=0;MY.sk.fill(0)}
  if(pv&&LICH.in){
@@ -15474,6 +15496,7 @@ function bossTick(){
   if(!pv.c0&&st.c0){SV.c0=st.c0;SV.endT=0;SV.tgT=0;SV.fired={};SV.kbDone=0;for(const v of SKV)v.die=0}
   if(pv.c0&&!st.c0&&!st.k){SV.endT=Date.now();sfxSplash(.45)}
   if(pv.bk&&!st.bk){BV.ret=Date.now();sfxPlop(1.25)}                               // vida cheia (ou morte): o livro volta para o poço devagar
+  if(st.b0&&pv.b0===st.b0){const a=pv.bu||{},b=st.bu||{};for(const k in b)if(a[k]!==b[k]){DR.push({t:Date.now(),u:k});HN.push({t:Date.now(),s:'+'+fmtN(BO.MAX*BX.HEAL),big:1});sfxDrain()}}
   if(st.m0&&pv.m0===st.m0){const a=pv.mu||{},b=st.mu||{};for(const k in b)if(!a[k]){DR.push({t:Date.now(),u:k});HN.push({t:Date.now(),s:'+'+fmtN(BO.MAX*MS.HEAL),big:1});sfxDrain()}}
   if(intang(pv,now-500)&&!intang(st,now)&&st.c0)SV.tgT=Date.now();
   if(pv.c0&&pv.c0===st.c0&&pv.sk&&st.sk)for(let i=0;i<BO.NSK;i++)if(pv.sk[i]>0&&st.sk[i]<=0){SKV[i].die=Date.now();sfxBone(i);
@@ -15485,10 +15508,19 @@ function bossTick(){
  if(MV.m0&&!MV.kill&&(st.k||st.m0!==MV.m0)&&now-MV.m0<MS.BUSY)MV.kill=Date.now();
  if(MV.m0&&LICH.in&&!MV.kill){const el=now-MV.m0,F=MV.fired,ev=(k,at,fn)=>{if(!F[k]&&el>=at){F[k]=1;if(el<at+1500)fn()}};
   ev('warn',0,()=>{sfxMistCharge();hint('⚠ O Lich vai soltar a Névoa das Almas! Saia da área vermelha')});
-  ev('t1',1000,()=>sfxTick(0));ev('t2',2000,()=>sfxTick(1));
   ev('blast',MS.WARN,()=>sfxMistBlast());
   ev('gone',MS.END,()=>sfxMistGone());
-  if(!LICH.stunned()&&MY.mz!==MV.m0&&!st.k){const X=P.x+8-OX,Z=P.y+14-OY;if(inMist(now,X,Z)){MY.mz=MV.m0;stunMe(MV.m0)}}}
+  if(!LICH.stunned()&&MY.mz!==MV.m0&&!st.k){const X=P.x+8-OX,Z=P.y+14-OY;if(inMist(now,X,Z)){MY.mz=MV.m0;stunMe(MV.m0,'m')}}}
+ // explosões de almas: começo, cada alma jogada, cada explosão (atordoa quem estiver no círculo)
+ if(st.b0&&st.b0!==XV.b0&&!st.k){XV.b0=st.b0;XV.kill=0;XV.fired={};XV.seed=(st.b0%2147483647)|0}
+ if(XV.b0&&!XV.kill&&(st.k||st.b0!==XV.b0)&&now-XV.b0<BX.BUSY)XV.kill=Date.now();
+ if(XV.b0&&LICH.in&&!XV.kill){const el=now-XV.b0,F=XV.fired;if(el>=0&&el<BX.BUSY){
+  if(!F.st){F.st=1;if(el<1500){sfxBlastStart();hint('⚠ O Lich vai lançar Explosões de Almas! Fuja dos círculos vermelhos')}}
+  for(let i=0;i<BX.N;i++){const ts=blastT(i),te=ts+BX.GROW+BX.WAIT;
+   if(el>=ts&&!F['s'+i]){F['s'+i]=1;if(el<ts+700)sfxBlastCast()}
+   if(el>=te&&!F['e'+i]){F['e'+i]=1;if(el<te+700){const p=blastPos(XV.seed,i),X=P.x+8-OX,Z=P.y+14-OY,d=hypot(X-p[0],Z-p[1]);sfxBoom(d);
+     if(d<90){XV.shT=Date.now();XV.shK=clp(1-d/90,0,1)}
+     if(d<=BX.R+2&&!LICH.stunned()&&!st.k)stunMe(XV.b0,'b')}}}}}
  // golpe pendente esperando o outro acabar: pede para o banco disparar (quem chegar primeiro dispara)
  if(LICH.in&&pend(st,now)&&Date.now()-NET.wantT>1200){NET.want=1;NET.wantT=Date.now()}
  // eventos do feitiço (sons, empurrão)
@@ -15505,7 +15537,7 @@ function bossTick(){
  // o feitiço sai sozinho a cada 20% de vida perdida (no apply)
  flush()}
 // testes (console): LICH.dbg.at(ms) põe o feitiço naquele instante · só no modo local
-LICH.dbg={BS,LE,BO,cur,NET,loc:()=>LOC,tick:()=>bossTick(),flush:()=>flush(),ff(){NET.lastF=0;flush();bossTick();return JSON.stringify(cur())},unfrz(){NET.frz=0},at(ms,frz){if(NET.on)return'online';NET.frz=0;LOC=norm(LOC,Date.now());LOC.c0=Date.now()-ms;NET.frz=frz?Date.now():0;LOC.h=1;if(!LOC.sk)LOC.sk=new Array(BO.NSK).fill(BO.SKHP);LOC.a=Date.now();return LOC},soon(){LOC=norm(LOC,Date.now());LOC.nx=Date.now()+500;LOC.a=Date.now();return LOC},A:()=>A,MV,ST,BV,mist(ms,mq,frz){if(NET.on)return'online';NET.frz=0;LOC=norm(LOC,Date.now());LOC.m0=Date.now()-ms;LOC.mq=mq;LOC.mu=0;NET.frz=frz?Date.now():0;LOC.a=Date.now();bossTick();return LOC},set(o){LOC=Object.assign(norm(LOC,Date.now()),o);LOC.a=Date.now();return LOC}};
+LICH.dbg={BS,LE,BO,cur,NET,loc:()=>LOC,tick:()=>bossTick(),flush:()=>flush(),ff(){NET.lastF=0;flush();bossTick();return JSON.stringify(cur())},unfrz(){NET.frz=0},at(ms,frz){if(NET.on)return'online';NET.frz=0;LOC=norm(LOC,Date.now());LOC.c0=Date.now()-ms;NET.frz=frz?Date.now():0;LOC.h=1;if(!LOC.sk)LOC.sk=new Array(BO.NSK).fill(BO.SKHP);LOC.a=Date.now();return LOC},soon(){LOC=norm(LOC,Date.now());LOC.nx=Date.now()+500;LOC.a=Date.now();return LOC},A:()=>A,MV,ST,BV,XV,bpos:i=>blastPos(XV.seed,i),bT:blastT,blast(ms,frz){if(NET.on)return'online';NET.frz=0;LOC=norm(LOC,Date.now());LOC.b0=Date.now()-ms;LOC.bu=0;NET.frz=frz?Date.now():0;LOC.a=Date.now();bossTick();return LOC},mist(ms,mq,frz){if(NET.on)return'online';NET.frz=0;LOC=norm(LOC,Date.now());LOC.m0=Date.now()-ms;LOC.mq=mq;LOC.mu=0;NET.frz=frz?Date.now():0;LOC.a=Date.now();bossTick();return LOC},set(o){LOC=Object.assign(norm(LOC,Date.now()),o);LOC.a=Date.now();return LOC}};
 function knock(){if(!LICH.in)return;const X=P.x+8-OX,Z=P.y+14-OY;if(Z>RR-16&&abs(X)<CW)return;const r=hypot(X,Z)||1,R2=RW-3;
  if(r>=R2-1)return;KB.t0=Date.now();KB.fx=X;KB.fz=Z;KB.tx=X/r*R2;KB.tz=Z/r*R2;if(fight===LE.lich)stopFight()}
 
@@ -15539,10 +15571,13 @@ function anim(now){const t=now/1000,dt=A.last?clp(t-A.last,0,.1):.016;A.last=t;A
   if(el>=BO.SPAWN)wHeal=ease((el-BO.SPAWN)/900)*(st.h?1:0)}
  else if(SV.endT){const u=(Date.now()-SV.endT)/1100;wCast=u<1?1-ease(u):0}
  // névoa das almas: vira para os quartos marcados, junta as almas nas mãos (3 s) e solta
- let wCh=0,wTh=0,ryT=0;const mel=st&&!st.k&&!MV.kill?mistEl(sn):-1,MI_=MV.info;
- if(mel>=0&&mel<MS.WARN+3000){ryT=MI_.fy;if(mel<MS.WARN)wCh=ease(mel/900);else{const u=mel-MS.WARN;wTh=u<240?eob(u/240):u<1800?1:1-ease((u-1800)/1100);wCh=u<200?1-ease(u/200):0}}
- A.ry=angd(0,A.ry+clp(angd(A.ry,ryT),-dt*1.9,dt*1.9));
- const wS=min(1,wDip+wPull+wCast+wCh+wTh);
+ let wCh=0,wTh=0,wB=0,ryT=0,fl0=0,fl1=0;const mel=st&&!st.k&&!MV.kill?mistEl(sn):-1,MI_=MV.info,bel=st&&!st.k&&!XV.kill&&XV.b0?sn-XV.b0:-1;
+ if(mel>=0&&mel<MS.WARN+3000){ryT=MI_.fy;if(mel<MS.WARN)wCh=ease(mel/350);else{const u=mel-MS.WARN;wTh=u<240?eob(u/240):u<1800?1:1-ease((u-1800)/1100);wCh=u<200?1-ease(u/200):0}}
+ // explosões: braços erguidos conjurando; a cada alma uma garra joga para o lugar (e ele se vira para lá)
+ if(bel>=0&&bel<BX.DUR){wB=ease(bel/400)*(1-ease((bel-BX.DUR+2000)/900));let j=-1;for(let i=0;i<BX.N;i++)if(blastT(i)<=bel)j=i;
+  if(j>=0){const p=blastPos(XV.seed,j);ryT=atan2(p[0],p[1]);const u=(bel-blastT(j))/450;if(u<1){const f=bump(u,0,1);if(j%2)fl1=f;else fl0=f}}}
+ A.ry=angd(0,A.ry+clp(angd(A.ry,ryT)*min(1,dt*7),-dt*5,dt*5));
+ const wS=min(1,wDip+wPull+wCast+wCh+wTh+wB);
  const br=sin(t*TAU/4.4)*.85+sin(t*TAU/2.2+.6)*.15;A.br=br*(1-wS*.5);
  // chamado das almas (só fora do feitiço)
  const Pp=A.pulse;if(t>Pp.next&&t-Pp.t0>18&&wS<.01&&!LV.dieT){Pp.t0=t;Pp.next=t+13+Math.random()*7;try{rumble()}catch(e){}}
@@ -15564,10 +15599,11 @@ function anim(now){const t=now/1000,dt=A.last?clp(t-A.last,0,.1):.016;A.last=t;A
  const Pl={bp:-.14,by:A.by,br:0,hp:-.32,hy:0,hr:0,lfx:-.62,lfz:.24,lc:-.45,rfx:-.62,rfz:-.24,rc:-.45,rt:0,bob:.02};
  const Cs={bp:.05+.02*sin(t*1.7),by:A.by,br:.015*sin(t*1.3),hp:.32-.14*wHeal+.03*sin(t*5.1),hy:.04*sin(t*.9),hr:.05*sin(t*1.6),
   lfx:-.25-.17*wHeal+.07*sin(t*3.1),lfz:-.3+.05*sin(t*2.2),lc:-.18+.2*sin(t*6.5),rfx:-.25-.17*wHeal+.07*sin(t*2.7+1),rfz:.3-.05*sin(t*2.5+1),rc:-.18+.2*sin(t*5.7+2),rt:.25*sin(t*3.3),bob:.008*sin(t*2)};
- const tr=mel>=MS.WARN-900&&mel<MS.WARN?(mel-MS.WARN+900)/900:0;          // treme antes de soltar
+ const tr=mel>=MS.WARN-400&&mel<MS.WARN?(mel-MS.WARN+400)/400:0;          // treme antes de soltar
  const Ch={bp:-.16+.03*sin(t*23)*tr,by:A.by,br:.03*sin(t*19)*tr,hp:-.26+.03*sin(t*4),hy:0,hr:.05*sin(t*2.1),lfx:-.78+.05*sin(t*5),lfz:.42,lc:-.25+.3*sin(t*9),rfx:-.78+.05*sin(t*5.4+1),rfz:-.42,rc:-.25+.3*sin(t*8+1),rt:.35*sin(t*6),bob:.016};
  const TH=MIST_POSE[MI_.k||0],Th={bp:TH.bp,by:A.by,br:0,hp:TH.hp,hy:0,hr:0,lfx:TH.lfx,lfz:TH.lfz,lc:TH.lc+.08*sin(t*12),rfx:TH.rfx,rfz:TH.rfz,rc:TH.rc+.08*sin(t*11),rt:0,bob:.01};
- const O={};for(const k of PK){let v=I[k]*(1-wS);v+=Dp[k]*wDip+Pl[k]*wPull+Cs[k]*wCast+Ch[k]*wCh+Th[k]*wTh;O[k]=v}
+ const Bl={bp:-.06+.03*sin(t*2),by:A.by,br:.02*sin(t*1.7),hp:-.14+.14*max(fl0,fl1),hy:0,hr:.04*sin(t*2.3),lfx:-.62+.8*fl0,lfz:.32-.45*fl0,lc:-.2+.25*sin(t*7)-.4*fl0,rfx:-.62+.8*fl1,rfz:-.32+.45*fl1,rc:-.2+.25*sin(t*6.4+1)-.4*fl1,rt:.3*sin(t*4),bob:.012};
+ const O={};for(const k of PK){let v=I[k]*(1-wS);v+=Dp[k]*wDip+Pl[k]*wPull+Cs[k]*wCast+Ch[k]*wCh+Th[k]*wTh+Bl[k]*wB;O[k]=v}
  // morte: afunda no poço gritando · renascer: sobe de volta
  let sink=0;if(LV.dieT){const u=(Date.now()-LV.dieT)/3200;sink=ease(u);O.hp=lerp(O.hp,-.45,ease(u*3));O.lfx=lerp(O.lfx,-.7,ease(u*3));O.rfx=lerp(O.rfx,-.7,ease(u*3));O.lc=-.5;O.rc=-.5;O.br+=sin(t*31)*.04*(1-u)}
  else if(st.k)sink=1;else if(LV.riseT){const u=(Date.now()-LV.riseT)/3000;sink=1-eob(u);if(u>=1)LV.riseT=0}
@@ -15581,12 +15617,12 @@ function anim(now){const t=now/1000,dt=A.last?clp(t-A.last,0,.1):.016;A.last=t;A
  M4.trs(MW,0,BASEY-sink*82*LK,0,0,A.ry,0,LS,LS,LS);
  // olhos/boca, brilho do poço, redemoinho, muralha e o centro do líquido
  const rec=wCast*(.5+.5*sin(t*9)*sin(t*3.7));
- A.eye=(.55+.12*(br*.5+.5)+1.1*flare+(vis?.12:0))*(1-wS)+(.9+.5*rec+.6*wPull)*wS+(LV.dieT?1.6:0)+.8*wCh+1.3*min(1,wTh);
+ A.eye=(.55+.12*(br*.5+.5)+1.1*flare+(vis?.12:0))*(1-wS)+(.9+.5*rec+.6*wPull)*wS+(LV.dieT?1.6:0)+.8*wCh+1.3*min(1,wTh)+.6*wB;
  A.K=(1+.42*flare+.04*sin(t*1.7))*(LV.dieT||st.k?lerp(1,.62,sink):1)+.35*wPull+.18*wHeal+.2*wCh+.5*min(1,wTh);
  A.swV=lerp(A.swV,.05+.32*flare+.5*wS+.4*wHeal+.6*wCh,1-Math.exp(-dt*2));A.sw+=A.swV*dt;
  let wall=0;if(el>=BO.PULL&&(it||(SV.tgT&&Date.now()-SV.tgT<900)||el<BO.UP)){wall=it||el<BO.UP?eob((el-BO.PULL)/650):1-ease((Date.now()-SV.tgT)/900)}A.wall=clp(wall,0,1.15);A.dip=clp(wall,0,1);
  A.surge=el>=BO.PULL&&el<BO.PULL+650?lerp(18,64,ease((el-BO.PULL)/650)):-1;
- A.B1=B1;A.B3=B3;A.B5=B5;A.wHeal=wHeal;A.wCast=wCast;A.el=el;A.wCh=wCh;A.wTh=wTh;A.mel=mel}
+ A.B1=B1;A.B3=B3;A.B5=B5;A.wHeal=wHeal;A.wCast=wCast;A.el=el;A.wCh=wCh;A.wTh=wTh;A.mel=mel;A.wB=wB;A.bel=bel}
 function xf(m,p){return[m[0]*p[0]+m[4]*p[1]+m[8]*p[2]+m[12],m[1]*p[0]+m[5]*p[1]+m[9]*p[2]+m[13],m[2]*p[0]+m[6]*p[1]+m[10]*p[2]+m[14]]}
 const toW=p=>xf(MW,xf(A.B1,p)),handW=(B,p)=>xf(MW,xf(B,p));
 
@@ -15597,7 +15633,7 @@ const BKR=50*LK,BKS=20*LK;
 function bookPose(){BK.vis=false;BK.held=0;const st=BS.st,sn=nowB(),el=st&&st.c0?sn-st.c0:-1,by=A.by+A.ry,fx=sin(by),fz=cos(by),s=sn/1000;
  let H=[fx*BKR,BASEY+.62*LS+2,fz*BKR],p,rx=-.12,rz=0;const T0=BO.PULL;
  // mergulho com o livro já na mão: ele sobe um pouco para as mãos passarem por baixo · névoa: vai para cima da cabeça
- const up=el>=0&&el<T0+700&&st.bo?ease(min(el/600,(T0+700-el)/600)):0,mw=clp(max(A.wCh||0,min(1,A.wTh||0)),0,1);
+ const up=el>=0&&el<T0+700&&st.bo?ease(min(el/600,(T0+700-el)/600)):0,mw=clp(max(A.wCh||0,min(1,A.wTh||0),A.wB||0),0,1);
  H=[H[0]*(1+.18*up-.42*mw),H[1]+16*up+50*mw,H[2]*(1+.18*up-.42*mw)];
  const held=()=>{p=[H[0],H[1]+sin(s*1.9)*1.6,H[2]];rx=-.12+sin(s*1.3)*.05-.5*mw;rz=sin(s*.9)*.06;BK.held=1};
  if(el>=0&&st.bo)held();
@@ -15768,12 +15804,32 @@ function sprites(t){const T=H3.tex;if(!T||!G.ok)return;const s=t/1000,K=A.K||1,f
     if(G.sprS)for(let i=0;i<9;i++){const u=hs(i,71+q*5),v=hs(i,72+q*5),a=QY[q]+(u-.5)*PI*.42,r=sqrt(lerp((ZR0+10)**2,(ZR1-12)**2,v));if(r>fr)continue;
      const P_=4+hs(i,73)*3,ph=(s/P_+hs(i,74))%1,x=sin(a)*r+sin(s*.8+i)*5,z=cos(a)*r+cos(s*.7+i)*5,y=floorY(x,z)+4+ph*22,al=sin(ph*PI)*.75*fa,w=7+hs(i,75)*4;
      H3.spr(G.sprS,x,y,z,w,w*1.5,null,[.65,1,.7,al],true,0,false)}}}}
+ // ---------- Explosões de Almas ----------
+ if(XV.b0&&G.sprD){const el=sn-XV.b0,kf=XV.kill?max(0,1-(Date.now()-XV.kill)/600):1;
+  if(el>=0&&el<BX.BUSY&&kf>0)for(let i=0;i<BX.N;i++){const ts=blastT(i),te=ts+BX.GROW+BX.WAIT;if(el<ts||el>te+1100)continue;
+   const p=blastPos(XV.seed,i),x=p[0],z=p[1],gy=floorY(x,z),D2=2*BX.R;
+   if(el<te){const g=ease(clp((el-ts)/BX.GROW,0,1)),w2=clp((el-ts-BX.GROW)/BX.WAIT,0,1),pl=.5+.5*sin(el/55);
+    // a alma voando da garra até o chão
+    if(el<ts+650&&A.B3&&A.B5&&!XV.kill){const u=(el-ts)/650,h=i%2?handW(A.B5,J.Rt):handW(A.B3,J.Lt),e=ease(u),ox=lerp(h[0],x,e),oy=lerp(h[1],gy+3,e)+sin(u*PI)*30,oz=lerp(h[2],z,e);
+     if(G.sprS)H3.spr(G.sprS,ox,oy,oz,7,10.5,null,[.75,1,.8,.95*kf],true,0,false);H3.spr(T.glow,ox,oy,oz,18,18,null,[.35,1,.42,.6*kf],true,0,true)}
+    // o aviso: círculo vermelho que cresce (1 s) e depois enche e pisca até explodir (1 s)
+    H3.flat(G.sprD,x,gy+1.9,z,D2*g,D2*g,null,[1,.14,.1,(.3+.12*w2*pl)*kf],false,0);
+    if(w2>0)H3.flat(G.sprD,x,gy+1.95,z,D2*w2,D2*w2,null,[1,.35,.22,.28*kf],false,0);
+    if(T.ring)H3.flat(T.ring,x,gy+2,z,D2*g*1.04,D2*g*1.04,null,[1,.3,.2,(.55+.35*w2*pl)*g*kf],true,0);
+    if(G.sprC)H3.flat(G.sprC,x,gy+2.05,z,D2*.78*g,D2*.78*g,null,[.4,1,.5,(.35+.3*w2)*g*kf],true,el/420+i)}
+   else{const u=(el-te)/1100,e=ease(min(1,u*2.6)),f=1-u;
+    H3.spr(T.glow,x,gy+12,z,30+90*e,30+90*e,null,[.45,1,.5,f*.9*kf],true,0,true);H3.spr(T.glow,x,gy+8,z,18+26*e,18+26*e,null,[.92,1,.92,f*f*kf],true,0,true);
+    if(T.ring)H3.flat(T.ring,x,gy+2,z,10+110*e,10+110*e,null,[.5,1,.55,f*.85*kf],true,0);
+    if(T.beam)H3.strip(T.beam,x,gy,z,x,gy+75*e,z,34*(1-u*.6),[.45,1,.5,f*.7*kf],true);
+    H3.flat(G.sprD,x,gy+1.85,z,D2*1.1,D2*1.1,null,[.05,.35,.1,.35*f*kf],false,0);
+    if(G.sprS)for(let k=0;k<7;k++){const a=k/7*TAU+i,r=u*32,y=gy+6+u*50;H3.spr(G.sprS,x+cos(a)*r,y,z+sin(a)*r,8,12,null,[.7,1,.75,f*kf],true,0,false)}
+    for(let k=0;k<12;k++){const a=hs(i,k+80)*TAU,v=.5+hs(i,k+90)*.6,r=u*44*v,y=gy+4+sin(min(1,u*1.4)*PI)*26*v;H3.spr(T.glow,x+cos(a)*r,y,z+sin(a)*r,5,5,null,[.6,1,.65,f*kf],true,0,true)}}}}
  // atordoados: almas girando em cima da cabeça (eu, a minha equipe e os outros jogadores e as equipes deles)
  const swirl=(x,y,z,k)=>{if(G.sprS)for(let j=0;j<3;j++){const a=s*3.2+j*TAU/3;H3.spr(G.sprS,x+cos(a)*6,y+sin(s*5+j)*.8,z+sin(a)*6,4.4,6.6,null,[.7,1,.75,.9*k],true,0,false)}
   if(T.ring)H3.flat(T.ring,x,y-1,z,15,15,null,[.4,1,.5,.55*k],true,s*2);H3.spr(T.glow,x,y,z,16,16,null,[.3,1,.4,.25*k],true,0,true)};
  if(LICH.stunned()){const k=min(1,(ST.until-Date.now())/600),S=H3.S;if(S&&S.mode===2)swirl(S.px,floorY(S.px,S.pz)+31,S.pz,k);
   try{for(const id of equipped){const q=fpos[id];if(!q)continue;const x=q.x+8-OX,z=q.y+14-OY;swirl(x,floorY(x,z)+29,z,k)}}catch(e){}}
- if(st.mu&&window.MP&&MP.others)for(const id in st.mu){if(id===myUid())continue;const r=MP.others[id],e2=sn-st.mu[id];if(!r||e2<0||e2>MS.STUN)continue;const k=min(1,(MS.STUN-e2)/600),x=r.x+8-OX,z=r.y+14-OY;
+ if(window.MP&&MP.others)for(const SU of[st.mu,st.bu])if(SU)for(const id in SU){if(id===myUid())continue;const r=MP.others[id],e2=sn-SU[id];if(!r||e2<0||e2>MS.STUN)continue;const k=min(1,(MS.STUN-e2)/600),x=r.x+8-OX,z=r.y+14-OY;
   swirl(x,floorY(x,z)+31,z,k);if(r.fp)for(const q of r.fp){if(!q)continue;const qx=q.x+8-OX,qz=q.y+14-OY;swirl(qx,floorY(qx,qz)+29,qz,k)}}
  // cura pela névoa: a alma de cada atordoado é sugada até o peito do Lich
  for(let i=DR.length-1;i>=0;i--){const d=DR[i],u=(Date.now()-d.t)/1600;if(u>=1){DR.splice(i,1);continue}
@@ -15800,7 +15856,14 @@ function sfxRattle(){for(let i=0;i<24;i++)sNoise(.05,.08,'highpass',3000+Math.ra
 function sfxBone(i){for(let k=0;k<8;k++)sNoise(.06,.07,'bandpass',1800+Math.random()*1800,null,3,k*.05);sTone(300,.6,.04,'sine',900,.1)}
 function sfxDie(){sTone(55,3.2,.3,'sawtooth',25);sNoise(3,.12,'bandpass',600,2600,3);for(let i=0;i<6;i++)sTone(880-i*90,.9,.03,'sine',220,i*.25)}
 function sfxRise(){sTone(40,2.8,.25,'sawtooth',70);sNoise(2.6,.1,'lowpass',300,1400,1)}
-function sfxMistCharge(){for(let i=0;i<3;i++)sTone(220+i*55,3,.03,'triangle',440+i*90,i*.05);sNoise(3,.07,'bandpass',500,2400,4);for(let i=0;i<10;i++)sTone(600+Math.random()*500,.5,.012,'sine',300+Math.random()*200,i*.28)}
+function sfxMistCharge(){for(let i=0;i<3;i++)sTone(220+i*55,1,.035,'triangle',520+i*90,i*.03);sNoise(1,.08,'bandpass',500,2600,4);for(let i=0;i<5;i++)sTone(600+Math.random()*500,.35,.014,'sine',300+Math.random()*200,i*.17)}
+function sfxBlastStart(){sTone(50,2.5,.2,'sawtooth',38);sNoise(2.2,.07,'bandpass',600,1800,5);for(let i=0;i<6;i++)sTone(500+Math.random()*400,.6,.015,'sine',250,i*.3)}
+function sfxBlastCast(){sNoise(.35,.05,'bandpass',700,2600,3);sTone(420,.3,.025,'sine',900)}
+function sfxBoom(d){const k=clp(1-d/280,.12,1);sNoise(.8,.26*k,'lowpass',1800,110,.7);sTone(78,.7,.3*k,'sine',32);sTone(330,.6,.035*k,'sawtooth',110);sNoise(.5,.05*k,'bandpass',2600,900,4,.05)}
+function sfxPant(){sNoise(.42,.06,'bandpass',800,1700,1.3);sNoise(.55,.07,'bandpass',1500,550,1.3,.5);sTone(52,.16,.22,'sine',40,.05);sTone(47,.18,.17,'sine',37,.3)}
+function blastLights(t){const FX=H3.fx;if(!FX||!FX.light||!XV.b0||!LICH.in||XV.kill)return;const el=nowB()-XV.b0;if(el<0||el>=BX.BUSY)return;
+ for(let i=0;i<BX.N;i++){const ts=blastT(i),te=ts+BX.GROW+BX.WAIT;if(el<ts+300||el>te+900)continue;const p=blastPos(XV.seed,i),gy=floorY(p[0],p[1]);
+  if(el<te)FX.light(p[0],gy+6,p[1],55,[1,.2,.15],.45);else FX.light(p[0],gy+14,p[1],140,[.4,1,.45],2.6*(1-(el-te)/900))}}
 function sfxTick(k){sTone(70,.35,.25,'sine',45);sTone(140+k*30,.2,.05,'square',100)}
 function sfxMistBlast(){sNoise(1.8,.28,'lowpass',300,3200,.8);sNoise(2.4,.1,'bandpass',900,400,3);sTone(520,1.6,.05,'sawtooth',180);sTone(66,1.4,.3,'sine',30);for(let i=0;i<6;i++)sTone(700-i*60,1.2,.02,'sine',250,.1+i*.12)}
 function sfxMistGone(){sNoise(1.5,.06,'bandpass',1400,500,2)}
@@ -15835,12 +15898,16 @@ function overlay(x,t,Cm,sc){
  for(let i=HN.length-1;i>=0;i--)if(Date.now()-HN[i].t>(HN[i].big?2200:1400))HN.splice(i,1);
  if(HN.length&&!A.hide){const p=H3.proj(0,BASEY+1.02*LS,0);if(p)for(const h of HN){const L_=h.big?2200:1400,u=(Date.now()-h.t)/L_,f=round(clp(sc*10,11,22)*(h.big?1.5:1));x.save();x.globalAlpha=u<.8?1:(1-u)*5;x.textAlign='center';x.font='bold '+f+'px "Courier New",monospace';x.lineWidth=h.big?4:3;x.strokeStyle='#04210a';
   const yy=p[1]-u*(h.big?60:40)*sc/2-(h.big?20:0),xx=p[0]+(h.big?-20:18);x.strokeText(h.s,xx,yy);x.fillStyle=h.big?'#b6ff6a':'#7dff8a';x.fillText(h.s,xx,yy);x.restore()}}
- // atordoado
- if(LICH.stunned()){const r=clp((ST.until-Date.now())/MS.STUN,0,1),e0=Date.now()-ST.t0,pu=.5+.5*sin(Date.now()/160),gv=x.createRadialGradient(W/2,Hh/2,min(W,Hh)*.3,W/2,Hh/2,max(W,Hh)*.75);
-  gv.addColorStop(0,'rgba(20,120,40,0)');gv.addColorStop(1,'rgba(30,200,70,'+(.28+.12*pu).toFixed(3)+')');x.save();x.fillStyle=gv;x.fillRect(0,0,W,Hh);
-  const f=round(clp(Hh/14,18,40)),y=Hh*.36,al=clp(e0/250,0,1);x.globalAlpha=al;x.textAlign='center';x.textBaseline='middle';x.font='bold '+f+'px Georgia,serif';x.shadowColor='rgba(80,255,110,.9)';x.shadowBlur=16;
-  x.fillStyle='#e0ffd8';x.fillText('ATORDOADO',W/2,y);x.shadowBlur=0;x.font='italic '+round(f*.42)+'px Georgia,serif';x.fillStyle='#a9f0a9';x.fillText('a Névoa das Almas prendeu você e a sua equipe',W/2,y+f*.85);
-  const bw2=min(260,W*.5);x.fillStyle='rgba(0,0,0,.6)';x.fillRect(W/2-bw2/2-2,y+f*1.35-2,bw2+4,9);x.fillStyle='#7dff8a';x.fillRect(W/2-bw2/2,y+f*1.35,bw2*r,5);x.restore()}
+ // atordoado: olhos pesados piscando (a tela meio preto e branco e borrada é o filtro no canvas do 3D)
+ if(LICH.stunned()){const now_=Date.now(),e0=now_-ST.t0,left=ST.until-now_,r=clp(left/MS.STUN,0,1);
+  let c=.17+.07*sin(e0/830);
+  if(e0<900)c=lerp(1,c,ease(e0/900));
+  else{const ph=(e0-900)%2300;let b=0;if(ph<140)b=ease(ph/140);else if(ph<220)b=1;else if(ph<480)b=1-ease((ph-220)/260);c=max(c,b*.97)}
+  if(left<600)c*=left/600;
+  const ry=max(.004,1-c)*Hh*.74,rx=W*.8,k=ry/rx;x.save();x.translate(W/2,Hh/2);x.scale(1,k);const gr=x.createRadialGradient(0,0,rx*.5,0,0,rx);
+  gr.addColorStop(0,'rgba(0,0,0,0)');gr.addColorStop(.75,'rgba(0,0,0,.78)');gr.addColorStop(1,'rgba(0,0,0,1)');x.fillStyle=gr;x.fillRect(-W,-Hh/k,W*2,Hh*2/k);x.restore();
+  const f=round(clp(Hh/16,16,34)),y=Hh*.3,al=clp(e0/400,0,1)*clp(left/400,0,1);x.save();x.globalAlpha=al;x.textAlign='center';x.textBaseline='middle';x.font='bold '+f+'px Georgia,serif';x.shadowColor='rgba(0,0,0,.9)';x.shadowBlur=10;
+  x.fillStyle='#e8e8e8';x.fillText('ATORDOADO',W/2,y);x.shadowBlur=0;const bw2=min(220,W*.45);x.fillStyle='rgba(0,0,0,.6)';x.fillRect(W/2-bw2/2-2,y+f*.75-2,bw2+4,8);x.fillStyle='#9fd39f';x.fillRect(W/2-bw2/2,y+f*.75,bw2*r,4);x.restore()}
  // barra de vida do Lich
  if(!LICH.in)return;
  const bw=min(560,W*.6),bx=(W-bw)/2,by=round(clp(Hh*.05,10,28))+14,bh=round(clp(Hh*.026,9,16)),hp=st.k?0:max(0,hpAt(st,sn)-NET.pd-NET.fl),r=hp/BO.MAX,it=intang(st,sn);
@@ -15854,8 +15921,9 @@ function overlay(x,t,Cm,sc){
  if(heal){const k=(Date.now()%900)/900;x.fillStyle='rgba(190,255,190,.35)';x.fillRect(bx+bw*r*k-10,by,20,bh)}
  for(let q=1;q<10;q++){x.fillStyle='rgba(0,0,0,.35)';x.fillRect(bx+bw*q/10,by,1,bh)}
  // situação
- let msg='',col='#cfe9cf';const el=st.c0?sn-st.c0:-1,n=st.sk?st.sk.filter(v=>v>0).length:0,mel=MV.m0&&!MV.kill&&!st.k?mistEl(sn):-1;
+ let msg='',col='#cfe9cf';const el=st.c0?sn-st.c0:-1,n=st.sk?st.sk.filter(v=>v>0).length:0,mel=MV.m0&&!MV.kill&&!st.k?mistEl(sn):-1,bel=XV.b0&&!XV.kill&&!st.k?sn-XV.b0:-1;
  if(st.k){const r2=max(0,st.k+BO.RESP-sn)/1000;msg='O Lich foi derrotado! Ele volta em '+floor(r2/60)+':'+String(floor(r2%60)).padStart(2,'0');col='#ffe08a'}
+ else if(bel>=0&&bel<BX.DUR){msg='⚠ EXPLOSÕES DE ALMAS! Fuja dos círculos vermelhos';col='#ff8a7a'}
  else if(mel>=0&&mel<MS.WARN){msg='⚠ NÉVOA DAS ALMAS! Saia da área vermelha';col='#ff8a7a'}
  else if(mel>=MS.WARN&&mel<MS.END){msg='Não entre na Névoa das Almas! (atordoa e cura o Lich)';col='#9dff9a'}
  else if(el>=0&&el<BO.PULL){msg='⚠ O Lich mergulhou as mãos no poço!';col='#ffb36b'}
@@ -15891,7 +15959,13 @@ const SC=SCN.lich={id:'lich',K:1,OX,OY,eye:25,camD:70,p3:-.08,pl:[[-.95,1.1],[-1
  leave(){envOff();document.body.classList.remove('h3lich')},clear(){},
  boss:()=>null,isTgt:e=>!!(e&&e.lk),tgt:lichTgt,ghR:e=>e&&e.lk==='lich'?62:0,
  bossPlan:(t)=>{anim(performance.now());return()=>drawBoss(t)},numPos,
- flicker,draw:drawRoom,sprites,frameFx:t=>{try{mistLights(t)}catch(e){}},shake:t=>{const el=A.el,su=el>=BO.PULL&&el<BO.PULL+700?1-(el-BO.PULL)/700:0,dk=LV.dieT?max(0,1-(Date.now()-LV.dieT)/3200):0,me=A.mel,mb=me>=MS.WARN&&me<MS.WARN+600?(1-(me-MS.WARN)/600)*1.8:me>=MS.WARN-900&&me<MS.WARN?.35:0,p=max(A.pin||0,su*2.2,dk*1.4,(A.wHeal||0)*.15,mb);if(p<.05)return null;const k=p*.35;return[(Math.random()-.5)*k,(Math.random()-.5)*k,(Math.random()-.5)*k,0,0]},
+ flicker,draw:drawRoom,sprites,frameFx:t=>{try{mistLights(t);blastLights(t)}catch(e){}},shake:t=>{const el=A.el,su=el>=BO.PULL&&el<BO.PULL+700?1-(el-BO.PULL)/700:0,dk=LV.dieT?max(0,1-(Date.now()-LV.dieT)/3200):0,me=A.mel,mb=me>=MS.WARN&&me<MS.WARN+600?(1-(me-MS.WARN)/600)*1.8:me>=MS.WARN-400&&me<MS.WARN?.35:0,
+  xb=XV.shT&&Date.now()-XV.shT<450?(1-(Date.now()-XV.shT)/450)*2.2*XV.shK:0,p=max(A.pin||0,su*2.2,dk*1.4,(A.wHeal||0)*.15,mb,xb);
+  let o=null;if(p>=.05){const k=p*.35;o=[(Math.random()-.5)*k,(Math.random()-.5)*k,(Math.random()-.5)*k,0,0]}
+  // atordoado: a câmera sobe e desce como quem está ofegante, de cabeça um pouco baixa e balançando
+  if(LICH.stunned()){const e0=(Date.now()-ST.t0)/1000,k=min(1,e0/.5)*min(1,(ST.until-Date.now())/700),br=TAU*(.85-.25*min(1,e0/10));o=o||[0,0,0,0,0];
+   o[1]+=sin(e0*br)*1.1*k;o[4]+=(sin(e0*br+.7)*.045-.06)*k;o[3]+=sin(e0*1.3)*.03*k;o[0]+=sin(e0*.9)*.5*k}
+  return o},
  flash:()=>0,fbPos:()=>null,overlayExtra:overlay};
 {const st=document.createElement('style');st.textContent='body.h3lich #h3ov{background:radial-gradient(ellipse at 50% 46%,rgba(0,0,0,0) 48%,rgba(2,10,4,.42) 80%,rgba(0,4,1,.72) 100%)}';document.head.appendChild(st)}
 
@@ -15917,7 +15991,7 @@ LICH.exit=goOut;
 // a cena de fora não fica ativa enquanto o jogador está na cripta (nem no instante de voltar para o 2D)
 {const H=SCN.hal;if(H){const _a=H.active;H.active=function(){if(LICH.in||LICH.pend2)return false;return _a.apply(this,arguments)}}}
 // mudou de mundo: sai da cripta
-{const _gw=goWorld;goWorld=function(n){const r=_gw.apply(this,arguments);if(world!==1&&LICH.in){LICH.in=false;LICH.want3=0}return r}}
+{const _gw=goWorld;goWorld=function(n){const r=_gw.apply(this,arguments);if(world!==1&&LICH.in){LICH.in=false;LICH.want3=0}if(world!==1){ST.until=0;try{const cv=document.getElementById('h3gl');if(cv)cv.style.filter='';ST.fs=''}catch(e){}}return r}}
 // tick: portal de teste, saída pela escada e garantir que a cripta está em 3D
 {const _t=tick;tick=function(){try{lichTick()}catch(e){console.error('Lich',e)}return _t.apply(this,arguments)}}
 function lichTick(){
@@ -17010,7 +17084,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261024074718;
+const GAME_BUILD=20261024081300;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
