@@ -1812,7 +1812,7 @@ function killLocal(e,t){giveDrop(e,t);e.dead=true;questKill(e);bossDrop(e,t);e.b
 stepChars=function(){const t=Date.now();
  if(world===2)wbUpd();
  equipped=equipped.filter(id=>chars.some(k=>k.id===id));if(!equipped.length)fight=null;
- if(fight&&(fight.dead||Math.hypot(P.x-fight.x,P.y-fight.y)>(fight.wb?240:fight.dm?200:100))){fight=null;resetF()}
+ if(fight&&(fight.dead||Math.hypot(P.x-fight.x,P.y-fight.y)>(fight.lk==='lich'?400:fight.wb?240:fight.dm?200:100))){fight=null;resetF()}
  // renasce quando o tempo acaba, mesmo com o jogador parado em cima (AFK). Se nascer encostado nele, não prende o jogador (e.ov) até ele se afastar
  EN.forEach(e=>{const pd=Math.hypot(P.x-e.x,P.y-e.y);if(e.ov&&pd>e.r+12)e.ov=0;if(!e.wb&&e.dead&&t>=e.back){e.dead=false;e.hp=e.max;e.dh=e.max;e.sp=t;e.ov=pd<=e.r+12?1:0}});
  const slots=fight?formation(fight):null,me=MEK();
@@ -15306,13 +15306,13 @@ function free(){const gl=G.gl;G.ok=false;LICH.ready=false;if(gl&&!gl.isContextLo
 //  0–3 s   mergulha as duas mãos no líquido
 //  3 s     puxão rápido: o líquido sobe na borda do poço (muralha), empurra todo mundo para longe e ele fica INTANGÍVEL;
 //          o livro sai do poço e flutua na frente dele (ele o controla com magia) — 3–9 s recitando o encantamento
-//  9 s     10 círculos mágicos acendem no chão e ele começa a se curar (50.000/s) recitando outro encantamento
+//  9 s     10 círculos mágicos acendem no chão e ele começa a se curar (25.000/s) recitando outro encantamento
 //  10,2 s  os 10 esqueletos (100.000 de vida cada) sobem do chão; os círculos apagam
 //  matar os 10 → a muralha cai e ele fica tangível (ainda se curando) · o 1º golpe nele interrompe a cura, o livro cai no poço e os 60 s recomeçam.
 // Online, o estado mora em lich/s no banco: todos veem a mesma vida, o mesmo feitiço e os mesmos esqueletos; cada jogador manda o próprio dano
 // numa transação a cada ~0,5 s (quem chega primeiro na hora do feitiço é quem o dispara). Sem as regras de lich/ publicadas no Firebase
 // (ou jogando offline) tudo funciona igual, só que cada aparelho tem o seu próprio Lich.
-const BO={MAX:10000000,HEAL:50000,SKHP:100000,NSK:10,RESP:30000,IDLE:300000,CYCLE:60000,PULL:3000,SPAWN:9000,RISE:10200,UP:11800};
+const BO={MAX:10000000,HEAL:25000,SKHP:100000,NSK:10,RESP:30000,IDLE:300000,CYCLE:60000,PULL:3000,SPAWN:9000,RISE:10200,UP:11800};
 const NET={ref:null,on:false,denied:false,st:null,pd:0,fl:0,ps:new Array(BO.NSK).fill(0),fls:new Array(BO.NSK).fill(0),busy:0,lastF:0,want:0,leftT:0};
 let LOC=null;
 const srvNow=()=>Date.now()+((window.MP&&+MP.off)||0);                    // hora do servidor (mesma conta do resto do jogo)
@@ -15363,7 +15363,7 @@ let hintT=0;const hint=m=>{const n=Date.now();if(n-hintT<4000)return;hintT=n;try
 const stopFight=()=>{fight=null;try{Object.values(fpos).forEach(q=>{q.nx=0;q.sk=null})}catch(e){}};
 function syncEN(st,now){mkEN();const L=LE.lich;if(!L)return;const inA=LICH.in&&world===1,alive=inA&&!st.k&&!LV.dieT,it=intang(st,now);
  L.dead=!alive;L.back=Infinity;L.eng=alive&&!it?84:0;L.hp=alive?max(1,round(hpAt(st,now)-NET.pd-NET.fl)):0;
- const px=P.x+8-OX,pz=P.y+14-OY,a=atan2(pz,px);L.x=cos(a)*62-8+OX;L.y=sin(a)*62-14+OY;          // âncora na borda do poço do lado do jogador
+ if(fight===L){L.x=OX-8;L.y=OY-14}else{const px=P.x+8-OX,pz=P.y+14-OY,a=atan2(pz,px);L.x=cos(a)*62-8+OX;L.y=sin(a)*62-14+OY}   // fora da luta: âncora na borda (botão Lutar) · lutando: no centro
  if(fight===L&&(it||!alive)){stopFight();if(it&&alive)hint('O Lich está intangível! Derrote os esqueletos.')}
  for(let i=0;i<BO.NSK;i++){const e=LE.sk[i],hp=st.c0&&st.sk?st.sk[i]:0,up=inA&&!!st.c0&&now>=st.c0+BO.UP&&hp>0;
   e.dead=!up;e.back=Infinity;e.hp=up?max(1,round(hp-NET.ps[i]-NET.fls[i])):0;if(fight===e&&!up)stopFight()}}
@@ -15375,10 +15375,13 @@ function bossHit(e,d){const st=cur(),now=nowB();if(!(d>0))return;
  else{const i=e.si;if(!st.sk||!(st.sk[i]>0)||now<st.c0+BO.UP)return;NET.ps[i]+=d;MY.sk[i]+=d}
  e.hp=max(1,e.hp-d);e.lh=Date.now()}
 // a equipe em volta do poço, no lado de cada jogador (o padrão espalharia todo mundo em volta do Lich, passando por dentro do líquido)
-LICH.form=function(e){if(e._ff===frame&&e._fm)return e._fm;const m=new Map(),me=(window.MP&&MP.uid&&MP.me)?MP.uid:'~eu';
- const put=(owner,n,x,y)=>{const a=atan2(y+14-OY,x+8-OX);for(let i=0;i<n;i++){const aa=a+(i-(n-1)/2)*.2;m.set(owner+':'+i,{x:OX-8+cos(aa)*90,y:OY-14+sin(aa)*90})}};
- try{if(fight===e)put(me,equipped.length,P.x,P.y);
-  if(window.MP&&MP.me&&MP.live){const idx=EN.indexOf(e);for(const id in MP.others){const r=MP.others[id];if(MP.live(r)&&r.f===idx)put(id,(r.k||[]).length,r.x,r.y)}}}catch(x){}
+LICH.form=function(e){if(e._ff===frame&&e._fm)return e._fm;const m=new Map(),parts=[],me=(window.MP&&MP.uid&&MP.me)?MP.uid:'~eu';
+ // padrão do jogo: posições fixas em volta do poço, que se reorganizam pelo número de personagens batendo (de todos os jogadores)
+ try{if(fight===e)equipped.forEach((id,i)=>parts.push({k:me+':'+i,o:me,i}));
+  if(window.MP&&MP.me&&MP.live){const idx=EN.indexOf(e);for(const id in MP.others){const r=MP.others[id];if(MP.live(r)&&r.f===idx)(r.k||[]).forEach((c,i)=>parts.push({k:id+':'+i,o:id,i}))}}}catch(x){}
+ parts.sort((a,b)=>a.o<b.o?-1:a.o>b.o?1:a.i-b.i);
+ const N=parts.length,R=N>1?max(90,9.5/sin(PI/N)):90,cx=OX-8,cy=OY-14;
+ parts.forEach((p,j)=>{const a=N===1?PI/2:PI/2+PI/N+2*PI*j/N;m.set(p.k,{x:cx+cos(a)*R,y:cy+sin(a)*R})});
  e._ff=frame;e._fm=m;return m};
 
 // ---------- o que cada aparelho vê (tempo local), mudanças de estado, recompensas, empurrão ----------
@@ -15659,7 +15662,7 @@ function overlay(x,t,Cm,sc){
  const heal=st.c0&&st.h&&sn>=st.c0+BO.SPAWN&&!st.k;if(heal&&Date.now()-SV.lastHeal>1000&&hpAt(st,sn)<BO.MAX){SV.lastHeal=Date.now();HN.push(Date.now())}
  while(HN.length&&Date.now()-HN[0]>1400)HN.shift();
  if(HN.length&&!A.hide){const p=H3.proj(0,BASEY+1.02*LS,0);if(p)for(const h0 of HN){const u=(Date.now()-h0)/1400,f=round(clp(sc*10,11,22));x.save();x.globalAlpha=u<.8?1:(1-u)*5;x.textAlign='center';x.font='bold '+f+'px "Courier New",monospace';x.lineWidth=3;x.strokeStyle='#04210a';
-  const yy=p[1]-u*40*sc/2;x.strokeText('+50.000',p[0]+18,yy);x.fillStyle='#7dff8a';x.fillText('+50.000',p[0]+18,yy);x.restore()}}
+  const yy=p[1]-u*40*sc/2;x.strokeText('+25.000',p[0]+18,yy);x.fillStyle='#7dff8a';x.fillText('+25.000',p[0]+18,yy);x.restore()}}
  // barra de vida do Lich
  if(!LICH.in)return;
  const bw=min(560,W*.6),bx=(W-bw)/2,by=round(clp(Hh*.05,10,28))+14,bh=round(clp(Hh*.026,9,16)),hp=st.k?0:max(0,hpAt(st,sn)-NET.pd-NET.fl),r=hp/BO.MAX,it=intang(st,sn);
@@ -15677,7 +15680,7 @@ function overlay(x,t,Cm,sc){
  if(st.k){const r2=max(0,st.k+BO.RESP-sn)/1000;msg='O Lich foi derrotado! Ele volta em '+floor(r2/60)+':'+String(floor(r2%60)).padStart(2,'0');col='#ffe08a'}
  else if(el>=0&&el<BO.PULL){msg='⚠ O Lich mergulhou as mãos no poço!';col='#ffb36b'}
  else if(it&&el<BO.SPAWN){msg='INTANGÍVEL · ele está recitando um encantamento...';col='#c4b8ff'}
- else if(it){msg='INTANGÍVEL · derrote os esqueletos ('+(BO.NSK-n)+'/'+BO.NSK+') · ele se cura +50.000/s';col='#c4b8ff'}
+ else if(it){msg='INTANGÍVEL · derrote os esqueletos ('+(BO.NSK-n)+'/'+BO.NSK+') · ele se cura +25.000/s';col='#c4b8ff'}
  else if(st.c0){msg='Ele está se curando! Acerte o Lich para interromper';col='#9dff9a'}
  else if(st.nx){msg='Próximo feitiço em '+max(0,Math.ceil((st.nx-sn)/1000))+' s';col='#cfe9cf'}
  else msg='Chegue perto do poço e toque em Lutar';
@@ -16823,7 +16826,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261024050032;
+const GAME_BUILD=20261024051318;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
