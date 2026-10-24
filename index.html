@@ -4292,6 +4292,34 @@ function heye(s0,state,k0){if(state==='open')return s0;const key=k0+state;if(HEY
  return HEYE[key]=R}
 // colunas da folha: 0-1 parado (respira) · 2-3 piscando · 4-11 andando · 12-13 olhando para os lados · 14-15 sentado · 16-17 dormindo
 function eyesOf(col){return col<=1?'open':col<=3?'closed':col<=11?'open':col===12?'lookL':col===13?'lookR':col>=16?'closed':'open'}
+// andar de lado: a perna de perto e a de longe giram no quadril (coxa) e no joelho (canela e pé), o braço balança no ombro,
+// e o corpo todo sobe/desce para o pé de apoio sempre tocar o chão
+function sideWalk(col,sp,lb,ext,put){
+ const ph=(col-4)*Math.PI/4,A=.58,F=.6,e=ext.N,yt=e.y0,y0=e.y0+4,y1=e.y1,L=y1-y0+1,yk=y0+Math.round(L*.45);
+ const mx=(y,y2,ch)=>{let s=0,n=0;for(let yy=y;yy<=y2;yy++)for(let x=0;x<HW;x++)if(lb[yy][x]===ch&&sp[yy][x]!=='.'){s+=x;n++}return n?s/n:HW/2};
+ const hx=mx(y0,y0+2,'N'),kx=mx(yk,yk+1,'N');
+ const rF=(dx,dy,a)=>[dx*Math.cos(a)+dy*Math.sin(a),-dx*Math.sin(a)+dy*Math.cos(a)],rI=(dx,dy,a)=>[dx*Math.cos(a)-dy*Math.sin(a),dx*Math.sin(a)+dy*Math.cos(a)];
+ const leg=(th,fl)=>{const res=[],kn=rF(kx-hx,yk-y0,th),ts=th-fl;
+  for(let y=Math.max(0,y0-3);y<Math.min(HH,y1+14);y++)for(let x=Math.max(0,Math.round(hx)-26);x<Math.min(HW,Math.round(hx)+26);x++){
+   let r=rI(x-hx,y-y0,th),sx=Math.round(r[0]+hx),sy=Math.round(r[1]+y0);
+   if(sy>=y0&&sy<yk&&sx>=0&&sx<HW&&lb[sy][sx]==='N'&&sp[sy][sx]!=='.'){res.push([x,y,sp[sy][sx]]);continue}
+   r=rI(x-hx-kn[0],y-y0-kn[1],ts);sx=Math.round(r[0]+kx);sy=Math.round(r[1]+yk);
+   if(sy>=yk&&sy<=y1&&sx>=0&&sx<HW&&lb[sy][sx]==='N'&&sp[sy][sx]!=='.')res.push([x,y,sp[sy][sx]])}
+  return res};
+ const th1=A*Math.sin(ph),fl1=F*Math.max(0,Math.cos(ph)),th2=A*Math.sin(ph+Math.PI),fl2=F*Math.max(0,Math.cos(ph+Math.PI));
+ const near=leg(th1,fl1),far=leg(th2,fl2);
+ let mxY=0;near.concat(far).forEach(q=>{if(q[1]>mxY)mxY=q[1]});
+ const dy=Math.max(-3,Math.min(3,y1-mxY));
+ far.forEach(([x,y,c])=>put(x,y+dy,c,1));near.forEach(([x,y,c])=>put(x,y+dy,c,0));
+ for(let y=0;y<HH;y++)for(let x=0;x<HW;x++){const n=lb[y][x];if((n==='T'||n==='H'||(n==='N'&&y<y0))&&sp[y][x]!=='.')put(x,y+dy,sp[y][x],0)}
+ // braço: balança no ombro, ao contrário da perna de perto
+ const ea=ext.A,ax=mx(ea.y0,ea.y0+2,'A'),ps=-A*.55*Math.sin(ph);
+ for(let y=Math.max(0,ea.y0-4);y<Math.min(HH,ea.y1+8);y++)for(let x=Math.max(0,Math.round(ax)-16);x<Math.min(HW,Math.round(ax)+16);x++){
+  const r=rI(x-ax,y-ea.y0,ps),sx=Math.round(r[0]+ax),sy=Math.round(r[1]+ea.y0);
+  if(sx>=0&&sx<HW&&sy>=0&&sy<HH&&lb[sy][sx]==='A'&&sp[sy][sx]!=='.')put(x,y+dy,sp[sy][sx],0)}
+ // cabeça por cima de tudo
+ for(let y=0;y<HH;y++)for(let x=0;x<HW;x++)if(lb[y][x]==='H'&&sp[y][x]!=='.')put(x,y+dy,sp[y][x],0);
+ return dy}
 // monta um quadro do corpo: {c:[HH][HW] letras do desenho, f: pixel de membro mais longe (escurecido)}
 function hbody(g,view,col){
  const sit=col>=14,v=sit?'front':view,sp=heye(spr(g,v),eyesOf(col),g+v),lb=lbl(g,v);
@@ -4316,6 +4344,7 @@ function hbody(g,view,col){
   for(const[ch,sh]of[['l',-2],['r',2]])for(let i=0;i<n;i++){const sy=i<K1?y0+i:y1-(n-1-i);for(let x=0;x<HW;x++)if(lb[sy][x]===ch&&sp[sy][x]!=='.')put(x+sh,top+i,sp[sy][x],0)}
   dT=[0,SD];dH=[0,SD+sl+ex];const ea=[0,SD+ex];
   solid('T',dT);limb('a','a',ea);limb('b','b',ea);solid('H',dH)}
+ else if(v==='side'&&col>=4&&col<=11&&ext.N&&ext.A){dT=[0,sideWalk(col,sp,lb,ext,put)]}
  else if(v==='side'){
   if(ext.N){const nf=D.n[0]||D.n[1]||D.n[2]||D.n[3]?D.n:D.N;limb('n','N',[nf[2],nf[3]],1);limb('N','N',[D.N[2],D.N[3]],0)}
   solid('T',dT);if(ext.A)limb('A','A',[D.A[2],D.A[3]],0);solid('H',dH)}
@@ -16960,7 +16989,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261024175008;
+const GAME_BUILD=20261024175724;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
