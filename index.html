@@ -15312,7 +15312,7 @@ function free(){const gl=G.gl;G.ok=false;LICH.ready=false;if(gl&&!gl.isContextLo
 // Online, o estado mora em lich/s no banco: todos veem a mesma vida, o mesmo feitiço e os mesmos esqueletos; cada jogador manda o próprio dano
 // numa transação a cada ~0,5 s (quem chega primeiro na hora do feitiço é quem o dispara). Sem as regras de lich/ publicadas no Firebase
 // (ou jogando offline) tudo funciona igual, só que cada aparelho tem o seu próprio Lich.
-const BO={MAX:10000000,HEAL:50000,SKHP:100000,NSK:10,RESP:300000,IDLE:300000,CYCLE:60000,PULL:3000,SPAWN:9000,RISE:10200,UP:11800};
+const BO={MAX:10000000,HEAL:50000,SKHP:100000,NSK:10,RESP:30000,IDLE:300000,CYCLE:60000,PULL:3000,SPAWN:9000,RISE:10200,UP:11800};
 const NET={ref:null,on:false,denied:false,st:null,pd:0,fl:0,ps:new Array(BO.NSK).fill(0),fls:new Array(BO.NSK).fill(0),busy:0,lastF:0,want:0,leftT:0};
 let LOC=null;
 const srvNow=()=>Date.now()+((window.MP&&+MP.off)||0);                    // hora do servidor (mesma conta do resto do jogo)
@@ -16823,7 +16823,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261024045715;
+const GAME_BUILD=20261024050032;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
