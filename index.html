@@ -1175,7 +1175,7 @@ function renderInv(){invInfo();const eq=equipped.map(id=>chars.find(k=>k.id===id
  paint('#grid',k=>openDet(k.id))}
 function openDet(id){const k=chars.find(c=>c.id===id);if(!k)return;curId=id;
  const c=$('detC');c.dataset.r=k.rar;drawSp(c,k.rar,2,k.sh,k.name);
- const on=equipped.includes(id),mx=k.lvl>=10;
+ const on=equipped.includes(id),mx=k.lvl>=20;
  $('detT').innerHTML=`<b>${escH(k.name)}</b><br>${badge(k)} · Nv ${k.lvl}${mx?' (MAX)':''}<br>Dano: ${dmgOf(k)}${pasTxt(k)}<br>Vida: ${k.hp||'-'}<br>XP: ${mx?'-':k.xp+'/'+need(k.lvl)}`;
  $('detMsg').textContent='';$('eqBtn').textContent=on?'Guardar':'Invocar';
  $('feedBtn').classList.toggle('dis',mx);
@@ -1189,7 +1189,7 @@ $('eqBtn').onclick=()=>{const id=curId;
 $('sellBtn').onclick=()=>{const k=chars.find(c=>c.id===curId);if(!k)return;
  if(equipped.includes(k.id)){$('detMsg').textContent='Guarde o personagem antes de vender';return}
  coins+=SELL[k.rar];chars=chars.filter(c=>c.id!==k.id);save();updHud();$('detM').style.display='none';renderInv()};
-$('feedBtn').onclick=()=>{const k=chars.find(c=>c.id===curId);if(!k||k.lvl>=10){$('detMsg').textContent='Nível máximo';return}
+$('feedBtn').onclick=()=>{const k=chars.find(c=>c.id===curId);if(!k||k.lvl>=20){$('detMsg').textContent='Nível máximo';return}
  sel=new Set();$('detM').style.display='none';renderFeed();$('feedM').style.display='flex'};
 function renderFeed(){const t=chars.find(c=>c.id===curId);
  const list=chars.filter(k=>k.id!==t.id&&!equipped.includes(k.id)).sort((a,b)=>a.rar-b.rar);
@@ -1198,7 +1198,7 @@ function renderFeed(){const t=chars.find(c=>c.id===curId);
  const xp=[...sel].reduce((a,id)=>a+XPV[chars.find(c=>c.id===id).rar],0);
  $('feedGo').textContent=`Alimentar ${t.name} (+${xp} XP)`;$('feedGo').classList.toggle('dis',!sel.size);$('feedGo').dataset.xp=xp}
 $('feedGo').onclick=()=>{if(!sel.size)return;const t=chars.find(c=>c.id===curId);t.xp+=+$('feedGo').dataset.xp;chars=chars.filter(c=>!sel.has(c.id));
- while(t.lvl<10&&t.xp>=need(t.lvl)){t.xp-=need(t.lvl);t.lvl++}if(t.lvl>=10)t.xp=0;
+ while(t.lvl<20&&t.xp>=need(t.lvl)){t.xp-=need(t.lvl);t.lvl++}if(t.lvl>=20)t.xp=0;
  save();$('feedM').style.display='none';renderInv();openDet(t.id)};
 $('feedBack').onclick=()=>{$('feedM').style.display='none';openDet(curId)};
 const UPS=[{k:'x2',n:'Girar 2 em 2',d:'Abre 2 personagens por giro (custa 20 moedas)',c:100},{k:'x3',n:'Girar 3 em 3',d:'Abre 3 personagens por giro (custa 30 moedas). Requer o 2 em 2',c:1000,req:'x2'},{k:'x4',n:'Girar 4 em 4',d:'Abre 4 personagens por giro (custa 40 moedas). Requer o 3 em 3',c:10000,req:'x3'},{k:'x5',n:'Girar 5 em 5',d:'Abre 5 personagens por giro (custa 50 moedas). Requer o 4 em 4',c:100000,req:'x4'},{k:'auto',n:'Auto Click',d:'Soca automaticamente 1 vez a cada 0,5s durante a luta',c:1000},{k:'autostar',n:'Auto Estrela',d:'Gira a estrela sozinho (botão Auto na roleta)',c:10000},{k:'autopas',n:'Auto Passiva',d:'Roleta passivas sozinho até sair a passiva alvo',c:10000}];   // o 'Slot extra' saiu da loja (quem já comprou continua com ele: ups.slot)
@@ -1457,14 +1457,14 @@ $('wClose').onclick=()=>{$('wM').style.display='none';lock=false};
 // --- inventário: slots + em massa + auto
 function invInfo(){$('invInfo').innerHTML=`Slots: <b style="color:${chars.length>=cap()?'#ff5252':'#fff'}">${chars.length}/${cap()}</b>`;$('buySlot').classList.toggle('dis',coins<1000)}
 $('buySlot').onclick=()=>{if(coins<1000)return;coins-=1000;ups.inv=(ups.inv||0)+1;save();updHud();invInfo()};
-function lvlUp(t){while(t.lvl<10&&t.xp>=need(t.lvl)){t.xp-=need(t.lvl);t.lvl++}if(t.lvl>=10)t.xp=0}
+function lvlUp(t){while(t.lvl<20&&t.xp>=need(t.lvl)){t.xp-=need(t.lvl);t.lvl++}if(t.lvl>=20)t.xp=0}
 function rarPanel(el,st,onch){const us=chars.slice().sort((a,b)=>b.rar-a.rar||b.lvl-a.lvl);
  el.innerHTML=`<div style="font-size:11px;opacity:.8;margin-bottom:4px">Unidade que recebe o XP:</div><select style="width:100%;margin-bottom:8px;background:#111;color:#fff;padding:6px;border-radius:6px"><option value="">— nenhuma —</option>${us.map(k=>`<option value="${k.id}"${k.id===st.unit?' selected':''}>${k.sh?'✦ ':''}${escH(k.name)} · ${RAR[k.rar]} Nv${k.lvl}</option>`).join('')}</select><div style="display:grid;grid-template-columns:1fr auto auto;gap:5px;align-items:center;font-size:12px;text-align:left"><span></span><b>Vender</b><b>Alimentar</b>${RAR.map((r,i)=>`<span style="color:${COL[i]||'#f0f'};font-weight:bold">${r}</span><button class="btn tg${st.sell[i]?' on':''}" data-t="sell" data-i="${i}">${st.sell[i]?'✓':'—'}</button><button class="btn tg${st.feed[i]?' on':''}" data-t="feed" data-i="${i}">${st.feed[i]?'✓':'—'}</button>`).join('')}</div>`;
  el.querySelector('select').onchange=e=>{st.unit=+e.target.value||null;onch&&onch()};
  el.querySelectorAll('.tg').forEach(b=>b.onclick=()=>{const a=st[b.dataset.t],i=+b.dataset.i;a[i]=a[i]?0:1;rarPanel(el,st,onch);onch&&onch()})}
 const mst={sell:[0,0,0,0,0],feed:[0,0,0,0,0],unit:null};
 function massPlan(st){const u=chars.find(c=>c.id===st.unit),r={u,sell:[],feed:[],xp:0,gold:0};
- chars.forEach(k=>{if(equipped.includes(k.id)||k.sh||k.pas||(u&&k.id===u.id))return;if(st.feed[k.rar]&&u&&u.lvl<10){r.feed.push(k.id);r.xp+=XPV[k.rar]}else if(st.sell[k.rar]){r.sell.push(k.id);r.gold+=SELL[k.rar]}});return r}
+ chars.forEach(k=>{if(equipped.includes(k.id)||k.sh||k.pas||(u&&k.id===u.id))return;if(st.feed[k.rar]&&u&&u.lvl<20){r.feed.push(k.id);r.xp+=XPV[k.rar]}else if(st.sell[k.rar]){r.sell.push(k.id);r.gold+=SELL[k.rar]}});return r}
 function massPrev(){const p=massPlan(mst);$('massGo').dataset.c='';$('massGo').textContent='Executar';$('massInfo').textContent=`Vender ${p.sell.length} (+${p.gold} moedas) · Alimentar ${p.feed.length} (+${p.xp} XP)`;$('massGo').classList.toggle('dis',!p.sell.length&&!p.feed.length)}
 $('massBtn').onclick=()=>{rarPanel($('massP'),mst,massPrev);massPrev();$('massM').style.display='flex'};
 $('massClose').onclick=()=>$('massM').style.display='none';
@@ -1472,7 +1472,7 @@ $('massGo').onclick=()=>{const p=massPlan(mst);if(!p.sell.length&&!p.feed.length
  coins+=p.gold;if(p.u){p.u.xp+=p.xp;lvlUp(p.u)}const rm=new Set([...p.sell,...p.feed]);chars=chars.filter(c=>!rm.has(c.id));save();updHud();renderInv();massPrev();$('massM').style.display='none'};
 $('cfgBtn').onclick=()=>{const p=$('cfgP');if(p.style.display==='none'){rarPanel(p,aset,save);p.style.display='block'}else p.style.display='none'};
 function autoProc(ws){const u=chars.find(c=>c.id===aset.unit);
- ws.forEach(w=>{if(w.sh)return;if(aset.feed[w.rar]&&u&&u.lvl<10&&u.id!==w.id){u.xp+=XPV[w.rar];lvlUp(u);w._a='f'}else if(aset.sell[w.rar]){coins+=SELL[w.rar];w._a='v'}});chars=chars.filter(c=>!c._a)}
+ ws.forEach(w=>{if(w.sh)return;if(aset.feed[w.rar]&&u&&u.lvl<20&&u.id!==w.id){u.xp+=XPV[w.rar];lvlUp(u);w._a='f'}else if(aset.sell[w.rar]){coins+=SELL[w.rar];w._a='v'}});chars=chars.filter(c=>!c._a)}
 // --- estrela
 let autoOn=false;
 const showChar=(el,k)=>{el.innerHTML=`<canvas class="sp" data-r="${k.rar}" width="12" height="12"></canvas><div style="color:${COL[k.rar]||'#f0f'};font-weight:bold;margin-top:2px">${k.sh?'✦ ':''}${escH(k.name)}</div>`;drawSp(el.firstChild,k.rar,2,k.sh,k.name)};
@@ -1644,7 +1644,7 @@ const fmtN=n=>n>=1e6?(n/1e6).toFixed(1)+'M':n>=1000?(n/1000).toFixed(1)+'K':''+n
 function popClose(){$('popM').style.display='none'}
 $('popM').addEventListener('click',e=>{if(e.target===$('popM'))popClose()});
 function openDet(id){const k=chars.find(c=>c.id===id);if(!k)return;curId=id;
- const on=equipped.includes(id),mx=k.lvl>=10,p=PAS[k.pas],col=COL[k.rar]||'#ff4fd8';
+ const on=equipped.includes(id),mx=k.lvl>=20,p=PAS[k.pas],col=COL[k.rar]||'#ff4fd8';
  const pct=mx?100:Math.min(100,Math.round(k.xp/need(k.lvl)*100));
  $('popMain').innerHTML=`<div class="hd"><canvas class="sp${k.sh?' shn':''}" id="popC" data-r="${k.rar}" width="12" height="12"></canvas><div><div class="nmx">${k.sh?'✦ ':''}${escH(k.name)}</div><div class="rr" style="color:${col}">${RAR[k.rar]}${k.sh?' · <span class="rbw">✦Shiny</span>':''}</div></div></div>
  <div class="pstat"><span>NV</span><b class="lv">${k.lvl}${mx?' MAX':''}</b><span>DANO</span><b class="dm">${fmtN(dmgOf(k))}</b></div>
@@ -1664,7 +1664,7 @@ function openDet(id){const k=chars.find(c=>c.id===id);if(!k)return;curId=id;
  $('pEq').onclick=()=>{if(equipped.includes(id)){equipped=equipped.filter(x=>x!==id);delete fpos[id]}
   else if(equipped.length>=maxEq()){msg('Máximo de '+maxEq()+' equipados');return}
   else equipped.push(id);save();popClose();renderInv()};
- $('pFeed').onclick=()=>{if(k.lvl>=10){msg('Nível máximo');return}sel=new Set();popClose();renderFeed();$('feedM').style.display='flex'};
+ $('pFeed').onclick=()=>{if(k.lvl>=20){msg('Nível máximo');return}sel=new Set();popClose();renderFeed();$('feedM').style.display='flex'};
  $('pSell').onclick=()=>{if(equipped.includes(id)){msg('Guarde o personagem antes de vender');return}coins+=SELL[k.rar];chars=chars.filter(c=>c.id!==id);save();updHud();popClose();renderInv()};
  $('popM').style.display='flex'}
 const pct_=x=>Math.round(x*100);
@@ -2222,7 +2222,7 @@ updHud=function(){$('hud').textContent=''+nf(coins)+(world===1?'  '+nf(pk):'')+'
 const _qk=questKill;
 questKill=function(e){_qk(e);onKill(e)};
 function onKill(e){const t=Date.now();st.kills++;if(e.t===2){st.boss++;prog('boss',1)}
- if(buffs.xp>0){const xp=[25,75,250,150][e.t]||25;let any=0;equipped.forEach(id=>{const k=chars.find(c=>c.id===id);if(k&&k.lvl<10){k.xp+=xp;lvlUp(k);any=1}});if(any)fx.push({x:P.x-6,y:P.y-16,t,s:'+'+xp+' XP',c:'#b388ff',big:1})}
+ if(buffs.xp>0){const xp=[25,75,250,150][e.t]||25;let any=0;equipped.forEach(id=>{const k=chars.find(c=>c.id===id);if(k&&k.lvl<20){k.xp+=xp;lvlUp(k);any=1}});if(any)fx.push({x:P.x-6,y:P.y-16,t,s:'+'+xp+' XP',c:'#b388ff',big:1})}
  const dm=bm('d');
  if(Math.random()<[.006,.02,.08,.05][e.t]*dm){const id=['f1','s1','d1','m1'][ri(0,3)];addItem(id,1);fx.push({x:e.x-10,y:e.y-22,t,s:'+1 '+IT[id].n,c:IT[id].c});qToast('Drop: '+IT[id].n+' (está no inventário)')}
  if(e.t===2&&Math.random()<.015*dm){const id=['f2','s2','d2','m2'][ri(0,3)];addItem(id,1);qToast('Drop raro: '+IT[id].n+'!')}
@@ -2267,7 +2267,7 @@ const ACH=[
  {id:'g10k',n:'Bolso Cheio',d:'Obtenha 10.000 de ouro',s:'gold',g:1e4,rw:{i:'m1'}},
  {id:'g1m',n:'Milionário',d:'Obtenha 1.000.000 de ouro',s:'gold',g:1e6,rw:{i:'m2',n:2}},
  {id:'pot10',n:'Alquimista',d:'Use 10 poções',s:'pots',g:10,rw:{i:'d1'}},
- {id:'lv10',n:'Mestre',d:'Tenha um lutador no nível 10',s:'maxlv',g:10,rw:{e:2}},
+ {id:'lv10',n:'Mestre',d:'Tenha um lutador no nível 10',s:'maxlv',g:10,rw:{e:2}},{id:'lv20',n:'Lenda',d:'Tenha um lutador no nível 20',s:'maxlv',g:20,rw:{e:4}},
  {id:'hw',n:'Explorador',d:'Visite o mundo Halloween',s:'hw',g:1,rw:{c:300}},
  {id:'h10',n:'Dedicado',d:'Jogue por 10 horas',s:'pt',g:36000,rw:{i:'f2'}},
  {id:'ms20',n:'Missionário',d:'Complete 20 missões',s:'mis',g:20,rw:{i:'d2'}},
@@ -17258,7 +17258,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261024162710;
+const GAME_BUILD=20261024164641;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
