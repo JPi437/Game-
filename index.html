@@ -16047,7 +16047,9 @@ window.HMON_DATA={"zombie":{"n":18327,"ni":45000,"h":1.0878,"min":[-0.277723,1.6
 'use strict';
 const H3=window.H3,DATA=window.HMON_DATA;
 if(!H3||!DATA||!H3.scenes||!H3.scenes.hal||!H3.M4){console.warn('HM3: faltam módulos do 3D');return}
-const SC=H3.scenes.hal,M4=H3.M4;
+let SC=H3.scenes.hal;const M4=H3.M4,IOX=2464;
+// a cena atual: o cemitério (hal) ou o interior da Catedral (halIn, x ≥ 2464); cada monstro aparece só na cena em que está
+const OXs=()=>SC.OX||0,inHere=e=>(e.x>=IOX-8)===(SC.id==='halIn');
 const PI=Math.PI,TAU=PI*2,sin=Math.sin,cos=Math.cos,abs=Math.abs,min=Math.min,max=Math.max,hypot=Math.hypot,atan2=Math.atan2;
 const clp=(v,a,b)=>v<a?a:v>b?b:v,lerp=(a,b,t)=>a+(b-a)*t,ease=u=>u<=0?0:u>=1?1:u*u*(3-2*u),easeIn=u=>u<=0?0:u>=1?1:u*u*u;
 const angd=(a,b)=>{let d=(b-a)%TAU;if(d>PI)d-=TAU;if(d<-PI)d+=TAU;return d};
@@ -16150,9 +16152,9 @@ function lights4(x,y,z){LP.fill(0);LC.fill(0);const L=SC.lights;if(!L)return;con
  best.sort((a,b)=>a[0]-b[0]);for(let i=0;i<4&&i<best.length;i++){const l=best[i][1];LP[i*4]=l.x;LP[i*4+1]=l.y;LP[i*4+2]=l.z;LP[i*4+3]=l.r;const k=l.k*.78;LC[i*3]=l.cr*k;LC[i*3+1]=l.cg*k;LC[i*3+2]=l.cb*k}}
 const MD=(()=>{const v=[.28,.5,-.82],l=hypot(v[0],v[1],v[2]);return[v[0]/l,v[1]/l,v[2]/l]})(),MC=[.5,.38,.82];
 function visible(now){const out=[];if(typeof WD==='undefined'||!WD[1]||!WD[1].EN)return out;const C=H3.cam().p;
- for(const e of WD[1].EN){const k=MAP[e.mon];if(!k||!e.hal)continue;const m=track(e,now);
+ for(const e of WD[1].EN){const k=MAP[e.mon];if(!k||!e.hal)continue;const m=track(e,now);if(!inHere(e))continue;
   const dying=e.dead&&m.dieT&&now-m.dieT<LIFE[k]+200;if(e.dead&&!dying)continue;
-  const x=e.x+8,z=e.y+14,d=hypot(C[0]-x,C[2]-z);if(d>330)continue;const h=HGT[k],gy=gyAt(x,z)+(FLOAT[k]||0);
+  const x=e.x+8-OXs(),z=e.y+14,d=hypot(C[0]-x,C[2]-z);if(d>330)continue;const h=HGT[k],gy=gyAt(x,z)+(FLOAT[k]||0);
   if(H3.vis&&!H3.vis(x,gy+h*.5,z,h*.75))continue;out.push({e,m,k,x,z,gy,d,dying})}
  out.sort((a,b)=>a.d-b.d);if(out.length>22)out.length=22;return out}
 HM3.draw=function(t){const gl=ensure();if(!gl)return;HM3.on=true;const now=HM3.frz||Date.now(),ts=now/1000,L=visible(now);HM3.list=L;if(!L.length)return;
@@ -16188,16 +16190,20 @@ HM3.sprites=function(t){const T=H3.tex;if(!T||!HM3.on)return;const now=HM3.frz||
   if(R.dying){const dc=DISC[k];for(let i=0;i<14;i++){const a=i/14*TAU+R.e._h*20,v=((s*.6+i*.137)%1),rr=(.15+.25*v)*h*.5,y=R.gy+h*(.15+.7*((i*.37)%1))+v*h*.4;
     H3.spr(T.glow,R.x+cos(a)*rr,y,R.z+sin(a)*rr,3,3,null,[dc[0],dc[1],dc[2],sin(v*PI)*clp((du-.45)*3,0,1)],true,0,true)}}}};
 // topo da cabeça (barra de vida) e alvo das habilidades
-HM3.top=e=>{const k=MAP[e.mon];const x=e.x+8,z=e.y+14;return gyAt(x,z)+(FLOAT[k]||0)+HGT[k]+5};
-{const _tg=SC.tgt;SC.tgt=e=>{if(HM3.own(e)){const k=MAP[e.mon],x=e.x+8,z=e.y+14,g=gyAt(x,z),h=HGT[k],f=FLOAT[k]||0;return[x,g+f+h*.55,z,max(14,h*.28),g]}return _tg?_tg(e):null}}
+HM3.top=e=>{const k=MAP[e.mon];const x=e.x+8-OXs(),z=e.y+14;return gyAt(x,z)+(FLOAT[k]||0)+HGT[k]+5};
+function hook(S0){SC=S0;
+{const _tg=SC.tgt;SC.tgt=e=>{SC=S0;if(HM3.own(e)){const k=MAP[e.mon],x=e.x+8-OXs(),z=e.y+14,g=gyAt(x,z),h=HGT[k],f=FLOAT[k]||0;return[x,g+f+h*.55,z,max(14,h*.28),g]}return _tg?_tg(e):null}}
 // números de dano: em cima do monstro mais perto
-SC.numPos=(q)=>{if(typeof WD==='undefined'||!WD[1])return null;let best=null,bd=40;for(const e of WD[1].EN){if(!e.hal||!MAP[e.mon])continue;const d=hypot(q.x-4-e.x,(q.y-(e.y-(e.vh||30)*.7))*.5);if(d<bd){bd=d;best=e}}
- if(!best)return null;const k=MAP[best.mon];return[best.x+8+(q.x-4-best.x)*.6,HM3.top(best)-4,best.y+14]};
+{const _np=SC.numPos;SC.numPos=(q,e0)=>{SC=S0;const r=numP(q);return r||(_np?_np(q,e0):null)}}
+function numP(q){if(typeof WD==='undefined'||!WD[1])return null;let best=null,bd=40;for(const e of WD[1].EN){if(!e.hal||!MAP[e.mon]||!inHere(e))continue;const d=hypot(q.x-4-e.x,(q.y-(e.y-(e.vh||30)*.7))*.5);if(d<bd){bd=d;best=e}}
+ if(!best)return null;const k=MAP[best.mon];return[best.x+8-OXs()+(q.x-4-best.x)*.6,HM3.top(best)-4,best.y+14]}
 // liga na cena do Halloween
-{const _bp=SC.bossPlan;SC.bossPlan=function(t,C){const r=_bp?_bp.apply(this,arguments):null;return()=>{if(r)r();try{HM3.draw(t)}catch(e){if(!HM3.err){HM3.err=1;console.error('HM3',e)}}}}}
-{const _sp=SC.sprites;SC.sprites=function(t){const r=_sp.apply(this,arguments);try{HM3.sprites(t)}catch(e){}return r}}
+{const _bp=SC.bossPlan;SC.bossPlan=function(t,C){const r=_bp?_bp.apply(this,arguments):null;return()=>{if(r)r();try{SC=S0;HM3.draw(t)}catch(e){if(!HM3.err){HM3.err=1;console.error('HM3',e)}}}}}
+{const _sp=SC.sprites;SC.sprites=function(t){const r=_sp.apply(this,arguments);try{SC=S0;HM3.sprites(t)}catch(e){}return r}}
 {const _fr=SC.free;SC.free=function(){G.ok=false;G.gl=null;return _fr?_fr.apply(this,arguments):undefined}}
 {const _lv=SC.leave;SC.leave=function(){HM3.on=false;HM3.list=[];return _lv?_lv.apply(this,arguments):undefined}}
+}
+hook(H3.scenes.hal);if(H3.scenes.halIn)hook(H3.scenes.halIn);SC=H3.scenes.hal;
 // testes
 HM3.dbg={G,MAP,HGT,LIFE,st};
 })();
@@ -17252,7 +17258,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261024091522;
+const GAME_BUILD=20261024162710;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
