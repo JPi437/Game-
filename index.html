@@ -4439,7 +4439,7 @@ sit:{x:-1,r:[ // pernas cruzadas (linhas 22..27); no meio de baixo ficam os pés
 "..OOOOOOOOOOO.."]},
 };
 const FW=23,FH=38,PX=5,PY=9; // arte de 13 colunas (centro 6) colocada em PX; pés na linha PY+27
-const SKIN=['#f7cfa8','#efbd8f','#d99f6c','#bf8350','#9a6238','#6f4425','#4b2c18'];
+const SKIN=['#f7cfa8','#efbd8f','#d99f6c','#bf8350','#9a6238','#6f4425','#4b2c18','#ffe6d5','#fbdcc2','#e9b98f','#c89466','#a6764d','#835535','#5d3a22','#3a2216','#9bd36f','#7fb6ea','#c79ae6'];
 const HAIRC=['#8a5530','#4a2c18','#1c1c1c','#e8c25a','#f3ead0','#c2461f','#a0a0a0','#e86aa6','#3f7fe0','#45b04f','#8e4fc4','#ffffff'];
 const EYEC=['#1e88e5','#6d4c2f','#2b2b2b','#2e9d4a','#7b8c96','#8e44ad','#d32f2f','#d4a017'];
 const CLOTH=['#df220f','#10a4e0','#1f3f99','#2e8b3a','#ffd23f','#ff8f00','#8e44ad','#ec6aa8','#f4f4f4','#8d8d8d','#2a2a2a','#753007','#14a3a3','#a0522d'];
@@ -4841,9 +4841,10 @@ const css=D.createElement('style');css.textContent=`
 #lkHead{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}#lkHead b{color:#ffd23f;font-size:17px}#lkNick{font-size:12px;opacity:.75}
 #lkMain{display:flex;gap:10px;min-height:0;flex:1}
 #lkLeft{display:flex;flex-direction:column;align-items:center;gap:6px;flex:0 0 auto}
-#lkStage{width:132px;height:160px;border:3px solid #fff;border-radius:10px;background:#4f8a3c;background-image:linear-gradient(45deg,#58963f 25%,transparent 25%,transparent 75%,#58963f 75%),linear-gradient(45deg,#58963f 25%,transparent 25%,transparent 75%,#58963f 75%);background-size:24px 24px;background-position:0 0,12px 12px;position:relative;overflow:hidden;touch-action:none}
+#lkStage{width:168px;height:210px;border:3px solid #fff;border-radius:10px;background:#4f8a3c;background-image:linear-gradient(45deg,#58963f 25%,transparent 25%,transparent 75%,#58963f 75%),linear-gradient(45deg,#58963f 25%,transparent 25%,transparent 75%,#58963f 75%);background-size:24px 24px;background-position:0 0,12px 12px;position:relative;overflow:hidden;touch-action:none}
+#lkC3{position:absolute;z-index:1;left:0;top:0;width:100%;height:100%}
 #lkCv{position:absolute;z-index:1;left:20px;top:4px;width:92px;height:152px;image-rendering:pixelated}
-#lkStage:after{content:'';position:absolute;left:44px;bottom:6px;width:44px;height:9px;border-radius:50%;background:#0004}
+#lkStage:after{content:'';position:absolute;left:52px;bottom:12px;width:64px;height:11px;border-radius:50%;background:#0004}
 #lkMode{position:absolute;z-index:2;left:4px;top:4px;font-size:10px;background:#0008;border-radius:6px;padding:1px 5px;color:#fff}
 .lkSm{padding:6px 10px;font-size:15px;min-width:40px}
 #lkRight{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px;overflow:auto}
@@ -4865,18 +4866,18 @@ const css=D.createElement('style');css.textContent=`
 #lkFoot{display:flex;gap:8px;justify-content:flex-end;align-items:center}
 #lkFoot .btn{padding:8px 14px}#lkOk{background:#2e7d32}
 #lkTip{font-size:10px;opacity:.6;margin-right:auto}
-@media (max-height:420px){#lkStage{width:112px;height:128px}#lkCv{left:21px;top:5px;width:69px;height:114px}#lkStage:after{left:36px;bottom:5px;width:40px}.lkIt canvas{width:42px;height:36px}.lkC{width:26px;height:26px}}`;
+@media (max-height:420px){#lkStage{width:124px;height:156px}#lkStage:after{left:38px!important;bottom:9px!important;width:48px!important}#lkCv{left:21px;top:5px;width:69px;height:114px}#lkStage:after{left:36px;bottom:5px;width:40px}.lkIt canvas{width:42px;height:36px}.lkC{width:26px;height:26px}}`;
 D.head.appendChild(css);
 const M=D.createElement('div');M.className='modal';M.id='lkM';
 M.innerHTML=`<div class="box" id="lkBox"><div id="lkHead"><b id="lkTitle"></b><span id="lkNick"></span></div>
-<div id="lkMain"><div id="lkLeft"><div id="lkStage"><span id="lkMode"></span><canvas id="lkCv" width="${E.FW}" height="${E.FH}"></canvas></div>
+<div id="lkMain"><div id="lkLeft"><div id="lkStage"><span id="lkMode"></span><canvas id="lkC3" width="336" height="420"></canvas><canvas id="lkCv" width="${E.FW}" height="${E.FH}"></canvas></div>
 <div style="display:flex;gap:4px"><button class="btn lkSm" id="lkRotL" aria-label="Girar">⟲</button><button class="btn lkSm" id="lkRnd" style="background:#8e44ad" aria-label="Aleatório">Sortear</button><button class="btn lkSm" id="lkRotR" aria-label="Girar">⟳</button></div></div>
 <div id="lkRight"><div id="lkTabs"></div><div class="lkLbl" id="lkL1">Estilo</div><div id="lkSty"></div><div class="lkLbl" id="lkL2">Cor</div><div id="lkCol"></div></div></div>
-<div id="lkFoot"><span id="lkTip">Mais roupas e chapéus chegam na loja</span><button class="btn" id="lkCancel" style="background:#555">Cancelar</button><button class="btn" id="lkOk"></button></div></div>`;
+<div id="lkFoot"><span id="lkTip">Arraste o boneco para girar · toque para ele andar</span><button class="btn" id="lkCancel" style="background:#555">Cancelar</button><button class="btn" id="lkOk"></button></div></div>`;
 D.body.appendChild(M);
-const TABS=[['s','','Corpo','g','s'],['h','','Cabelo','h','hc'],['e','','Olhos',null,'e'],['t','','Camisa','t','tc'],['b','','Calça','b','bc'],['f','','Sapatos','f','fc'],['c','','Chapéu','c','cc']];
+const TABS=[['s','','Pele',null,'s']];   // o personagem 3D é o único modelo: na criação só escolhe o tom de pele
 const PALS={s:E.SKIN,hc:E.HAIRC,e:E.EYEC,tc:E.CLOTH,bc:E.CLOTH,fc:E.CLOTH,cc:E.CLOTH};
-let L=null,tab='s',isNew=false,dirI=0,raf=0,t0=0;
+let L=null,tab='s',isNew=false,dirI=0,raf=0,t0=0,pv=null,yaw=0,yawT=0;
 const DIRS=[0,2,1,3]; // frente, esquerda, costas, direita (linhas da folha)
 // miniaturas: um quadro só, recortado (cabeça para cabelo/chapéu, corpo para roupas, busto para o modelo)
 const CROP={head:[1,4,21,17],body:[3,18,17,20],torso:[3,7,17,24]};
@@ -4893,6 +4894,7 @@ const GEN=id=>{const h=E.HAIR.find(a=>a[0]===id);return h?h[2]:'u'};
 function render(){
  if(L.g==='tv'||isHD(L.g))tab='s';const T=TABS.find(t=>t[0]===tab);
  const tabs=L.g==='tv'||isHD(L.g)?TABS.filter(t=>t[0]==='s'):TABS;if(!tabs.some(t=>t[0]===tab))tab='s';
+ $('lkTabs').style.display=tabs.length>1?'':'none';
  $('lkTabs').innerHTML=tabs.map(t=>`<button class="lkTab${t[0]===tab?' on':''}" data-t="${t[0]}">${t[2]}</button>`).join('');
  $('lkTabs').querySelectorAll('.lkTab').forEach(b=>b.onclick=()=>{tab=b.dataset.t;render()});
  const sc=T[3],st=$('lkSty');
@@ -4909,12 +4911,18 @@ function render(){
     L[sc]=v;t0=Date.now();render()}})}
  // cor: some quando não faz sentido (careca, descalço, sem chapéu ou item de cor fixa)
  const ck=T[4],it=sc?item(sc,L[sc]):null,noCol=(tab==='s'&&isHD(L.g))||(sc==='h'&&L.h==='careca')||(sc==='f'&&L.f==='descalco')||(sc==='c'&&(L.c==='nenhum'||(it&&it[2]&&it[2].cor===0)));
- $('lkL2').textContent=tab==='s'?(L.g==='tv'?'Cor das mãos':'Tom de pele'):tab==='e'?'Cor dos olhos':'Cor';
+ $('lkL2').textContent=tab==='s'?'Tom de pele':tab==='e'?'Cor dos olhos':'Cor';
  $('lkL2').style.display=$('lkCol').style.display=noCol?'none':'';
  $('lkCol').innerHTML=PALS[ck].map((c,i)=>`<button class="lkC${L[ck]===i?' on':''}" data-i="${i}" style="background:${c}" aria-label="Cor ${i+1}"></button>`).join('');
  $('lkCol').querySelectorAll('.lkC').forEach(b=>b.onclick=()=>{L[ck]=+b.dataset.i;t0=Date.now();render()})}
 // prévia: fica parado (respira e pisca) e depois anda, sem parar
-function anim(){if(M.style.display!=='flex'){raf=0;return}const s=sheet(L),cv=$('lkCv'),hrm=!!(s&&s.hr),cm=hrm&&L.g==='fhc'?capeSheet():null,FWc=cm?112:hrm?s.fw:E.FW,FHc=cm?124:hrm?s.fh:E.FH;
+function pvInit(){if(pv!==null)return pv;try{pv=window.HERO3&&HERO3.preview?HERO3.preview($('lkC3')):null}catch(e){console.error(e);pv=null}
+ $((pv?'lkCv':'lkC3')).style.display='none';return pv}
+function anim(){if(M.style.display!=='flex'){raf=0;return}
+ if(pvInit()){const now=Date.now(),ph=Math.floor((now-t0)/3400)%2;yaw+=(yawT-yaw)*.18;
+  try{pv.frame({skin:L.s,yaw,walk:ph===1})}catch(e){console.error(e)}
+  const m=ph===1?'andando':'parado';if($('lkMode').textContent!==m)$('lkMode').textContent=m;raf=requestAnimationFrame(anim);return}
+ const s=sheet(L),cv=$('lkCv'),hrm=!!(s&&s.hr),cm=hrm&&L.g==='fhc'?capeSheet():null,FWc=cm?112:hrm?s.fw:E.FW,FHc=cm?124:hrm?s.fh:E.FH;
  if(cv.width!==FWc||cv.height!==FHc){cv.width=FWc;cv.height=FHc;const cw=Math.round(152*FWc/FHc);cv.style.width=hrm?cw+'px':'';cv.style.left=hrm?Math.max(0,Math.round((132-cw)/2))+'px':''}
  const x=cv.getContext('2d');x.imageSmoothingEnabled=false;x.clearRect(0,0,FWc,FHc);
  const now=Date.now(),ph=Math.floor((now-t0)/3400)%2;let c;
@@ -4923,12 +4931,8 @@ function anim(){if(M.style.display!=='flex'){raf=0;return}const s=sheet(L),cv=$(
  if(s&&cm){const r=DIRS[dirI],cc=ph===1?c+4:Math.floor(now/120)%8;x.drawImage(s,c*28,r*52,28,52,32,2,56,104);x.drawImage(cm,cc*112,r*124,112,124,0,0,112,124)}
  else if(s){if(s.tv&&glitchOn(now,PV)){if(c<=1)c+=2;glitchPaint(x,s,c*E.FW,DIRS[dirI]*E.FH,0,0,now,PV)}else x.drawImage(s,c*FWc,DIRS[dirI]*FHc,FWc,FHc,0,0,FWc,FHc)}raf=requestAnimationFrame(anim)}
 const PV={seed:7};
-function rnd(){const pick=a=>a[Math.floor(Math.random()*a.length)],free=c=>E.STY[c].filter(a=>!locked(c,a[0])).map(a=>a[0]),g=L&&L.g||'m';
- const hs=free('h').filter(h=>{const k=GEN(h);return k==='u'||k===g||g==='tv'});
- L={g,s:Math.floor(Math.random()*E.SKIN.length),h:pick(hs),hc:Math.floor(Math.random()*E.HAIRC.length),e:Math.floor(Math.random()*E.EYEC.length),
-  t:pick(free('t')),tc:Math.floor(Math.random()*E.CLOTH.length),b:pick(free('b')),bc:Math.floor(Math.random()*E.CLOTH.length),f:pick(free('f')),fc:Math.floor(Math.random()*E.CLOTH.length),
-  c:Math.random()<.45?'nenhum':pick(free('c')),cc:Math.floor(Math.random()*E.CLOTH.length)};t0=Date.now();render()}
-function open(nw){isNew=!!nw;L=E.norm(X.cur);if(L.g==='tv'&&!isAdm())L.g='m';tab='s';dirI=0;t0=Date.now();
+function rnd(){L=Object.assign({},L,{s:Math.floor(Math.random()*E.SKIN.length)});t0=Date.now();render()}
+function open(nw){isNew=!!nw;L=E.norm(X.cur);L.g='m';tab='s';dirI=0;yaw=yawT=0;t0=Date.now();
  $('lkTitle').textContent=isNew?'Crie seu personagem':'Meu visual';
  $('lkNick').textContent=MP&&MP.nick&&!MP.offline?(isNew?'Bem-vindo(a), '+MP.nick+'! Escolha como você quer ser no AllStar.':MP.nick):'';
  $('lkCancel').style.display=isNew?'none':'';$('lkOk').textContent=isNew?'Começar a aventura':'Salvar';
@@ -4936,9 +4940,12 @@ function open(nw){isNew=!!nw;L=E.norm(X.cur);if(L.g==='tv'&&!isAdm())L.g='m';tab
  render();if(!raf)raf=requestAnimationFrame(anim)}
 function close(){M.style.display='none';try{lock=false}catch(e){}}
 X.open=()=>open(false);
-$('lkRotL').onclick=()=>{dirI=(dirI+3)%4};$('lkRotR').onclick=()=>{dirI=(dirI+1)%4};$('lkRnd').onclick=rnd;
+$('lkRotL').onclick=()=>{if(pv)yawT-=Math.PI/2;else dirI=(dirI+3)%4};$('lkRotR').onclick=()=>{if(pv)yawT+=Math.PI/2;else dirI=(dirI+1)%4};$('lkRnd').onclick=rnd;
 // arrastar o boneco para girar; tocar alterna entre parado e andando
-{let sx=null;const st=$('lkStage');st.addEventListener('pointerdown',e=>{sx=e.clientX});st.addEventListener('pointerup',e=>{if(sx==null)return;const d=e.clientX-sx;sx=null;if(Math.abs(d)>18)dirI=(dirI+(d>0?3:1))%4;else t0-=3400})}
+{let sx=null,lx=0,mv=0;const st=$('lkStage');st.addEventListener('pointerdown',e=>{sx=lx=e.clientX;mv=0;try{st.setPointerCapture(e.pointerId)}catch(_){}});
+ st.addEventListener('pointermove',e=>{if(sx==null)return;const d=e.clientX-lx;lx=e.clientX;mv+=Math.abs(d);if(pv){yaw+=d*.013;yawT=yaw}});
+ st.addEventListener('pointercancel',()=>{sx=null});
+ st.addEventListener('pointerup',e=>{if(sx==null)return;const d=e.clientX-sx;sx=null;if(pv){if(mv<6)t0-=3400}else if(Math.abs(d)>18)dirI=(dirI+(d>0?3:1))%4;else t0-=3400})}
 $('lkCancel').onclick=close;
 $('lkOk').onclick=()=>{X.cur=E.norm(L);stamp();keep();if(isNew)LSs('look_new',null);try{save()}catch(e){}try{MP&&MP.saveNow&&MP.saveNow()}catch(e){}X.pub(true);close();
  if(X.me)X.me.idle=Date.now();if(isNew&&typeof toast==='function')toast('Visual pronto! Boa aventura!')};
@@ -10713,6 +10720,9 @@ const _tick=tick;
 tick=function(){
  if(S.exitT&&(!S.mode||Date.now()-S.exitT>=EXD)){const m=S.mode;S.exitT=0;S.exitFrom=null;if(m)setMode(0)}
  enforceH3D();syncBtn();portalTouch();
+ // 3D é a câmera principal: ao chegar numa cena com 3D entra sozinho (3ª pessoa, ou a última perspectiva escolhida; quem escolheu 2D fica no 2D)
+ if(!S.mode&&!S.exitT&&!S.ld&&!S.dead&&!lock&&btn&&btn._on&&S.err<2&&Date.now()>(S.autoT||0)){S.autoT=Date.now()+2500;let pf=2;try{const v=localStorage.getItem('mp_persp');if(v!=null)pf=+v|0}catch(e){}
+  if(pf>0&&pf<=3){S.quiet=1;try{setMode(pf)}catch(e){console.error('H3 auto',e)}finally{S.quiet=0}}}
  if(!S.mode)return _tick();
  jumpTick();
  if(!SC||!SC.active()){const n=sceneNow(),m=S.mode;setMode(0);if(n&&n!==SC&&n.active())setMode(m);return _tick()}      // entrou ou saiu da torre: continua em 3D na outra cena
@@ -10751,7 +10761,7 @@ function isoLike(F){const h=(typeof VH!=='undefined'?VH:221)*.5;let top=1e9,ok=n
   if(D>=110||pit===1.3){D=Math.max(30,D);return{x:F.x,y:F.y+D*sn,z:F.z+D*c,yaw:0,pitch:-pit,fov:Math.min(1.45,2*Math.atan(h/D))}}}}
 const EXD=950;S.exitT=0;S.exitFrom=null;
 // pede um modo; do 3D para o 2D a câmera primeiro sobe (sai do personagem e vai para o alto, como o desenho 2D) e só depois troca
-function toMode(n){if(S.exitT)return;if(n===0&&SC&&SC.only3d&&SC.active())n=1;if(n===0&&S.mode&&S.mode!==3&&!S.dbg&&SC&&SC.active()&&!S.dead){S.exitT=Date.now();S.exitFrom=CTR.last;return}setMode(n)}
+function toMode(n){if(S.exitT)return;try{localStorage.setItem('mp_persp',String(n))}catch(e){}if(n===0&&SC&&SC.only3d&&SC.active())n=1;if(n===0&&S.mode&&S.mode!==3&&!S.dbg&&SC&&SC.active()&&!S.dead){S.exitT=Date.now();S.exitFrom=CTR.last;return}setMode(n)}
 function blend2D(){const k=S.b2d||0,cv0=$$('c');
  if(k>.001){const sg=g;g=G0;try{G0.setTransform(1,0,0,1,0,0);G0.imageSmoothingEnabled=false;_render()}catch(e){}finally{g=sg}
   cv0.style.visibility='visible';const o=(1-k).toFixed(3);if(glc)glc.style.opacity=o;if(ovc)ovc.style.opacity=o;S.b2on=true}
@@ -10887,7 +10897,7 @@ const _render=render;
 render=function(){
  if(!S.mode)return _render();
  try{frame()}catch(e){fail(e)}};
-function fail(e){console.error('H3',e);S.err++;if(S.mode){H3C.on=false;g=G0;try{setMode(0)}catch(x){}toastS('O modo 3D deu erro e voltou para o 2D.');if(S.err>4)S.dead=true}}
+function fail(e){console.error('H3',e);S.err++;if(S.mode){H3C.on=false;g=G0;try{setMode(0)}catch(x){}S.autoT=Date.now()+30000;toastS('O modo 3D deu erro e voltou para o 2D.');if(S.err>4)S.dead=true}}
 function proj(x,y,z){const m=H3.gl_frame().VP,cw=m[3]*x+m[7]*y+m[11]*z+m[15];if(cw<=.05)return null;
  return[(((m[0]*x+m[4]*y+m[8]*z+m[12])/cw)*.5+.5)*S.cssW,(1-(((m[1]*x+m[5]*y+m[9]*z+m[13])/cw)*.5+.5))*S.cssH,cw]}
 function frame(){
@@ -16431,33 +16441,48 @@ function pick(s,want,bd){if(s.cur!==want){s.prev=s.cur;s.tp=s.t;s.cur=want;s.t=0
 const HP='#ifdef GL_FRAGMENT_PRECISION_HIGH\nprecision highp float;\n#else\nprecision mediump float;\n#endif\n';
 const VS=`attribute vec3 aP;attribute vec3 aN;attribute vec2 aT;attribute vec4 aJ;attribute vec4 aW;
 uniform mat4 uVP;uniform mat4 uB[${NB}];uniform vec3 uMin;uniform vec3 uSz;uniform vec2 uUm;uniform vec2 uUs;
-varying vec3 vP;varying vec3 vN;varying vec2 vT;
-void main(){vec4 p=vec4(uMin+aP*uSz,1.0);
+varying vec3 vP;varying vec3 vN;varying vec2 vT;varying vec3 vO;
+void main(){vec4 p=vec4(uMin+aP*uSz,1.0);vO=p.xyz;
  mat4 b0=uB[int(aJ.x+0.5)];mat4 b1=uB[int(aJ.y+0.5)];mat4 b2=uB[int(aJ.z+0.5)];mat4 b3=uB[int(aJ.w+0.5)];
  vec4 w=(b0*p)*aW.x+(b1*p)*aW.y+(b2*p)*aW.z+(b3*p)*aW.w;
  vec3 n=(b0*vec4(aN,0.0)).xyz*aW.x+(b1*vec4(aN,0.0)).xyz*aW.y+(b2*vec4(aN,0.0)).xyz*aW.z+(b3*vec4(aN,0.0)).xyz*aW.w;
  vP=w.xyz;vN=n;vT=uUm+aT*uUs;gl_Position=uVP*w;}`;
-const FS=HP+`varying vec3 vP;varying vec3 vN;varying vec2 vT;
-uniform sampler2D uTex;uniform vec3 uCam;uniform vec4 uFog;uniform float uFO;uniform vec3 uLt;uniform vec3 uMD;uniform vec4 uFlc;
-void main(){vec3 alb=texture2D(uTex,vT).rgb;vec3 n=normalize(vN);vec3 V=uCam-vP;float dV=length(V);V/=dV;if(dot(n,V)<0.0)n=-n;
+const FS=HP+`varying vec3 vP;varying vec3 vN;varying vec2 vT;varying vec3 vO;
+uniform sampler2D uTex;uniform vec3 uCam;uniform vec4 uFog;uniform float uFO;uniform vec3 uLt;uniform vec3 uMD;uniform vec4 uFlc;uniform vec3 uSk;
+void main(){vec3 alb=texture2D(uTex,vT).rgb;
+ float skm=max(smoothstep(0.735,0.752,vO.y),smoothstep(0.412,0.432,abs(vO.x)));alb*=mix(vec3(1.0),uSk*1.22,skm);
+ vec3 n=normalize(vN);vec3 V=uCam-vP;float dV=length(V);V/=dV;if(dot(n,V)<0.0)n=-n;
  float sh=0.74+0.26*max(dot(n,uMD),0.0)+0.10*max(n.y,0.0)+0.08*max(dot(n,V),0.0);
  vec3 c=alb*uLt*sh;c=mix(c,uFlc.rgb,uFlc.a);
  float dF=max(dV-uFO,0.0);float f=1.0-exp(-dF*dF*uFog.a*uFog.a);c=mix(c,uFog.rgb,f);gl_FragColor=vec4(c,1.0);}`;
-const G={gl:null,p:null,u:null,vb:null,ib:null,tex:null,ok:false};
+const makeG=()=>({gl:null,p:null,u:null,vb:null,ib:null,tex:null,ok:false});
 function sh(gl,t,s){const o=gl.createShader(t);gl.shaderSource(o,s);gl.compileShader(o);if(!gl.getShaderParameter(o,gl.COMPILE_STATUS))throw new Error('HERO3 shader: '+gl.getShaderInfoLog(o));return o}
-function build(gl){G.gl=gl;G.ok=false;G.tex=null;
+function build(gl,G){G.gl=gl;G.ok=false;G.tex=null;
  const p=gl.createProgram();gl.attachShader(p,sh(gl,gl.VERTEX_SHADER,VS));gl.attachShader(p,sh(gl,gl.FRAGMENT_SHADER,FS));['aP','aN','aT','aJ','aW'].forEach((a,i)=>gl.bindAttribLocation(p,i,a));gl.linkProgram(p);
  if(!gl.getProgramParameter(p,gl.LINK_STATUS))throw new Error('HERO3 programa: '+gl.getProgramInfoLog(p));G.p=p;G.u={};
- for(const n of['uVP','uB','uMin','uSz','uUm','uUs','uTex','uCam','uFog','uFO','uLt','uMD','uFlc'])G.u[n]=gl.getUniformLocation(p,n);
+ for(const n of['uVP','uB','uMin','uSz','uUm','uUs','uTex','uCam','uFog','uFO','uLt','uMD','uFlc','uSk'])G.u[n]=gl.getUniformLocation(p,n);
  G.vb=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,G.vb);gl.bufferData(gl.ARRAY_BUFFER,b64(D.vb),gl.STATIC_DRAW);
  G.ib=gl.createBuffer();gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,G.ib);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,b64(D.ib),gl.STATIC_DRAW);
  const im=new Image();im.onload=()=>{if(G.gl!==gl||gl.isContextLost())return;const t=gl.createTexture();gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,t);gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,false);
   gl.texImage2D(gl.TEXTURE_2D,0,gl.RGB,gl.RGB,gl.UNSIGNED_BYTE,im);gl.generateMipmap(gl.TEXTURE_2D);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR_MIPMAP_LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
   gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);G.tex=t};im.src=D.tex;
  G.ok=true}
-function ensure(){if(HERO3.fail)return null;const gl=H3.gl&&H3.gl();if(!gl||gl.isContextLost())return null;if(G.gl!==gl||!G.ok){try{build(gl)}catch(e){console.error(e);HERO3.fail=1;G.ok=false;return null}}return gl}
+const GM=makeG();
+function ensure(){if(HERO3.fail)return null;const gl=H3.gl&&H3.gl();if(!gl||gl.isContextLost())return null;if(GM.gl!==gl||!GM.ok){try{build(gl,GM)}catch(e){console.error(e);HERO3.fail=1;GM.ok=false;return null}}return gl}
 // o motor 3D pergunta: "este personagem eu desenho?" (só depois do programa e da textura estarem prontos; senão fica o cartaz 2D)
-HERO3.on=()=>{const gl=ensure();return !!(gl&&G.ok&&G.tex&&!HERO3.fail)};
+HERO3.on=()=>{const gl=ensure();return !!(gl&&GM.ok&&GM.tex&&!HERO3.fail)};
+// liga programa, buffers e atributos (comum ao jogo e à prévia)
+function bindAll(gl,G){const u=G.u;gl.useProgram(G.p);gl.uniform1i(u.uTex,0);
+ gl.uniform3fv(u.uMin,D.min);gl.uniform3fv(u.uSz,D.size);gl.uniform2fv(u.uUm,D.uvmin);gl.uniform2fv(u.uUs,D.uvsize);
+ gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,G.tex);
+ gl.bindBuffer(gl.ARRAY_BUFFER,G.vb);for(let i=0;i<5;i++)gl.enableVertexAttribArray(i);
+ gl.vertexAttribPointer(0,3,gl.UNSIGNED_SHORT,true,22,0);gl.vertexAttribPointer(2,2,gl.UNSIGNED_SHORT,true,22,6);gl.vertexAttribPointer(1,3,gl.BYTE,true,22,10);gl.vertexAttribPointer(3,4,gl.UNSIGNED_BYTE,false,22,14);gl.vertexAttribPointer(4,4,gl.UNSIGNED_BYTE,true,22,18);
+ gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,G.ib)}
+// cor da pele (índice do visual → rgb 0..1); sem o motor de visual, um tom neutro
+const SKC={};
+function skinRGB(idx){const E=(typeof LKE!=='undefined')?LKE:null,pal=E&&E.SKIN||['#f7cfa8'],i=(idx|0)>=0&&(idx|0)<pal.length?(idx|0):0,h=String(pal[i]);
+ return SKC[h]||(SKC[h]=new Float32Array([1,3,5].map(o=>parseInt(h.substr(o,2),16)/255)))}
+function skinOf(A){let i=0;try{if(A.k==='P'){const X=window.LOOKX;i=X&&X.cur?X.cur.s:0}else{const l=A.q&&A.q.lk;i=l?l.s:0}}catch(e){}return skinRGB(i)}
 // ---------- desenho ----------
 const W=new Float32Array(NN*16),LM=new Float32Array(16),MD=(()=>{const v=[.28,.7,-.6],l=hypot(v[0],v[1],v[2]);return new Float32Array([v[0]/l,v[1]/l,v[2]/l])})();
 const BM=new Float32Array(NB*16),TMP=new Float32Array(16),MODEL=new Float32Array(16),QQ=new Float32Array(NN*4),TT=new Float32Array(3),LT=[1,1,1],TV=[0,0,0];
@@ -16478,37 +16503,53 @@ function place(A,s,dt){
  else{if(s.air)s.landT=.5;if(s.landT>0){s.landT-=dt;if(mv&&s.landT<.4)pick(s,'Jog_Fwd_Loop',.12);else pick(s,mv?'Jog_Fwd_Loop':'Jump_Land',.08)}else pick(s,mv?'Jog_Fwd_Loop':'Idle_Loop',.16)}
  s.air=air;
  const rate=s.cur==='Jog_Fwd_Loop'?clp(s.spd/REF_RUN,.7,1.9):s.cur==='Jump_Land'?1.7:1;
+ animate(s,dt,rate);bones(s.yaw,A.x,A.y,A.z)}
+// avança o tempo da animação (com a mistura de 2 animações na troca) e deixa os quaternions em QQ e a translação do quadril em TT
+function animate(s,dt,rate){
  s.t+=dt*rate;if(s.bl<1){s.bl=min(1,s.bl+dt/s.bd);s.tp+=dt}
  sample(s.cur,s.t,QQ,TT);
  if(s.bl<1&&s.prev){sample(s.prev,s.tp,Q1,P1);const k=s.bl,e=k*k*(3-2*k);
   for(let i=0;i<NN;i++){const o=i*4;let dd=Q1[o]*QQ[o]+Q1[o+1]*QQ[o+1]+Q1[o+2]*QQ[o+2]+Q1[o+3]*QQ[o+3];const sg=dd<0?-1:1;
    let x=Q1[o]+(QQ[o]*sg-Q1[o])*e,y=Q1[o+1]+(QQ[o+1]*sg-Q1[o+1])*e,z=Q1[o+2]+(QQ[o+2]*sg-Q1[o+2])*e,w=Q1[o+3]+(QQ[o+3]*sg-Q1[o+3])*e;const l=1/sqrt(x*x+y*y+z*z+w*w);
    QQ[o]=x*l;QQ[o+1]=y*l;QQ[o+2]=z*l;QQ[o+3]=w*l}
-  for(let c=0;c<3;c++)TT[c]=P1[c]+(TT[c]-P1[c])*e}
- // matriz do personagem: posição, direção (o modelo olha para +Z), escala
- const c=cos(s.yaw),sn=sin(s.yaw),S=SC0;
- MODEL.set([c*S,0,-sn*S,0, 0,S,0,0, sn*S,0,c*S,0, A.x,A.y,A.z,1]);
+  for(let c=0;c<3;c++)TT[c]=P1[c]+(TT[c]-P1[c])*e}}
+// matrizes dos ossos: posição, direção (o modelo olha para +Z) e escala do personagem
+function bones(yaw,px,py,pz){const c=cos(yaw),sn=sin(yaw),S=SC0;
+ MODEL.set([c*S,0,-sn*S,0, 0,S,0,0, sn*S,0,c*S,0, px,py,pz,1]);
  for(let k=0;k<NN;k++){TV[0]=D.rt[k][0];TV[1]=D.rt[k][1];TV[2]=D.rt[k][2];if(k===PEL){TV[0]=TT[0];TV[1]=TT[1];TV[2]=TT[2]}
   fromQT(LM,QQ.subarray(k*4,k*4+4),TV);const p=PAR[k];
   if(p<0)mul(W.subarray(k*16,k*16+16),MODEL,LM);else mul(W.subarray(k*16,k*16+16),W.subarray(p*16,p*16+16),LM)}
  for(let b=0;b<NB;b++)mul(BM.subarray(b*16,b*16+16),W.subarray(SKIN[b]*16,SKIN[b]*16+16),IBM.subarray(b*16,b*16+16))}
-HERO3.draw=function(list,lightAt,SC,t){const gl=ensure();if(!gl||!G.tex)return;
+HERO3.draw=function(list,lightAt,SC,t){const gl=ensure();if(!gl||!GM.tex)return;
  const L=[];for(const A of list)if(A.hero)L.push(A);if(!L.length)return;
- const VP=H3.gl_frame().VP,cam=H3.cam().p,fog=H3.fogv(),S=H3.S||{},Cm=S.cam,F=S.foc||Cm,FO=Cm&&F?max(0,hypot(Cm.x-F.x,Cm.y-F.y,Cm.z-F.z)-26):0,u=G.u,now=performance.now();
- gl.useProgram(G.p);gl.uniformMatrix4fv(u.uVP,false,VP);gl.uniform3f(u.uCam,cam[0],cam[1],cam[2]);gl.uniform4fv(u.uFog,fog);gl.uniform1f(u.uFO,FO);gl.uniform3fv(u.uMD,MD);gl.uniform1i(u.uTex,0);
- gl.uniform3fv(u.uMin,D.min);gl.uniform3fv(u.uSz,D.size);gl.uniform2fv(u.uUm,D.uvmin);gl.uniform2fv(u.uUs,D.uvsize);
- gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,G.tex);
- gl.bindBuffer(gl.ARRAY_BUFFER,G.vb);for(let i=0;i<5;i++)gl.enableVertexAttribArray(i);
- gl.vertexAttribPointer(0,3,gl.UNSIGNED_SHORT,true,22,0);gl.vertexAttribPointer(2,2,gl.UNSIGNED_SHORT,true,22,6);gl.vertexAttribPointer(1,3,gl.BYTE,true,22,10);gl.vertexAttribPointer(3,4,gl.UNSIGNED_BYTE,false,22,14);gl.vertexAttribPointer(4,4,gl.UNSIGNED_BYTE,true,22,18);
- gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,G.ib);
+ const VP=H3.gl_frame().VP,cam=H3.cam().p,fog=H3.fogv(),S=H3.S||{},Cm=S.cam,F=S.foc||Cm,FO=Cm&&F?max(0,hypot(Cm.x-F.x,Cm.y-F.y,Cm.z-F.z)-26):0,u=GM.u,now=performance.now();
+ bindAll(gl,GM);gl.uniformMatrix4fv(u.uVP,false,VP);gl.uniform3f(u.uCam,cam[0],cam[1],cam[2]);gl.uniform4fv(u.uFog,fog);gl.uniform1f(u.uFO,FO);gl.uniform3fv(u.uMD,MD);
  for(const A of L){const q=A.q,s=state(q,A);let dt=(now-s.last)/1000;s.last=now;if(!(dt>0))dt=.016;dt=min(dt,.1);
   const jh=A.jh||0,sk=max(.45,1-jh/60);
   if(H3.flat&&H3.tex&&H3.tex.blob)H3.flat(H3.tex.blob,A.x,A.y-jh+.25,A.z,34*sk,34*sk,null,[1,1,1,.85*sk],false);   // sombra redonda no chão, como a dos cartazes
   lightAt(A.x,A.y+12,A.z,LT);if(SC&&SC.shadeAt)SC.shadeAt(A.x,A.y,A.z,LT);
   place(A,s,dt);
-  gl.uniformMatrix4fv(u.uB,false,BM);gl.uniform3f(u.uLt,LT[0]*.92,LT[1]*.92,LT[2]*.92);gl.uniform4f(u.uFlc,1,1,1,0);
+  gl.uniformMatrix4fv(u.uB,false,BM);gl.uniform3f(u.uLt,LT[0]*.92,LT[1]*.92,LT[2]*.92);gl.uniform4f(u.uFlc,1,1,1,0);gl.uniform3fv(u.uSk,skinOf(A));
   gl.drawElements(gl.TRIANGLES,D.ni,gl.UNSIGNED_SHORT,0)}
  gl.disableVertexAttribArray(3);gl.disableVertexAttribArray(4)};
+// ---------- prévia na tela de criação do personagem: o mesmo modelo, num canvas próprio (contexto WebGL à parte) ----------
+function persp(f,a,n,fa){const t=1/Math.tan(f/2);return[t/a,0,0,0,0,t,0,0,0,0,(fa+n)/(n-fa),-1,0,0,2*fa*n/(n-fa),0]}
+function look(e,c){let z=[e[0]-c[0],e[1]-c[1],e[2]-c[2]];let l=hypot(z[0],z[1],z[2]);z=z.map(v=>v/l);let x=[z[2],0,-z[0]];l=hypot(x[0],x[1],x[2]);x=x.map(v=>v/l);const y=[z[1]*x[2]-z[2]*x[1],z[2]*x[0]-z[0]*x[2],z[0]*x[1]-z[1]*x[0]];
+ return[x[0],y[0],z[0],0,x[1],y[1],z[1],0,x[2],y[2],z[2],0,-(x[0]*e[0]+x[1]*e[1]+x[2]*e[2]),-(y[0]*e[0]+y[1]*e[1]+y[2]*e[2]),-(z[0]*e[0]+z[1]*e[1]+z[2]*e[2]),1]}
+function mm(a,b){const o=new Array(16).fill(0);for(let c=0;c<4;c++)for(let r=0;r<4;r++){let s=0;for(let k=0;k<4;k++)s+=a[k*4+r]*b[c*4+k];o[c*4+r]=s}return o}
+HERO3.preview=function(cv){
+ if(HERO3.fail)return null;let gl=null;try{gl=cv.getContext('webgl',{alpha:true,antialias:true,premultipliedAlpha:true})||cv.getContext('experimental-webgl')}catch(e){}
+ if(!gl)return null;const G=makeG();try{build(gl,G)}catch(e){console.error(e);return null}
+ const s={yaw:0,cur:'Idle_Loop',t:0,prev:null,tp:0,bl:1,bd:.2},PV={last:performance.now()};
+ const cam=[0,17,60],VPm=new Float32Array(mm(persp(.62,cv.width/cv.height,1,300),look(cam,[0,14.2,0])));
+ return{frame(o){if(gl.isContextLost()||!G.tex)return false;const now=performance.now();let dt=(now-PV.last)/1000;PV.last=now;dt=clp(dt||.016,0,.1);
+   const want=o.walk?'Jog_Fwd_Loop':'Idle_Loop';if(s.cur!==want){s.prev=s.cur;s.tp=s.t;s.cur=want;s.t=0;s.bl=0;s.bd=.2}
+   s.yaw=o.yaw||0;animate(s,dt,1);bones(s.yaw,0,0,0);
+   gl.viewport(0,0,cv.width,cv.height);gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.enable(gl.DEPTH_TEST);gl.disable(gl.CULL_FACE);gl.disable(gl.BLEND);
+   const u=G.u;bindAll(gl,G);gl.uniformMatrix4fv(u.uVP,false,VPm);gl.uniform3f(u.uCam,cam[0],cam[1],cam[2]);gl.uniform4f(u.uFog,0,0,0,0);gl.uniform1f(u.uFO,0);gl.uniform3fv(u.uMD,MD);
+   gl.uniformMatrix4fv(u.uB,false,BM);gl.uniform3f(u.uLt,1,1,1);gl.uniform4f(u.uFlc,1,1,1,0);gl.uniform3fv(u.uSk,skinRGB(o.skin));
+   gl.drawElements(gl.TRIANGLES,D.ni,gl.UNSIGNED_SHORT,0);gl.disableVertexAttribArray(3);gl.disableVertexAttribArray(4);return true},
+  ready:()=>!!G.tex}};
 HERO3.info={tris:D.ni/3,verts:D.n,bones:NB,height:HEIGHT};
 })();
 </script>
@@ -17561,7 +17602,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261024203437;
+const GAME_BUILD=20261024205156;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
