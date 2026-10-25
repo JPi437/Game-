@@ -2674,7 +2674,8 @@ const corr=(x,y)=>{const d=Math.hypot(x-DZ.x,(y-DZ.y)*1.12)+(nCor(x,y)-.5)*120;r
 const PATHS=[[488,500,488,846],[40,624,1000,624],[1000,624,1070,700],[1070,700,1094,872],[1094,872,1122,904],[1122,904,1150,906],[1150,906,1150,876],[40,352,318,352],[656,352,1310,352],[1012,352,1012,236]];
 function segD(x,y,a){const[x1,y1,x2,y2]=a,dx=x2-x1,dy=y2-y1,l=dx*dx+dy*dy,t=Math.max(0,Math.min(1,((x-x1)*dx+(y-y1)*dy)/l));return Math.hypot(x-x1-t*dx,y-y1-t*dy)}
 const ringQ=(x,y)=>{const qx=(x-MCX)/140,qy=(y-MCY)/(y>MCY?152:112);return Math.sqrt(qx*qx+qy*qy)};
-const onBridge=(x,y)=>(Math.abs(x-MCX)<15&&y>MCY)||(Math.abs(y-352)<13);
+const BW=34;   // meia-largura das pontes (cabem o jogador e as 4 tropas lado a lado); no 3D a ponte é um modelo de madeira (js/31b: FLD.bridges)
+const onBridge=(x,y)=>(Math.abs(x-MCX)<BW&&y>MCY)||(Math.abs(y-352)<BW);
 const pondQ=(x,y)=>{const a=(x-PD.x)/PD.rx,b=(y-PD.y)/PD.ry;return a*a+b*b};
 const rimQ=(x,y)=>{const a=(x-PD.x)/(PD.rx+12),b=(y-PD.y)/(PD.ry+10);return a*a+b*b};
 // ===== montanhas: picos desenhados em camadas ao longo das bordas =====
@@ -2822,7 +2823,7 @@ function* genMapG(){
   PAD=['#3a3430','#4a433d','#5a524a','#6a6157','#7a7064'].map(hex),RIM=['#4a4136','#6f6656','#8e8574','#ada492','#c9c0ad','#e3dccb'].map(hex);
  const put=(i,c)=>{const j=i*4;d[j]=c[0];d[j+1]=c[1];d[j+2]=c[2];d[j+3]=255};const HX={};const hx=s=>HX[s]||(HX[s]=hex(s));const NB4=[1,-1,MW,-MW];
  for(let y=0;y<MH;y++){if((y&63)===63)yield .3+.3*y/MH;for(let x=0;x<MW;x++){const i=y*MW+x,t=TY[i],hh=h32(x,y,7);let c;
-  if(t===5){const vert=Math.abs(x-MCX)<15,u=vert?y:x,v=vert?x-MCX:y-352;const edge=Math.abs(v)>=12;c=hex(edge?'#4a2e16':(u%5===0?'#5e3c1e':((h32(u>>2,0,31)*3|0)===0?'#9a6a3c':'#b07c48')));if(Math.abs(v)===11)c=hx('#7a5230')}
+  if(t===5){const vert=Math.abs(x-MCX)<BW&&y>MCY,u=vert?y:x,v=vert?x-MCX:y-352;const edge=Math.abs(v)>=BW-3;c=hex(edge?'#4a2e16':(u%5===0?'#5e3c1e':((h32(u>>2,0,31)*3|0)===0?'#9a6a3c':'#b07c48')));if(Math.abs(v)===BW-4)c=hx('#7a5230')}
   else if(t===4||t===7){const dw=DW[i],up=y>0&&!isW(TY[i-MW])&&dw<=3;let k=dw===1?5:dw<=2?4:dw<=4?3:2;const rip=vn(x+y*.3,y*2.2,10,8);if(k<=3&&rip>.66)k=3;if(k===2&&rip<.25)k=1;if(up||(y>2&&!isW(TY[i-2*MW])&&dw<=3))k=dw===1?1:0;
    if(t===4)c=WA[k];else{const bl=sst(200,224,y)*(1-sst(26,60,Math.abs(x-PD.x)));c=bl>0?mixc(TQ[k],WA[k],bl):TQ[k]}}
   else if(t===9){const a=Math.atan2((y-PD.y)/(PD.ry+10),(x-PD.x)/(PD.rx+12)),rq=rimQ(x,y),dl=DL[i];let k;
@@ -3977,7 +3978,7 @@ RD._dbg={planClear,genBlock,roomCanvas,halCrop,AR,startRaid,startWait,spawnRoom,
 
 // ----- ponte para o modo 3D do salão (js/22..26-h3-*.js): só mostra o que é local deste arquivo -----
 window.H3X={inRoom:()=>inRoom(),boss:()=>BOSS(),DM,SK,skOf,wb:()=>WB,DS,ICE,ICEJ,DRG,wbMax:WBMAX,
- w3:()=>W3,mc:()=>MC,mapOk:()=>MAPOK&&!!W3,corr,ringQ,onBridge,GT,PD,TW,DZ,TWS,GTS,MW,MH,MCX,MCY,DY};   // wb/DS/ICE/DRG: o boss mundial (Caverna de Gelo) para js/27-h3-ice.js e js/28-h3-dragon.js
+ w3:()=>W3,mc:()=>MC,mapOk:()=>MAPOK&&!!W3,corr,ringQ,onBridge,BW,GT,PD,TW,DZ,TWS,GTS,MW,MH,MCX,MCY,DY};   // wb/DS/ICE/DRG: o boss mundial (Caverna de Gelo) para js/27-h3-ice.js e js/28-h3-dragon.js
 window.__gen=true;mcStart();{const gi=setInterval(()=>{if(genStep(12))clearInterval(gi)},24)}
 
 })();
@@ -11786,7 +11787,7 @@ function hAt(x,z){let u=(x+MRG)/CS,v=(z+MRG)/CS;u=clp(u,0,GWc-1e-4);v=clp(v,0,GH
 function nAt(x,z,o){const e=3,hx=hAt(x+e,z)-hAt(x-e,z),hz=hAt(x,z+e)-hAt(x,z-e),l=hypot(hx,2*e,hz);o=o||[0,1,0];o[0]=-hx/l;o[1]=2*e/l;o[2]=-hz/l;return o}
 // altura onde o personagem pisa: em cima da ponte vale o tabuleiro
 function floorY(x,z){const h=hAt(x,z);if(FLD.typeAt(x|0,z|0)===5&&FLD.deckY!==undefined)return max(h,FLD.deckY);return h}
-FLD.hAt=hAt;FLD.nAt=nAt;FLD.floorY=floorY;FLD.deckY=LAND+.42;
+FLD.hAt=hAt;FLD.nAt=nAt;FLD.floorY=floorY;FLD.deckY=LAND+1.7;   // topo do tabuleiro das pontes 3D
 
 // ---------- cores da rocha, da neve e do pé dos morros (por vértice) ----------
 const hexC=h=>H3.C(h);
@@ -12332,6 +12333,50 @@ FLD.reg({
  draw:(t,dyn)=>{const cam=H3.S.foc||H3.S.cam;FL.draw(t,dyn);FL.drawPines(cam);if(FL.lily)H3.mesh(FL.lily.m,null,null,null,{})},
  frame:FL.frame,enter:FL.enter,
  free:()=>{const gl=H3.gl();if(gl){for(const c of FL.ch.values())if(c.m)gl.deleteBuffer(c.m.vbo);for(const c of FL.pines)gl.deleteBuffer(c.m.vbo);if(FL.lily)gl.deleteBuffer(FL.lily.m.vbo)}FL.ch.clear();FL.pines=[];FL.lily=null}});
+})();
+</script>
+<script>
+// ===================== Modo 3D do Mundo 1 — pontes de madeira =====================
+// As pontes do rio (a do sul da praça e as duas da estrada leste-oeste) viram modelos 3D: tabuleiro de tábuas, vigas por baixo, pilares dentro d'água,
+// guarda-corpo com postes e lampiões nas cabeceiras. A largura vem do mapa (BW = 34 px de cada lado do eixo: cabem o jogador e as 4 tropas);
+// o personagem pisa no topo das tábuas (FLD.deckY, usado por FLD.floorY nas células de ponte).
+(function(){
+'use strict';
+const H3=window.H3,FLD=H3&&H3.fld,X=window.H3X;
+if(!FLD||!H3.MB||!X)return;
+const MB=H3.MB,PI=Math.PI,min=Math.min,max=Math.max,BW=X.BW||34,MCX=X.MCX||488,MCY=X.MCY||346;
+let LIST=[];
+function comps(){const tw=Math.ceil(FLD.MW/4),th=Math.ceil(FLD.MH/4),seen=new Uint8Array(tw*th),out=[];
+ for(let j=0;j<th;j++)for(let i=0;i<tw;i++){const k=j*tw+i;if(seen[k]||FLD.typeAt(i*4+2,j*4+2)!==5)continue;
+  let x0=1e9,x1=-1e9,z0=1e9,z1=-1e9,n=0;const st=[k];seen[k]=1;
+  while(st.length){const c=st.pop(),ci=c%tw,cj=(c/tw)|0;n++;x0=min(x0,ci*4);x1=max(x1,ci*4+4);z0=min(z0,cj*4);z1=max(z1,cj*4+4);
+   for(const[di,dj]of[[1,0],[-1,0],[0,1],[0,-1]]){const a=ci+di,b=cj+dj;if(a<0||b<0||a>=tw||b>=th)continue;const kk=b*tw+a;if(seen[kk]||FLD.typeAt(a*4+2,b*4+2)!==5)continue;seen[kk]=1;st.push(kk)}}
+  if(n>8)out.push({x0,x1,z0,z1})}
+ return out}
+const WOOD=['#8a5a32','#7c5029','#946238','#6f4724','#9c6a3e'],DARK='#4a2e16',POST='#5e3c1e';
+function bridge(mb,b){const vert=Math.abs((b.x0+b.x1)/2-MCX)<BW+8&&(b.z0+b.z1)/2>MCY;
+ const cx=vert?MCX:(b.x0+b.x1)/2,cz=vert?(b.z0+b.z1)/2:352,L=(vert?b.z1-b.z0:b.x1-b.x0)+12,dy=FLD.deckY,r=mb.r,W=BW*2;
+ const toW=(lx,lz)=>vert?[cx+lx,cz+lz]:[cx+lz,cz-lx];          // local (x = de lado, z = ao longo) -> mundo
+ mb.push().T(cx,0,cz);if(!vert)mb.RY(PI/2);
+ // tábuas
+ for(let z=-L/2+2;z<L/2-1;z+=4.3){mb.push().T((r()-.5)*.6,dy-.55+(r()-.5)*.18,z).RY((r()-.5)*.035).box(W-3+(r()-.5)*1.2,1.1,3.9,WOOD[(r()*WOOD.length)|0],0).pop()}
+ // vigas por baixo e rodapé dos lados
+ for(const x of[-BW+3,-BW/3,BW/3,BW-3])mb.push().T(x,dy-2.2,0).box(2.6,2.2,L,DARK,0).pop();
+ for(const s of[-1,1]){mb.push().T(s*(BW-1.2),dy+.55,0).box(2.4,1.2,L,POST,0).pop();
+  // postes, corrimão e travessa do meio
+  const n=Math.max(2,Math.round(L/12));for(let i=0;i<=n;i++){const z=-L/2+1.5+(L-3)*i/n;mb.push().T(s*(BW-1.2),dy,z).box(2.3,9.4,2.3,POST,0,true).pop();mb.push().T(s*(BW-1.2),dy+9.4,z).box(2.9,.8,2.9,DARK,0,true).pop()}
+  mb.push().T(s*(BW-1.2),dy+8.6,0).box(1.8,1.4,L-2,WOOD[0],0).pop();mb.push().T(s*(BW-1.2),dy+4.8,0).box(1.1,1,L-3,WOOD[3],0).pop();
+  // pilares dentro d'água (até o leito)
+  const np=Math.max(2,Math.round(L/34));for(let i=0;i<np;i++){const z=-L/2+8+(L-16)*(np===1?.5:i/(np-1)),w=toW(s*(BW-4),z),yb=FLD.hAt(w[0],w[1])-1.5,h=dy-2.2-yb;if(h>.5)mb.push().T(s*(BW-4),yb,z).cyl(2.1,1.8,h,8,POST,0).pop()}
+  // lampiões nas cabeceiras
+  for(const e of[-1,1]){const z=e*(L/2-1.5);mb.push().T(s*(BW-1.2),dy+10.2,z).box(1.2,3,1.2,DARK,0,true).pop();mb.push().T(s*(BW-1.2),dy+13.2,z).box(2.6,2.6,2.6,'#ffd27a',1).pop();mb.push().T(s*(BW-1.2),dy+14.8,z).box(3.4,.7,3.4,DARK,0).pop();}}
+ mb.pop()}
+FLD.bridges=()=>LIST;
+FLD.reg({
+ build:function*(gl){LIST=[];const cs=comps();const mb=new MB(9191,{pk:true});for(const b of cs)bridge(mb,b);yield .7;
+  if(mb.count){const pk=mb.pack();LIST.push({m:H3.upload(gl,pk),cx:pk.cx,cy:pk.cy,cz:pk.cz,rad:pk.rad,n:cs.length})}yield 1},
+ draw:()=>{for(const c of LIST){if(H3.vis&&!H3.vis(c.cx,c.cy,c.cz,c.rad))continue;H3.mesh(c.m,null,null,null,{})}},
+ free:()=>{const gl=H3.gl();if(gl)for(const c of LIST)gl.deleteBuffer(c.m.vbo);LIST=[]}});
 })();
 </script>
 <script>
@@ -18066,7 +18111,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261025031824;
+const GAME_BUILD=20261025032314;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
