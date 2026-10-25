@@ -2217,9 +2217,10 @@ window.chUi=function(){const el=document.getElementById('spinCh');if(!el)return;
  const N=world===1?HNAMES:NAMES,f=v=>(+v.toFixed(4)).toLocaleString('pt-BR',{maximumFractionDigits:4})+'%';
  let bf='';for(const id in buffs)if(buffs[id]>0&&IT[id]&&IT[id].k==='s'&&IT[id].m===Lk){bf=`${IT[id].n} ativa (${String(Lk).replace('.',',')}x) · acaba em ${ft(buffs[id])}`;break}
  const key=world+'|'+Lk+'|'+GOTv+'|'+Object.keys(GOT).length;
- if(key!==chKey){chKey=key;let h='<div class="scg">';
-  N.forEach((ns,r)=>ns.forEach(n=>{const own=!!GOT[n],p=ch[r]/ns.length,b=CH[r]/ns.length,up=Lk>1&&Math.abs(p-b)>1e-9;
-   h+=`<div class="scd r${r}${own?'':' no'}" style="--c:${RC[r]}" title="${own?n:'???'}"><div class="scr">${RN[r]}</div><canvas data-n="${n}" data-r="${r}"></canvas><div class="scn">${own?n:'???'}</div><div class="scp" style="${up?'color:'+(p>b?'#69f0ae':'#ff8a80'):''}">${up?`<s>${f(b)}</s>`:''}${f(p)}</div></div>`}));
+ if(key!==chKey){chKey=key;const tot=N.flat().length,odd=tot%2,mm=odd?(tot-1)/2:tot/2,cols=odd?mm+1:mm;let ix=0;   // 2 fileiras; se sobrar um (o Mítico), fica sozinho no meio, na ponta da direita
+  let h=`<div class="scg" style="grid-template-columns:repeat(${cols},minmax(0,1fr))">`;
+  N.forEach((ns,r)=>ns.forEach(n=>{const own=!!GOT[n],p=ch[r]/ns.length,b=CH[r]/ns.length,up=Lk>1&&Math.abs(p-b)>1e-9,i=ix++,pos=(odd&&i===tot-1)?`grid-column:${cols};grid-row:1/3;align-self:center`:`grid-column:${i%mm+1};grid-row:${i<mm?1:2}`;
+   h+=`<div class="scd r${r}${own?'':' no'}" style="--c:${RC[r]};${pos}" title="${own?n:'???'}"><div class="scr">${RN[r]}</div><canvas data-n="${n}" data-r="${r}"></canvas><div class="scn">${own?n:'???'}</div><div class="scp" style="${up?'color:'+(p>b?'#69f0ae':'#ff8a80'):''}">${up?`<s>${f(b)}</s>`:''}${f(p)}</div></div>`}));
   h+='</div><div class="scx" style="font-size:11px">✦ Shiny (aura arco-íris) '+(Lk>1?`<s style="opacity:.55">0,5%</s> → <b style="color:#69f0ae">${f(sh)}</b>`:'0,5%')+'</div><div class="scb" style="margin-top:3px;font-size:11px"></div>';
   el.innerHTML=h;el.style.textAlign='center';el.querySelectorAll('canvas[data-n]').forEach(c=>{try{drawSp(c,+c.dataset.r,2,0,c.dataset.n)}catch(e){}})}
  const sb=el.querySelector('.scb');if(sb){const x=bf?`<span style="color:#69f0ae;font-weight:bold">${bf}</span>`:'<span style="opacity:.6">Use uma Poção de Sorte para aumentar as chances</span>';if(sb.innerHTML!==x)sb.innerHTML=x}
@@ -18430,7 +18431,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261025052920;
+const GAME_BUILD=20261025053133;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
