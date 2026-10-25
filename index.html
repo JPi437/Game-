@@ -16561,11 +16561,11 @@ function pick(s,want,bd){if(s.cur!==want){s.prev=s.cur;s.tp=s.t;s.cur=want;s.t=0
 // ---------- WebGL ----------
 const HP='#ifdef GL_FRAGMENT_PRECISION_HIGH\nprecision highp float;\n#else\nprecision mediump float;\n#endif\n';
 const VS=`attribute vec3 aP;attribute vec3 aN;attribute vec2 aT;attribute vec4 aJ;attribute vec4 aW;
-uniform mat4 uVP;uniform mat4 uB[${NB}];uniform vec3 uMin;uniform vec3 uSz;uniform vec2 uUm;uniform vec2 uUs;uniform vec4 uCp;uniform vec4 uHq;uniform mat3 uAm;uniform vec3 uAp;uniform vec3 uAo;
+uniform mat4 uVP;uniform mat4 uB[${NB}];uniform vec3 uMin;uniform vec3 uSz;uniform vec2 uUm;uniform vec2 uUs;uniform vec4 uCp;uniform vec4 uHq;uniform mat3 uAm;uniform vec3 uAp;uniform vec3 uAo;uniform float uAs;
 varying vec3 vP;varying vec3 vN;varying vec2 vT;varying vec3 vO;
 void main(){vec4 p=vec4(uMin+aP*uSz,1.0);vO=p.xyz;
  if(uCp.w>0.5){float k=pow(clamp((0.76-p.y)/0.74,0.0,1.0),1.35);p.z-=uCp.z*k;p.x+=sin(uCp.y*3.1+p.y*9.0)*uCp.x*k;p.z+=cos(uCp.y*2.3+p.y*7.0+p.x*6.0)*uCp.x*.7*k;}   // capa: balança no vento e vai para trás com a velocidade
- p.xyz=uAm*(p.xyz-uAp)+uAp+uAo;   // ajuste da peça feito no Editor do ADM (identidade quando não há)
+ {vec3 pv=uAp;mat3 A=uAm;vec3 ao=uAo;if(uAs>0.0){float sg=p.x<uAp.x?-1.0:1.0;pv.x+=sg*uAs;if(sg<0.0){mat3 Sx=mat3(-1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,1.0);A=Sx*A*Sx;ao.x=-ao.x;}}p.xyz=A*(p.xyz-pv)+pv+ao;}   // ajuste da peça feito no Editor do ADM (identidade quando não há)
  mat4 b0=uB[int(aJ.x+0.5)];mat4 b1=uB[int(aJ.y+0.5)];mat4 b2=uB[int(aJ.z+0.5)];mat4 b3=uB[int(aJ.w+0.5)];
  vec4 w=(b0*p)*aW.x+(b1*p)*aW.y+(b2*p)*aW.z+(b3*p)*aW.w;
  vec3 n=(b0*vec4(aN,0.0)).xyz*aW.x+(b1*vec4(aN,0.0)).xyz*aW.y+(b2*vec4(aN,0.0)).xyz*aW.z+(b3*vec4(aN,0.0)).xyz*aW.w;
@@ -16585,7 +16585,7 @@ function sh(gl,t,s){const o=gl.createShader(t);gl.shaderSource(o,s);gl.compileSh
 function build(gl,G){G.gl=gl;G.ok=false;G.tex=null;
  const p=gl.createProgram();gl.attachShader(p,sh(gl,gl.VERTEX_SHADER,VS));gl.attachShader(p,sh(gl,gl.FRAGMENT_SHADER,FS));['aP','aN','aT','aJ','aW'].forEach((a,i)=>gl.bindAttribLocation(p,i,a));gl.linkProgram(p);
  if(!gl.getProgramParameter(p,gl.LINK_STATUS))throw new Error('HERO3 programa: '+gl.getProgramInfoLog(p));G.p=p;G.u={};
- for(const n of['uVP','uB','uMin','uSz','uUm','uUs','uTex','uCam','uFog','uFO','uLt','uMD','uFlc','uSk','uCl','uCp','uFr','uHq','uHt','uAm','uAp','uAo'])G.u[n]=gl.getUniformLocation(p,n);
+ for(const n of['uVP','uB','uMin','uSz','uUm','uUs','uTex','uCam','uFog','uFO','uLt','uMD','uFlc','uSk','uCl','uCp','uFr','uHq','uHt','uAm','uAp','uAo','uAs'])G.u[n]=gl.getUniformLocation(p,n);
  G.vb=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,G.vb);gl.bufferData(gl.ARRAY_BUFFER,b64(D.vb),gl.STATIC_DRAW);
  G.ib=gl.createBuffer();gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,G.ib);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,b64(D.ib),gl.STATIC_DRAW);
  loadTex(gl,G,D.tex,t=>{G.tex=t});
@@ -16605,9 +16605,9 @@ function ensure(){if(HERO3.fail)return null;const gl=H3.gl&&H3.gl();if(!gl||gl.i
 HERO3.on=()=>{const gl=ensure();return !!(gl&&GM.ok&&GM.tex&&!HERO3.fail)};
 // liga programa, buffers e atributos (comum ao jogo e à prévia)
 const ID3=new Float32Array([1,0,0,0,1,0,0,0,1]);
-function adjId(gl,G){const u=G.u;gl.uniformMatrix3fv(u.uAm,false,ID3);gl.uniform3f(u.uAp,0,0,0);gl.uniform3f(u.uAo,0,0,0);G._ad=0}
+function adjId(gl,G){const u=G.u;gl.uniformMatrix3fv(u.uAm,false,ID3);gl.uniform3f(u.uAp,0,0,0);gl.uniform3f(u.uAo,0,0,0);gl.uniform1f(u.uAs,0);G._ad=0}
 // ajuste de uma peça (cabelo, chapéu, camiseta, botas, capa...) feito no Editor do ADM
-function adjFor(gl,G,key,c){const E=window.EDITS,a=E&&key?E.partAdj(key,c):null;if(a){const u=G.u;gl.uniformMatrix3fv(u.uAm,false,a.m);gl.uniform3fv(u.uAp,a.p);gl.uniform3fv(u.uAo,a.o);G._ad=1}else if(G._ad)adjId(gl,G)}
+function adjFor(gl,G,key,c){const E=window.EDITS,a=E&&key?E.partAdj(key,c):null;if(a){const u=G.u;gl.uniformMatrix3fv(u.uAm,false,a.m);gl.uniform3fv(u.uAp,a.p);gl.uniform3fv(u.uAo,a.o);gl.uniform1f(u.uAs,a.sm?a.hs:0);G._ad=1}else if(G._ad)adjId(gl,G)}
 function bindAll(gl,G){const u=G.u;gl.useProgram(G.p);gl.uniform1i(u.uTex,0);adjId(gl,G);for(let i=0;i<5;i++)gl.enableVertexAttribArray(i);bindGeo(gl,G,D,G.vb,G.ib,G.tex)}
 function bindGeo(gl,G,c,vb,ib,tex){const u=G.u;if(G._ad)adjId(gl,G);
  gl.uniform3fv(u.uMin,c.min);gl.uniform3fv(u.uSz,c.size);gl.uniform2fv(u.uUm,c.uvmin);gl.uniform2fv(u.uUs,c.uvsize);gl.uniform1f(u.uCl,c===D?0:1);
@@ -18791,7 +18791,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261025172032;
+const GAME_BUILD=20261025180432;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;

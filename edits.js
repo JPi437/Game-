@@ -43,7 +43,7 @@ function clean(raw){const d=blank();if(!raw||typeof raw!=='object')return d;d.t=
  if(raw.ch&&typeof raw.ch==='object')for(const n of Object.keys(raw.ch).slice(0,60)){if(!/^[A-Za-z0-9 ._-]{1,24}$/.test(n)||n==='__proto__')continue;const s=raw.ch[n];if(!s||typeof s!=='object')continue;
   const o={sx:nm(s.sx,.2,6,1),sy:nm(s.sy,.2,6,1),sz:nm(s.sz,.2,6,1)};if(o.sx!==1||o.sy!==1||o.sz!==1)d.ch[n]=o}
  if(raw.pt&&typeof raw.pt==='object')for(const n of Object.keys(raw.pt).slice(0,60)){if(!/^[a-z0-9_]{1,12}$/.test(n))continue;const s=raw.pt[n];if(!s||typeof s!=='object')continue;
-  const o={sx:nm(s.sx,.1,6,1),sy:nm(s.sy,.1,6,1),sz:nm(s.sz,.1,6,1),dx:nm(s.dx,-2,2,0),dy:nm(s.dy,-2,2,0),dz:nm(s.dz,-2,2,0),rx:nm(s.rx,-3.2,3.2,0),ry:nm(s.ry,-3.2,3.2,0),rz:nm(s.rz,-3.2,3.2,0),py:nm(s.py,0,1,.5)};
+  const o={sx:nm(s.sx,.1,6,1),sy:nm(s.sy,.1,6,1),sz:nm(s.sz,.1,6,1),dx:nm(s.dx,-2,2,0),dy:nm(s.dy,-2,2,0),dz:nm(s.dz,-2,2,0),rx:nm(s.rx,-3.2,3.2,0),ry:nm(s.ry,-3.2,3.2,0),rz:nm(s.rz,-3.2,3.2,0),py:nm(s.py,0,1,.5),sm:s.sm?1:0};
   d.pt[n]=o}
  if(Array.isArray(raw.cam))for(const c of raw.cam.slice(0,30)){if(!c||typeof c!=='object'||!Array.isArray(c.k))continue;
   const k=[];for(const f of c.k.slice(0,80)){if(!f||typeof f!=='object')continue;k.push({x:nm(f.x,-1e5,1e5,0),y:nm(f.y,-1e5,1e5,0),z:nm(f.z,-1e5,1e5,0),yaw:nm(f.yaw,-100,100,0),pitch:nm(f.pitch,-1.6,1.6,0),fov:nm(f.fov,.2,2.2,.9),t:nm(f.t,0,3600,0)})}
@@ -79,18 +79,35 @@ E.setChar=function(name,patch){if(!/^[A-Za-z0-9 ._-]{1,24}$/.test(name))return;c
 
 // ---------- ajuste de cada peça (cabelo, chapéu, camiseta, botas, capa, conjunto): usado pelo shader do personagem ----------
 const ADJ_ID=new Float32Array([1,0,0,0,1,0,0,0,1]);
+// caixa real do pedaço (a região da roupa do aventureiro ou a malha toda): o ponto de crescimento fica no centro DELE, não do corpo inteiro
+const BBC=new WeakMap();
+function u8(s){const b=atob(s),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u}
+function boxOf(key,c){let M=BBC.get(c);if(!M){M={};BBC.set(c,M)}if(M[key])return M[key];
+ const fallback={mn:[c.min[0],c.min[1],c.min[2]],mx:[c.min[0]+c.size[0],c.min[1]+c.size[1],c.min[2]+c.size[2]],lx:c.min[0]+c.size[0]*.25,rx:c.min[0]+c.size[0]*.75};
+ try{
+  const vb=new Uint16Array(u8(c.vb).buffer),n=c.n||(vb.length/11|0);let ids=null;
+  if(/^av\d$/.test(key)&&c.cnt&&c.ib){const r=+key[2];let off=0;for(let i=0;i<r;i++)off+=c.cnt[i]||0;const ib=new Uint16Array(u8(c.ib).buffer);ids=ib.subarray(off,off+(c.cnt[r]||0))}
+  const mn=[1e9,1e9,1e9],mx=[-1e9,-1e9,-1e9],P=new Float32Array(3),xs=[];
+  const eat=i=>{for(let k=0;k<3;k++){const v=c.min[k]+vb[i*11+k]/65535*c.size[k];if(v<mn[k])mn[k]=v;if(v>mx[k])mx[k]=v;P[k]=v}xs.push(P[0])};
+  if(ids){if(!ids.length)return M[key]=fallback;for(let i=0;i<ids.length;i++)eat(ids[i])}else for(let i=0;i<n;i++)eat(i);
+  const xm=(mn[0]+mx[0])/2;let l0=1e9,l1=-1e9,r0=1e9,r1=-1e9;for(const x of xs){if(x<xm){if(x<l0)l0=x;if(x>l1)l1=x}else{if(x<r0)r0=x;if(x>r1)r1=x}}
+  const box={mn,mx,lx:l1>-1e8?(l0+l1)/2:mn[0],rx:r1>-1e8?(r0+r1)/2:mx[0]};
+  if(!(mx[0]>mn[0]))return M[key]=fallback;return M[key]=box
+ }catch(e){return M[key]=fallback}}
+E.boxOf=boxOf;
 E.partAdj=function(key,c){const p=E.data.pt[key];if(!p)return null;let a=p._c;
  if(!a||a.rev!==E.rev||a.cs!==c){const cx=cos(p.rx),sx=sin(p.rx),cy=cos(p.ry),sy=sin(p.ry),cz=cos(p.rz),sz=sin(p.rz);
   // R = Rz·Ry·Rx ; M = R·diag(s)  (guardado por colunas, como o WebGL quer)
   const r=[cy*cz,cy*sz,-sy, sx*sy*cz-cx*sz,sx*sy*sz+cx*cz,sx*cy, cx*sy*cz+sx*sz,cx*sy*sz-sx*cz,cx*cy];
   const m=new Float32Array([r[0]*p.sx,r[1]*p.sx,r[2]*p.sx, r[3]*p.sy,r[4]*p.sy,r[5]*p.sy, r[6]*p.sz,r[7]*p.sz,r[8]*p.sz]);
-  Object.defineProperty(p,'_c',{value:a={rev:E.rev,cs:c,m,p:[c.min[0]+c.size[0]/2,c.min[1]+c.size[1]*p.py,c.min[2]+c.size[2]/2],o:[p.dx,p.dy,p.dz]},writable:true,enumerable:false,configurable:true})}
+  const bx=boxOf(key,c),sm=p.sm?1:0,xc=sm?(bx.lx+bx.rx)/2:(bx.mn[0]+bx.mx[0])/2;
+  Object.defineProperty(p,'_c',{value:a={rev:E.rev,cs:c,m,p:[xc,bx.mn[1]+(bx.mx[1]-bx.mn[1])*p.py,(bx.mn[2]+bx.mx[2])/2],o:[p.dx,p.dy,p.dz],sm,hs:sm?max(1e-4,(bx.rx-bx.lx)/2):0},writable:true,enumerable:false,configurable:true})}
  return a};
 E.ADJ_ID=ADJ_ID;
-E.setPart=function(key,patch){if(!/^[a-z0-9_]{1,12}$/.test(key))return;const p=E.data.pt[key]||(E.data.pt[key]={sx:1,sy:1,sz:1,dx:0,dy:0,dz:0,rx:0,ry:0,rz:0,py:.5});Object.assign(p,patch);
+E.setPart=function(key,patch){if(!/^[a-z0-9_]{1,12}$/.test(key))return;const p=E.data.pt[key]||(E.data.pt[key]={sx:1,sy:1,sz:1,dx:0,dy:0,dz:0,rx:0,ry:0,rz:0,py:.5,sm:0});Object.assign(p,patch);p.sm=p.sm?1:0;
  const L={sx:[.1,6,1],sy:[.1,6,1],sz:[.1,6,1],dx:[-2,2,0],dy:[-2,2,0],dz:[-2,2,0],rx:[-3.2,3.2,0],ry:[-3.2,3.2,0],rz:[-3.2,3.2,0],py:[0,1,.5]};
  for(const k in L)p[k]=nm(p[k],L[k][0],L[k][1],L[k][2]);
- if(p.sx===1&&p.sy===1&&p.sz===1&&!p.dx&&!p.dy&&!p.dz&&!p.rx&&!p.ry&&!p.rz)delete E.data.pt[key];E.touch()};
+ if(p.sx===1&&p.sy===1&&p.sz===1&&!p.dx&&!p.dy&&!p.dz&&!p.rx&&!p.ry&&!p.rz&&!p.sm)delete E.data.pt[key];E.touch()};
 
 // ---------- objetos do Mundo 1 (a lista NAT do motor 3D) ----------
 let H3,FLD,NAT,M4;

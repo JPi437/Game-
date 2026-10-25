@@ -57,6 +57,22 @@ const css=D.createElement('style');css.textContent=`
 #edStop{position:fixed;right:14px;bottom:14px;z-index:60;display:none;background:#c62828;color:#fff;border:3px solid #fff;border-radius:12px;font-weight:900;padding:10px 16px;font-size:15px}
 #edFly{position:fixed;right:16px;bottom:96px;z-index:41;display:none;flex-direction:column;gap:8px}
 #edFly button{width:56px;height:56px;border-radius:50%;border:3px solid #fff;background:#1d4f9c;color:#fff;font-size:22px;font-weight:900;touch-action:none;user-select:none;-webkit-user-select:none}
+/* o jogo desliga o toque em TUDO (touch-action:none): aqui o painel precisa rolar com o dedo */
+#edP,#edP *{touch-action:pan-y}
+#edP input,#edP textarea,#edP select{-webkit-user-select:text;user-select:text}
+#edP .edB{min-height:0;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#ffe84a #14141b}
+#edP .edB::-webkit-scrollbar{width:8px}#edP .edB::-webkit-scrollbar-thumb{background:#ffe84a;border-radius:6px}
+#edP.left{left:0;right:auto;border-left:0;border-right:3px solid #ffe84a;box-shadow:6px 0 24px #000a}
+#edP.min{bottom:auto;min-width:230px;border-bottom:3px solid #ffe84a;border-radius:0 0 0 12px}
+#edP.left.min{border-radius:0 0 12px 0}
+#edP.min .edT,#edP.min .edB{display:none}
+#edP .sl input.ov{width:100%;min-width:0;text-align:right;padding:2px 3px;font-size:10px;color:#ffe84a;border:1px solid #4a4a5e;border-radius:5px;background:#0b0b10;font-variant-numeric:tabular-nums}
+#edP .grp{margin:6px 0 2px;font-size:10px;font-weight:900;color:#9a9ab0;letter-spacing:.4px;text-transform:uppercase}
+#edP button.b.dot::after{content:' •';color:#ffe84a}
+#edP button.b.on.dot::after{color:#111}
+#edP label.ck{display:flex;gap:6px;align-items:center;margin:6px 0}
+#edP label.ck input{width:20px;height:20px;accent-color:#ffe84a}
+@media (pointer:coarse){#edP .sl{grid-template-columns:76px 32px 1fr 32px 52px 30px;gap:4px;margin:5px 0}#edP .sl button{height:32px;font-size:16px}#edP .sl input[type=range]{height:32px}#edP button.b{padding:8px 10px;font-size:13px}#edP .edT button{padding:10px 4px}#edP .sl input.ov{padding:6px 3px;font-size:11px}}
 body.edCine>*:not(#h3gl):not(#edStop):not(#h3ov):not(script):not(style){visibility:hidden!important}
 body.edCine.edCineClean #h3ov{visibility:hidden!important}
 body.edFlyOn #edFly{display:flex}
@@ -72,10 +88,13 @@ function hint(t){const h=el('div','hint');h.textContent=t;return h}
 function fmt(v,d){return (+v).toFixed(d==null?2:d).replace('.',',')}
 // controle deslizante com − e + e botão de voltar ao padrão. o={label,min,max,step,get,set,def,dec,start}
 function sld(o){const w=el('div','sl'),l=el('label');l.textContent=o.label;const m=el('button');m.textContent='−';const p=el('button');p.textContent='+';
- const r=el('input');r.type='range';r.min=o.min;r.max=o.max;r.step=o.step;const out=el('output'),rs=el('button');rs.textContent='↺';rs.title='voltar ao padrão';
- const show=()=>{const v=+o.get();r.value=v;out.textContent=(o.show?o.show(v):fmt(v,o.dec))};show();
+ const r=el('input');r.type='range';r.min=o.min;r.max=o.max;r.step=o.step;const out=el('input','ov'),rs=el('button');out.type='text';out.setAttribute('inputmode','decimal');out.title='toque para digitar o valor';rs.textContent='↺';rs.title='voltar ao padrão';
+ const show=()=>{const v=+o.get();r.value=v;if(D.activeElement!==out)out.value=(o.show?o.show(v):fmt(v,o.dec))};show();
  const put=v=>{v=clp(+v,+o.min,+o.max);o.set(v);show()};
  r.oninput=()=>put(r.value);r.onpointerdown=()=>{if(o.start)o.start()};
+ out.onfocus=()=>out.select();
+ out.onchange=()=>{const v=parseFloat(String(out.value).replace(',','.'));if(isFinite(v)){if(o.start)o.start();put(v)}else show()};
+ out.onkeydown=e=>{if(e.key==='Enter')out.blur()};
  m.onclick=()=>{if(o.start)o.start();put(+o.get()-+o.step)};p.onclick=()=>{if(o.start)o.start();put(+o.get()+ +o.step)};
  rs.onclick=()=>{if(o.start)o.start();put(o.def)};
  w.append(l,m,r,p,out,rs);w._show=show;return w}
@@ -222,39 +241,77 @@ function tabMon(B){
 
 // ----- modelo: personagens, roupas, cabelo, acessórios -----
 const CHARS=[['player','Jogador (todos os humanos)'],['Guts','Guts'],['Springtrap','Springtrap'],['Naruto','Naruto'],['Goku','Goku'],['Luffy','Luffy'],['Gon','Gon'],['Itadori','Itadori']];
-const PARTS=[['h1','Cabelo 1'],['h2','Cabelo 2'],['h3','Cabelo 3'],['h4','Cabelo 4'],['chm','Chapéu de mago'],['cam','Camiseta'],['bot','Botas padrão'],['capm','Capa de mago'],['cape','Capa do Lich'],['av0','Aventureiro: peito'],['av1','Aventureiro: calça'],['av2','Aventureiro: botas'],['av3','Aventureiro: barra da calça']];
-function dressFor(key){const f=Object.assign({o:0,k:0,a:0,w:0,hc:0},window.EDFORCE||{});
- if(/^h\d$/.test(key))f.a=+key[1];else if(key==='chm')f.w=1;else if(key==='cam')f.o|=8;else if(key==='bot')f.o|=16;else if(key==='capm')f.k=2;else if(key==='cape')f.k=1;
- else if(key==='av0')f.o|=1;else if(key==='av1'||key==='av3')f.o|=2;else if(key==='av2')f.o|=4;return f}
+// as peças que existem no modelo do jogador, em grupos
+const GROUPS=[['Cabelo',[['h1','Cabelo 1'],['h2','Cabelo 2'],['h3','Cabelo 3'],['h4','Cabelo 4']]],['Cabeça',[['chm','Chapéu de mago']]],
+ ['Tronco',[['cam','Camiseta'],['av0','Aventureiro: peito']]],['Pernas',[['av1','Aventureiro: calça'],['av3','Aventureiro: barra da calça']]],
+ ['Pés',[['bot','Botas padrão'],['av2','Aventureiro: botas']]],['Capas',[['capm','Capa de mago'],['cape','Capa do Lich']]]];
+const PNAME={};GROUPS.forEach(g=>g[1].forEach(([k,t])=>PNAME[k]=t));
+const PY0={bot:0,av2:0,chm:0,av0:1,av1:1,av3:1,cam:1,capm:1,cape:1};
+const SYMP={bot:1,av2:1};                       // peças com um lado esquerdo e um direito (pés)
+// o "look de teste": o que o SEU personagem veste enquanto você ajusta (não salva; só você vê)
+const look=()=>ED.look||(ED.look={o:0,k:0,a:0,w:0,hc:0});
+function wear(key){const L=look();
+ if(/^h\d$/.test(key))L.a=+key[1];else if(key==='chm')L.w=1;else if(key==='cam')L.o|=8;else if(key==='bot')L.o|=16;else if(key==='capm')L.k=2;else if(key==='cape')L.k=1;
+ else if(key==='av0')L.o|=1;else if(key==='av1'||key==='av3')L.o|=2;else if(key==='av2')L.o|=4;window.EDFORCE=L}
+function lookBtn(txt,on,fn){return btn(txt,fn,'sm '+(on?'on':''))}
 function tabMod(B){
  B.appendChild(h4('Tamanho do personagem'));
  const cur=ED._ch||'player';
  B.appendChild(row(sel(CHARS,cur,v=>{ED._ch=v;render()})));
  const c=E.data.ch[cur]||{sx:1,sy:1,sz:1};
  const setc=p=>E.setChar(cur,p);
- B.appendChild(sld({label:'Tudo',min:.3,max:3,step:.02,def:1,get:()=>(c.sx+c.sy+c.sz)/3,set:v=>{setc({sx:v,sy:v,sz:v});refreshSl(B)},start:hist}));
- B.appendChild(sld({label:'Largura',min:.3,max:3,step:.02,def:1,get:()=>(E.data.ch[cur]||c).sx,set:v=>setc({sx:v}),start:hist}));
- B.appendChild(sld({label:'Altura',min:.3,max:3,step:.02,def:1,get:()=>(E.data.ch[cur]||c).sy,set:v=>setc({sy:v}),start:hist}));
- B.appendChild(sld({label:'Profundidade',min:.3,max:3,step:.02,def:1,get:()=>(E.data.ch[cur]||c).sz,set:v=>setc({sz:v}),start:hist}));
+ B.appendChild(sld({label:'Tudo',min:.3,max:3,step:.01,def:1,get:()=>{const q=E.data.ch[cur]||c;return(q.sx+q.sy+q.sz)/3},set:v=>{setc({sx:v,sy:v,sz:v});refreshSl(B)},start:hist}));
+ B.appendChild(sld({label:'Largura',min:.3,max:3,step:.01,def:1,get:()=>(E.data.ch[cur]||c).sx,set:v=>setc({sx:v}),start:hist}));
+ B.appendChild(sld({label:'Altura',min:.3,max:3,step:.01,def:1,get:()=>(E.data.ch[cur]||c).sy,set:v=>setc({sy:v}),start:hist}));
+ B.appendChild(sld({label:'Profundidade',min:.3,max:3,step:.01,def:1,get:()=>(E.data.ch[cur]||c).sz,set:v=>setc({sz:v}),start:hist}));
  B.appendChild(hint(cur==='player'?'Vale para o seu personagem e para os outros jogadores.':'Para ver, o personagem precisa estar equipado na sua equipe.'));
+
  B.appendChild(h4('Roupas, cabelo e acessórios'));
+ B.appendChild(hint('Escolha a peça, ajuste e veja no seu personagem. Cada peça é ajustada sozinha, igual para todo mundo.'));
  const pk=ED._pk||'h1';
- B.appendChild(row(sel(PARTS,pk,v=>{ED._pk=v;window.EDFORCE=dressFor(v);render()})));
- B.appendChild(row(btn('Vestir para testar',()=>{window.EDFORCE=dressFor(pk);toast('Seu personagem veste só para teste (não salva).');},'blu'),btn('Voltar à minha roupa',()=>{window.EDFORCE=null;toast('Roupa normal.')}),btn('📷 Câmera de perto',()=>{camClose();},'grn')));
- const p=E.data.pt[pk]||{sx:1,sy:1,sz:1,dx:0,dy:0,dz:0,rx:0,ry:0,rz:0,py:.5},P2=()=>E.data.pt[pk]||p,sp=q=>E.setPart(pk,q);
- B.appendChild(sld({label:'Tamanho',min:.2,max:3,step:.02,def:1,get:()=>(P2().sx+P2().sy+P2().sz)/3,set:v=>{sp({sx:v,sy:v,sz:v});refreshSl(B)},start:hist}));
- B.appendChild(sld({label:'Largura',min:.2,max:3,step:.02,def:1,get:()=>P2().sx,set:v=>sp({sx:v}),start:hist}));
- B.appendChild(sld({label:'Altura',min:.2,max:3,step:.02,def:1,get:()=>P2().sy,set:v=>sp({sy:v}),start:hist}));
- B.appendChild(sld({label:'Profundidade',min:.2,max:3,step:.02,def:1,get:()=>P2().sz,set:v=>sp({sz:v}),start:hist}));
- B.appendChild(sld({label:'Mover ←→',min:-.3,max:.3,step:.005,def:0,dec:3,get:()=>P2().dx,set:v=>sp({dx:v}),start:hist}));
- B.appendChild(sld({label:'Mover ↑↓',min:-.3,max:.3,step:.005,def:0,dec:3,get:()=>P2().dy,set:v=>sp({dy:v}),start:hist}));
- B.appendChild(sld({label:'Mover frente/trás',min:-.3,max:.3,step:.005,def:0,dec:3,get:()=>P2().dz,set:v=>sp({dz:v}),start:hist}));
- B.appendChild(sld({label:'Inclinar X (°)',min:-90,max:90,step:1,def:0,dec:0,get:()=>P2().rx*180/PI,set:v=>sp({rx:v*PI/180}),start:hist}));
- B.appendChild(sld({label:'Girar Y (°)',min:-90,max:90,step:1,def:0,dec:0,get:()=>P2().ry*180/PI,set:v=>sp({ry:v*PI/180}),start:hist}));
- B.appendChild(sld({label:'Inclinar Z (°)',min:-90,max:90,step:1,def:0,dec:0,get:()=>P2().rz*180/PI,set:v=>sp({rz:v*PI/180}),start:hist}));
- B.appendChild(sld({label:'Crescer de',min:0,max:1,step:.05,def:.5,dec:2,get:()=>P2().py,set:v=>sp({py:v}),start:hist}));
- B.appendChild(hint('"Crescer de": 0 = o tamanho muda a partir da base da peça, 1 = a partir do topo. Cada peça é ajustada para todo mundo igual.'));
- B.appendChild(row(two('Zerar esta peça',()=>{hist();delete E.data.pt[pk];E.touch();render()},'red')))}
+ for(const [gn,items] of GROUPS){B.appendChild(el('div','grp',gn));
+  B.appendChild(row(...items.map(([k,t])=>btn(t,()=>{ED._pk=k;wear(k);render()},'sm '+(k===pk?'on ':'')+(E.data.pt[k]?'dot':'')))))}
+ // look de teste
+ B.appendChild(el('div','grp','Veste no teste (só no seu personagem)'));
+ const L=look(),hasF=!!window.EDFORCE;
+ B.appendChild(row(
+  lookBtn('Cabelo: '+(L.a?L.a:'nenhum'),L.a>0,()=>{L.a=(L.a+1)%5;window.EDFORCE=L;render()}),
+  lookBtn('Chapéu',L.w===1,()=>{L.w=L.w?0:1;window.EDFORCE=L;render()}),
+  lookBtn('Camiseta',!!(L.o&8),()=>{L.o^=8;window.EDFORCE=L;render()}),
+  lookBtn('Botas',!!(L.o&16),()=>{L.o^=16;window.EDFORCE=L;render()})));
+ B.appendChild(row(
+  lookBtn('Peito av.',!!(L.o&1),()=>{L.o^=1;window.EDFORCE=L;render()}),
+  lookBtn('Calça av.',!!(L.o&2),()=>{L.o^=2;window.EDFORCE=L;render()}),
+  lookBtn('Pés av.',!!(L.o&4),()=>{L.o^=4;window.EDFORCE=L;render()}),
+  lookBtn('Capa: '+(['nenhuma','Lich','mago'][L.k|0]),L.k>0,()=>{L.k=((L.k|0)+1)%3;window.EDFORCE=L;render()})));
+ B.appendChild(row(btn('Vestir só a peça',()=>{ED.look={o:0,k:0,a:0,w:0,hc:0};wear(pk);render()},'sm blu'),btn('Voltar à minha roupa',()=>{window.EDFORCE=null;ED.look=null;render();toast('Roupa normal.')},'sm'),
+  btn(ED.fly&&ED.fly.mode==='orbit'?'📷 Sair da câmera':'📷 Câmera de perto',()=>{if(ED.fly&&ED.fly.mode==='orbit')stopFly();else camClose(true);render()},'sm grn')));
+ if(ED.fly&&ED.fly.mode==='orbit'){B.appendChild(row(btn('⟲ Girar',()=>{ED.fly.yaw-=.6;flyApply()},'sm'),btn('⟳ Girar',()=>{ED.fly.yaw+=.6;flyApply()},'sm'),btn('＋ Perto',()=>{ED.fly.od=clp(ED.fly.od*.8,12,400);flyApply()},'sm'),btn('－ Longe',()=>{ED.fly.od=clp(ED.fly.od*1.25,12,400);flyApply()},'sm'),btn('↕ Altura',()=>{ED.fly.pitch=ED.fly.pitch<-.05?.25:-.12;flyApply()},'sm')));
+  B.appendChild(hint('Também dá para arrastar a tela para girar em volta do personagem.'))}
+
+ B.appendChild(h4('Ajustar: '+PNAME[pk]));
+ const dpy=PY0[pk]!=null?PY0[pk]:.5;   // ponto fixo padrão: botas/chapéu pela base, roupas pelo topo
+ const P2=()=>E.data.pt[pk]||{sx:1,sy:1,sz:1,dx:0,dy:0,dz:0,rx:0,ry:0,rz:0,py:dpy,sm:0},sp=q=>E.setPart(pk,E.data.pt[pk]?q:Object.assign({py:dpy},q));
+ const sym=!!SYMP[pk];
+ if(sym){const ck=el('label','ck'),cb=el('input');cb.type='checkbox';cb.checked=!!P2().sm;cb.onchange=()=>{hist();sp({sm:cb.checked?1:0});render()};
+  ck.append(cb,el('span','','Cada pé separado (o ajuste vale para o pé esquerdo e o direito, espelhado)'));B.appendChild(ck)}
+ B.appendChild(el('div','grp','Tamanho'));
+ B.appendChild(sld({label:'Tudo',min:.1,max:3,step:.01,def:1,get:()=>{const q=P2();return(q.sx+q.sy+q.sz)/3},set:v=>{sp({sx:v,sy:v,sz:v});refreshSl(B)},start:hist}));
+ B.appendChild(sld({label:'Largura',min:.1,max:3,step:.01,def:1,get:()=>P2().sx,set:v=>sp({sx:v}),start:hist}));
+ B.appendChild(sld({label:'Altura',min:.1,max:3,step:.01,def:1,get:()=>P2().sy,set:v=>sp({sy:v}),start:hist}));
+ B.appendChild(sld({label:'Profundidade',min:.1,max:3,step:.01,def:1,get:()=>P2().sz,set:v=>sp({sz:v}),start:hist}));
+ B.appendChild(el('div','grp','Posição'));
+ B.appendChild(sld({label:'Subir / descer',min:-.5,max:.5,step:.002,def:0,dec:3,get:()=>P2().dy,set:v=>sp({dy:v}),start:hist}));
+ B.appendChild(sld({label:sym&&P2().sm?'Afastar / juntar':'Esq. / dir.',min:-.5,max:.5,step:.002,def:0,dec:3,get:()=>P2().dx,set:v=>sp({dx:v}),start:hist}));
+ B.appendChild(sld({label:'Frente / trás',min:-.5,max:.5,step:.002,def:0,dec:3,get:()=>P2().dz,set:v=>sp({dz:v}),start:hist}));
+ B.appendChild(el('div','grp','Giro'));
+ B.appendChild(sld({label:'Inclinar ⤵ (°)',min:-90,max:90,step:1,def:0,dec:0,get:()=>P2().rx*180/PI,set:v=>sp({rx:v*PI/180}),start:hist}));
+ B.appendChild(sld({label:'Girar ⟳ (°)',min:-90,max:90,step:1,def:0,dec:0,get:()=>P2().ry*180/PI,set:v=>sp({ry:v*PI/180}),start:hist}));
+ B.appendChild(sld({label:'Tombar ⤴ (°)',min:-90,max:90,step:1,def:0,dec:0,get:()=>P2().rz*180/PI,set:v=>sp({rz:v*PI/180}),start:hist}));
+ B.appendChild(el('div','grp','Ponto fixo do tamanho'));
+ B.appendChild(sld({label:'Base ↔ topo',min:0,max:1,step:.05,def:dpy,dec:2,get:()=>P2().py,set:v=>sp({py:v}),start:hist}));
+ B.appendChild(hint('Base ↔ topo: onde fica o ponto parado quando você muda o tamanho. 0 = a base fica no lugar (bota: o chão não muda); 1 = o topo fica no lugar (roupa presa no ombro/cintura); 0,5 = o meio.'));
+ B.appendChild(row(btn('Copiar ajuste',()=>{ED.clip=JSON.parse(JSON.stringify(P2()));toast('Ajuste copiado')},'sm'),btn('Colar ajuste',()=>{if(!ED.clip){toast('Nada copiado');return}hist();const q=Object.assign({},ED.clip);if(!sym)q.sm=0;sp(q);render()},'sm'),two('Zerar esta peça',()=>{hist();delete E.data.pt[pk];E.touch();render()},'red')))}
 
 // ----- câmera: voo livre e cinemáticas -----
 function startFly(mode){if(!S.mode){toast('Entre no modo 3D primeiro');return}
@@ -263,11 +320,11 @@ function startFly(mode){if(!S.mode){toast('Entre no modo 3D primeiro');return}
  if(mode==='orbit'){ED.fly.yaw=C.yaw;ED.fly.pitch=-.2}
  D.body.classList.add('edFlyOn');flyApply()}
 function stopFly(){if(!ED.fly)return;ED.fly=null;S.dbg=null;D.body.classList.remove('edFlyOn')}
-function camClose(){startFly('orbit');ED.fly.od=48;ED.fly.pitch=-.12;ED.tab='cam';render()}
+function camClose(stay){startFly('orbit');if(!ED.fly)return;ED.fly.od=48;ED.fly.pitch=-.12;if(!stay)ED.tab='cam';render()}
 function moveCamTo(x,z){if(!ED.fly)return;const y=H3.fld.hAt(x,z);const b=basis(ED.fly);ED.fly.x=x-b.fw[0]*90;ED.fly.z=z-b.fw[2]*90;ED.fly.y=max(y+40,ED.fly.y);flyApply()}
 function flyApply(){const f=ED.fly;if(!f)return;
  if(f.mode==='orbit'){const px=P.x+8,pz=P.y+14,py=H3.fld.hAt(px,pz)+14,cp=cos(f.pitch);f.x=px-sin(f.yaw)*cp*f.od;f.y=py-sin(f.pitch)*f.od;f.z=pz+cos(f.yaw)*cp*f.od;
-  const off=ED.on&&!ED.play?Math.atan((P_.offsetWidth/2)/focalPx()):0; // deixa o jogador na parte visível (fora do painel)
+  const off=ED.on&&!ED.play&&!ED.min?(ED.left?-1:1)*Math.atan((P_.offsetWidth/2)/focalPx()):0; // deixa o jogador na parte visível (fora do painel)
   S.dbg={x:f.x,y:max(f.y,H3.fld.hAt(f.x,f.z)+3),z:f.z,yaw:f.yaw+off,pitch:f.pitch,fov:f.fov};return}
  if(f.ground)f.y=max(f.y,H3.fld.hAt(f.x,f.z)+2.5);
  S.dbg={x:f.x,y:f.y,z:f.z,yaw:f.yaw,pitch:f.pitch,fov:f.fov}}
@@ -370,11 +427,36 @@ function tabSave(B){
 const P_=el('div');P_.id='edP';D.body.appendChild(P_);
 const TABS=[['map','Mapa'],['mon','Monstros'],['mod','Modelo'],['cam','Câmera'],['save','Salvar']];
 function render(){if(!ED.on){P_.classList.remove('on');return}
- P_.classList.add('on');P_.innerHTML='';
- const H=el('div','edH');H.innerHTML='<b>🛠 Editor do ADM</b>';const x=el('button');x.textContent='✕';x.title='Fechar editor';x.onclick=()=>toggle(false);H.appendChild(x);P_.appendChild(H);
- const T=el('div','edT');TABS.forEach(([k,t])=>{const b=el('button',ED.tab===k?'on':'');b.textContent=t;b.onclick=()=>{ED.tab=k;render()};T.appendChild(b)});P_.appendChild(T);
+ const old=P_.querySelector('.edB'),keep=old&&ED._rt===ED.tab?old.scrollTop:0;ED._rt=ED.tab;
+ P_.classList.add('on');P_.classList.toggle('left',!!ED.left);P_.classList.toggle('min',!!ED.min);P_.innerHTML='';
+ const H=el('div','edH');H.innerHTML='<b>🛠 Editor do ADM</b>';
+ const hb=(t,tt,fn)=>{const x=el('button');x.textContent=t;x.title=tt;x.onclick=fn;H.appendChild(x);return x};
+ hb('⇆','Painel para o outro lado da tela',()=>{ED.left=!ED.left;render();if(ED.fly&&ED.fly.mode==='orbit')flyApply()});
+ hb(ED.min?'▢':'–',ED.min?'Abrir painel':'Minimizar painel',()=>{ED.min=!ED.min;render();if(ED.fly&&ED.fly.mode==='orbit')flyApply()});
+ hb('✕','Fechar editor',()=>toggle(false));P_.appendChild(H);
+ if(ED.min)return;
+ const T=el('div','edT');TABS.forEach(([k,t])=>{const b=el('button',ED.tab===k?'on':'');b.textContent=t;b.onclick=()=>{ED.tab=k;ED._rt=null;render()};T.appendChild(b)});P_.appendChild(T);
  const B=el('div','edB');P_.appendChild(B);
- try{({map:tabMap,mon:tabMon,mod:tabMod,cam:tabCam,save:tabSave})[ED.tab](B)}catch(e){console.error('EDITOR',e);B.appendChild(hint('Erro: '+e.message))}}
+ try{({map:tabMap,mon:tabMon,mod:tabMod,cam:tabCam,save:tabSave})[ED.tab](B)}catch(e){console.error('EDITOR',e);B.appendChild(hint('Erro: '+e.message))}
+ if(keep)B.scrollTop=keep}
+// roda do mouse: rola o painel e nunca chega ao jogo (o jogo não tem zoom na roda, mas assim fica garantido)
+P_.addEventListener('wheel',e=>{
+ let n=e.target,inner=null;while(n&&n!==P_){if(n.nodeType===1&&n.scrollHeight>n.clientHeight+1&&/auto|scroll/.test(getComputedStyle(n).overflowY)){inner=n;break}n=n.parentNode}
+ const B=P_.querySelector('.edB'),box=inner||B;if(!box){return}
+ const dy=e.deltaY*(e.deltaMode===1?16:e.deltaMode===2?box.clientHeight:1);
+ const top=box.scrollTop;box.scrollTop=top+dy;
+ if(box.scrollTop===top&&inner&&B&&B!==inner)B.scrollTop+=dy;   // a lista chegou no fim: passa a rolagem para o painel
+ e.preventDefault();e.stopPropagation()},{passive:false});
+P_.addEventListener('pointerdown',e=>e.stopPropagation());
+// toque: o navegador rola sozinho (touch-action:pan-y). Se por algum motivo ele não rolar, o dedo rola o painel à mão
+let tsc=null;
+P_.addEventListener('touchstart',e=>{const t=e.target,B=P_.querySelector('.edB');tsc=null;if(!B||e.touches.length!==1||(t.tagName==='INPUT'&&t.type==='range')||/^(SELECT|TEXTAREA)$/.test(t.tagName))return;
+ let n=t,box=B;while(n&&n!==P_){if(n.nodeType===1&&n.scrollHeight>n.clientHeight+1&&/auto|scroll/.test(getComputedStyle(n).overflowY)){box=n;break}n=n.parentNode}
+ tsc={y:e.touches[0].clientY,top:box.scrollTop,box,n:0,man:false}},{passive:true});
+P_.addEventListener('touchmove',e=>{const c=tsc;if(!c||e.touches.length!==1)return;const dy=e.touches[0].clientY-c.y;
+ if(!c.man){if(Math.abs(dy)>16){c.n++;if(c.n>=3&&c.box.scrollTop===c.top){c.man=true;c.y0=c.y+(dy>0?16:-16)}}if(!c.man)return}
+ c.box.scrollTop=c.top-(e.touches[0].clientY-c.y0)},{passive:true});
+P_.addEventListener('touchend',()=>{tsc=null},{passive:true});P_.addEventListener('touchcancel',()=>{tsc=null},{passive:true});     // clicar no painel nunca chega no jogo
 function freeMouse(){try{S.mfree=true;if(document.pointerLockElement&&document.exitPointerLock)document.exitPointerLock()}catch(e){}}
 function toggle(on){ED.on=on===undefined?!ED.on:on;L_.classList.toggle('on',ED.on);if(ED.on)freeMouse();else{try{S.mfree=false}catch(e){}}if(!ED.on){window.EDFORCE=null;if(ED.fly&&ED.fly.mode==='free'){/* mantém o voo? não: sai */}stopFly();ring.style.display='none'}render()}
 const L_=el('button');L_.id='edBtn';L_.textContent='🛠 Editor';L_.onclick=()=>toggle();D.body.appendChild(L_);
@@ -406,6 +488,11 @@ addEventListener('pointercancel',e=>{if(drag&&e.pointerId===drag.id){if(drag.typ
 
 addEventListener('keydown',e=>{if(!ED.fly||ED.play||!ED.on)return;const t=e.target;if(t&&/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))return;
  if(e.code==='Space'||e.code==='KeyC'||e.code==='ShiftLeft'||e.code==='ShiftRight'){if(e.code==='Space')upHeld=1;else if(e.code==='KeyC')upHeld=-1;else ED.turboKey=true;e.preventDefault();e.stopImmediatePropagation()}},true);
+addEventListener('keydown',e=>{if(!ED.on||ED.play)return;const t=e.target;if(t&&/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))return;
+ const c=e.ctrlKey||e.metaKey;
+ if(c&&(e.code==='KeyZ')){e.preventDefault();e.stopImmediatePropagation();if(e.shiftKey)redo();else undo();return}
+ if(c&&e.code==='KeyY'){e.preventDefault();e.stopImmediatePropagation();redo();return}
+ if((e.code==='Delete')&&(ED.tab==='map'||ED.tab==='mon')){e.preventDefault();e.stopImmediatePropagation();try{delSel()}catch(x){}}},true);
 addEventListener('keyup',e=>{if(!ED.fly)return;if(e.code==='Space'&&upHeld===1)upHeld=0;else if(e.code==='KeyC'&&upHeld===-1)upHeld=0;else if(e.code==='ShiftLeft'||e.code==='ShiftRight')ED.turboKey=false},true);
 // ============================================================ laço por quadro ============================================================
 const _tick=window.tick;
