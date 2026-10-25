@@ -13163,7 +13163,7 @@ const VIS=[];let lastT=0;
 MOB.frame=function(t,C,dt){VIS.length=0;if(!MOB.ready||typeof EN==='undefined')return;const F=H3.S.foc||C,far=MOB.far*(FLD.distK||1);
  for(const e of EN){if(e.dead||e.dm||e.wb||!e.mon||!DEFS[e.mon])continue;const p=wpos(e);if(hypot(p[0]-F.x,p[1]-F.z)>far)continue;VIS.push(e)}};
 MOB.draw=function(t,dyn){if(!MOB.ready)return;const dt=lastT?clp((t-lastT)/1000,.001,.05):.016;lastT=t;const F=H3.S.foc;FLM=[];
- for(const e of VIS){const D=DEFS[e.mon],o=poseAlive(e,t,dt);e._o3=o;if(!H3.vis(o.x,o.y+D.h*.5,o.z,D.h*.6+4))continue;
+ for(const e of VIS){const D=DEFS[e.mon],o=poseAlive(e,t,dt);if(e.edsc&&e.edsc!==1)o.sc=(o.sc||1)*e.edsc;e._o3=o;if(!H3.vis(o.x,o.y+D.h*.5,o.z,D.h*.6+4))continue;
   OPT.cx=o.x;OPT.cy=o.y+D.h*.5;OPT.cz=o.z;OPT.rad=D.h*.6;OPT.fl=o.fl;OPT.di=o.di;OPT.eg=1;OPT.tint=null;
   drawRig(D,MOB.M[e.mon],o,FLD.lights,dyn,false)}
  // mortes
@@ -16561,10 +16561,11 @@ function pick(s,want,bd){if(s.cur!==want){s.prev=s.cur;s.tp=s.t;s.cur=want;s.t=0
 // ---------- WebGL ----------
 const HP='#ifdef GL_FRAGMENT_PRECISION_HIGH\nprecision highp float;\n#else\nprecision mediump float;\n#endif\n';
 const VS=`attribute vec3 aP;attribute vec3 aN;attribute vec2 aT;attribute vec4 aJ;attribute vec4 aW;
-uniform mat4 uVP;uniform mat4 uB[${NB}];uniform vec3 uMin;uniform vec3 uSz;uniform vec2 uUm;uniform vec2 uUs;uniform vec4 uCp;uniform vec4 uHq;
+uniform mat4 uVP;uniform mat4 uB[${NB}];uniform vec3 uMin;uniform vec3 uSz;uniform vec2 uUm;uniform vec2 uUs;uniform vec4 uCp;uniform vec4 uHq;uniform mat3 uAm;uniform vec3 uAp;uniform vec3 uAo;
 varying vec3 vP;varying vec3 vN;varying vec2 vT;varying vec3 vO;
 void main(){vec4 p=vec4(uMin+aP*uSz,1.0);vO=p.xyz;
  if(uCp.w>0.5){float k=pow(clamp((0.76-p.y)/0.74,0.0,1.0),1.35);p.z-=uCp.z*k;p.x+=sin(uCp.y*3.1+p.y*9.0)*uCp.x*k;p.z+=cos(uCp.y*2.3+p.y*7.0+p.x*6.0)*uCp.x*.7*k;}   // capa: balança no vento e vai para trás com a velocidade
+ p.xyz=uAm*(p.xyz-uAp)+uAp+uAo;   // ajuste da peça feito no Editor do ADM (identidade quando não há)
  mat4 b0=uB[int(aJ.x+0.5)];mat4 b1=uB[int(aJ.y+0.5)];mat4 b2=uB[int(aJ.z+0.5)];mat4 b3=uB[int(aJ.w+0.5)];
  vec4 w=(b0*p)*aW.x+(b1*p)*aW.y+(b2*p)*aW.z+(b3*p)*aW.w;
  vec3 n=(b0*vec4(aN,0.0)).xyz*aW.x+(b1*vec4(aN,0.0)).xyz*aW.y+(b2*vec4(aN,0.0)).xyz*aW.z+(b3*vec4(aN,0.0)).xyz*aW.w;
@@ -16584,7 +16585,7 @@ function sh(gl,t,s){const o=gl.createShader(t);gl.shaderSource(o,s);gl.compileSh
 function build(gl,G){G.gl=gl;G.ok=false;G.tex=null;
  const p=gl.createProgram();gl.attachShader(p,sh(gl,gl.VERTEX_SHADER,VS));gl.attachShader(p,sh(gl,gl.FRAGMENT_SHADER,FS));['aP','aN','aT','aJ','aW'].forEach((a,i)=>gl.bindAttribLocation(p,i,a));gl.linkProgram(p);
  if(!gl.getProgramParameter(p,gl.LINK_STATUS))throw new Error('HERO3 programa: '+gl.getProgramInfoLog(p));G.p=p;G.u={};
- for(const n of['uVP','uB','uMin','uSz','uUm','uUs','uTex','uCam','uFog','uFO','uLt','uMD','uFlc','uSk','uCl','uCp','uFr','uHq','uHt'])G.u[n]=gl.getUniformLocation(p,n);
+ for(const n of['uVP','uB','uMin','uSz','uUm','uUs','uTex','uCam','uFog','uFO','uLt','uMD','uFlc','uSk','uCl','uCp','uFr','uHq','uHt','uAm','uAp','uAo'])G.u[n]=gl.getUniformLocation(p,n);
  G.vb=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,G.vb);gl.bufferData(gl.ARRAY_BUFFER,b64(D.vb),gl.STATIC_DRAW);
  G.ib=gl.createBuffer();gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,G.ib);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,b64(D.ib),gl.STATIC_DRAW);
  loadTex(gl,G,D.tex,t=>{G.tex=t});
@@ -16603,8 +16604,12 @@ function ensure(){if(HERO3.fail)return null;const gl=H3.gl&&H3.gl();if(!gl||gl.i
 // o motor 3D pergunta: "este personagem eu desenho?" (só depois do programa e da textura estarem prontos; senão fica o cartaz 2D)
 HERO3.on=()=>{const gl=ensure();return !!(gl&&GM.ok&&GM.tex&&!HERO3.fail)};
 // liga programa, buffers e atributos (comum ao jogo e à prévia)
-function bindAll(gl,G){const u=G.u;gl.useProgram(G.p);gl.uniform1i(u.uTex,0);for(let i=0;i<5;i++)gl.enableVertexAttribArray(i);bindGeo(gl,G,D,G.vb,G.ib,G.tex)}
-function bindGeo(gl,G,c,vb,ib,tex){const u=G.u;
+const ID3=new Float32Array([1,0,0,0,1,0,0,0,1]);
+function adjId(gl,G){const u=G.u;gl.uniformMatrix3fv(u.uAm,false,ID3);gl.uniform3f(u.uAp,0,0,0);gl.uniform3f(u.uAo,0,0,0);G._ad=0}
+// ajuste de uma peça (cabelo, chapéu, camiseta, botas, capa...) feito no Editor do ADM
+function adjFor(gl,G,key,c){const E=window.EDITS,a=E&&key?E.partAdj(key,c):null;if(a){const u=G.u;gl.uniformMatrix3fv(u.uAm,false,a.m);gl.uniform3fv(u.uAp,a.p);gl.uniform3fv(u.uAo,a.o);G._ad=1}else if(G._ad)adjId(gl,G)}
+function bindAll(gl,G){const u=G.u;gl.useProgram(G.p);gl.uniform1i(u.uTex,0);adjId(gl,G);for(let i=0;i<5;i++)gl.enableVertexAttribArray(i);bindGeo(gl,G,D,G.vb,G.ib,G.tex)}
+function bindGeo(gl,G,c,vb,ib,tex){const u=G.u;if(G._ad)adjId(gl,G);
  gl.uniform3fv(u.uMin,c.min);gl.uniform3fv(u.uSz,c.size);gl.uniform2fv(u.uUm,c.uvmin);gl.uniform2fv(u.uUs,c.uvsize);gl.uniform1f(u.uCl,c===D?0:1);
  gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,tex);
  gl.bindBuffer(gl.ARRAY_BUFFER,vb);
@@ -16614,11 +16619,11 @@ function bindGeo(gl,G,c,vb,ib,tex){const u=G.u;
 const REG=D.reg||[D.ni,0,0,0],CLK='aventureiro';
 function clothOf(A){try{if(A.k==='P'){const X=window.LOOKX;return X&&X.cur?(X.cur.o|0):0}const l=A.q&&A.q.lk;return l?(l.o|0):0}catch(e){return 0}}
 // capa do Lich (acessório de costas, visual .k = 1): presa ao peito (spine_03), balança, voa para trás correndo, fogo verde na barra e rastro de fogo
-function capeOf(A){try{if(A.k==='P'){const X=window.LOOKX;return X&&X.cur?(X.cur.k|0):0}const l=A.q&&A.q.lk;return l?(l.k|0):0}catch(e){return 0}}
+function capeOf(A){try{if(A.k==='P'&&window.EDFORCE)return window.EDFORCE.k|0;if(A.k==='P'){const X=window.LOOKX;return X&&X.cur?(X.cur.k|0):0}const l=A.q&&A.q.lk;return l?(l.k|0):0}catch(e){return 0}}
 const CSP=D.cape?D.skin.indexOf(D.nodes.indexOf('spine_03')):-1,CPV=[0,0,0,0];
 function capeParams(s,tm){const sp=s&&s.spd||0,run=min(1.4,sp/REF_RUN);CPV[0]=.008+.012*run;CPV[1]=tm;CPV[2]=.015+.13*run+(s&&s.air?.05:0);CPV[3]=1;return CPV}
 function drawCape(gl,G,s,tm){const c=D.cape,o=G.cape;if(!c||!o||!o.tex)return;const u=G.u;bindGeo(gl,G,c,o.vb,o.ib,o.tex);
- gl.uniform4fv(u.uCp,capeParams(s,tm));gl.uniform4f(u.uFr,1,tm,0,0);gl.drawElements(gl.TRIANGLES,c.ni,gl.UNSIGNED_SHORT,0);
+ gl.uniform4fv(u.uCp,capeParams(s,tm));gl.uniform4f(u.uFr,1,tm,0,0);adjFor(gl,G,'cape',c);gl.drawElements(gl.TRIANGLES,c.ni,gl.UNSIGNED_SHORT,0);
  gl.uniform4f(u.uCp,0,0,0,0);gl.uniform4f(u.uFr,0,0,0,0);bindGeo(gl,G,D,G.vb,G.ib,G.tex)}
 // fogo verde na barra (mesma conta do shader, em alguns pontos da barra) — parado sobe e some; andando, as brasas ficam para trás e fazem o rastro
 function capeFire(s,tm,moving){const E=H3.FX,c=D.cape;if(!E||!c||CSP<0)return;const m=BM.subarray(CSP*16,CSP*16+16),P=capeParams(s,tm),H=c.hem;
@@ -16629,27 +16634,27 @@ function capeFire(s,tm,moving){const E=H3.FX,c=D.cape;if(!E||!c||CSP<0)return;co
 // peças novas (camiseta e botas padrão, capa e chapéu de mago, cabelos): mesmo esqueleto e formato das roupas de aventureiro
 const ITD=window.HERO_ITEMS||{};
 function itemGeo(gl,G,k){const c=ITD[k];if(!c)return null;let o=G.it[k];
- if(!o){o=G.it[k]={c,vb:gl.createBuffer(),ib:gl.createBuffer(),tex:null};gl.bindBuffer(gl.ARRAY_BUFFER,o.vb);gl.bufferData(gl.ARRAY_BUFFER,b64(c.vb),gl.STATIC_DRAW);gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,o.ib);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,b64(c.ib),gl.STATIC_DRAW);loadTex(gl,G,c.tex,t=>{o.tex=t})}
+ if(!o){o=G.it[k]={c,k,vb:gl.createBuffer(),ib:gl.createBuffer(),tex:null};gl.bindBuffer(gl.ARRAY_BUFFER,o.vb);gl.bufferData(gl.ARRAY_BUFFER,b64(c.vb),gl.STATIC_DRAW);gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,o.ib);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,b64(c.ib),gl.STATIC_DRAW);loadTex(gl,G,c.tex,t=>{o.tex=t})}
  return o.tex?o:null}
 // cabelo com chapéu: versão própria (o que passaria pelo chapéu entra na copa; o que ainda atravessaria sai) — montada só quando alguém usa os dois
 function hairHat(gl,o){const c=o.c;if(!c.hp)return null;if(!o.hvb){const v=b64(c.vb),p=b64(c.hp);for(let i=0;i<c.n;i++)v.set(p.subarray(i*6,i*6+6),i*22);
   o.hvb=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,o.hvb);gl.bufferData(gl.ARRAY_BUFFER,v,gl.STATIC_DRAW);o.hib=gl.createBuffer();gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,o.hib);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,b64(c.hib),gl.STATIC_DRAW)}
  return o}
-function drawItem(gl,G,o){bindGeo(gl,G,o.c,o.vb,o.ib,o.tex);gl.drawElements(gl.TRIANGLES,o.c.ni,gl.UNSIGNED_SHORT,0)}
+function drawItem(gl,G,o){bindGeo(gl,G,o.c,o.vb,o.ib,o.tex);adjFor(gl,G,o.k,o.c);gl.drawElements(gl.TRIANGLES,o.c.ni,gl.UNSIGNED_SHORT,0)}
 // L = visual {o,k,a,w,hc}; o: bits 1 camisa, 2 calça, 4 botas (aventureiro), 8 camiseta padrão, 16 botas padrão. O corpo esconde o que fica embaixo da roupa.
 function drawDressed(gl,G,L){const m=L.o|0,c=D.cloth&&D.cloth[CLK],o=G.cl[CLK],av=c&&o&&o.tex?(m&7):0,u=G.u;
  const cam=(m&8)?itemGeo(gl,G,'cam'):null,bot=(m&16)?itemGeo(gl,G,'bot'):null,hide=[0,(av&1)||cam?1:0,(av&2)?1:0,(av&4)||bot?1:0];
  let off=0;for(let r=0;r<4;r++){const n=REG[r];if(n&&!hide[r])gl.drawElements(gl.TRIANGLES,n,gl.UNSIGNED_SHORT,off*2);off+=n}
  if(av){bindGeo(gl,G,c,o.vb,o.ib,o.tex);off=0;
-  for(let r=0;r<4;r++){const n=c.cnt[r]||0,on=r<3?(av>>r)&1:(av&2)&&!(m&20);if(on&&n)gl.drawElements(gl.TRIANGLES,n,gl.UNSIGNED_SHORT,off*2);off+=n}}   // r=3: barra da calça até o tornozelo (só sem bota)
+  for(let r=0;r<4;r++){const n=c.cnt[r]||0,on=r<3?(av>>r)&1:(av&2)&&!(m&20);if(on&&n){adjFor(gl,G,'av'+r,c);gl.drawElements(gl.TRIANGLES,n,gl.UNSIGNED_SHORT,off*2)}off+=n}}   // r=3: barra da calça até o tornozelo (só sem bota)
  if(cam)drawItem(gl,G,cam);if(bot)drawItem(gl,G,bot);
  const hat=(L.w|0)===1?itemGeo(gl,G,'chm'):null,hr=(L.a|0)>0?itemGeo(gl,G,'h'+(L.a|0)):null;
- if(hr){const hc=hairRGB(L.hc);gl.uniform4f(u.uHt,hc[0],hc[1],hc[2],1);const hh=hat?hairHat(gl,hr):null;if(hh){bindGeo(gl,G,hr.c,hh.hvb,hh.hib,hr.tex);gl.drawElements(gl.TRIANGLES,hr.c.hni,gl.UNSIGNED_SHORT,0)}else drawItem(gl,G,hr);gl.uniform4f(u.uHt,0,0,0,0)}
+ if(hr){const hc=hairRGB(L.hc);gl.uniform4f(u.uHt,hc[0],hc[1],hc[2],1);const hh=hat?hairHat(gl,hr):null;if(hh){bindGeo(gl,G,hr.c,hh.hvb,hh.hib,hr.tex);adjFor(gl,G,hr.k,hr.c);gl.drawElements(gl.TRIANGLES,hr.c.hni,gl.UNSIGNED_SHORT,0)}else drawItem(gl,G,hr);gl.uniform4f(u.uHt,0,0,0,0)}
  if(hat)drawItem(gl,G,hat);
  if((L.k|0)===2){const cp=itemGeo(gl,G,'capm');if(cp)drawItem(gl,G,cp)}
  bindGeo(gl,G,D,G.vb,G.ib,G.tex)}
 const NOLOOK={o:0,k:0,a:0,w:0,hc:0};
-function lookOf(A){try{if(A.k==='P'){const X=window.LOOKX;return X&&X.cur?X.cur:NOLOOK}return (A.q&&A.q.lk)||NOLOOK}catch(e){return NOLOOK}}
+function lookOf(A){try{if(A.k==='P'&&window.EDFORCE)return window.EDFORCE;if(A.k==='P'){const X=window.LOOKX;return X&&X.cur?X.cur:NOLOOK}return (A.q&&A.q.lk)||NOLOOK}catch(e){return NOLOOK}}
 const HRC={};
 function hairRGB(idx){const E=(typeof LKE!=='undefined')?LKE:null,pal=E&&E.HAIRC||['#8a5530'],i=(idx|0)>=0&&(idx|0)<pal.length?(idx|0):0,h=String(pal[i]);
  return HRC[h]||(HRC[h]=new Float32Array([1,3,5].map(o=>parseInt(h.substr(o,2),16)/255)))}
@@ -16711,8 +16716,8 @@ function animate(s,dt,rate){
    QQ[o]=x*l;QQ[o+1]=y*l;QQ[o+2]=z*l;QQ[o+3]=w*l}
   for(let c=0;c<3;c++)TT[c]=P1[c]+(TT[c]-P1[c])*e}}
 // matrizes dos ossos: posição, direção (o modelo olha para +Z) e escala do personagem
-function bones(yaw,px,py,pz){const c=cos(yaw),sn=sin(yaw),S=SC0;
- MODEL.set([c*S,0,-sn*S,0, 0,S,0,0, sn*S,0,c*S,0, px,py,pz,1]);
+function bones(yaw,px,py,pz){const c=cos(yaw),sn=sin(yaw),S=SC0,Z=window.EDSZ?EDSZ('player'):[1,1,1];
+ MODEL.set([c*S*Z[0],0,-sn*S*Z[0],0, 0,S*Z[1],0,0, sn*S*Z[2],0,c*S*Z[2],0, px,py,pz,1]);
  for(let k=0;k<NN;k++){TV[0]=D.rt[k][0];TV[1]=D.rt[k][1];TV[2]=D.rt[k][2];if(k===PEL){TV[0]=TT[0];TV[1]=TT[1];TV[2]=TT[2]}
   fromQT(LM,QQ.subarray(k*4,k*4+4),TV);const p=PAR[k];
   if(p<0)mul(W.subarray(k*16,k*16+16),MODEL,LM);else mul(W.subarray(k*16,k*16+16),W.subarray(p*16,p*16+16),LM);
@@ -16955,11 +16960,11 @@ function animate(s,dt,rate){
 // pose direta (tempo escolhido por quem chama); a troca de animação ainda é suavizada
 function setPose(s,name,time,bd){if(s.cur!==name){s.prev=s.cur;s.tp=s.t;s.cur=name;s.bl=0;s.bd=bd||.12}s.t=time}
 // MODEL = T(pos) · Ry(yaw) · T(0,c,0) · Rx(flip) · T(0,-c,0) · S
-function modelM(px,py,pz,yaw,flip){const S=SC0,cy=.34*S,c=cos(yaw),sn=sin(yaw),cf=cos(flip),sf=sin(flip);
+function modelM(px,py,pz,yaw,flip){const Z=window.EDSZ?EDSZ('Guts'):[1,1,1];const S=SC0,cy=.34*S,c=cos(yaw),sn=sin(yaw),cf=cos(flip),sf=sin(flip);
  // Rx(flip) em torno do ponto (0,cy,0), depois Ry e T
  const a=[1,0,0,0, 0,cf,sf,0, 0,-sf,cf,0, 0,cy-cy*cf,cy*sf,1];          // T(0,cy,0)·Rx·T(0,-cy,0) (colunas)
  const ry=[c,0,-sn,0, 0,1,0,0, sn,0,c,0, px,py,pz,1];
- mul(MX,ry,a);MS.set([S,0,0,0, 0,S,0,0, 0,0,S,0, 0,0,0,1]);mul(MODEL,MX,MS)}
+ mul(MX,ry,a);MS.set([S*Z[0],0,0,0, 0,S*Z[1],0,0, 0,0,S*Z[2],0, 0,0,0,1]);mul(MODEL,MX,MS)}
 function bones(crouch){
  for(let k=0;k<NN;k++){TV[0]=D.rt[k][0];TV[1]=D.rt[k][1];TV[2]=D.rt[k][2];if(k===PEL){TV[0]=TT[0];TV[1]=TT[1]-crouch*.07;TV[2]=TT[2]}
   fromQT(LM,QQ.subarray(k*4,k*4+4),TV);const p=PAR[k];
@@ -17141,11 +17146,11 @@ function animate(s,dt,rate){
 // pose direta (tempo escolhido por quem chama); a troca de animação ainda é suavizada
 function setPose(s,name,time,bd){if(s.cur!==name){s.prev=s.cur;s.tp=s.t;s.cur=name;s.bl=0;s.bd=bd||.12}s.t=time}
 // MODEL = T(pos) · Ry(yaw) · T(0,c,0) · Rx(flip) · T(0,-c,0) · S
-function modelM(px,py,pz,yaw,flip){flip=flip||0;const S=SC0,cy=.34*S,c=cos(yaw),sn=sin(yaw),cf=cos(flip),sf=sin(flip);
+function modelM(px,py,pz,yaw,flip){const Z=window.EDSZ?EDSZ('Springtrap'):[1,1,1];flip=flip||0;const S=SC0,cy=.34*S,c=cos(yaw),sn=sin(yaw),cf=cos(flip),sf=sin(flip);
  // Rx(flip) em torno do ponto (0,cy,0), depois Ry e T
  const a=[1,0,0,0, 0,cf,sf,0, 0,-sf,cf,0, 0,cy-cy*cf,cy*sf,1];          // T(0,cy,0)·Rx·T(0,-cy,0) (colunas)
  const ry=[c,0,-sn,0, 0,1,0,0, sn,0,c,0, px,py,pz,1];
- mul(MX,ry,a);MS.set([S,0,0,0, 0,S,0,0, 0,0,S,0, 0,0,0,1]);mul(MODEL,MX,MS)}
+ mul(MX,ry,a);MS.set([S*Z[0],0,0,0, 0,S*Z[1],0,0, 0,0,S*Z[2],0, 0,0,0,1]);mul(MODEL,MX,MS)}
 // OV[k] = [[eixo 0..2 do próprio modelo, ângulo], ...]: gira o osso (e tudo que vem dele) em volta da junta — curvar para pegar o machado, olhar para cima no grito
 const OV=new Array(NN).fill(null),NI=n=>D.nodes.indexOf(n),RW=new Float32Array(9);
 function ovClear(){OV.fill(null)}
@@ -17343,11 +17348,11 @@ function animate(s,dt,rate){
 // pose direta (tempo escolhido por quem chama); a troca de animação ainda é suavizada
 function setPose(s,name,time,bd){if(s.cur!==name){s.prev=s.cur;s.tp=s.t;s.cur=name;s.bl=0;s.bd=bd||.12}s.t=time}
 // MODEL = T(pos) · Ry(yaw) · T(0,c,0) · Rx(flip) · T(0,-c,0) · S
-function modelM(px,py,pz,yaw,flip){flip=flip||0;const S=SC0,cy=.34*S,c=cos(yaw),sn=sin(yaw),cf=cos(flip),sf=sin(flip);
+function modelM(px,py,pz,yaw,flip){const Z=window.EDSZ?EDSZ('Naruto'):[1,1,1];flip=flip||0;const S=SC0,cy=.34*S,c=cos(yaw),sn=sin(yaw),cf=cos(flip),sf=sin(flip);
  // Rx(flip) em torno do ponto (0,cy,0), depois Ry e T
  const a=[1,0,0,0, 0,cf,sf,0, 0,-sf,cf,0, 0,cy-cy*cf,cy*sf,1];          // T(0,cy,0)·Rx·T(0,-cy,0) (colunas)
  const ry=[c,0,-sn,0, 0,1,0,0, sn,0,c,0, px,py,pz,1];
- mul(MX,ry,a);MS.set([S*D.sc[0],0,0,0, 0,S*D.sc[1],0,0, 0,0,S*D.sc[2],0, 0,0,0,1]);mul(MODEL,MX,MS)}
+ mul(MX,ry,a);MS.set([S*D.sc[0]*Z[0],0,0,0, 0,S*D.sc[1]*Z[1],0,0, 0,0,S*D.sc[2]*Z[2],0, 0,0,0,1]);mul(MODEL,MX,MS)}
 function bones(crouch){
  for(let k=0;k<NN;k++){TV[0]=D.rt[k][0];TV[1]=D.rt[k][1];TV[2]=D.rt[k][2];if(k===PEL){TV[0]=TT[0];TV[1]=TT[1]-crouch*.07;TV[2]=TT[2]}
   fromQT(LM,QQ.subarray(k*4,k*4+4),TV);const p=PAR[k];
@@ -17552,7 +17557,7 @@ CH3.on=nm=>{if(!DD[nm]||CH3.fail)return false;const gl=ensure();if(!gl||!G.ok)re
 // ---------- desenho ----------
 const W=new Float32Array(NN*16),LM=new Float32Array(16),BM=new Float32Array(NB*16),MODEL=new Float32Array(16),MX=new Float32Array(16),MS=new Float32Array(16),SY=new Float32Array(16),TMP=new Float32Array(16);
 const MD=(()=>{const v=[.28,.7,-.6],l=hypot(v[0],v[1],v[2]);return new Float32Array([v[0]/l,v[1]/l,v[2]/l])})(),LT=[1,1,1];
-function modelM(px,py,pz,yaw){const S=SC0,c=cos(yaw),sn=sin(yaw);MX.set([c,0,-sn,0, 0,1,0,0, sn,0,c,0, px,py,pz,1]);MS.set([S,0,0,0, 0,S,0,0, 0,0,S,0, 0,0,0,1]);mul(MODEL,MX,MS)}
+function modelM(px,py,pz,yaw){const Z=window.EDSZ?EDSZ(window.EDN):[1,1,1];const S=SC0,c=cos(yaw),sn=sin(yaw);MX.set([c,0,-sn,0, 0,1,0,0, sn,0,c,0, px,py,pz,1]);MS.set([S*Z[0],0,0,0, 0,S*Z[1],0,0, 0,0,S*Z[2],0, 0,0,0,1]);mul(MODEL,MX,MS)}
 function bones(){const TV=[0,0,0];
  for(let k=0;k<NN;k++){if(k===PEL){TV[0]=TT[0];TV[1]=TT[1];TV[2]=TT[2]}else{TV[0]=RT[k][0];TV[1]=RT[k][1];TV[2]=RT[k][2]}
   fromQT(LM,QQ.subarray(k*4,k*4+4),TV);const p=PAR[k];
@@ -17713,7 +17718,7 @@ function place(A,s,dt,t,SC){
  s.yaw+=clp(angd(s.yaw,tg),-dt*(skill?22:14),dt*(skill?22:14));
  animate(s,dt,rate);
  if(post)post(px,py,pz,s.yaw);
- modelM(px,py,pz,s.yaw);bones();
+ window.EDN=nm;modelM(px,py,pz,s.yaw);bones();
  if(fxf)fxf();
  return{x:px,y:py,z:pz,h:py-A.y}}
 CH3.draw=function(list,lightAt,SC,t){
@@ -18786,7 +18791,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261025084246;
+const GAME_BUILD=20261025172032;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
@@ -18945,6 +18950,15 @@ renderW=function(){
  L.querySelectorAll('canvas[data-nm]').forEach(c=>{try{drawSp(c,+c.dataset.r,2,c.dataset.s==='1',c.dataset.nm)}catch(e){}});
  L.querySelectorAll('.wsec').forEach(sec=>{const b=by[sec.dataset.n];sec.querySelector('.whead').onclick=()=>{if(b)b.click()}})};
 const wt=$('wM').querySelector('h2');if(wt)wt.textContent='Mundos';
+})();
+</script>
+<script>
+// ===== Editor do ADM: edits.js (aplica os ajustes publicados, todo mundo) · editor.js (painel de edição, só ADM) =====
+(function(){
+ const v=(typeof GAME_BUILD!=='undefined'?GAME_BUILD:'')+'';
+ function ld(f){const e=document.createElement('script');e.src=f+'?v='+v;e.async=true;document.body.appendChild(e)}
+ ld('edits.js');
+ let n=0;const t=setInterval(()=>{n++;try{if(window.ADM&&ADM.isAdm&&ADM.isAdm()){clearInterval(t);ld('editor.js')}}catch(e){}if(n>7200)clearInterval(t)},2500);
 })();
 </script>
 <script>
