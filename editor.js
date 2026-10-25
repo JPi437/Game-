@@ -203,7 +203,7 @@ function tabMap(B){
   const isScn=!!o._scn;
   const cc=k=>sld({label:({0:'Cor R',1:'Cor G',2:'Cor B'})[k],min:0,max:2,step:.05,def:1,get:()=>g('c')[k],set:v=>{const c=(ovOfSel().c||[1,1,1]).slice();c[k]=v;patchSel({c})},start:hist});
   if(!isScn){B.appendChild(cc(0));B.appendChild(cc(1));B.appendChild(cc(2))}
-  const solid=(e0=>{const def=isScn?(o._scn.solid?1:0):(s.kind==='tree'||s.kind==='rock')?1:0;return ov.col!==undefined?ov.col:def})();
+  const solid=(e0=>{const def=isScn?(o._scn.solid?1:0):(s.kind==='tree'||s.kind==='rock'||s.kind==='bush')?1:0;return ov.col!==undefined?ov.col:def})();
   const ck=el('label');ck.style.cssText='display:flex;gap:6px;align-items:center;margin:6px 0';const cb=el('input');cb.type='checkbox';cb.checked=!!solid;
   cb.onchange=()=>{hist();patchSel({col:cb.checked?1:0})};ck.append(cb,el('span','','Bloqueia o andar (colisão) — vale para o objeto movido/adicionado'));B.appendChild(ck);
   B.appendChild(row(isScn?null:btn('⧉ Duplicar',dupSel,'blu'),btn(isScn?'🙈 Esconder':'🗑 Apagar',delSel,'red'),isAdd?null:btn('↺ Original',resetSel)));

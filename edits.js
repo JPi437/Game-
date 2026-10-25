@@ -116,7 +116,7 @@ E.variants=function(kind){const out=[];if(!NAT||!NAT.VAR)return out;for(const k 
   if(kind==='bush'?b:kind==='rock'?r:kind==='decor'?d:(!b&&!r&&!d))out.push(k)}return out};
 const ovOf=(w,kind,key)=>{const a=E.data.o[w];return a&&a[kind]&&a[kind][key]||null};
 function dKey(kind,o,cnt){const b=kind+':'+round(o.x*2)/2+','+round(o.z*2)/2,n=(cnt[b]=(cnt[b]||0)+1);return n>1?b+'#'+n:b}
-const SOLID={tree:8,rock:7};     // raio (px) do tronco/pedra que bloqueia o andar, antes da escala
+const SOLID={tree:8,rock:7,bush:9};     // raio (px) do tronco/pedra que bloqueia o andar, antes da escala
 function origOf(kind,o){const m=o.m,sx=hypot(m[0],m[2]),sz=hypot(m[8],m[10]),sy=m[5],rot=Math.atan2(-m[2],m[0]);
  return{x:o.x,z:o.z,y:o.y,by:o.y-FLD.hAt(o.x,o.z),rot,sx,sy,sz,wx:o.wx-o.x,wy:o.wy-o.y,wz:o.wz-o.z,rad:o.rad,cr:o.cr,cy:(o.cy||0)-o.y,R:o.R,top:o.top,tint:o.tint?o.tint.slice():[1,1,1]}}
 function place(o,e,x,z,yo,rot,sx,sy,sz,c){const gy=FLD.hAt(x,z),y=gy+e.by+yo;o.x=x;o.z=z;o.y=y;
@@ -171,18 +171,29 @@ function scnTiles(){try{if(typeof world==='undefined'||world!==0||typeof map==='
   if(st){SX=wx;SY=wy}else{TOX=wx;TOY=wy}}}catch(e){if(!E._te){E._te=1;console.error('EDITS tiles',e)}}}
 let seen={},CM0=null;
 E._cm0=()=>CM0;
+// colisão original de um objeto: as células bloqueadas do mapa ligadas à base dele (até um raio máximo), para liberar quando ele é apagado ou movido
+const FPK=new WeakMap();
+function footprint(obj,e,kind){if(!CM0||typeof CW==='undefined')return null;let f=FPK.get(obj);if(f)return f;
+ const sc=max(e.sx||1,e.sz||1),R=kind==='decor'?clampN((e.rad||6)*1.4,6,24):clampN((kind==='tree'?12:kind==='bush'?18:22)*sc,8,60),seedR=kind==='rock'?14*sc:kind==='decor'?5*sc:8*sc,
+  bx=e.x,bz=e.z+2,blocked=i=>i>=0&&(i>>3)<CM0.length&&!((CM0[i>>3]>>(7-(i&7)))&1),seen=new Set(),q=[],cells=[];
+ const x0=max(0,(bx-seedR)>>2),x1=min(CW-1,(bx+seedR)>>2),y0=max(0,(bz-seedR)>>2),y1=(bz+seedR)>>2;
+ for(let cy=y0;cy<=y1;cy++)for(let cx=x0;cx<=x1;cx++){if(hypot(cx*4+2-bx,cy*4+2-bz)>seedR)continue;const i=cy*CW+cx;if(blocked(i)&&!seen.has(i)){seen.add(i);q.push(i)}}
+ while(q.length){const i=q.pop();cells.push(i);const cx=i%CW,cy=(i/CW)|0;
+  for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){const nx=cx+dx,ny=cy+dy;if(nx<0||nx>=CW||ny<0)continue;const j=ny*CW+nx;if(seen.has(j)||!blocked(j))continue;if(hypot(nx*4+2-bx,ny*4+2-bz)>R)continue;seen.add(j);q.push(j)}}
+ FPK.set(obj,cells);return cells}
+const clampN=(v,a,b)=>v<a?a:v>b?b:v;
 function cmApply(){if(typeof CM==='undefined'||typeof CW==='undefined'||!CM0)return;CM.set(CM0);
  const circ=(x,z,r,v)=>{const x0=Math.max(0,(x-r)>>2),x1=Math.min(CW-1,(x+r)>>2),y0=Math.max(0,(z-r)>>2),y1=(z+r)>>2;
   for(let cy=y0;cy<=y1;cy++)for(let cx=x0;cx<=x1;cx++){const px=cx*4+2,py=cy*4+2;if(hypot(px-x,py-z)>r)continue;const i=cy*CW+cx;if(i<0||(i>>3)>=CM.length)continue;if(v)CM[i>>3]|=1<<(7-(i&7));else CM[i>>3]&=~(1<<(7-(i&7)))}};
- for(const u of E.unb)circ(u.x,u.z,u.r,1);
+ for(const u of E.unb){if(u.cells){for(const i of u.cells)if((i>>3)<CM.length)CM[i>>3]|=1<<(7-(i&7))}else circ(u.x,u.z,u.r,1)}
  for(const b of E.blk)circ(b.x,b.z,b.r,0)}
 function sweep(){E.unb=[];E.blk=[];
  const rr=(o,k)=>(SOLID[k]||5)*max(hypot(o.m[0],o.m[2]),hypot(o.m[8],o.m[10]));
  for(const o of E.objects()){const e=o._e;if(o._add||o._scn)continue;const ov=ovOf('0',e.kind,e.key);if(!ov)continue;
   const s0=SOLID[e.kind],moved=!!(ov.x||ov.z),on=ov.col!==undefined?!!ov.col:!!s0;
-  if(s0&&(moved||!on))E.unb.push({x:e.o.x,z:e.o.z+2,r:s0*max(e.o.sx,e.o.sz)});   // no lugar de origem deixa de bloquear
+  if(moved||!on){const fp=footprint(o,e.o,e.kind);if(fp&&fp.length)E.unb.push({cells:fp});else if(s0)E.unb.push({x:e.o.x,z:e.o.z+2,r:s0*max(e.o.sx,e.o.sz)})}   // no lugar de origem deixa de bloquear
   if(on&&(moved||!s0))E.blk.push({x:o.x,z:o.z+2,r:rr(o,e.kind)})}                // bloqueia onde está agora
- for(const [key,g] of E.gone){const s0=SOLID[g.kind];if(s0)E.unb.push({x:g.o.x,z:g.o.z+2,r:s0*max(g.o.sx,g.o.sz)})}
+ for(const [key,g] of E.gone){if(g.kind==='scn')continue;const fp=footprint(g.obj,g.o,g.kind);if(fp&&fp.length)E.unb.push({cells:fp});else{const s0=SOLID[g.kind];if(s0)E.unb.push({x:g.o.x,z:g.o.z+2,r:s0*max(g.o.sx,g.o.sz)})}}
  for(const o of E.adds.values()){const a=o._a;const s0=SOLID[a.k];const on=a.col!==undefined?a.col:(s0?1:0);if(on)E.blk.push({x:o.x,z:o.z+2,r:(s0||5)*max(a.sx||1,a.sz||1)})}
  for(const p of E.scn){const ov=ovOf('0','scn',p._e.key);if(!ov)continue;const s0=p._scn.solid||0,e=p.e0,cz=p._scn.cz||0,hid=!!ov.d,
   moved=!!(ov.x||ov.z||ov.sx||ov.sz),on=hid?false:(ov.col!==undefined?!!ov.col:!!s0);
