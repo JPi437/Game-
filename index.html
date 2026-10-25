@@ -445,7 +445,7 @@ body.mnOpen .mi b{transform:none}
 <script>
 const RAR=['Comum','Raro','Épico','Lendário','Mítico'],COL=['#9e9e9e','#2f6fe4','#8e44ad','#ffd23f',null];
 const CH=[60.07,28,9.5,2.4,0.03];
-const NAMES=[['Naruto','Goku','Luffy'],['Gon','Killua','Asta','Itadori'],['Baki','Jotaro','Ichigo'],['Kaneki','Meliodas'],['Guts']];const HNAMES=[['Chara','Shaco','Sally'],['Ghostface','Chucky','Jason'],['Bendy','Baldi','Nemesis'],['Jeff the Killer','Sonic.exe','Slender Man'],['Springtrap','Herobrine']];
+const NAMES=[['Naruto','Goku','Luffy'],['Gon','Itadori','Baki'],['Jotaro','Ichigo'],['Kaneki','Meliodas'],['Guts']];const HNAMES=[['Chara','Shaco','Sally'],['Ghostface','Chucky','Jason'],['Bendy','Baldi','Nemesis'],['Jeff the Killer','Sonic.exe','Slender Man'],['Springtrap','Herobrine']];
 const pickN=r=>{const N=(typeof world!=='undefined'&&world===1)?HNAMES:NAMES;return N[r][Math.floor(Math.random()*N[r].length)]};
 const DMG=[[5,10],[12,20],[25,40],[50,80],[100,150]],HP=[[30,50],[60,90],[120,180],[250,400],[600,900]];
 const ri=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
@@ -469,6 +469,8 @@ function sanSave(o){
  const seen=new Set(),chars=[];let top=0;
  for(const c of o.chars.slice(0,5000)){if(!c||typeof c!=='object')continue;
   const id=SAN.int(c.id,1,1e9,0),k={id,rar:SAN.int(c.rar,0,4,0),sh:c.sh?1:0,name:SAN.name(c.name)||'Naruto',lvl:SAN.int(c.lvl,1,9999,1),xp:SAN.int(c.xp,0,1e9,0),spd:SAN.int(c.spd,1,999,5)};
+  if(k.name==='Killua'||k.name==='Asta')continue;   // retirados do jogo: somem do inventário de quem tinha
+  if(k.name==='Baki'&&k.rar===2)k.rar=1;   // Baki desceu de Épico para Raro
   if(typeof c.pas==='string'&&/^[a-z0-9]{1,4}$/.test(c.pas))k.pas=c.pas;if(typeof c.gs==='string'&&/^[0-9]{3}$/.test(c.gs))k.gs=c.gs;if(c.lk)k.lk=1;if(c.wo)k.wo=SAN.int(c.wo,0,100,0);
   if(id&&!seen.has(id)){seen.add(id);top=Math.max(top,id)}else k.id=0;chars.push(k)}
  if(!chars.length)return null;
@@ -18426,7 +18428,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261025050312;
+const GAME_BUILD=20261025052646;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
