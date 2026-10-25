@@ -434,11 +434,11 @@ body.mnOpen .mi b{transform:none}
 <div class="eq" id="pasSel"></div><div id="pasMsg" style="font-size:12px;color:#ffb74d;min-height:16px;margin:4px 0"></div>
 <button class="btn" id="pasGo">Roletar (1 essência)</button> <button class="btn" id="pasAuto" style="display:none;background:#6a1b9a">Auto</button> <button class="btn" id="pasClose" style="background:#555">Fechar</button></div></div>
 <div class="modal" id="upM"><div class="box" style="max-width:380px"><h2>Upgrades</h2><div id="upList"></div><button class="btn" id="upClose">Fechar</button></div></div>
-<div class="modal" id="mtM"><div class="box" style="max-width:380px"><h2>Montarias</h2><div style="font-size:11px;opacity:.7;margin-bottom:8px">Segure o botão por 0,5s para montar/desmontar</div><div id="mtList" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px"></div><button class="btn" id="mtClose">Fechar</button></div></div>
+<div class="modal" id="mtM"><div class="box invbox gm"><div class="invhead"><span class="ttl">Montarias</span></div><div class="gstats"><span>Desbloqueado: <b id="mtCnt"></b></span><span>Velocidade de montaria: <b id="mtSpd"></b></span><span class="gh">Segure o botão por 0,5s para montar/desmontar</span></div><div class="gbody"><div id="mtList" class="ggrid"></div></div><button class="btn" id="mtClose" style="display:none">Fechar</button></div></div>
 <div class="modal" id="sayM" style="background:#0003;align-items:flex-start;padding-top:calc(16px + env(safe-area-inset-top,0px))"><div id="say"><div id="sayN">Lina</div><canvas id="sayP" width="24" height="26"></canvas><div id="sayB"><div id="sayT"></div><div id="sayG"></div><div id="sayH"><span>toque para continuar</span><i id="sayK"></i></div></div></div></div>
 <button class="btn" id="gateBtn"></button><button class="btn ic" id="worldBtn" data-l="Mundos">Mundos</button><button class="btn ic" id="saveBtn" data-l="Save">Save</button>
 <div class="modal" id="svM"><div class="box" style="max-width:420px"><h2>Save</h2><div id="svInfo" style="font-size:12px;opacity:.85;margin-bottom:8px"></div><div style="font-size:11px;opacity:.7;margin-bottom:4px">Código do seu save (guarde em algum lugar para não perder o progresso):</div><textarea id="svOut" readonly></textarea><div><button class="btn" id="svCopy" style="background:#2e7d32">Copiar código</button><button class="btn" id="svDl" style="background:#37474f">Baixar arquivo</button></div><div style="font-size:11px;opacity:.7;margin:10px 0 4px">Colar um código para carregar:</div><textarea id="svIn" placeholder="Cole o código aqui"></textarea><div><button class="btn" id="svLoad" style="background:#c62828">Carregar save</button><button class="btn" id="svClose" style="background:#555">Fechar</button></div><div id="svMsg" style="font-size:12px;color:#ffb74d;min-height:16px;margin-top:6px"></div></div></div><div id="toast"></div>
-<div class="modal" id="wM"><div class="box" style="max-width:320px"><h2>Mundos</h2><div style="font-size:11px;opacity:.7;margin-bottom:8px">Teleporte instantâneo para mundos já desbloqueados</div><div id="wList"></div><button class="btn" id="wClose">Fechar</button></div></div>
+<div class="modal" id="wM"><div class="box invbox gm"><div class="invhead"><span class="ttl">Mundos</span></div><div class="gstats"><span>Personagens: <b id="wCnt"></b></span><span class="gh">Toque no mundo para teleportar · personagem cinza = ainda não pegou</span></div><div class="gbody"><div id="wList"></div></div><button class="btn" id="wClose" style="display:none">Fechar</button></div></div>
 <div class="modal" id="massM" style="z-index:6"><div class="box" style="max-width:380px"><h2>Em massa</h2><div style="font-size:11px;opacity:.7;margin-bottom:6px">Ignora equipados, ✦ shinys e personagens com passiva. Alimentar tem prioridade sobre vender.</div><div id="massP"></div><div id="massInfo" style="font-size:12px;margin:8px 0;min-height:16px;color:#ffd23f"></div><button class="btn" id="massGo" style="background:#c62828">Executar</button> <button class="btn" id="massClose" style="background:#555">Cancelar</button></div></div>
 <div id="rot">Gire o celular para a horizontal</div>
 
@@ -1680,7 +1680,7 @@ const pct_=x=>Math.round(x*100);
 <div id="bfs"></div><div id="bnr"></div>
 <button class="btn" id="qMt"></button><button class="btn" id="rkBtn">Rank de Dano</button>
 <div id="wbH"><div class="nm">VELDORA · Dragão da Tempestade</div><div class="bar"><i class="tr" id="wbTr"></i><i class="fl" id="wbFl"></i><em class="tx" id="wbTx"></em></div><div class="sub"><span id="wbSub"></span><button id="wbRk">Rank</button></div></div>
-<div class="modal" id="itM"><div class="box v6box"><h2>Inventário</h2><div class="act" id="itAct"></div><div class="v6grid" id="itGrid"></div><div id="itDet"></div><button class="btn" id="itClose" style="display:none">Fechar</button></div></div>
+<div class="modal" id="itM"><div class="box invbox gm"><div class="invhead"><div class="ttlw"><h2 class="ttl">Inventário</h2></div><label class="gsr"><input id="itQ" type="text" placeholder="Buscar item..." autocomplete="off" maxlength="30"></label></div><div class="gstats"><span>Itens: <b id="itCnt"></b></span><span class="act" id="itAct"></span></div><div class="gbody"><div class="ggrid fi" id="itGrid"></div><div id="itDet"></div></div><button class="btn" id="itClose" style="display:none">Fechar</button></div></div>
 <div class="modal" id="shM"><div class="box v6box"><h2>Loja</h2><div class="tabs"><button class="tb on" data-t="pot">Poções</button><button class="tb" data-t="up">Upgrades</button></div><div id="shPot"></div><div id="shUp" style="display:none"></div><button class="btn" id="shClose" style="display:none">Fechar</button></div></div>
 <div class="modal" id="msM"><div class="box v6box"><h2>Missões</h2><div id="msBody"></div><button class="btn" id="msClose" style="display:none">Fechar</button></div></div>
 <div class="modal" id="acM"><div class="box v6box"><h2>Conquistas</h2><div id="acInfo" style="text-align:center;font-size:12px;opacity:.85;margin-bottom:6px"></div><div class="achg" id="acBody"></div><button class="btn" id="acClose" style="display:none">Fechar</button></div></div>
@@ -2338,15 +2338,18 @@ const qm=$('qMt');qm.onclick=()=>{mtToggle()};
 function qmUi(){const ok=!!MT[mountEq]&&mounts.includes(mountEq),d=ok?'flex':'none';if(qm.style.display!==d)qm.style.display=d;if(!qm.firstChild)qm.innerHTML=GI.svg('mount');qm.classList.toggle('on',!!mounted)}
 
 // ===================== inventário de itens =====================
-let itSel=null;
+let itSel=null,itQ='';
 function openItems(){itSel=null;renderItems();show('itM')}
 function actHtml(){const ids=IORD.filter(id=>buffs[id]>0);return ids.length?'<b style="font-size:12px;margin-right:4px">Ativas:</b>'+ids.map(id=>`<span style="--c:${IT[id].c}">${IT[id].n} · ${ft(buffs[id])}</span>`).join(''):''}
-function renderItems(){const ids=IORD.filter(id=>items[id]>0);if(itSel&&!(items[itSel]>0))itSel=null;$('itAct').innerHTML=actHtml();
- const G=$('itGrid');G.innerHTML=ids.length?ids.map(id=>`<div class="ic${itSel===id?' on':''}" data-id="${id}" style="--c:${IT[id].c}"><canvas></canvas><b>x${items[id]}</b><span>${IT[id].n}</span></div>`).join(''):'<div class="emp" style="grid-column:1/-1">Seu inventário está vazio.<br>Compre poções na Loja ou ganhe nas Missões!</div>';
- G.querySelectorAll('.ic').forEach(el=>{potIco(el.querySelector('canvas'),el.dataset.id);el.onclick=()=>{itSel=el.dataset.id;renderItems()}});
+const kf=n=>{const f=v=>v.toFixed(1).replace(/\.0$/,'').replace('.',',');return n>=1e6?f(n/1e6)+'M':n>=1e3?f(n/1e3)+'K':''+n},nz=t=>String(t).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+function renderItems(){const ids=IORD.filter(id=>items[id]>0);if(itSel&&!(items[itSel]>0))itSel=null;$('itAct').innerHTML=actHtml();$('itCnt').textContent=ids.length+(ids.length===1?' tipo':' tipos');
+ const q=nz(itQ.trim()),list=q?ids.filter(id=>nz(IT[id].n).includes(q)):ids;
+ const G=$('itGrid');G.innerHTML=list.length?list.map(id=>`<div class="it fc${itSel===id?' on':''}" data-id="${id}" style="--c:${IT[id].c}"><div class="pic"><canvas></canvas><span class="cnt">x${kf(items[id])}</span></div><div class="nm">${IT[id].n}</div></div>`).join(''):`<div class="emp">${ids.length?'Nenhum item encontrado.':'Seu inventário está vazio.<br>Compre poções na Loja ou ganhe nas Missões!'}</div>`;
+ G.querySelectorAll('.fc').forEach(el=>{potIco(el.querySelector('canvas'),el.dataset.id);el.onclick=()=>{itSel=el.dataset.id;renderItems()}});
  const d=$('itDet');if(!itSel){d.innerHTML=ids.length?'<div class="hint">Toque em um item para ver e usar</div>':'';return}
  const it=IT[itSel],on=buffs[itSel]>0;if(it.key){d.innerHTML=`<div class="dt"><canvas id="itDc"></canvas><div><b style="color:${it.c};font-size:14px">${it.n}</b><br>${it.t}<br><span style="opacity:.75">Cada entrada na Raid gasta 1 chave. Cai de qualquer boss (5% de chance; a Poção de Drop aumenta).</span></div></div>`;potIco($('itDc'),itSel);return}d.innerHTML=`<div class="dt"><canvas id="itDc"></canvas><div><b style="color:${it.c};font-size:14px">${it.n}</b><br>${it.t}<br>Duração: ${durTxt(it.d)}${on?'<br><span style="color:#7CFC9A">Ativa agora: usar soma mais '+durTxt(it.d)+'</span>':''}</div><button class="btn" id="itUse">Usar</button></div>`;
  potIco($('itDc'),itSel);$('itUse').onclick=()=>useItem(itSel)}
+$('itQ').oninput=e=>{itQ=e.target.value;renderItems()};
 
 // ===================== loja =====================
 let shTab='pot';
@@ -18783,7 +18786,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261025081731;
+const GAME_BUILD=20261025084246;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
@@ -18848,6 +18851,100 @@ setInterval(()=>{const MP=window.MP;if(on||!MP||!MP.db||!MP.uid||MP.offline)retu
  MP.db.ref('broadcast').on('value',s=>{const v=s.val();if(!v||!v.id||v.id===seen)return;const n=Date.now()+(MP.off||0);
   if(!(v.exp>n))return;seen=v.id;try{localStorage.setItem('mp_bcast',v.id)}catch(e){}
   if(n-(+v.s||0)<6*3600e3)show(v)},()=>{})},3000);
+})();
+</script>
+<style>
+/* ===== menus novos: montarias, mundos e inventário (mesmo visual dos lutadores) ===== */
+.gm{max-width:640px;width:100%}
+.gm .gstats{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:4px 14px;padding:8px 18px 4px;font-weight:bold;font-size:13px;color:#b9b9c4}
+.gm .gstats b{color:#ffd23f;margin-left:6px}
+.gm .gstats .gh{font-size:11px;opacity:.8}
+.gm .gstats .act{margin:0;gap:4px}
+.gm .gbody{overflow-y:auto;flex:1;min-height:90px;padding:6px 14px 14px;-webkit-overflow-scrolling:touch}
+.gm .ggrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:8px;align-content:start;grid-auto-rows:max-content}
+.gm .emp,.gm .hint{grid-column:1/-1;opacity:.7;text-align:center;font-size:12px;padding:16px}
+.gm .fc{cursor:pointer}
+.gm .fc .pic canvas{image-rendering:pixelated}
+.gm .fc .nm{white-space:normal;line-height:1.1;min-height:24px;display:flex;align-items:center;justify-content:center;padding:2px 3px 3px}
+.gm .fc.lock{--c:#55555f;cursor:default}
+.gm .fc.lock .pic canvas,.gm .fc.lock .pic .mic{filter:grayscale(1) brightness(.4)}
+.gm .fc.lock .nm{color:#a4a4ae}
+.gm .fc.on{box-shadow:0 0 0 2px #fff,0 0 12px var(--c)}
+.gm .fc .cnt{position:absolute;right:4px;bottom:2px;font-size:13px;font-weight:900;color:#ffd23f;text-shadow:0 1px 0 #000,1px 0 0 #000,-1px 0 0 #000,0 -1px 0 #000}
+.gm .fc .mic{position:absolute;left:14%;top:14%;width:72%;height:72%;display:flex;align-items:center;justify-content:center}
+.gm .fc .pic .mic svg,.gm .fc .pic .mic canvas{position:static;width:100%!important;height:100%!important;max-width:none;aspect-ratio:auto;margin:0}
+.gm .fc .eqr{position:absolute;left:0;right:0;bottom:0;text-align:center;font-size:9px;font-weight:900;color:#2dff55;background:#000b;text-shadow:0 1px 0 #000}
+.gm .ggrid.fi .fc .pic canvas{left:20%;top:8%;width:60%;height:auto;aspect-ratio:3/4}
+.invhead .ttlw{display:flex;flex-direction:column;gap:3px;min-width:0}
+.gm h2.ttl{margin:0}
+.ttlw .hBal{margin:0;justify-content:flex-start;gap:4px;font-size:11px;color:#fff}
+.gsr{display:flex;align-items:center;flex:1;max-width:230px;height:32px;padding:0 10px;background:#11111a;border-radius:10px;box-shadow:inset 0 0 0 2px #ffe84a}
+.gsr input{flex:1;min-width:0;background:transparent;border:0;outline:0;color:#fff;font-family:inherit;font-weight:bold;font-size:13px}
+.gsr input::placeholder{color:#8a8a96}
+/* mundos */
+.wsec{margin:0 0 12px;border-radius:12px;overflow:hidden;background:#0b0b10;box-shadow:0 0 0 3px #0d0d10,0 0 0 5px var(--c)}
+.wsec.here{box-shadow:0 0 0 3px #0d0d10,0 0 0 5px #fff,0 0 14px var(--c)}
+.wsec .whead{display:flex;align-items:center;gap:8px;padding:9px 12px;background:linear-gradient(135deg,var(--c),var(--c2));cursor:pointer;border-bottom:3px solid #0d0d10}
+.wsec .wname{flex:1;min-width:0;font-size:20px;font-weight:900;color:#fff;-webkit-text-stroke:.6px #000;text-shadow:0 2px 0 #000a;letter-spacing:.3px;line-height:1.1}
+.wsec .wname small{display:block;margin-top:2px;font-size:11px;font-weight:bold;-webkit-text-stroke:0;text-shadow:0 1px 2px #000}
+.wsec .wpill{flex:0 0 auto;padding:3px 10px;font-size:12px;font-weight:900;color:#ffe84a;background:#000a;border-radius:999px}
+.wsec .wpill.hr{color:#2dff55}
+.wsec .wgo{flex:0 0 auto;font-size:13px;font-weight:900;padding:6px 14px;border-radius:9px;background:#11111a;color:#ffe84a;box-shadow:inset 0 0 0 2px #ffe84a}
+.wsec.dis .whead{filter:grayscale(.85) brightness(.7)}
+.wsec.dis .wgo{color:#9a9aa4;box-shadow:inset 0 0 0 2px #9a9aa4}
+.wsec .wgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:6px;padding:10px}
+</style>
+<script>
+// ===== menus novos: Montarias e Mundos (o Inventário de itens fica junto do código dele) =====
+(function(){
+const RC=r=>COL[r]||'#ff4fd8';
+const f1=n=>n.toFixed(1).replace('.',',');
+
+// ---------- Montarias ----------
+const MTC={cavalo:'#c8843c',vassoura:'#b36bff'};
+renderMt=function(){
+ const all=Object.keys(MT),own=all.filter(k=>mounts.includes(k)),eq=(MT[mountEq]&&mounts.includes(mountEq))?MT[mountEq]:null;
+ $('mtCnt').textContent=own.length+'/'+all.length;
+ $('mtSpd').textContent=eq?'x'+f1(eq.v/1.2):'—';
+ const order=own.concat(all.filter(k=>!own.includes(k)));
+ $('mtList').innerHTML=order.map(k=>{const m=MT[k],has=mounts.includes(k),on=has&&mountEq===k;
+  return `<div class="it fc${has?'':' lock'}${on?' on':''}" data-k="${k}" style="--c:${MTC[k]||'#8ab4ff'}"><div class="pic"><div class="mic">${GI.svg(k==='vassoura'?'broom':'mount')}</div><span class="lv">x${f1(m.v/1.2)}</span>${on?'<span class="ck">✓</span><span class="eqr">EQUIPADA</span>':''}</div><div class="nm">${m.n}</div></div>`}).join('')
+  +(own.length?'':'<div class="emp">Nenhuma montaria ainda. Ajude a Lina!</div>');
+ $('mtList').querySelectorAll('.fc').forEach(el=>{
+  if(!el.classList.contains('lock'))el.onclick=()=>{mountEq=el.dataset.k;save();renderMt()}});
+ // a vassoura usa o sprite novo (se ainda não carregou, fica o ícone de vetor)
+ if(window.BROOM)$('mtList').querySelectorAll('.fc[data-k="vassoura"] .mic').forEach(d=>{const c=document.createElement('canvas');try{if(BROOM.icon(c)){d.textContent='';d.appendChild(c)}}catch(e){}})};
+
+// ---------- Mundos ----------
+const WDEF=[
+ {n:0,name:'Mundo 1',c:'#43b047',c2:'#1b5e20',pool:()=>NAMES},
+ {n:1,name:'Halloween',c:'#ff8f00',c2:'#bf360c',pool:()=>HNAMES},
+ {n:2,name:'Boss Mundial',c:'#26c6da',c2:'#00374a'},
+ {n:3,name:'Raid',c:'#8e5cd6',c2:'#3a1a6a'}];
+const _rw=renderW;
+renderW=function(){
+ try{_rw()}catch(e){}
+ const L=$('wList');if(!L)return;
+ // os botões antigos guardam as regras de entrada e o texto de status: leio deles e clico neles ao teleportar
+ const by={};L.querySelectorAll('.wb').forEach(b=>{by[b.dataset.n!==undefined?b.dataset.n:'3']=b});
+ const got=new Set(chars.map(k=>k.name)),shiny=new Set(chars.filter(k=>k.sh).map(k=>k.name));
+ let tot=0,have=0;
+ const html=WDEF.map(w=>{const b=by[w.n];if(!b)return '';
+  const dis=b.classList.contains('dis'),here=world===w.n,sm=b.querySelector('small'),status=sm?sm.textContent:'';
+  let sub=status,grid='',cnt='';
+  if(w.n===0)sub='Floresta · moedas';
+  if(w.n===1)sub=ups.gate?'Cemitério e catedral · abóboras':'Abra o portão para entrar';
+  if(w.pool){const list=[];w.pool().forEach((ns,r)=>ns.forEach(nm=>list.push([nm,r])));
+   const mine=list.filter(x=>got.has(x[0])).length;tot+=list.length;have+=mine;
+   cnt=`<span class="wpill">${mine}/${list.length}</span>`;
+   grid='<div class="wgrid">'+list.map(([nm,r])=>{const ok=got.has(nm);
+    return `<div class="it fc${ok?'':' lock'}" style="--c:${RC(r)}" title="${nm} · ${RAR[r]}"><div class="pic"><canvas class="sp" width="12" height="12" data-nm="${nm}" data-r="${r}" data-s="${shiny.has(nm)?1:0}"></canvas>${shiny.has(nm)?'<span class="lv" style="color:#80deea">✦</span>':''}</div><div class="nm">${nm}</div></div>`}).join('')+'</div>'}
+  return `<div class="wsec${here?' here':''}${dis?' dis':''}" data-n="${w.n}" style="--c:${w.c};--c2:${w.c2}"><div class="whead"><div class="wname">${w.name}<small>${sub}</small></div>${cnt}${here?'<span class="wpill hr">AQUI</span>':`<span class="wgo">${dis?'Bloqueado':'Ir'}</span>`}</div>${grid}</div>`}).join('');
+ L.innerHTML=html;
+ $('wCnt').textContent=have+'/'+tot;
+ L.querySelectorAll('canvas[data-nm]').forEach(c=>{try{drawSp(c,+c.dataset.r,2,c.dataset.s==='1',c.dataset.nm)}catch(e){}});
+ L.querySelectorAll('.wsec').forEach(sec=>{const b=by[sec.dataset.n];sec.querySelector('.whead').onclick=()=>{if(b)b.click()}})};
+const wt=$('wM').querySelector('h2');if(wt)wt.textContent='Mundos';
 })();
 </script>
 <script>
