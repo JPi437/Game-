@@ -1157,7 +1157,7 @@ function drawActors(f){const now=Date.now(),L=[];
  for(let i=fx.length-1;i>=0;i--){const q=fx[i],a=now-q.t;if(a>1000){fx.splice(i,1);continue}const X=Math.round(q.x-cam.x),Y=Math.round(q.y-cam.y-a/60);g.fillStyle='#000';g.fillText(q.s,X+1,Y+1);g.fillStyle=q.c;g.fillText(q.s,X,Y)}}
 const fightBtn=document.getElementById('fightBtn'),recallBtn=document.getElementById('recallBtn');
 recallBtn.onclick=()=>{fight=null;Object.values(fpos).forEach(q=>q.nx=0)};
-function uiFight(){uiNpc();let e=null;if(!fight&&!lock&&!(window.STUN&&STUN()))e=EN.find(q=>!q.dead&&Math.hypot(P.x-q.x,P.y-q.y)<q.eng);
+function uiFight(){uiNpc();let e=null;if(!fight&&!lock&&!(window.STUN&&STUN()))e=EN.find(q=>!q.dead&&Math.hypot(P.x-q.x,P.y-q.y)<q.eng&&!(q.lk&&window.LICH&&LICH.out&&LICH.out()));
  fightBtn.style.display=e?'block':'none';fightBtn.classList.toggle('dis',!equipped.length);fightBtn._e=e;recallBtn.style.display=fight&&!lock?'block':'none';document.getElementById('punchBtn').style.display=fight&&!lock?'block':'none'}
 fightBtn.onclick=()=>{if(!equipped.length||!fightBtn._e)return;fight=fightBtn._e;Object.values(fpos).forEach(q=>q.nx=0)};
 function spinUi(){try{window.chUi&&window.chUi()}catch(e){}
@@ -1816,7 +1816,7 @@ function killLocal(e,t){giveDrop(e,t);e.dead=true;questKill(e);bossDrop(e,t);e.b
 stepChars=function(){const t=Date.now();
  if(world===2)wbUpd();
  equipped=equipped.filter(id=>chars.some(k=>k.id===id));if(!equipped.length)fight=null;
- if(fight&&(fight.dead||Math.hypot(P.x-fight.x,P.y-fight.y)>(fight.lk==='lich'?400:fight.wb?240:fight.dm?200:100))){fight=null;resetF()}
+ if(fight&&(fight.dead||Math.hypot(P.x-fight.x,P.y-fight.y)>(fight.lk==='lich'?400:fight.wb?240:fight.dm?200:100)||(fight.lk&&window.LICH&&LICH.out&&LICH.out()))){fight=null;resetF()}   // na cripta do Lich: saiu da sala para o corredor = as tropas largam o chefe e voltam para o jogador
  // renasce quando o tempo acaba, mesmo com o jogador parado em cima (AFK). Se nascer encostado nele, não prende o jogador (e.ov) até ele se afastar
  EN.forEach(e=>{const pd=Math.hypot(P.x-e.x,P.y-e.y);if(e.ov&&pd>e.r+12)e.ov=0;if(!e.wb&&e.dead&&t>=e.back){e.dead=false;e.hp=e.max;e.dh=e.max;e.sp=t;e.ov=pd<=e.r+12?1:0}});
  const slots=fight?formation(fight):null,me=MEK();
@@ -16089,6 +16089,7 @@ LICH.tp=function(dir){
   LICH.cool=Date.now()+2200;NET.leftT=Date.now();KB.t0=0;if(!LICH.prev&&H3.S&&H3.S.mode)LICH.pend2=true}};
 function goOut(){if(!LICH.in||HAL.tr)return;HAL.go('lichOut')}
 LICH.exit=goOut;
+LICH.out=()=>LICH.in&&(P.y+14-OY)>RR+4;                         // o jogador está no corredor/escada (fora da sala redonda)
 // a cena de fora não fica ativa enquanto o jogador está na cripta (nem no instante de voltar para o 2D)
 {const H=SCN.hal;if(H){const _a=H.active;H.active=function(){if(LICH.in||LICH.pend2)return false;return _a.apply(this,arguments)}}}
 // mudou de mundo: sai da cripta
@@ -18065,7 +18066,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261025030915;
+const GAME_BUILD=20261025031824;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
