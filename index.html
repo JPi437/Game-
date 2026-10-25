@@ -1127,7 +1127,7 @@ function player2(f){const hz=mounted&&mountEq==='cavalo'&&window.HORSE&&HORSE.ok
  try{riderBody(x,fy,f)}finally{g.restore()}
  HORSE.fg()}
 // ===== v3: moedas, equipar 3, combate, vender, alimentar =====
-const fpos={},fx=[],OFF=[[-18,2],[18,2],[-9,-15],[9,-15]];let fight=null,curId=null,sel=new Set();
+const fpos={},HV={},fx=[],OFF=[[-18,2],[18,2],[-9,-15],[9,-15]];let fight=null,curId=null,sel=new Set();
 function updHud(){document.getElementById('hud').textContent=''+coins+(world?'  '+pk:'')+'  '+ess}
 function stepChars(){const now=Date.now();
  equipped=equipped.filter(id=>chars.some(k=>k.id===id));if(!equipped.length)fight=null;
@@ -1817,7 +1817,7 @@ stepChars=function(){const t=Date.now();
  // renasce quando o tempo acaba, mesmo com o jogador parado em cima (AFK). Se nascer encostado nele, não prende o jogador (e.ov) até ele se afastar
  EN.forEach(e=>{const pd=Math.hypot(P.x-e.x,P.y-e.y);if(e.ov&&pd>e.r+12)e.ov=0;if(!e.wb&&e.dead&&t>=e.back){e.dead=false;e.hp=e.max;e.dh=e.max;e.sp=t;e.ov=pd<=e.r+12?1:0}});
  const slots=fight?formation(fight):null,me=MEK();
- equipped.forEach((id,i)=>{let f=fpos[id];if(!f)f=fpos[id]={x:P.x,y:P.y,dir:2,nx:0,hits:0,sk:null};if(window.STUN&&STUN()){f.sk=null;f.nx=0;return}
+ equipped.forEach((id,i)=>{let f=fpos[id];if(!f)f=fpos[id]={x:P.x,y:P.y,dir:2,nx:0,hits:HV[id]||0,sk:null};if(window.STUN&&STUN()){f.sk=null;f.nx=0;return}
   let tx,ty;
   if(fight){const s=slots.get(me+':'+i)||{x:fight.x,y:fight.y};tx=s.x;ty=s.y}else{const o=OFF[i]||[0,0];tx=P.x+o[0];ty=P.y+o[1]}
   const dx=tx-f.x,dy=ty-f.y;f.x+=dx*.1;f.y+=dy*.1;
@@ -1827,10 +1827,10 @@ stepChars=function(){const t=Date.now();
   const S=skOf(k);
   if(f.sk){while(f.sk&&t>=f.sk.nt){const d=Math.max(1,Math.round(dmgOf(k)*(window.gsM?gsM(k,2):1)*S.m*(S.w?S.w[f.sk.n]:1/S.tk)*bm('f')));dealDmg(e,d);e.lh=t;
     fx.push({x:e.x+4+ri(-8,8)+(e.wb?4:0),y:fxTop(e)-ri(0,8),t,s:'-'+fk(d),c:S.lc,big:1});
-    f.sk.n++;if(f.sk.n>=S.tk){f.sk=null;f.hits=0;f.nx=t+(S.rec||350)}else f.sk.nt=f.sk.t0+(S.at?S.at[f.sk.n]:S.ch+(S.d-S.ch)*(f.sk.n+1)/S.tk)}}
+    f.sk.n++;if(f.sk.n>=S.tk){f.sk=null;f.hits=HV[id]=0;f.nx=t+(S.rec||350)}else f.sk.nt=f.sk.t0+(S.at?S.at[f.sk.n]:S.ch+(S.d-S.ch)*(f.sk.n+1)/S.tk)}}
   else{if(!f.nx)f.nx=t+400+i*300;
    if(t>=f.nx&&Math.hypot(dx,dy)<12){const d=Math.max(1,Math.round(dmgOf(k)*(window.gsM?gsM(k,0):1)*bm('f')));f.nx=t+1000/((1+asOf(k))*(window.gsM?gsM(k,1):1));dealDmg(e,d);e.lh=t;f.atk=t;
-    fx.push({x:e.x+4+(e.wb?ri(-10,10):ri(-5,5)),y:fxTop(e),t,s:'-'+fk(d),c:'#fff'});f.hits=(f.hits||0)+1;
+    fx.push({x:e.x+4+(e.wb?ri(-10,10):ri(-5,5)),y:fxTop(e),t,s:'-'+fk(d),c:'#fff'});f.hits=HV[id]=(f.hits||0)+1;
     if(f.hits>=S.h){f.sk={t0:t,n:0,nt:t+(S.at?S.at[0]:S.ch+(S.d-S.ch)/S.tk)};fx.push({x:f.x-14,y:f.y-12,t,s:S.n,c:S.lc,lbl:1});skSnd(k.name,S)}}}
   if(fight&&fight.hp<=0&&!fight.wb&&(!window.MPshared||fight.noSync))killLocal(fight,t)})};
 punch=function(){if(!fight||lock||(window.STUN&&STUN())||!punchOk())return;const e=fight,t=Date.now(),cd=Math.max(1,Math.round(clickDmg()*bm('f')));dealDmg(e,cd);e.lh=t;
@@ -17802,7 +17802,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261024214110;
+const GAME_BUILD=20261024215536;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
