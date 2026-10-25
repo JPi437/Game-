@@ -249,7 +249,7 @@ const PNAME={};GROUPS.forEach(g=>g[1].forEach(([k,t])=>PNAME[k]=t));
 const PY0={bot:0,av2:0,chm:0,av0:1,av1:1,av3:1,cam:1,capm:1,cape:1};
 const SYMP={bot:1,av2:1};                       // peças com um lado esquerdo e um direito (pés)
 // o "look de teste": o que o SEU personagem veste enquanto você ajusta (não salva; só você vê)
-const look=()=>ED.look||(ED.look={o:0,k:0,a:0,w:0,hc:0});
+const look=()=>{if(!ED.look||window.EDFORCE!==ED.look)ED.look={o:0,k:0,a:0,w:0,hc:0,...(window.EDFORCE&&window.EDFORCE.o!==undefined?window.EDFORCE:{})};return ED.look};
 function wear(key){const L=look();
  if(/^h\d$/.test(key))L.a=+key[1];else if(key==='chm')L.w=1;else if(key==='cam')L.o|=8;else if(key==='bot')L.o|=16;else if(key==='capm')L.k=2;else if(key==='cape')L.k=1;
  else if(key==='av0')L.o|=1;else if(key==='av1'||key==='av3')L.o|=2;else if(key==='av2')L.o|=4;window.EDFORCE=L}
@@ -270,7 +270,7 @@ function tabMod(B){
  B.appendChild(hint('Escolha a peça, ajuste e veja no seu personagem. Cada peça é ajustada sozinha, igual para todo mundo.'));
  const pk=ED._pk||'h1';
  for(const [gn,items] of GROUPS){B.appendChild(el('div','grp',gn));
-  B.appendChild(row(...items.map(([k,t])=>btn(t,()=>{ED._pk=k;wear(k);render()},'sm '+(k===pk?'on ':'')+(E.data.pt[k]?'dot':'')))))}
+  B.appendChild(row(...items.map(([k,t])=>btn(t,()=>{ED._pk=k;ED._own=false;wear(k);render()},'sm '+(k===pk?'on ':'')+(E.data.pt[k]?'dot':'')))))}
  // look de teste
  B.appendChild(el('div','grp','Veste no teste (só no seu personagem)'));
  const L=look(),hasF=!!window.EDFORCE;
@@ -284,7 +284,7 @@ function tabMod(B){
   lookBtn('Calça av.',!!(L.o&2),()=>{L.o^=2;window.EDFORCE=L;render()}),
   lookBtn('Pés av.',!!(L.o&4),()=>{L.o^=4;window.EDFORCE=L;render()}),
   lookBtn('Capa: '+(['nenhuma','Lich','mago'][L.k|0]),L.k>0,()=>{L.k=((L.k|0)+1)%3;window.EDFORCE=L;render()})));
- B.appendChild(row(btn('Vestir só a peça',()=>{ED.look={o:0,k:0,a:0,w:0,hc:0};wear(pk);render()},'sm blu'),btn('Voltar à minha roupa',()=>{window.EDFORCE=null;ED.look=null;render();toast('Roupa normal.')},'sm'),
+ B.appendChild(row(btn('Vestir só a peça',()=>{window.EDFORCE=ED.look={o:0,k:0,a:0,w:0,hc:0};wear(pk);render()},'sm blu'),btn('Voltar à minha roupa',()=>{window.EDFORCE=null;ED.look=null;ED._own=true;render();toast('Roupa normal.')},'sm'),
   btn(ED.fly&&ED.fly.mode==='orbit'?'📷 Sair da câmera':'📷 Câmera de perto',()=>{if(ED.fly&&ED.fly.mode==='orbit')stopFly();else camClose(true);render()},'sm grn')));
  if(ED.fly&&ED.fly.mode==='orbit'){B.appendChild(row(btn('⟲ Girar',()=>{ED.fly.yaw-=.6;flyApply()},'sm'),btn('⟳ Girar',()=>{ED.fly.yaw+=.6;flyApply()},'sm'),btn('＋ Perto',()=>{ED.fly.od=clp(ED.fly.od*.8,12,400);flyApply()},'sm'),btn('－ Longe',()=>{ED.fly.od=clp(ED.fly.od*1.25,12,400);flyApply()},'sm'),btn('↕ Altura',()=>{ED.fly.pitch=ED.fly.pitch<-.05?.25:-.12;flyApply()},'sm')));
   B.appendChild(hint('Também dá para arrastar a tela para girar em volta do personagem.'))}
@@ -426,6 +426,8 @@ function tabSave(B){
 // ============================================================ painel ============================================================
 const P_=el('div');P_.id='edP';D.body.appendChild(P_);
 const TABS=[['map','Mapa'],['mon','Monstros'],['mod','Modelo'],['cam','Câmera'],['save','Salvar']];
+// na aba Modelo a peça escolhida sempre aparece vestida no seu personagem (senão não dá para ver o que está ajustando)
+function autoWear(){if(ED.on&&ED.tab==='mod'&&!window.EDFORCE&&!ED._own)wear(ED._pk||'h1')}
 function render(){if(!ED.on){P_.classList.remove('on');return}
  const old=P_.querySelector('.edB'),keep=old&&ED._rt===ED.tab?old.scrollTop:0;ED._rt=ED.tab;
  P_.classList.add('on');P_.classList.toggle('left',!!ED.left);P_.classList.toggle('min',!!ED.min);P_.innerHTML='';
@@ -435,7 +437,7 @@ function render(){if(!ED.on){P_.classList.remove('on');return}
  hb(ED.min?'▢':'–',ED.min?'Abrir painel':'Minimizar painel',()=>{ED.min=!ED.min;render();if(ED.fly&&ED.fly.mode==='orbit')flyApply()});
  hb('✕','Fechar editor',()=>toggle(false));P_.appendChild(H);
  if(ED.min)return;
- const T=el('div','edT');TABS.forEach(([k,t])=>{const b=el('button',ED.tab===k?'on':'');b.textContent=t;b.onclick=()=>{ED.tab=k;ED._rt=null;render()};T.appendChild(b)});P_.appendChild(T);
+ const T=el('div','edT');TABS.forEach(([k,t])=>{const b=el('button',ED.tab===k?'on':'');b.textContent=t;b.onclick=()=>{ED.tab=k;ED._rt=null;autoWear();render()};T.appendChild(b)});P_.appendChild(T);
  const B=el('div','edB');P_.appendChild(B);
  try{({map:tabMap,mon:tabMon,mod:tabMod,cam:tabCam,save:tabSave})[ED.tab](B)}catch(e){console.error('EDITOR',e);B.appendChild(hint('Erro: '+e.message))}
  if(keep)B.scrollTop=keep}
@@ -458,7 +460,7 @@ P_.addEventListener('touchmove',e=>{const c=tsc;if(!c||e.touches.length!==1)retu
  c.box.scrollTop=c.top-(e.touches[0].clientY-c.y0)},{passive:true});
 P_.addEventListener('touchend',()=>{tsc=null},{passive:true});P_.addEventListener('touchcancel',()=>{tsc=null},{passive:true});     // clicar no painel nunca chega no jogo
 function freeMouse(){try{S.mfree=true;if(document.pointerLockElement&&document.exitPointerLock)document.exitPointerLock()}catch(e){}}
-function toggle(on){ED.on=on===undefined?!ED.on:on;L_.classList.toggle('on',ED.on);if(ED.on)freeMouse();else{try{S.mfree=false}catch(e){}}if(!ED.on){window.EDFORCE=null;if(ED.fly&&ED.fly.mode==='free'){/* mantém o voo? não: sai */}stopFly();ring.style.display='none'}render()}
+function toggle(on){ED.on=on===undefined?!ED.on:on;if(!ED.on){ED.look=null;ED._own=false}else autoWear();L_.classList.toggle('on',ED.on);if(ED.on)freeMouse();else{try{S.mfree=false}catch(e){}}if(!ED.on){window.EDFORCE=null;if(ED.fly&&ED.fly.mode==='free'){/* mantém o voo? não: sai */}stopFly();ring.style.display='none'}render()}
 const L_=el('button');L_.id='edBtn';L_.textContent='🛠 Editor';L_.onclick=()=>toggle();D.body.appendChild(L_);
 const ring=el('div');ring.id='edRing';ring.innerHTML='<i></i>';D.body.appendChild(ring);
 const stopB=el('button');stopB.id='edStop';stopB.textContent='■ Parar';stopB.onclick=stopCine;D.body.appendChild(stopB);

@@ -10614,7 +10614,7 @@ let btn=null,glc=null,ovc=null,ovx=null,JG=null;
 function css(){const st=document.createElement('style');st.textContent=`
 #persBtn{position:fixed;left:calc(162px + env(safe-area-inset-left,0px));bottom:calc(26px + env(safe-area-inset-bottom,0px));z-index:3;display:none;background:linear-gradient(#7e57c2,#4527a0);padding:5px 12px;line-height:1.05;min-width:100px;text-align:center}
 #persBtn small{display:block;font-size:9px;opacity:.85;letter-spacing:.3px}#persBtn b{display:block;font-size:15px}
-#h3gl,#h3ov{position:fixed;inset:0;width:100%;height:100%;display:none}#h3gl{image-rendering:pixelated;touch-action:none;background:#050308}#h3ov{pointer-events:none}
+#h3gl,#h3ov{position:fixed;inset:0;width:100%;height:100%;display:none}#h3gl{touch-action:none;background:#050308}#h3ov{pointer-events:none}
 @media (pointer:fine){#spinBtn::after,#talkBtn::after{content:' [E]';opacity:.75;font-size:.8em}}
 body.h3on #c{visibility:hidden}body.h3on #h3gl,body.h3on #h3ov{display:block}
 #jumpBtn{position:fixed;right:calc(22px + env(safe-area-inset-right,0px));bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:3;display:none;width:62px;height:62px;border-radius:50%;padding:0;
@@ -10675,7 +10675,8 @@ function enter3D(sc){
  SC=S.sc=sc;sc.env();
  S.osv=OFF.map(a=>a.slice());if(sc.enter)sc.enter();
  S.yaw=[0,-PI/2,PI,PI/2][P.dir|0]||0;S.pitch=0;S.moving=false;S.bossYaw=undefined;S.cam.yaw=S.yaw;
- const qs=clp(720/max(1,innerWidth),.35,1);S.qs0=qs;H3.setQ(qs);S.ft=16;S.lastT=0;S.jh=S.jv=0;S.isoY=null;
+ const dprQ=Math.min(window.devicePixelRatio||1,1.5),maxW=matchMedia('(pointer:coarse)').matches?1100:1920,qs=clp(Math.min(innerWidth*dprQ,maxW)/max(1,innerWidth),.5,1.25);S.qs0=qs;H3.setQ(qs);   // nítido: desenha na resolução da tela (até 1920 no PC / 1100 no celular); se ficar lento o próprio jogo desce sozinho (quadro abaixo)
+ S.ft=16;S.lastT=0;S.jh=S.jv=0;S.isoY=null;
  if(H3.gfx&&H3.gfx.apply)try{H3.gfx.apply()}catch(e){console.error('H3 gfx',e)}
  document.body.classList.add('h3on','h3j');FX.clear();if(sc.clear)sc.clear();return true}
 function leave3D(){
@@ -18791,7 +18792,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261025180432;
+const GAME_BUILD=20261025183806;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
