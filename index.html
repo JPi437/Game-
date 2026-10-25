@@ -12213,16 +12213,18 @@ function blade(mb,x,y,z,a,w,h,lean,c0,c1,sw,out){
 const TC=[0,0,0,0],T0=[0,0,0],T1=[0,0,0],TIP=[0,0,0];
 function tuft(mb,x,y,z,g,H,rnd,dry,q){
  // q: 0 normal · 1 caprichado (perto, gráfico Alto: mais lâminas, mais variação) · 2 longe (gráfico Alto: poucas lâminas largas)
- const n=q===1?6+((rnd()*4)|0):q===2?3+((rnd()*2)|0):4+((rnd()*3)|0),sp=q===2?2.6:1.5,wk=q===2?1.9:1;
- for(let i=0;i<n;i++){const a=rnd()*TAU,dd=rnd()*sp,bx=x+cos(a)*dd,bz=z+sin(a)*dd,h=H*(.55+rnd()*.75)*(q===1&&rnd()<.15?1.45:1),lean=h*(.22+rnd()*.4),w=(.8+rnd()*.7)*wk,k=.88+rnd()*.28;
-  T0[0]=g[0]*.5*k;T0[1]=g[1]*.55*k;T0[2]=g[2]*.45*k;
-  T1[0]=min(255,g[0]*1.08*k+16+dry*30);T1[1]=min(255,g[1]*1.42*k+20-dry*40);T1[2]=min(255,g[2]*.9*k+dry*6);
+ // longe (q=2): lâminas finas como as de perto e com a cor bem próxima à do chão, para o capim distante virar um tapete macio em vez de pontos claros piscando
+ const n=q===1?6+((rnd()*4)|0):q===2?4+((rnd()*2)|0):4+((rnd()*3)|0),sp=q===2?1.7:1.3,wk=q===2?1.05:.85,far=q===2;
+ for(let i=0;i<n;i++){const a=rnd()*TAU,dd=rnd()*sp,bx=x+cos(a)*dd,bz=z+sin(a)*dd,h=H*(.6+rnd()*.6)*(q===1&&rnd()<.12?1.25:1),lean=h*(.2+rnd()*.35),w=(.7+rnd()*.5)*wk,k=far?.94+rnd()*.12:.88+rnd()*.28;
+  if(far){T0[0]=g[0]*.72*k;T0[1]=g[1]*.78*k;T0[2]=g[2]*.7*k;T1[0]=min(255,g[0]*1.02*k+5+dry*18);T1[1]=min(255,g[1]*1.16*k+7-dry*22);T1[2]=min(255,g[2]*.92*k+dry*4)}
+  else{T0[0]=g[0]*.55*k;T0[1]=g[1]*.6*k;T0[2]=g[2]*.5*k;
+  T1[0]=min(255,g[0]*1.06*k+12+dry*28);T1[1]=min(255,g[1]*1.32*k+15-dry*36);T1[2]=min(255,g[2]*.9*k+dry*6)}
   blade(mb,bx,y-.25,bz,rnd()*TAU,w,h,lean,T0.slice(),T1.slice(),8+((rnd()*5)|0))}}
 const FLC=['#ffffff','#ffd23f','#ff6f91','#b38cff','#7fd8ff'].map(C);
 function flower(mb,x,y,z,ci,rnd){
- const h=3.4+rnd()*2.8,a=rnd()*TAU,lean=(rnd()-.5)*1.4,tip=[0,0,0];
+ const h=2.5+rnd()*1.9,a=rnd()*TAU,lean=(rnd()-.5)*1.1,tip=[0,0,0];
  blade(mb,x,y-.2,z,a,.55,h,lean,[34,96,36],[64,140,56],7,tip);
- const R=1.5+rnd()*.8,col=FLC[ci],cen=[255,226,122],ex=tip[0],ey=tip[1]+.05,ez=tip[2],tl=.25+rnd()*.2,tx=(rnd()-.5)*tl,tz=(rnd()-.5)*tl;
+ const R=1.2+rnd()*.6,col=FLC[ci],cen=[255,226,122],ex=tip[0],ey=tip[1]+.05,ez=tip[2],tl=.25+rnd()*.2,tx=(rnd()-.5)*tl,tz=(rnd()-.5)*tl;
  const nn=[tx,1,tz];
  for(let i=0;i<5;i++){const a0=i/5*TAU+a,a1=(i+1)/5*TAU+a,r0=R*(.9+.2*((i*7)%3)/2),r1=R*(.9+.2*(((i+1)*7)%3)/2);
   mb.raw([ex,ey+.5,ez],[ex+cos(a0)*r0,ey,ez+sin(a0)*r0],[ex+cos(a1)*r1,ey,ez+sin(a1)*r1],nn,nn,nn,cen,col,col,9*2,9*2,9*2)}}
@@ -12234,7 +12236,7 @@ function reed(mb,x,y,z,rnd){
 
 // ============================================================ pedaços de capim ============================================================
 function chunkBuild(ci,cj,q){q=q||0;
- const cs=FL.cs,x0=ci*cs,z0=cj*cs,mb=new MB(((ci*7919)^(cj*104729))+11+q*7,{pk:true}),rnd=mb.r,GS=q===1?4.3:q===2?7.4:5.1,N=ceil(cs/GS),g=[0,0,0,0];
+ const cs=FL.cs,x0=ci*cs,z0=cj*cs,mb=new MB(((ci*7919)^(cj*104729))+11+q*7,{pk:true}),rnd=mb.r,GS=q===1?4.1:q===2?6.4:5.1,N=ceil(cs/GS),g=[0,0,0,0];
  for(let gz=0;gz<N;gz++)for(let gx=0;gx<N;gx++){
   const x=x0+(gx+rnd())*GS,z=z0+(gz+rnd())*GS,r1=rnd(),r2=rnd(),r3=rnd();
   if(x<6||z<6||x>MW-6||z>MH-6)continue;
@@ -12253,7 +12255,7 @@ function chunkBuild(ci,cj,q){q=q||0;
   const fz=vn(x*.021,z*.021,77),fi=floor(vn(x*.013,z*.013,79)*5);
   if(cz<.25&&ty!==2&&fz>(ty===1?.3:.56)&&r3<(ty===1?.2:.14)*(q===2?.6:1)){flower(mb,x,y,z,fi%5,rnd);if(q===1&&rnd()<.5)flower(mb,x+(rnd()-.5)*3,y,z+(rnd()-.5)*3,fi%5,rnd);continue}
   const dry=clp(cz*1.6,0,1);
-  tuft(mb,x,y,z,g,(3.1+rnd()*2.4)*(1-cz*.35)*(wo<14?1.35:1)*(q===2?1.2:1),rnd,dry,q)}
+  tuft(mb,x,y,z,g,(1.9+rnd()*1.4)*(1-cz*.35)*(wo<14?1.25:1),rnd,dry,q)}   // capim mais baixo (antes 3,1 a 5,5)
  if(mb.count===0)return null;
  const pk=mb.pack(),m=H3.upload(H3.gl(),pk);return{m,cx:pk.cx,cy:pk.cy,cz:pk.cz,rad:pk.rad,ci,cj,q}}
 const key=(ci,cj)=>cj*1000+ci;
@@ -17983,7 +17985,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261025023733;
+const GAME_BUILD=20261025024433;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
