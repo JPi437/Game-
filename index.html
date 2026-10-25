@@ -547,7 +547,7 @@ const T=16,W1=148,H1=112,W0=84,H0=63,RMX=1640,RMY=300;let W=W0,H=H0;
 // (g.setTransform(1,0,0,1,0,0) passa a significar "escala base"). Os personagens do Halloween usam o dobro de pixels no mesmo tamanho.
 // RS=4 (padrão): personagens do Halloween com 4x os pixels; ?rs=1|2|4 na URL força; se o aparelho ficar lento o jogo desce sozinho 4 -> 2 -> 1 (ver rsWatch).
 const RSQ=(location.search.match(/[?&]rs=([124])\b/)||[])[1];if(RSQ==='4')try{localStorage.removeItem('mp_rs')}catch(e){}
-let RS=RSQ?+RSQ:((()=>{try{const v=+localStorage.getItem('mp_rs');return v===1||v===2?v:4}catch(e){return 4}})());
+let RS=RSQ?+RSQ:((()=>{try{localStorage.removeItem('mp_rs')}catch(e){}return 4})());   // sempre 4: sem queda automática de resolução
 (function(){const st=CanvasRenderingContext2D.prototype.setTransform;
  G0.setTransform=function(a,b,c,d,e,f){return arguments.length>=6?st.call(this,a*RS,b*RS,c*RS,d*RS,e*RS,f*RS):st.apply(this,arguments)};
  G0.resetTransform=function(){st.call(this,RS,0,0,RS,0,0)}})();
@@ -630,7 +630,7 @@ function render(){cam.x=Math.max(0,Math.min(W*T-VW,P.x+8-VW/2));cam.y=Math.max(0
  if((frame&3)===0)mythRedraw();
  if(window.FBT)FBT()}
 let rsN=0,rsS=0,rsC=0;   // média do tempo entre quadros (sem pausas): aparelho lento volta sozinho para RS=1 e lembra disso
-function rsWatch(dt){if(RS<2||!(dt>0)||dt>200)return;rsS+=dt;rsN++;
+function rsWatch(dt){return;if(RS<2||!(dt>0)||dt>200)return;rsS+=dt;rsN++;
  if(rsN>=240){const a=rsS/rsN;rsS=rsN=0;if(a>32){if(++rsC>=2){rsC=0;RS=RS>2?2:1;applyRS();try{localStorage.setItem('mp_rs',''+RS)}catch(e){}}}else rsC=0}}
 function loop(ts){requestAnimationFrame(loop);                 // agenda primeiro: um erro num quadro não congela o jogo
  if(ts===undefined)ts=performance.now();
@@ -10675,7 +10675,7 @@ function enter3D(sc){
  SC=S.sc=sc;sc.env();
  S.osv=OFF.map(a=>a.slice());if(sc.enter)sc.enter();
  S.yaw=[0,-PI/2,PI,PI/2][P.dir|0]||0;S.pitch=0;S.moving=false;S.bossYaw=undefined;S.cam.yaw=S.yaw;
- const dprQ=Math.min(window.devicePixelRatio||1,1.5),maxW=matchMedia('(pointer:coarse)').matches?1100:1920,qs=clp(Math.min(innerWidth*dprQ,maxW)/max(1,innerWidth),.5,1.25);S.qs0=qs;H3.setQ(qs);   // nítido: desenha na resolução da tela (até 1920 no PC / 1100 no celular); se ficar lento o próprio jogo desce sozinho (quadro abaixo)
+ const dprQ=Math.min(window.devicePixelRatio||1,1.5),coarse=matchMedia('(pointer:coarse)').matches,maxW=coarse?1000:1920,qs=clp(Math.min(innerWidth*(coarse?1:dprQ),maxW)/max(1,innerWidth),.5,1.25);S.qs0=qs;H3.setQ(qs);   // nítido: desenha na resolução da tela (até 1920 no PC / 1100 no celular); se ficar lento o próprio jogo desce sozinho (quadro abaixo)
  S.ft=16;S.lastT=0;S.jh=S.jv=0;S.isoY=null;
  if(H3.gfx&&H3.gfx.apply)try{H3.gfx.apply()}catch(e){console.error('H3 gfx',e)}
  document.body.classList.add('h3on','h3j');FX.clear();if(sc.clear)sc.clear();return true}
@@ -11017,7 +11017,7 @@ function frame(){
  overlay(t,C);blend2D();
  // 4) qualidade: se o aparelho está lento, desenha o 3D em menos pixels (a vista de cima já usa a resolução do 2D)
  const dt=pf-S.lastT;S.lastT=pf;if(dt>0&&dt<250&&!C.iso){S.ft+=(dt-S.ft)*.05;
-  if(S.fr%90===0){if(S.ft>27&&H3.getQ()>.4){H3.setQ(max(.4,H3.getQ()*.82))}else if(S.ft<18.5&&H3.getQ()<S.qs0-.01)H3.setQ(min(S.qs0,H3.getQ()*1.1))}}}
+  /* sem otimização automática: a resolução do 3D fica fixa (antes ela descia sozinha e a tela piscava) */}}
 
 // ============================================================ texto por cima: números de dano, nomes, cronômetro, clarões ============================================================
 function overlay(t,C){
@@ -18792,7 +18792,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261025183806;
+const GAME_BUILD=20261025185408;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;

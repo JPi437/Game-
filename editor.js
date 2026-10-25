@@ -121,7 +121,7 @@ function groundAt(cx,cy){const r=rayAt(cx,cy),hA=H3.fld.hAt;let t=2,pt=0;
  return null}
 
 // ============================================================ seleção ============================================================
-const NM={tree:'Árvore',bush:'Arbusto',rock:'Pedra',decor:'Decoração'};
+const NM={tree:'Árvore',bush:'Arbusto',rock:'Pedra',decor:'Decoração',scn:'Cenário'};
 const PALN={g:'Carvalho',d:'Verde escuro',s:'Doente',r:'Morrendo',a:'Salmão',x:'Seca',p:'Abeto'};
 function varLabel(kind,k){if(kind==='tree'){const n=PALN[k.charAt(0)]||'';return (n?n+' ':'')+k}
  if(kind==='bush')return ({bg:'Verde',bd:'Verde escuro',bs:'Doente',bx:'Seco'})[k]+' ('+k+')';
@@ -161,7 +161,7 @@ function moveTo(x,z){const s=ED.sel;if(!s)return;
  else if(s.type==='add')patchSel({x,z});
  else if(s.type==='mon'){const e=enList()[s.idx];if(e&&e._eo)patchSel({x:x-8-e._eo.x,y:z-15-e._eo.y})}}
 function camDir(){const y=(S.cam&&S.cam.yaw)||0;return{fx:sin(y),fz:-cos(y),rx:cos(y),rz:sin(y)}}
-function dupSel(){const s=ED.sel;if(!s||s.type==='mon')return;hist();const o=s.o,ov=ovOfSel(),e=o._e.o,kind=s.kind;
+function dupSel(){const s=ED.sel;if(!s||s.type==='mon')return;if(s.o&&s.o._scn){toast('O cenário fixo não pode ser duplicado');return}hist();const o=s.o,ov=ovOfSel(),e=o._e.o,kind=s.kind;
  const v=okey(o);if(!v)return;
  const id=E.addObj({k:kind,v,x:o.x+14,z:o.z+8,y:(ov.y||0)+(s.type==='add'?0:(e.by||0)),r:(s.type==='add'?(ov.r||0):e.rot+(ov.r||0)),sx:(s.type==='add'?(ov.sx||1):e.sx*(ov.sx||1)),sy:(s.type==='add'?(ov.sy||1):e.sy*(ov.sy||1)),sz:(s.type==='add'?(ov.sz||1):e.sz*(ov.sz||1)),c:ov.c});
  ED.pend=id;ED.pendT=Date.now()}
@@ -200,13 +200,20 @@ function tabMap(B){
   B.appendChild(sld({label:'Largura (X)',min:.1,max:5,step:.05,def:1,get:()=>g('sx'),set:v=>patchSel({sx:v}),start:hist}));
   B.appendChild(sld({label:'Altura (Y)',min:.1,max:5,step:.05,def:1,get:()=>g('sy'),set:v=>patchSel({sy:v}),start:hist}));
   B.appendChild(sld({label:'Profund. (Z)',min:.1,max:5,step:.05,def:1,get:()=>g('sz'),set:v=>patchSel({sz:v}),start:hist}));
+  const isScn=!!o._scn;
   const cc=k=>sld({label:({0:'Cor R',1:'Cor G',2:'Cor B'})[k],min:0,max:2,step:.05,def:1,get:()=>g('c')[k],set:v=>{const c=(ovOfSel().c||[1,1,1]).slice();c[k]=v;patchSel({c})},start:hist});
-  B.appendChild(cc(0));B.appendChild(cc(1));B.appendChild(cc(2));
-  const solid=(e0=>{const def=(s.kind==='tree'||s.kind==='rock')?1:0;return ov.col!==undefined?ov.col:def})();
+  if(!isScn){B.appendChild(cc(0));B.appendChild(cc(1));B.appendChild(cc(2))}
+  const solid=(e0=>{const def=isScn?(o._scn.solid?1:0):(s.kind==='tree'||s.kind==='rock')?1:0;return ov.col!==undefined?ov.col:def})();
   const ck=el('label');ck.style.cssText='display:flex;gap:6px;align-items:center;margin:6px 0';const cb=el('input');cb.type='checkbox';cb.checked=!!solid;
   cb.onchange=()=>{hist();patchSel({col:cb.checked?1:0})};ck.append(cb,el('span','','Bloqueia o andar (colisão) — vale para o objeto movido/adicionado'));B.appendChild(ck);
-  B.appendChild(row(btn('⧉ Duplicar',dupSel,'blu'),btn('🗑 Apagar',delSel,'red'),isAdd?null:btn('↺ Original',resetSel)));
+  B.appendChild(row(isScn?null:btn('⧉ Duplicar',dupSel,'blu'),btn(isScn?'🙈 Esconder':'🗑 Apagar',delSel,'red'),isAdd?null:btn('↺ Original',resetSel)));
+  if(isScn&&(o._e.key==='star'||o._e.key==='mach'))B.appendChild(hint('O botão de '+(o._e.key==='star'?'roletar':'passivas')+' passa a aparecer perto do novo lugar.'))
  }
+ B.appendChild(h4('Cenário fixo (estrela, máquina, fonte, pilares)'));
+ {const L=el('div','lst');L.style.maxHeight='140px';const ls=[...E.scn].filter(p=>!p.hid);
+  if(!ls.length)L.appendChild(hint(E.scn.length?'Tudo escondido (veja a lixeira).':'Carregando o cenário…'));
+  ls.forEach(p=>{const d=el('div',ED.sel&&ED.sel.o===p?'on':''),sp=el('span');const ov=(E.data.o['0']&&E.data.o['0'].scn&&E.data.o['0'].scn[p._e.key])||null;sp.textContent=p.key+(ov?' •':'');d.append(sp);d.onclick=()=>{ED.sel={type:'obj',kind:'scn',key:p._e.key,o:p};render();moveCamTo(p.x,p.z)};L.appendChild(d)});
+  B.appendChild(L)}
  B.appendChild(h4('Adicionar objeto'));
  const kinds=[['tree','Árvore'],['bush','Arbusto'],['rock','Pedra'],['decor','Decoração']];
  let kind=ED._addKind||'tree';const vs=()=>E.variants(kind);
@@ -218,7 +225,7 @@ function tabMap(B){
  B.appendChild(h4('Lixeira'));
  const gone=[...E.gone.entries()];
  if(!gone.length)B.appendChild(hint('Nenhum objeto original apagado.'));
- else{const L=el('div','lst');gone.forEach(([key,g])=>{const d=el('div');const sp=el('span');sp.textContent=NM[g.kind]+' '+okey(g.obj)+' @'+key.split(':')[1];d.append(sp,btn('Voltar',()=>{hist();E.setObj(g.kind,key,{d:0})},'sm'));
+ else{const L=el('div','lst');gone.forEach(([key,g])=>{const d=el('div');const sp=el('span');sp.textContent=NM[g.kind]+' '+okey(g.obj)+(key.split(':')[1]?' @'+key.split(':')[1]:'');d.append(sp,btn('Voltar',()=>{hist();E.setObj(g.kind,key,{d:0})},'sm'));
    d.onclick=()=>{moveCamTo(g.o.x,g.o.z)};L.appendChild(d)});B.appendChild(L)}
  const c=E.count();B.appendChild(hint('Mudados: '+c.obj+' · apagados: '+c.del+' · adicionados: '+c.add))}
 function refreshSl(B){B.querySelectorAll('.sl').forEach(w=>w._show&&w._show())}

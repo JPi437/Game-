@@ -29,7 +29,7 @@ const okKey=k=>typeof k==='string'&&k.length>0&&k.length<=40&&k!=='__proto__'&&k
 function clean(raw){const d=blank();if(!raw||typeof raw!=='object')return d;d.t=nm(raw.t,0,9e15,0);
  try{
  if(raw.o&&typeof raw.o==='object')for(const w of Object.keys(raw.o)){if(!/^[0-3]$/.test(w))continue;const wo=raw.o[w];if(!wo||typeof wo!=='object')continue;
-  for(const k of KINDS){const L=wo[k];if(!L||typeof L!=='object')continue;
+  for(const k of KINDS.concat('scn')){const L=wo[k];if(!L||typeof L!=='object')continue;
    for(const key of Object.keys(L).slice(0,8000)){if(!okKey(key))continue;const ov=cOv(L[key]);if(!Object.keys(ov).length)continue;
     const A=d.o[w]||(d.o[w]=mp()),B=A[k]||(A[k]=mp());B[key]=ov}}}
  if(raw.a&&typeof raw.a==='object')for(const w of Object.keys(raw.a)){if(!/^[0-3]$/.test(w)||!Array.isArray(raw.a[w]))continue;const arr=[],seen=new Set();
@@ -126,7 +126,7 @@ function place(o,e,x,z,yo,rot,sx,sy,sz,c){const gy=FLD.hAt(x,z),y=gy+e.by+yo;o.x
  if(e.cr!==undefined&&o.cr!==undefined){o.cr=e.cr*max(kx,kz);o.cy=y+e.cy*ky}
  if(e.R!==undefined)o.R=e.R*kx;if(e.top!==undefined)o.top=e.top*ky;
  o.tint=c?[e.tint[0]*c[0],e.tint[1]*c[1],e.tint[2]*c[2]]:e.tint.slice()}
-function applyOne(o){const e=o._e,ov=ovOf('0',e.kind,e.key);
+function applyOne(o){if(o._scn)return;const e=o._e,ov=ovOf('0',e.kind,e.key);
  if(!ov){if(o._moved){place(o,e.o,e.o.x,e.o.z,0,e.o.rot,e.o.sx,e.o.sy,e.o.sz,null);o._moved=0}return}
  o._moved=1;place(o,e.o,e.o.x+(ov.x||0),e.o.z+(ov.z||0),ov.y||0,e.o.rot+(ov.r||0),e.o.sx*(ov.sx||1),e.o.sy*(ov.sy||1),e.o.sz*(ov.sz||1),ov.c||null)}
 function mkAdd(a){const v=NAT.VAR[a.v];if(!v)return null;const kind=a.k;
@@ -136,8 +136,39 @@ function mkAdd(a){const v=NAT.VAR[a.v];if(!v)return null;const kind=a.k;
  o._e=e;return o}
 function applyAdd(o,a){const e=o._e;e.o.x=a.x;e.o.z=a.z;place(o,e.o,a.x,a.z,a.y||0,a.r||0,a.sx||1,a.sy||1,a.sz||1,a.c||null)}
 E.listOf=kind=>{const L=NAT&&({tree:NAT.trees,bush:NAT.bushes,rock:NAT.rocks,decor:NAT.decor})[kind];return L||null};
-E.objects=function*(){for(const k of KINDS){const L=E.listOf(k);if(L)for(const o of L)if(o._e)yield o}};
+E.objects=function*(){for(const k of KINDS){const L=E.listOf(k);if(L)for(const o of L)if(o._e)yield o}for(const p of E.scn)if(!p.hid)yield p};
 E.keyOf=o=>o._e?o._e.key:null;
+
+// ---------- cenário fixo do Mundo 1: estátua da estrela, máquina de passivas, chafariz (fonte) e pilares da praça ----------
+// Cada um vira um "objeto" editável como os outros (mover, girar, tamanho, apagar, colisão). A estrela e o cristal giram sozinhos no motor:
+// o tamanho deles é aplicado por um pequeno gancho no desenho (H3.mesh). Os pontos de interação (roleta e passivas) acompanham a peça.
+E.scn=[];let scSt=null;const SCN_MESH=new Map();
+const SCN_INFO={star:{n:'Estátua da estrela',k:'ped',solid:0,cz:0},mach:{n:'Máquina de passivas',k:'mach',solid:0,cz:0},fnt:{n:'Chafariz (fonte)',k:'fnt',solid:26,cz:0}};
+function scnBuild(){const S=FLD.sce;scSt=S.st;E.scn=[];SCN_MESH.clear();for(const [k,g] of [...E.gone])if(g.kind==='scn')E.gone.delete(k);
+ const mk=(key,name,it,inf)=>{const M=it.mt,e={x:M[12],y:M[13],z:M[14],rot:Math.atan2(-M[2],M[0]),sx:1,sy:1,sz:1,by:0},
+  p={_scn:inf,key:name,items:[it],x:e.x,y:e.y,z:e.z,wx:it.wx,wy:it.wy,wz:it.wz,rad:it.rad,m:M,di:1,tint:[1,1,1],hid:0,e0:e};p._e={kind:'scn',key,o:e};return p};
+ for(const key of['star','mach','fnt']){const inf=SCN_INFO[key],it=S.st.find(i=>i.k===inf.k);if(!it)continue;const p=mk(key,inf.n,it,inf);
+  if(key==='star'&&S.star){p.ex=S.star;p.off=25.5;SCN_MESH.set(S.star.m,p)}else if(key==='mach'&&S.mach){p.ex=S.mach;p.off=24.5;SCN_MESH.set(S.mach.m,p)}else if(key==='fnt'&&S.fnt)p.ex=S.fnt;
+  E.scn.push(p)}
+ S.st.filter(i=>i.k==='pil').forEach((it,i)=>E.scn.push(mk('pil:'+i,'Pilar '+(i+1),it,{solid:8,cz:4})))}
+function scnApply(p){const S=FLD.sce,e=p.e0,key=p._e.key,ov=ovOf('0','scn',key)||{};
+ const x=e.x+(ov.x||0),z=e.z+(ov.z||0),rot=e.rot+(ov.r||0),sx=ov.sx||1,sy=ov.sy||1,sz=ov.sz||1,y=e.y+(FLD.hAt(x,z)-FLD.hAt(e.x,e.z))+(ov.y||0);
+ const it=p.items[0],M=it.mt,m=it.m;M4.trs(M,x,y,z,0,rot,0,sx,sy,sz);
+ it.wx=M[0]*m.cx+M[4]*m.cy+M[8]*m.cz+M[12];it.wy=M[1]*m.cx+M[5]*m.cy+M[9]*m.cz+M[13];it.wz=M[2]*m.cx+M[6]*m.cy+M[10]*m.cz+M[14];it.rad=m.rad*max(sx,sy,sz)*1.02;
+ p.x=x;p.y=y;p.z=z;p.wx=it.wx;p.wy=it.wy;p.wz=it.wz;p.rad=it.rad;
+ const hid=!!ov.d,L=S.L,at=S.st.indexOf(it);
+ if(hid&&at>=0)S.st.splice(at,1);else if(!hid&&at<0)S.st.push(it);
+ p.hid=hid?1:0;if(hid)E.gone.set(key,{kind:'scn',o:e,obj:p});else E.gone.delete(key);
+ const ex=p.ex;
+ if(key==='star'){S.star=hid?null:ex;if(ex){ex.x=x;ex.y=y;ex.z=z;ex.top=y+26*sy;ex._k=[sx,sy,sz]}if(L&&L.star){L.star.x=x;L.star.z=z;L.star.y=y+26*sy-6;L.star.r=hid?0:52}}
+ else if(key==='mach'){S.mach=hid?null:ex;if(ex){ex.x=x;ex.y=y;ex.z=z;ex._k=[sx,sy,sz]}if(L&&L.mach){L.mach.x=x;L.mach.z=z;L.mach.y=y+22*sy;L.mach.r=hid?0:38}}
+ else if(key==='fnt'){S.fnt=hid?null:ex;if(ex){ex.x=x;ex.z=z;ex.y=y+19.2*(sy-1)}}}
+function scnTiles(){try{if(typeof world==='undefined'||world!==0||typeof map==='undefined'||!map||typeof SX0==='undefined')return;
+ for(const [key,X0,Y0,tile] of [['star',SX0,SY0,4],['mach',TOX0,TOY0,5]]){const p=E.scn.find(q=>q._e.key===key);if(!p)continue;
+  const wx=p.hid?X0:X0+round((p.x-p.e0.x)/16),wy=p.hid?Y0:Y0+round((p.z-p.e0.z)/16),st=key==='star',cx=st?SX:TOX,cy=st?SY:TOY;
+  if(cx===wx&&cy===wy)continue;
+  if(map[cy]&&map[cy][cx]===tile)map[cy][cx]=0;if(map[wy])map[wy][wx]=tile;
+  if(st){SX=wx;SY=wy}else{TOX=wx;TOY=wy}}}catch(e){if(!E._te){E._te=1;console.error('EDITS tiles',e)}}}
 let seen={},CM0=null;
 E._cm0=()=>CM0;
 function cmApply(){if(typeof CM==='undefined'||typeof CW==='undefined'||!CM0)return;CM.set(CM0);
@@ -147,12 +178,16 @@ function cmApply(){if(typeof CM==='undefined'||typeof CW==='undefined'||!CM0)ret
  for(const b of E.blk)circ(b.x,b.z,b.r,0)}
 function sweep(){E.unb=[];E.blk=[];
  const rr=(o,k)=>(SOLID[k]||5)*max(hypot(o.m[0],o.m[2]),hypot(o.m[8],o.m[10]));
- for(const o of E.objects()){const e=o._e;if(o._add)continue;const ov=ovOf('0',e.kind,e.key);if(!ov)continue;
+ for(const o of E.objects()){const e=o._e;if(o._add||o._scn)continue;const ov=ovOf('0',e.kind,e.key);if(!ov)continue;
   const s0=SOLID[e.kind],moved=!!(ov.x||ov.z),on=ov.col!==undefined?!!ov.col:!!s0;
   if(s0&&(moved||!on))E.unb.push({x:e.o.x,z:e.o.z+2,r:s0*max(e.o.sx,e.o.sz)});   // no lugar de origem deixa de bloquear
   if(on&&(moved||!s0))E.blk.push({x:o.x,z:o.z+2,r:rr(o,e.kind)})}                // bloqueia onde está agora
  for(const [key,g] of E.gone){const s0=SOLID[g.kind];if(s0)E.unb.push({x:g.o.x,z:g.o.z+2,r:s0*max(g.o.sx,g.o.sz)})}
  for(const o of E.adds.values()){const a=o._a;const s0=SOLID[a.k];const on=a.col!==undefined?a.col:(s0?1:0);if(on)E.blk.push({x:o.x,z:o.z+2,r:(s0||5)*max(a.sx||1,a.sz||1)})}
+ for(const p of E.scn){const ov=ovOf('0','scn',p._e.key);if(!ov)continue;const s0=p._scn.solid||0,e=p.e0,cz=p._scn.cz||0,hid=!!ov.d,
+  moved=!!(ov.x||ov.z||ov.sx||ov.sz),on=hid?false:(ov.col!==undefined?!!ov.col:!!s0);
+  if(s0&&(moved||!on))E.unb.push({x:e.x,z:e.z+cz,r:s0+1});
+  if(on&&(moved||!s0))E.blk.push({x:p.x,z:p.z+cz*max(ov.sz||1,1),r:(s0||12)*max(ov.sx||1,ov.sz||1)})}
  cmApply()}
 function monsters(){let EN0;try{EN0=WD[0].EN}catch(e){return}if(!EN0)return;const M=E.data.m['0']||{};
  EN0.forEach((e,i)=>{if(!e._eo)e._eo={x:e.x,y:e.y};const ov=M[i];
@@ -168,6 +203,7 @@ function reapply(){
   for(let i=L.length-1;i>=0;i--){const o=L[i];if(!o._e||o._add)continue;const ov=ovOf('0',kind,o._e.key);if(ov&&ov.d){L.splice(i,1);E.gone.set(o._e.key,{kind,o:o._e.o,obj:o})}}}
  for(const [key,g] of [...E.gone]){const ov=ovOf('0',g.kind,key);if(!ov||!ov.d){E.gone.delete(key);const L=E.listOf(g.kind);if(L&&!L.includes(g.obj))L.push(g.obj)}}
  for(const o of E.objects())if(!o._add)applyOne(o);
+ for(const p of E.scn)scnApply(p);
  // adicionados
  const want=new Map();for(const a of E.data.a['0']||[])want.set(a.i,a);
  for(const [id,o] of [...E.adds]){if(!want.has(id)){const L=E.listOf(o._a.k);if(L){const i=L.indexOf(o);if(i>=0)L.splice(i,1)}E.adds.delete(id)}}
@@ -179,7 +215,9 @@ function frame(){if(!FLD||!FLD.ready||!NAT||!NAT.trees)return;
   if(typeof CM!=='undefined'&&!CM0&&!window.__gen)CM0=CM.slice();   // mapa já gerado: guarda a colisão original
   const cnt={};for(const kind of KINDS){const L=E.listOf(kind);if(!L)continue;for(const o of L){if(o._e)continue;const key=dKey(kind,o,cnt);o._e={kind,key,o:origOf(kind,o)}}}
   E._rv=-1}
+ {const S=FLD.sce;if(S&&S.ready&&S.st&&S.st!==scSt&&S.st.length){scnBuild();E._rv=-1}else if(S&&!S.ready&&E.scn.length){E.scn=[];scSt=null}}
  if(E._rv!==E.rev){E._rv=E.rev;reapply()}
+ if(E.scn.length)scnTiles();
  else if(E.data.m['0']||E._anyM){E._anyM=!!E.data.m['0'];monsters()}
  for(const e of(function(){try{return WD[0].EN}catch(x){return[]}})())if(e.off){if(!e.dead||e.back!==Infinity){e.dead=true;e.back=Infinity;e.hp=0}}}
 E.hookCM=function(){
@@ -203,7 +241,11 @@ E.setMon=function(idx,patch){const M=E.data.m['0']||(E.data.m['0']=mp());const c
 // ---------- ligação com o motor ----------
 function init(){H3=window.H3;FLD=H3&&H3.fld;NAT=FLD&&FLD.nat;M4=H3&&H3.M4;if(!FLD||!NAT||!M4)return false;
  try{FLD.reg({frame:()=>{try{frame()}catch(e){if(!E._er){E._er=1;console.error('EDITS',e)}}}})}catch(e){return false}
- E.hookCM();rebuildSz();return true}
+ E.hookCM();rebuildSz();
+ try{const hm=H3.mesh;if(hm&&!hm._ed){H3.mesh=function(m,mt){const q=SCN_MESH.get(m);if(q&&q.ex&&q.ex._k&&mt){const k=q.ex._k;
+   if(k[0]!==1||k[1]!==1||k[2]!==1){mt[0]*=k[0];mt[1]*=k[0];mt[2]*=k[0];mt[4]*=k[1];mt[5]*=k[1];mt[6]*=k[1];mt[8]*=k[2];mt[9]*=k[2];mt[10]*=k[2];mt[13]+=(k[1]-1)*q.off}}
+   return hm.apply(this,arguments)};H3.mesh._ed=1}}catch(e){console.error('EDITS mesh',e)}
+ return true}
 E.cb.push(rebuildSz);
 (function boot(n){if(init())return;if(n<60)setTimeout(()=>boot(n+1),500)})(0);
 })();
