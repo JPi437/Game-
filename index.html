@@ -10700,7 +10700,8 @@ function unstick(){if(!hit(P.x,P.y))return;                       // ao voltar p
  for(let rr=1;rr<=48;rr++)for(let a=0;a<12;a++){const x=P.x+round(cos(a/12*TAU)*rr),y=P.y+round(sin(a/12*TAU)*rr);if(!hit(x,y)){P.x=x;P.y=y;return}}}
 function updOff(){
  if(S.mode===3){if(S.osv)for(let i=0;i<4&&i<S.osv.length;i++){OFF[i][0]=S.osv[i][0];OFF[i][1]=S.osv[i][1]}return}     // vista de cima: a equipe fica como no 2D
- const rx=cos(S.yaw),rz=sin(S.yaw),bx=-sin(S.yaw),bz=cos(S.yaw),
+ if(S.fyaw===undefined||S.moving||S.fym!==S.mode){S.fyaw=S.yaw;S.fym=S.mode}      // parado: a equipe fica onde está (só girar a câmera não mexe nela); andando: acompanha a câmera
+ const fy=S.fyaw,rx=cos(fy),rz=sin(fy),bx=-sin(fy),bz=cos(fy),
  sl=S.mode===1?[[-22,14],[22,14],[-13,34],[13,34]]:[[-25,-2],[25,-2],[-15,-22],[15,-22]];      // 1ª pessoa: a equipe fica atrás de você · 3ª pessoa: ao redor, à frente da câmera
  for(let i=0;i<4;i++){OFF[i][0]=rx*sl[i][0]+bx*sl[i][1];OFF[i][1]=(rz*sl[i][0]+bz*sl[i][1])/SC.K}}
 function move3(){
@@ -17801,7 +17802,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261024212518;
+const GAME_BUILD=20261024212930;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
