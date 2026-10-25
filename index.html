@@ -10583,7 +10583,7 @@ const LABEL=['2D','1ª pessoa','3ª pessoa','Vista de cima'];
 // opções do 3D (Configurações → Gráficos 3D): campo de visão da 1ª e da 3ª pessoa, em graus (salvas no aparelho)
 const G3=H3.G3=H3.G3||{fov1:62,fov3:60};
 try{const o=JSON.parse(localStorage.getItem('mp_3d')||'{}');if(o&&typeof o==='object'){if(+o.fov1>=40&&+o.fov1<=120)G3.fov1=+o.fov1;if(+o.fov3>=40&&+o.fov3<=120)G3.fov3=+o.fov3}}catch(e){}
-const nModes=()=>{const s=sceneNow()||SC;return s&&s.iso?4:3};               // a vista de cima só existe no campo do primeiro mundo
+const nModes=()=>3;               // só 1ª e 3ª pessoa: o 2D e a vista de cima saíram de todas as cenas 3D (o 0 do ciclo vira 1ª pessoa em toMode)
 
 // ============================================================ tela: botão, canvases ============================================================
 let btn=null,glc=null,ovc=null,ovx=null,JG=null;
@@ -10613,7 +10613,24 @@ function mkCanvases(){if(glc)return;const cv0=$$('c');
  ovx=ovc.getContext('2d');JG=document.createElement('canvas');JG.width=VW;JG.height=VH;JG.getContext('2d').imageSmoothingEnabled=false;JG=JG.getContext('2d');
  glc.addEventListener('pointerdown',pd);glc.addEventListener('pointermove',pm);glc.addEventListener('pointerup',pu);glc.addEventListener('pointercancel',pu)}
 function syncBtn(){mkBtn();const sc=sceneNow(),on=!!(sc&&sc.active()&&!S.dead);if(btn._on!==on){btn._on=on;btn.style.display=on?'block':'none'}
- if(!on&&S.mode)setMode(0)}
+ if(!on&&S.mode)setMode(0);loadScr(on&&!S.mode&&!lock&&S.err<2&&Date.now()>(S.failT||0),sc)}
+// tela de carregamento: cobre o jogo enquanto o 3D é montado (início do jogo, campo do primeiro mundo, troca de cena), já que não existe mais o 2D nessas cenas
+let LDS=null;
+function loadScr(show,sc){
+ if(!LDS){if(!show)return;LDS=document.createElement('div');LDS.id='h3load';
+  LDS.innerHTML='<div class="h3lBox"><div class="h3lT">Carregando o mundo 3D…</div><div class="h3lBar"><i></i></div><div class="h3lP">0%</div><div class="h3lH"></div></div>';
+  const st=document.createElement('style');st.textContent=`#h3load{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;background:radial-gradient(ellipse at center,#2a1b4d 0%,#0b0716 75%);color:#fff;font-family:system-ui,sans-serif;pointer-events:auto}
+#h3load .h3lBox{width:min(78vw,420px);text-align:center}#h3load .h3lT{font:800 20px/1.2 system-ui,sans-serif;letter-spacing:.4px;margin-bottom:14px;text-shadow:0 2px 0 #0008}
+#h3load .h3lBar{height:14px;border-radius:9px;background:#ffffff1f;border:2px solid #ffffff55;overflow:hidden}#h3load .h3lBar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#7e57c2,#4fc3f7);transition:width .15s}
+#h3load .h3lP{margin-top:8px;font:700 13px system-ui,sans-serif;opacity:.85}#h3load .h3lH{margin-top:16px;font-size:12px;opacity:.65;min-height:15px}`;
+  document.head.appendChild(st);document.body.appendChild(LDS);LDS._t=0}
+ if(!show){if(LDS.style.display!=='none'){LDS.style.display='none'}LDS._t=0;return}
+ if(LDS.style.display!=='flex'){LDS.style.display='flex';LDS._t=Date.now();LDS._k=0}
+ const L=S.ld;let pr=L&&L.sc&&L.sc.progress?clp(L.sc.progress(),0,1):null;
+ if(pr===null){LDS._k=min(.92,(LDS._k||0)+(.92-(LDS._k||0))*.06);pr=LDS._k}else LDS._k=pr;
+ LDS.querySelector('i').style.width=Math.round(pr*100)+'%';LDS.querySelector('.h3lP').textContent=Math.round(pr*100)+'%';
+ const tips=['Arraste a tela para olhar em volta','Toque no botão Perspectiva para trocar entre 1ª e 3ª pessoa','Botão azul: pular','Toque para bater durante a luta'];
+ const h=LDS.querySelector('.h3lH'),tp=tips[Math.floor((Date.now()-LDS._t)/3500)%tips.length];if(h.textContent!==tp)h.textContent=tp}
 
 // ============================================================ entrar e sair do 3D ============================================================
 function dirOfYaw(a){a=((a%TAU)+TAU)%TAU;return a<PI/4||a>7*PI/4?0:a<3*PI/4?3:a<5*PI/4?2:1}      // 0 cima(norte) · 1 esquerda(oeste) · 2 baixo(sul) · 3 direita(leste)
@@ -10666,7 +10683,7 @@ function setMode(m){
  const was=S.mode;
  if(m>0){const sc=sceneNow();if(!sc||!sc.active()||S.dead)return;if(!was&&sc.stepBuild&&!sc.built()){startLoad(sc,m);return}if(!was&&!enter3D(sc))return}
  if(was&&!m)leave3D();
- S.mode=H3.mode=m;if(btn)btn.querySelector('b').textContent=LABEL[m];if(m&&!was&&!S.sw){S.ctrIn=true;S.b2d=1;S.b2on=true;$$('c').style.visibility='visible';if(glc)glc.style.opacity='0';if(ovc)ovc.style.opacity='0'}
+ S.mode=H3.mode=m;if(btn)btn.querySelector('b').textContent=LABEL[m];if(m&&!was&&!S.sw){S.ctrIn=false;S.b2d=0;S.b2on=false}   // sem o 2D: entra direto no 3D (a tela de carregamento cobre a montagem)
  // vista de cima: o canvas fica do tamanho da tela do 2D (cada pixel do jogo = um pixel do canvas) e o navegador amplia sem suavizar
  if(m===3){if(document.exitPointerLock&&document.pointerLockElement)document.exitPointerLock();S.isoY=null;isoQ()}
  else if(was===3){H3.setIso(null);H3.setPix(null);if(glc)glc.classList.remove('pix');H3.setQ(S.qs0)}
@@ -10730,8 +10747,9 @@ tick=function(){
  if(S.exitT&&(!S.mode||Date.now()-S.exitT>=EXD)){const m=S.mode;S.exitT=0;S.exitFrom=null;if(m)setMode(0)}
  enforceH3D();syncBtn();portalTouch();
  // 3D é a câmera principal: ao chegar numa cena com 3D entra sozinho (3ª pessoa, ou a última perspectiva escolhida; quem escolheu 2D fica no 2D)
- if(!S.mode&&!S.exitT&&!S.ld&&!S.dead&&!lock&&btn&&btn._on&&S.err<2&&Date.now()>(S.autoT||0)){S.autoT=Date.now()+2500;let pf=2;try{const v=localStorage.getItem('mp_persp');if(v!=null)pf=+v|0}catch(e){}
-  if(pf>0&&pf<=3){S.quiet=1;try{setMode(pf)}catch(e){console.error('H3 auto',e)}finally{S.quiet=0}}}
+ if(!S.mode&&!S.exitT&&!S.ld&&!S.dead&&!lock&&btn&&btn._on&&S.err<2&&Date.now()>(S.autoT||0)){S.autoT=Date.now()+400;let pf=2;try{const v=localStorage.getItem('mp_persp');if(v!=null)pf=+v|0}catch(e){}
+  pf=pf===1?1:2;   // só 1ª ou 3ª pessoa
+  {S.quiet=1;try{setMode(pf)}catch(e){console.error('H3 auto',e)}finally{S.quiet=0}}}
  if(!S.mode)return _tick();
  jumpTick();
  if(!SC||!SC.active()){const n=sceneNow(),m=S.mode;setMode(0);if(n&&n!==SC&&n.active())setMode(m);return _tick()}      // entrou ou saiu da torre: continua em 3D na outra cena
@@ -10770,7 +10788,7 @@ function isoLike(F){const h=(typeof VH!=='undefined'?VH:221)*.5;let top=1e9,ok=n
   if(D>=110||pit===1.3){D=Math.max(30,D);return{x:F.x,y:F.y+D*sn,z:F.z+D*c,yaw:0,pitch:-pit,fov:Math.min(1.45,2*Math.atan(h/D))}}}}
 const EXD=950;S.exitT=0;S.exitFrom=null;
 // pede um modo; do 3D para o 2D a câmera primeiro sobe (sai do personagem e vai para o alto, como o desenho 2D) e só depois troca
-function toMode(n){if(S.exitT)return;try{localStorage.setItem('mp_persp',String(n))}catch(e){}if(n===0&&SC&&SC.only3d&&SC.active())n=1;if(n===0&&S.mode&&S.mode!==3&&!S.dbg&&SC&&SC.active()&&!S.dead){S.exitT=Date.now();S.exitFrom=CTR.last;return}setMode(n)}
+function toMode(n){if(S.exitT)return;if(n===0||n===3){const sc=SC&&SC.active()?SC:sceneNow();if(sc&&sc.active())n=n===3?2:1}try{localStorage.setItem('mp_persp',String(n))}catch(e){}if(n===0&&S.mode&&S.mode!==3&&!S.dbg&&SC&&SC.active()&&!S.dead){S.exitT=Date.now();S.exitFrom=CTR.last;return}setMode(n)}
 function blend2D(){const k=S.b2d||0,cv0=$$('c');
  if(k>.001){const sg=g;g=G0;try{G0.setTransform(1,0,0,1,0,0);G0.imageSmoothingEnabled=false;_render()}catch(e){}finally{g=sg}
   cv0.style.visibility='visible';const o=(1-k).toFixed(3);if(glc)glc.style.opacity=o;if(ovc)ovc.style.opacity=o;S.b2on=true}
@@ -10916,7 +10934,7 @@ const _render=render;
 render=function(){
  if(!S.mode)return _render();
  try{frame()}catch(e){fail(e)}};
-function fail(e){console.error('H3',e);S.err++;if(S.mode){H3C.on=false;g=G0;try{setMode(0)}catch(x){}S.autoT=Date.now()+30000;toastS('O modo 3D deu erro e voltou para o 2D.');if(S.err>4)S.dead=true}}
+function fail(e){console.error('H3',e);S.err++;if(S.mode){H3C.on=false;g=G0;try{setMode(0)}catch(x){}S.autoT=Date.now()+30000;S.failT=S.autoT;toastS('O modo 3D deu erro e voltou para o 2D.');if(S.err>4)S.dead=true}}
 function proj(x,y,z){const m=H3.gl_frame().VP,cw=m[3]*x+m[7]*y+m[11]*z+m[15];if(cw<=.05)return null;
  return[(((m[0]*x+m[4]*y+m[8]*z+m[12])/cw)*.5+.5)*S.cssW,(1-(((m[1]*x+m[5]*y+m[9]*z+m[13])/cw)*.5+.5))*S.cssH,cw]}
 function frame(){
@@ -17965,7 +17983,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261025023254;
+const GAME_BUILD=20261025023733;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
