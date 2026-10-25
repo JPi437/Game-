@@ -68,7 +68,7 @@ E.discardDraft=function(){try{localStorage.removeItem(DRAFT)}catch(e){}E.dirty=f
 E.load=function(raw,asPub){const d=clean(raw);if(asPub)E.pub=d;E.data=d;E.rev++;if(E.admin)E.useDraft();for(const f of E.cb)try{f()}catch(e){}};
 E.json=()=>JSON.stringify(E.data);
 // o publicado é lido do editor.json (sem cache); se não existir ou der erro, o jogo segue normal
-try{fetch('editor.json?t='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.json():null).then(j=>{if(j)E.load(j,true);E.pub=E.pub||clean(j||null)}).catch(()=>{})}catch(e){}
+try{fetch((location.host==='appassets.androidplatform.net'||location.protocol==='file:'?'https://jpi437.github.io/Game-/':'')+'editor.json?t='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.json():null).then(j=>{if(j)E.load(j,true);E.pub=E.pub||clean(j||null)}).catch(()=>{})}catch(e){}
 
 // ---------- tamanho dos personagens 3D: EDSZ('Guts') → [largura, altura, profundidade] ----------
 const ONE=[1,1,1];
