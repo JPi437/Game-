@@ -18793,7 +18793,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261026150252;
+const GAME_BUILD=20261026151250;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
@@ -19341,7 +19341,7 @@ function applyEdits(){const E=window.EDITS,gl=H3.gl();if(!DBW.ready||!gl)return;
   place(o,a.x,a.z,a.y||0,a.r||0,a.sx||1,a.sy||1,a.sz||1,a.c||null)}
  // colisão
  CG.set(CG0);CGT=CG;for(const o of OBJ)if(!o.hid&&o.colOn)stampCol(o);for(const o of ADDS.values())if(o.colOn)stampCol(o);
- DBW.rev++}
+ DBW.rev++;grassClear()}
 DBW.apply=()=>{appliedRev=-1};
 function editTick(){const E=window.EDITS,r=E?E.rev:0;if(r!==appliedRev){appliedRev=r;try{applyEdits()}catch(e){console.error('DBW edits',e)}}}
 // API para o editor
@@ -19448,10 +19448,44 @@ function step(ms){const gl=H3.gl();if(!gl)return false;if(DBW.ready)return true;
  while(performance.now()-t0<ms){const s=building.next();if(s.done){building=null;return true}}return DBW.ready}
 function freeAll(){const gl=H3.gl();if(gl&&!gl.isContextLost()){const del=m=>{if(m)try{gl.deleteBuffer(m.vbo)}catch(e){}};
   for(const c of CH){del(c.gm);del(c.om)}for(const o of OBJ)del(o.mesh);for(const o of ADDS.values())del(o.mesh);for(const k in TV)for(const m of TV[k].m)del(m)}
- CH=[];OBJ=[];ADDS=new Map();TV={};GONE=[];DBW.ready=false;building=null;DBW.pct=0}
+ grassClear();CH=[];OBJ=[];ADDS=new Map();TV={};GONE=[];DBW.ready=false;building=null;DBW.pct=0}
 
 DBW.stats=()=>{let g=0,o=0,n=0;for(const c of CH){if(c.gm)g+=c.gm.n;if(c.om)o+=c.om.n}for(const q of OBJ){const m=meshOf(q);if(m)n+=m.n}return{g:g/3|0,o:o/3|0,obj:OBJ.length,objTri:n/3|0}};
 
+// ---------- mato baixo (capim) nas partes de grama: pedaços de 64 x 64 em volta da câmera, como no Mundo 1 ----------
+const GR={ch:new Map(),cs:64,tick:0};
+function blade(mb,x,y,z,a,w,h,lean,c0,c1,sw,out){const ca=cos(a),sa=sin(a),wx=ca*w*.5,wz=sa*w*.5,lx=-sa*lean,lz=ca*lean,p2=[x+lx,y+h,z+lz],n=[-sa*.34,.86,ca*.34];
+ mb.raw([x-wx,y,z-wz],[x+wx,y,z+wz],p2,n,n,n,c0,c0,c1,0,0,sw*2);if(out){out[0]=p2[0];out[1]=p2[1];out[2]=p2[2]}}
+function tuft(mb,x,y,z,g,H,rnd){const n=4+((rnd()*3)|0);
+ for(let i=0;i<n;i++){const a=rnd()*TAU,dd=rnd()*1.3,h=H*(.6+rnd()*.6),k=.88+rnd()*.28;
+  blade(mb,x+cos(a)*dd,y-.25,z+sin(a)*dd,rnd()*TAU,(.7+rnd()*.5)*.85,h,h*(.2+rnd()*.35),[g[0]*.55*k,g[1]*.6*k,g[2]*.5*k],[min(255,g[0]*1.06*k+12),min(255,g[1]*1.32*k+15),min(255,g[2]*.9*k)],8+((rnd()*5)|0))}}
+const FLC=[[255,255,255],[255,210,63],[255,111,145],[179,140,255],[127,216,255]];
+function flower(mb,x,y,z,ci,rnd){const h=2.5+rnd()*1.9,a=rnd()*TAU,tip=[0,0,0];blade(mb,x,y-.2,z,a,.55,h,(rnd()-.5)*1.1,[34,96,36],[64,140,56],7,tip);
+ const R=1.2+rnd()*.6,col=FLC[ci],cen=[255,226,122],ex=tip[0],ey=tip[1]+.05,ez=tip[2],nn=[0,1,0];
+ for(let i=0;i<5;i++){const a0=i/5*TAU+a,a1=(i+1)/5*TAU+a;mb.raw([ex,ey+.5,ez],[ex+cos(a0)*R,ey,ez+sin(a0)*R],[ex+cos(a1)*R,ey,ez+sin(a1)*R],nn,nn,nn,cen,col,col,18,18,18)}}
+// onde tem grama (mundo): fora do deserto/penhasco, das ruas, da praça da Cápsula, do parque, do heliponto, da plataforma da arena e de dentro das construções
+function grassy(x,z){const xd=x/K,zd=z/K;if(xd>CLX0-14||xd<46||zd<46||zd>MH-46)return false;if(onRoad(xd,zd,8))return false;
+ if(hypot(xd-CCX,zd-CCZ)<CCR+44)return false;if(hypot(xd-760,zd-900)<74)return false;if(abs(xd-760)<20&&zd>CCZ+CCR&&zd<900)return false;
+ if(abs(xd-980)<48&&abs(zd-1010)<48)return false;if(abs(xd-ACX)<AH+30&&abs(zd-ACZ)<AH+30)return false;if(abs(xd-ACX)<26&&zd>AZ0&&zd<AZ1+4)return false;
+ if(blockedD(xd,zd))return false;return true}
+function grassChunk(ci,cj){const cs=GR.cs,x0=ci*cs,z0=cj*cs,mb=new MB(((ci*7919)^(cj*104729))+31,{pk:true}),rnd=mb.r,GS=5.1,N=Math.ceil(cs/GS);
+ for(let gz=0;gz<N;gz++)for(let gx=0;gx<N;gx++){const x=x0+(gx+rnd())*GS,z=z0+(gz+rnd())*GS,r3=rnd();
+  if(!grassy(x,z))continue;const g=gcol(x/K,z/K),y=floorW(x,z);
+  const fz=vn(x*.0105,z*.0105,77),fi=floor(vn(x*.0065,z*.0065,79)*5);
+  if(fz>.56&&r3<.12){flower(mb,x,y,z,fi%5,rnd);continue}
+  tuft(mb,x,y,z,g,1.9+rnd()*1.4,rnd)}
+ if(!mb.count)return null;const pk=mb.pack();return{m:H3.upload(H3.gl(),pk),cx:pk.cx,cy:pk.cy,cz:pk.cz,rad:pk.rad,ci,cj}}
+const FLO=()=>(H3.fld&&H3.fld.flora)||{R:228,RF:400,fade:[128,214]};
+function grassStep(C,maxN,ms){const F=FLO();if(F.off)return;const cs=GR.cs,R=F.R||228,r=Math.ceil((R+cs)/cs),ci0=floor(C.x/cs),cj0=floor(C.z/cs),nci=Math.ceil(WW/cs),ncj=Math.ceil(WH/cs),need=[];
+ for(let cj=cj0-r;cj<=cj0+r;cj++)for(let ci=ci0-r;ci<=ci0+r;ci++){if(ci<0||cj<0||ci>=nci||cj>=ncj)continue;if(GR.ch.has(cj*1000+ci))continue;const d=hypot((ci+.5)*cs-C.x,(cj+.5)*cs-C.z);if(d>R+cs*.72)continue;need.push([d,ci,cj])}
+ if(!need.length)return;need.sort((a,b)=>a[0]-b[0]);const t0=performance.now();let n=0;
+ for(const q of need){GR.ch.set(q[2]*1000+q[1],grassChunk(q[1],q[2])||{m:null,ci:q[1],cj:q[2]});n++;if(n>=maxN||performance.now()-t0>ms)break}}
+function grassEvict(C){const gl=H3.gl(),RF=FLO().RF||400;for(const[k,c]of GR.ch){if(hypot((c.ci+.5)*GR.cs-C.x,(c.cj+.5)*GR.cs-C.z)>RF){if(c.m&&gl)gl.deleteBuffer(c.m.vbo);GR.ch.delete(k)}}}
+function grassClear(){const gl=H3.gl();for(const c of GR.ch.values())if(c.m&&gl)try{gl.deleteBuffer(c.m.vbo)}catch(e){}GR.ch.clear()}
+function grassDraw(){const F=FLO();if(F.off)return;const cam=H3.S.foc||H3.S.cam,fr=F.fade||[128,214];
+ for(const c of GR.ch.values()){if(!c.m)continue;const d=hypot(c.cx-cam.x,c.cz-cam.z)-c.rad;if(d>fr[1]+4)continue;if(!H3.vis(c.cx,c.cy,c.cz,c.rad))continue;
+  H3.mesh(c.m,null,null,null,{fd:fr,rad:c.rad,cx:c.cx,cy:c.cy,cz:c.cz,tr:.5})}}
+DBW.grass=GR;
 // ---------- desenho ----------
 const FAR=5200,LODD=[300,700];
 function drawObj(o,F,dyn){const far=FARK[o.kind==='tree'?'tree':o.v]||3000,dx=o.wx-F.x,dz=o.wz-F.z,d2=dx*dx+dz*dz;if(d2>(far+o.rad)*(far+o.rad))return;if(!H3.vis(o.wx,o.wy,o.wz,o.rad))return;
@@ -19462,14 +19496,16 @@ function draw(t,dyn){H3.skyDraw();editTick();const F=H3.S.foc||H3.S.cam;
   if(c.gm&&H3.vis(c.gm.cx,c.gm.cy,c.gm.cz,c.gm.rad))H3.mesh(c.gm,null,LIGHTS,dyn,{});
   if(c.om&&H3.vis(c.om.cx,c.om.cy,c.om.cz,c.om.rad))H3.mesh(c.om,null,LIGHTS,dyn,{})}
  for(const o of OBJ)if(!o.hid)drawObj(o,F,dyn);
- for(const o of ADDS.values())drawObj(o,F,dyn)}
+ for(const o of ADDS.values())drawObj(o,F,dyn);
+ grassDraw()}
 function shadow(t,F){for(const c of CH)if(c.om&&H3.shVis(c.om.cx,c.om.cy,c.om.cz,c.om.rad))H3.shMesh(c.om,null,false);
  const sh=o=>{if(!H3.shVis(o.wx,o.wy,o.wz,o.rad))return;if(o.kind==='tree'){const v=TV[o.v];if(v)H3.shMesh(v.m[1]||v.m[0],o.m,true)}else if(o.mesh)H3.shMesh(o.mesh,o.m,false)};
  for(const o of OBJ)if(!o.hid)sh(o);for(const o of ADDS.values())sh(o)}
 function sprites(t){const T=H3.tex;if(!T)return;const s=t/1000;
  const y=floorW(BACK.x,BACK.z)+26;H3.spr(T.glow,BACK.x,y,BACK.z,52,52,null,[1,.65,.2,.35+.1*sin(s*3)],true,0,true);
  H3.spr(T.glow,BACK.x,y,BACK.z,30,30,null,[1,.9,.5,.5],true,0,true)}
-function frameFx(t,Cm){const FX=H3.fx;if(!FX)return;
+function frameFx(t,Cm){{const C=H3.S.foc||Cm,F=FLO();grassStep(C,F.perF||2,F.msF||4);if((GR.tick++&31)===0)grassEvict(C)}
+ const FX=H3.fx;if(!FX)return;
  if(Cm.x>CLX0*K&&Math.random()<.25)FX.emit({x:Cm.x+(Math.random()-.5)*300,y:floorW(Cm.x,Cm.z)+2+Math.random()*8,z:Cm.z+(Math.random()-.5)*300,vx:.25+Math.random()*.3,vy:.02,vz:(Math.random()-.5)*.1,g:0,life:2200,s0:4,s1:9,c:[.86,.66,.42],a:.25,add:false,tex:'dot',drag:.999});
  if(Math.random()<.35&&hypot(Cm.x-BACK.x,Cm.z-BACK.z)<500)FX.emit({x:BACK.x+(Math.random()-.5)*4,y:floorW(BACK.x,BACK.z)+8+Math.random()*36,z:BACK.z+(Math.random()-.5)*36,vx:0,vy:.25,vz:0,g:0,life:900,s0:2.4,s1:.4,c:[1,.75,.3],a:.9,tex:'dot'})}
 
@@ -19490,7 +19526,7 @@ SCN.db={id:'db',K:1,OX:0,OY:0,eye:25,camD:92,p3:-.18,pl:[[-.95,.85],[-1.0,.4]],a
  step:o=>{const ok=(x,z)=>!blocked(x,z);if(ok(o.x,o.z))return;if(ok(o.x,o.oz)){o.z=o.oz;return}if(ok(o.ox,o.z)){o.x=o.ox;return}o.x=o.ox;o.z=o.oz},
  camOk:pz=>(x,z)=>x>8&&z>8&&x<WW-8&&z<WH-8&&!insideCC(x,z),
  camY:(cy,cz,cx)=>max(cy,floorW(cx===undefined?WW/2:cx,cz)+6),
- enter(){},leave(){},clear(){},
+ enter(){if(typeof P!=='undefined'&&P&&DBW.ready)grassStep({x:P.x+8,z:P.y+14},60,120)},leave(){grassClear()},clear(){},
  boss:()=>null,isTgt:e=>!!e,tgt:e=>e?[e.x+8,floorW(e.x+8,e.y+14)+16,e.y+14,30,floorW(e.x+8,e.y+14)]:null,bossPlan:()=>null,
  flicker:()=>{},draw,sprites,frameFx,shadow,shake:()=>null,flash:()=>0,
  fbPos:()=>null};
