@@ -18793,7 +18793,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261026151250;
+const GAME_BUILD=20261026152827;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
@@ -19291,7 +19291,7 @@ function dbParams(type,seed){const r=rng(seed);
  if(type==='mesa'){const R=50+r()*60;return{R,H:120+r()*180}}
  return{}}
 // malha de uma construção, feita na origem (escala de projeto x K)
-function dbMesh(gl,type,p,seed){const mb=new MB(seed);mb.push().S(K,K,K);const r=rng(seed^0x9e3779b9);LOCAL=true;
+function dbMesh(gl,type,p,seed){const mb=new MB(seed,{pk:true});mb.push().S(K,K,K);const r=rng(seed^0x9e3779b9);LOCAL=true;
  try{
   if(type==='casa')domeHouse(mb,0,0,p.R,p.roof,0,r);
   else if(type==='poste')stiltHouse(mb,0,0,p.R,p.roof,0,r);
@@ -19355,11 +19355,11 @@ DBW.label=(kind,v)=>kind==='tree'?((TNAME[v[0]]||'Árvore')+' '+v):(DBT[v]||v);
 // ============================================================ montagem (aos poucos) ============================================================
 let CH=[],LIGHTS=[],building=null;
 const CHK=(x,z)=>{const i=clp(floor(x/CS),0,NCX-1),j=clp(floor(z/CS),0,NCZ-1);return CH[j*NCX+i]};
-function newChunkMB(seed){const mb=new MB(seed);mb.push().S(K,K,K);return mb}
+function newChunkMB(seed){const mb=new MB(seed,{pk:true});mb.push().S(K,K,K);return mb}
 function* gen(gl){
  CGT=CG0;CG0.fill(0);LIGHTS=[];OBJ=[];ADDS=new Map();GONE=[];
  const r=rng(20261026);
- CH=[];for(let j=0;j<NCZ;j++)for(let i=0;i<NCX;i++)CH.push({i,j,g:new MB(100+j*NCX+i),o:newChunkMB(500+j*NCX+i),gm:null,om:null,cx:(i+.5)*CS*K,cz:(j+.5)*CS*K});
+ CH=[];for(let j=0;j<NCZ;j++)for(let i=0;i<NCX;i++)CH.push({i,j,g:new MB(100+j*NCX+i,{pk:true}),o:newChunkMB(500+j*NCX+i),gm:null,om:null,cx:(i+.5)*CS*K,cz:(j+.5)*CS*K});
  DBW.pct=.02;yield;
  // bordas do mundo, penhasco e paredões da passagem
  rect(0,0,MW-1,44);rect(0,MH-45,MW-1,MH-1);rect(0,0,44,MH-1);rect(MW-45,0,MW-1,MH-1);
@@ -19504,7 +19504,13 @@ function shadow(t,F){for(const c of CH)if(c.om&&H3.shVis(c.om.cx,c.om.cy,c.om.cz
 function sprites(t){const T=H3.tex;if(!T)return;const s=t/1000;
  const y=floorW(BACK.x,BACK.z)+26;H3.spr(T.glow,BACK.x,y,BACK.z,52,52,null,[1,.65,.2,.35+.1*sin(s*3)],true,0,true);
  H3.spr(T.glow,BACK.x,y,BACK.z,30,30,null,[1,.9,.5,.5],true,0,true)}
-function frameFx(t,Cm){{const C=H3.S.foc||Cm,F=FLO();grassStep(C,F.perF||2,F.msF||4);if((GR.tick++&31)===0)grassEvict(C)}
+// sombras do sol no Mundo 2: área bem maior que a do Mundo 1 (prédios altos e ruas largas), conforme o nível de sombra dos Gráficos 3D
+const SHW=[null,{res:1024,ext:320,f0:270,f1:312},{res:2048,ext:560,f0:480,f1:550},{res:2048,ext:820,f0:720,f1:810}];
+let shKey='';
+function shadowTune(){let sh=1;try{const L=H3.gfx&&H3.gfx.cur();sh=L?(L.sh|0):1}catch(e){}const c=SHW[sh],k=sh+'';if(k===shKey)return;shKey=k;
+ if(c)H3.shadowCfg({on:sh,res:c.res,ext:c.ext,f0:c.f0,f1:c.f1});else H3.shadowCfg({on:0})}
+DBW.shadowTune=()=>{shKey='';shadowTune()};
+function frameFx(t,Cm){shadowTune();{const C=H3.S.foc||Cm,F=FLO();grassStep(C,F.perF||2,F.msF||4);if((GR.tick++&31)===0)grassEvict(C)}
  const FX=H3.fx;if(!FX)return;
  if(Cm.x>CLX0*K&&Math.random()<.25)FX.emit({x:Cm.x+(Math.random()-.5)*300,y:floorW(Cm.x,Cm.z)+2+Math.random()*8,z:Cm.z+(Math.random()-.5)*300,vx:.25+Math.random()*.3,vy:.02,vz:(Math.random()-.5)*.1,g:0,life:2200,s0:4,s1:9,c:[.86,.66,.42],a:.25,add:false,tex:'dot',drag:.999});
  if(Math.random()<.35&&hypot(Cm.x-BACK.x,Cm.z-BACK.z)<500)FX.emit({x:BACK.x+(Math.random()-.5)*4,y:floorW(BACK.x,BACK.z)+8+Math.random()*36,z:BACK.z+(Math.random()-.5)*36,vx:0,vy:.25,vz:0,g:0,life:900,s0:2.4,s1:.4,c:[1,.75,.3],a:.9,tex:'dot'})}
@@ -19526,7 +19532,7 @@ SCN.db={id:'db',K:1,OX:0,OY:0,eye:25,camD:92,p3:-.18,pl:[[-.95,.85],[-1.0,.4]],a
  step:o=>{const ok=(x,z)=>!blocked(x,z);if(ok(o.x,o.z))return;if(ok(o.x,o.oz)){o.z=o.oz;return}if(ok(o.ox,o.z)){o.x=o.ox;return}o.x=o.ox;o.z=o.oz},
  camOk:pz=>(x,z)=>x>8&&z>8&&x<WW-8&&z<WH-8&&!insideCC(x,z),
  camY:(cy,cz,cx)=>max(cy,floorW(cx===undefined?WW/2:cx,cz)+6),
- enter(){if(typeof P!=='undefined'&&P&&DBW.ready)grassStep({x:P.x+8,z:P.y+14},60,120)},leave(){grassClear()},clear(){},
+ enter(){shKey='';if(typeof P!=='undefined'&&P&&DBW.ready)grassStep({x:P.x+8,z:P.y+14},60,120)},leave(){grassClear();shKey='';try{if(H3.gfx&&H3.gfx.apply)H3.gfx.apply()}catch(e){}},clear(){},
  boss:()=>null,isTgt:e=>!!e,tgt:e=>e?[e.x+8,floorW(e.x+8,e.y+14)+16,e.y+14,30,floorW(e.x+8,e.y+14)]:null,bossPlan:()=>null,
  flicker:()=>{},draw,sprites,frameFx,shadow,shake:()=>null,flash:()=>0,
  fbPos:()=>null};
