@@ -18793,7 +18793,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261026152827;
+const GAME_BUILD=20261026154247;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
@@ -19552,6 +19552,26 @@ setInterval(()=>{try{if(typeof world==='undefined'||lock)return;const x=P.x+8,z=
  else if(world===WID&&hypot(x-BACK.x,z-BACK.z)<16)DBW.back()}catch(e){}},120);
 setTimeout(()=>{try{const sv=typeof SV!=='undefined'?SV:null;if(sv&&sv.w===WID){goWorld(WID);if(typeof sv.px==='number'&&!DBW.solid(sv.px+8,sv.py+14)&&sv.px<WW&&sv.py<WH){P.x=sv.px;P.y=sv.py}else{P.x=SPAWN.x-8;P.y=SPAWN.z-14}}}catch(e){}},0);
 
+// ---------- nuvens no céu do Mundo 1 (parte do campo 3D): grupos de "bolas" brancas achatadas, iluminadas pelo sol, andando devagar com o vento ----------
+{const FLD1=H3.fld;
+ if(FLD1&&FLD1.reg){let CL=[],T0=0;
+  function cloudMB(seed){const mb=new MB(seed,{pk:true}),r=mb.r,n=7+((r()*6)|0),L=110+r()*130,W=50+r()*50;
+   const top=[255,255,255],mid=[250,251,255],bot=[226,232,244];
+   for(let i=0;i<n;i++){const u=(i/(n-1))-.5,x=u*L+(r()-.5)*24,z=(r()-.5)*W*.7,R=(1-abs(u)*1.1)*(30+r()*22)+14,y=(1-abs(u)*1.4)*R*.35;
+    mb.push().T(x,y,z).S(1,.55+r()*.2,.85+r()*.3).sph(R,6,12,i%3===0?top:mid,.62).pop()}
+   // base mais escura e lisa
+   mb.push().T(0,-6,0).S(1,.18,1).sph(L*.42,4,14,bot,.5).pop();
+   return mb}
+  FLD1.reg({build:function*(gl){CL=[];const r=H3.rng(424242);
+    for(let i=0;i<26;i++){const mb=cloudMB(9000+i),pk=mb.pack(),m=H3.upload(gl,pk),s=.8+r()*.9;
+     CL.push({m,x:-700+r()*2800,y:240+r()*170,z:-650+r()*2200,s,sp:5+r()*6,ry:(r()-.5)*.5,mt:new Float32Array(16)});if(i%6===5)yield .5}
+    yield 1},
+   draw:(t,dyn)=>{const C=H3.S.cam;if(!C)return;const tt=t/1000;
+    for(const c of CL){let x=c.x+tt*c.sp;x=((x+900)%3600+3600)%3600-900;const z=c.z;
+     if(hypot(x-C.x,z-C.z)>2600)continue;H3.M4.trs(c.mt,x,c.y,z,0,c.ry,0,c.s,c.s,c.s);
+     const R=c.m.rad*c.s;if(!H3.vis(x,c.y,z,R))continue;H3.mesh(c.m,c.mt,null,null,{rad:R,cx:x,cy:c.y,cz:z,fog:.3,eg:1.25})}},
+   free:()=>{const gl=H3.gl();if(gl)for(const c of CL)try{gl.deleteBuffer(c.m.vbo)}catch(e){}CL=[]}});
+ }}
 // ---------- o portal no Mundo 1 (parte do campo 3D) ----------
 const FLD=H3.fld;
 if(FLD&&FLD.reg){let pm=null,py=0;
