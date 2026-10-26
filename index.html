@@ -566,7 +566,7 @@ function bgDraw(){if(!world&&BGOK)g.drawImage(BG,Math.round(cam.x),Math.round(ca
 const hash=(x,y)=>((x*73856093)^(y*19349663))>>>0;
 const SPX=482,SPY=361;const P={x:SPX,y:SPY,dir:2,step:0,moving:false},FO={x:13*T-6,y:15*T+2};
 let jx=0,jy=0;
-const solid=(px,py)=>{if(world===3)return window.RAID?RAID.solid(px,py):true;if(py>=GY*T&&py<GY*T+T&&px>=GX*T-8&&px<GX*T+T+8)return true;if(world===0){if(px>=W*T+48)return window.RMS?RMS(px,py):true;if(px<0||py<0||px>=W*T||py>=H*T)return true;const t0=map[py>>4][px>>4];if(t0>=4&&t0<=6)return true;const i=(py>>2)*CW+(px>>2);return !((CM[i>>3]>>(7-(i&7)))&1)}if(world===1)return window.HAL?HAL.solid(px,py):true;const tx=Math.floor(px/T),ty=Math.floor(py/T);if(tx<0||ty<0||tx>=W||ty>=H)return true;const t=map[ty][tx];return t===1||t===3||t===4||t===5||t===6||t===7||t===8||t===9};
+const solid=(px,py)=>{if(world===3)return window.RAID?RAID.solid(px,py):true;if(world===4)return window.DBW?DBW.solid(px,py):true;if(py>=GY*T&&py<GY*T+T&&px>=GX*T-8&&px<GX*T+T+8)return true;if(world===0){if(px>=W*T+48)return window.RMS?RMS(px,py):true;if(px<0||py<0||px>=W*T||py>=H*T)return true;const t0=map[py>>4][px>>4];if(t0>=4&&t0<=6)return true;const i=(py>>2)*CW+(px>>2);return !((CM[i>>3]>>(7-(i&7)))&1)}if(world===1)return window.HAL?HAL.solid(px,py):true;const tx=Math.floor(px/T),ty=Math.floor(py/T);if(tx<0||ty<0||tx>=W||ty>=H)return true;const t=map[ty][tx];return t===1||t===3||t===4||t===5||t===6||t===7||t===8||t===9};
 const hit=(x,y)=>solid(x+3,y+8)||solid(x+12,y+8)||solid(x+3,y+15)||solid(x+12,y+15)||eBlock(x,y);
 // Mundo 1 (floresta): 0 goblin · 1 ciclope · 2 boss (Demônio da Torre) · 3 cavaleiro das chamas (mini boss). O desenho deles está em js/13-monsters.js (e.mon).
 // s e vh = altura do sprite (a barra de vida e os números de dano ficam acima da cabeça) · r = raio que bloqueia o jogador · orb = distância dos lutadores · eng = distância do botão Lutar
@@ -585,7 +585,7 @@ let EN=[
 EN.push({x:RMX-8,y:RMY-28,t:2,...TY[2],hp:TY[2].max,dead:false,back:0});   // o Demônio da Torre fica por último (dentro do salão da torre)
 const eBlock=(x,y)=>EN.some(e=>!e.dead&&!e.fly&&!e.ov&&Math.hypot(x+8-(e.x+8),y+12-(e.y+8))<e.r)||Math.hypot(x+8-(NPC.x+8),y+12-(NPC.y+8))<10;
 const R=(c,x,y,w,h)=>{g.fillStyle=c;g.fillRect(x,y,w,h)};
-function tile(t,x,y,tx,ty,f){if(world===3)return;const h=hash(tx,ty);if(!world&&BGOK)return;if(world===1&&tile1(t,x,y,tx,ty,f,h))return;if(world===2&&window.tile2&&tile2(t,x,y,tx,ty,f,h))return;
+function tile(t,x,y,tx,ty,f){if(world===3||world===4)return;const h=hash(tx,ty);if(!world&&BGOK)return;if(world===1&&tile1(t,x,y,tx,ty,f,h))return;if(world===2&&window.tile2&&tile2(t,x,y,tx,ty,f,h))return;
  if(t===0||t===1||t===4||t===5||t===6){R('#5fb94a',x,y,T,T);if(h%5===0)R('#4a9e3a',x+h%12,y+(h>>3)%12,2,2);if(h%13===0){R('#fff',x+5,y+6,2,2);R('#ffd23f',x+5,y+8,2,1)}}
  if(t===2){R('#d9b878',x,y,T,T);if(h%4===0)R('#c4a060',x+h%12,y+(h>>3)%12,2,2)}
  if(t===3){R('#3b78d8',x,y,T,T);R('#7db4f5',x+((f>>4)+tx*3)%12,y+4+(ty%3)*3,4,1)}
@@ -1255,7 +1255,7 @@ function qReward(s){const t=Date.now(),at=(txt,c,dy)=>fx.push({x:NPC.x-4,y:NPC.y
  else if(s===4){coins+=500;ess+=5;if(!mounts.includes('cavalo'))mounts.push('cavalo');if(!mountEq)mountEq='cavalo';at('+500 moedas','#ffd23f');at('+5 essências','#80d8ff',10);at('Montaria: Cavalo','#ffffff',20)}
  updHud()}
 function updQuest(){const c=Q(),s=qs.st,q=$('quest');let t='';
- if(world===2||world===3);else if(s===0)t='Fale com '+(world?'a Bruxa Mira':'a Lina');else if(s<c.E)t=qs.n>=c.G[s]?'Volte à '+(world?'Bruxa Mira':'Lina'):c.N[s]+' '+qs.n+'/'+c.G[s];
+ if(world>=2);else if(s===0)t='Fale com '+(world?'a Bruxa Mira':'a Lina');else if(s<c.E)t=qs.n>=c.G[s]?'Volte à '+(world?'Bruxa Mira':'Lina'):c.N[s]+' '+qs.n+'/'+c.G[s];
  q.textContent=t;q.style.display=t?'block':'none'}
 function questKill(e){const c=Q(),s=qs.st;if(world!==2&&s>=1&&s<c.E&&e.t===c.T[s]&&qs.n<c.G[s]){qs.n++;save();updQuest()}}
 function talk(){const c=Q(),s=qs.st;
@@ -2300,7 +2300,8 @@ function renderAch(){const n=ACH.filter(a=>ach[a.id]).length;$('acInfo').textCon
 const wbCan=()=>!!(window.MP&&MP.uid&&!MP.offline&&MP.db);
 const WCFG=[{w:W0,h:H0,s:[SX0,SY0],to:[TOX0,TOY0],gt:[GX0,GY0],np:[NX0,NY0],p:[SPX,SPY],d:2},
  {w:W1,h:H1,s:[SX1,SY1],to:[TOX1,TOY1],gt:[GX1,GY1],np:[13,103],p:[13*T,100*T],d:2},
- {w:W2,h:H2,s:[-50,-50],to:[-50,-50],gt:[20,19],np:[-99,-99],p:[15*T+8,20*T],d:0}];
+ {w:W2,h:H2,s:[-50,-50],to:[-50,-50],gt:[20,19],np:[-99,-99],p:[15*T+8,20*T],d:0},
+ null,{w:188,h:141,s:[-50,-50],to:[-50,-50],gt:[-50,-50],np:[-99,-99],p:[292,1106],d:3}];   // 4: Mundo 2 · Dragon Ball (só 3D, js do fim do arquivo)
 goWorld=function(n){if(n===world||!WCFG[n])return;if(n===1&&!ups.gate)return;if(n===2&&!wbCan()){toast('A Arena do Boss Mundial precisa de internet: entre na sua conta');return}
  const c=WCFG[n];world=n;W=c.w;H=c.h;SX=c.s[0];SY=c.s[1];TOX=c.to[0];TOY=c.to[1];GX=c.gt[0];GY=c.gt[1];NPC.x=c.np[0]*T;NPC.y=c.np[1]*T;
  map=WD[n].map;EN=WD[n].EN;qs=QS[n];fight=null;for(const k in fpos)delete fpos[k];P.x=c.p[0];P.y=c.p[1];P.dir=c.d;DY.length=0;PT.length=0;
@@ -10598,7 +10599,7 @@ const clp=(v,a,b)=>v<a?a:v>b?b:v;
 const NM3='Herobrine 3D',ALT_Y=14.6,BZ=-16;                    // nome do personagem · topo do altar · Z do Demônio
 const angd=(a,b)=>{let d=(b-a)%TAU;if(d>PI)d-=TAU;if(d<-PI)d+=TAU;return d};
 const SCN=H3.scenes=H3.scenes||{};let SC=null;                  // cenas registradas · cena do modo 3D em uso
-const sceneNow=()=>world===0?(X.inRoom()?SCN.hall:(SCN.field||null)):world===2?SCN.ice:world===1?((window.LICH&&LICH.in)?(SCN.lich||null):(window.HAL&&HAL.inside)?(SCN.halIn||null):(SCN.hal||null)):null;
+const sceneNow=()=>world===0?(X.inRoom()?SCN.hall:(SCN.field||null)):world===2?SCN.ice:world===4?(SCN.db||null):world===1?((window.LICH&&LICH.in)?(SCN.lich||null):(window.HAL&&HAL.inside)?(SCN.halIn||null):(SCN.hal||null)):null;
 const S=H3.S={mode:0,yaw:0,pitch:0,moving:false,step:0,dead:false,built:false,qs0:1,punchT:0,bossYaw:0,fr:0,cam:{x:0,y:21,z:131,yaw:0,pitch:0,fov:1},foc:{x:0,y:0,z:131},cssW:896,cssH:412,px:0,pz:131,err:0,ft:16,lastT:0,hint:0,sc:null,
  jh:0,jv:0,isoY:null};
 const $$=id=>document.getElementById(id);
@@ -18792,7 +18793,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261025195841;
+const GAME_BUILD=20261026144313;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
@@ -18952,6 +18953,480 @@ renderW=function(){
  L.querySelectorAll('.wsec').forEach(sec=>{const b=by[sec.dataset.n];sec.querySelector('.whead').onclick=()=>{if(b)b.click()}})};
 const wt=$('wM').querySelector('h2');if(wt)wt.textContent='Mundos';
 })();
+</script>
+<script>
+// ===================== Mundo 2 · Dragon Ball (só em 3D) =====================
+// Um mundo novo, feito direto em 3D (sem mapa 2D): ~5x a área do Mundo 1 (3008 x 2256 unidades; 1 unidade = 1 pixel do 2D, o jogador tem ~28).
+//  · a Cidade do Oeste: avenidas com calçadas e faixas, a Corporação Cápsula (cúpula amarela gigante com janelas azuis, letreiro "CAPSULE CORP.",
+//    torres e cúpulas menores), parque com chafariz, heliponto, casas-cúpula coloridas, torres-cápsula e prédios brancos, árvores redondas;
+//  · a arena do Torneio de Artes Marciais: plataforma de ladrilhos com borda azul, templo de telhado de palha com a placa, arquibancadas lotadas,
+//    muros vermelhos com lanternas, palmeiras e bandeiras;
+//  · depois do penhasco (descida pela passagem com o portão da Cápsula), o Deserto de Yajirobe: dunas, mesas e torres de pedra gigantes em camadas,
+//    cactos, arbustos secos e pedras.
+// Entrada/saída: portal no Mundo 1 (a sudoeste da praça) e portal de volta perto do ponto de chegada.
+// O jogo continua todo no 2D por baixo (posição P em pixels); aqui: colisão (DBW.solid), altura do chão, a cena 3D (SCN.db) e os portais.
+(function(){
+'use strict';
+const H3=window.H3;
+if(!H3||!H3.MB)return;
+const MB=H3.MB;
+const PI=Math.PI,TAU=PI*2,sin=Math.sin,cos=Math.cos,abs=Math.abs,min=Math.min,max=Math.max,floor=Math.floor,round=Math.round,sqrt=Math.sqrt,hypot=Math.hypot,atan2=Math.atan2;
+const clp=(v,a,b)=>v<a?a:v>b?b:v,lerp=(a,b,t)=>a+(b-a)*t,sm=(a,b,v)=>{v=clp((v-a)/(b-a),0,1);return v*v*(3-2*v)};
+const WID=4,MW=3008,MH=2256,TW=MW/16,TH=MH/16;
+const CLX0=1600,CLX1=1668,DY=-44,PZC=1120;            // penhasco (cidade em cima, deserto embaixo) e a passagem (rampa) no meio
+const SPAWN={x:300,z:1120},BACK={x:150,z:1120};       // chegada e portal de volta (coordenadas 3D: x = P.x+8, z = P.y+14)
+const M1P={x:352,z:584};                              // portal no Mundo 1
+const DBW=window.DBW={WID,MW,MH,ready:false,pct:0,M1P,SPAWN,BACK};
+
+// ---------- ruído ----------
+function h2(i,j,s){let h=(i*374761393+j*668265263+((s|0)*1442695041))|0;h=Math.imul(h^(h>>>13),1274126177);h^=h>>>16;return(h>>>0)/4294967296}
+function vn(x,z,s){const i=floor(x),j=floor(z),fx=x-i,fz=z-j,u=fx*fx*(3-2*fx),v=fz*fz*(3-2*fz),a=h2(i,j,s),b=h2(i+1,j,s),c=h2(i,j+1,s),d=h2(i+1,j+1,s);return a+(b-a)*u+(c-a)*v+(a-b-c+d)*u*v}
+function rng(s){s=s>>>0;return()=>{s=(s+0x6D2B79F5)>>>0;let t=s;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296}}
+
+// ---------- relevo ----------
+const desertH=(x,z)=>DY+(vn(x/240,z/240,3)-.5)*16+(vn(x/70,z/70,5)-.5)*4;
+const passK=z=>1-sm(40,62,abs(z-PZC));
+function baseH(x,z){
+ if(x<=1540)return 0;
+ const dz=desertH(x,z);let h=x<=CLX0?0:x>=CLX1?dz:lerp(0,dz,sm(CLX0,CLX1,x));
+ const pk=passK(z);if(pk>0){const r=x<1800?lerp(0,desertH(1800,z),sm(1540,1800,x)):dz;h=lerp(h,r,pk)}
+ return h}
+// arena do torneio (plataforma de ladrilhos, 7 de altura) com escadas no norte e no sul
+const ACX=760,ACZ=1640,AH=110,APH=7;
+function floorY(x,z){let h=baseH(x,z);
+ if(abs(x-ACX)<=AH&&abs(z-ACZ)<=AH)return h+APH;
+ if(abs(x-ACX)<=34){const d=abs(z-ACZ)-AH;if(d>0&&d<22)return h+APH*(1-d/22)}
+ return h}
+DBW.floorY=floorY;DBW.baseH=baseH;
+
+// ---------- colisão: grade de 4 x 4 ----------
+const GW=MW>>2,GH=MH>>2,CG=new Uint8Array(GW*GH);
+function circ(x,z,r,v){v=v===undefined?1:v;const x0=max(0,(x-r)>>2),x1=min(GW-1,(x+r)>>2),z0=max(0,(z-r)>>2),z1=min(GH-1,(z+r)>>2);
+ for(let j=z0;j<=z1;j++)for(let i=x0;i<=x1;i++){if(hypot(i*4+2-x,j*4+2-z)<=r)CG[j*GW+i]=v}}
+function rect(x0,z0,x1,z1,v){v=v===undefined?1:v;const a=max(0,x0>>2),b=min(GW-1,x1>>2),c=max(0,z0>>2),d=min(GH-1,z1>>2);for(let j=c;j<=d;j++)for(let i=a;i<=b;i++)CG[j*GW+i]=v}
+// retângulo girado (yaw) em volta do centro
+function orect(cx,cz,hw,hd,yaw,v){const r=hypot(hw,hd),c=cos(yaw),s=sin(yaw);v=v===undefined?1:v;
+ for(let j=max(0,(cz-r)>>2);j<=min(GH-1,(cz+r)>>2);j++)for(let i=max(0,(cx-r)>>2);i<=min(GW-1,(cx+r)>>2);i++){const dx=i*4+2-cx,dz=j*4+2-cz,lx=dx*c-dz*s,lz=dx*s+dz*c;if(abs(lx)<=hw&&abs(lz)<=hd)CG[j*GW+i]=v}}
+function blocked(x,z){if(x<0||z<0||x>=MW||z>=MH)return true;return CG[(z>>2)*GW+(x>>2)]===1}
+DBW.solid=(px,py)=>blocked(px,py);DBW.blocked=blocked;
+
+// ---------- cores ----------
+const ROOF=['#e8455a','#f08a2a','#f2c94c','#5aa0e8','#56b870','#e86fb0','#9b6be8','#e85a3a','#3ab8c8'];
+const WALL=['#f2f3f5','#e9ebef','#f6f1e6','#eaf2f6'],WIN='#2a4f8f',WINL='#7fb6e8',GLASS='#9cc8ec';
+const CCY='#f6d65a',CCY2='#e7bf3a',CCB='#2f5fb8',CCB2='#1f4290';
+const SAND=[228,170,100],SAND2=[214,150,84],PATH=[238,200,138],ROCK=['#b5602f','#c9733a','#d98b4a','#a4522a','#e3a060','#8f4524'];
+const GRASS=[92,176,70],GRASS2=[120,190,74],DIRT=[150,120,80];
+
+// ---------- letras (5 x 7) para letreiros ----------
+const FONT={A:'01110100011000111111100011000110001',B:'11110100011000111110100011000111110',C:'01111100001000010000100001000001111',D:'11110100011000110001100011000111110',
+ E:'11111100001000011110100001000011111',G:'01111100001000010011100011000101111',I:'11111001000010000100001000010011111',L:'10000100001000010000100001000011111',
+ M:'10001110111010110101100011000110001',N:'10001110011010110011100011000110001',O:'01110100011000110001100011000101110',P:'11110100011000111110100001000010000',
+ R:'11110100011000111110101001001010001',S:'01111100001000001110000010000111110',T:'11111001000010000100001000010000100',U:'10001100011000110001100011000101110',
+ '.':'00000000000000000000000000000000100','2':'01110100010000100010001000100011111','1':'00100011000010000100001000010001110',W:'10001100011000110101101011101110001',
+ K:'10001100101010011000101001001010001',Y:'10001100010101000100001000010000100',J:'00111000010000100001000011000101110',H:'10001100011000111111100011000110001'};
+// texto centrado na origem, virado para +z (x para a direita, y para cima a partir de 0); px = tamanho do "pixel", d = espessura
+function text(mb,str,px,d,col,e){const n=str.length,w=(n*6-1)*px,x0=-w/2;
+ for(let k=0;k<n;k++){const g=FONT[str[k]];if(!g)continue;for(let r=0;r<7;r++)for(let c=0;c<5;c++)if(g[r*5+c]==='1')mb.push().T(x0+(k*6+c+.5)*px,(6-r+.5)*px,d/2).box(px*1.02,px*1.02,d,col,e||0).pop()}}
+
+// ---------- formas ----------
+// cúpula (meia elipsoide) com base em y0, raio R, altura H; colAt(anel, gomo) dá a cor de cada face
+function dome(mb,R,H,n,lat,colAt,y0,e){y0=y0||0;
+ for(let i=0;i<lat;i++){const a0=i/lat*PI/2,a1=(i+1)/lat*PI/2,r0=cos(a0)*R,r1=cos(a1)*R,ya=y0+sin(a0)*H,yb=y0+sin(a1)*H;
+  for(let k=0;k<n;k++){const b0=k/n*TAU,b1=(k+1)/n*TAU,c=colAt(i,k);
+   if(i===lat-1)mb.tri([0,yb,0],[cos(b0)*r0,ya,sin(b0)*r0],[cos(b1)*r0,ya,sin(b1)*r0],c,e||0);
+   else mb.quad([cos(b0)*r0,ya,sin(b0)*r0],[cos(b1)*r0,ya,sin(b1)*r0],[cos(b1)*r1,yb,sin(b1)*r1],[cos(b0)*r1,yb,sin(b0)*r1],c,e||0)}}}
+// esfera achatada embaixo (casa em cima de poste)
+function ball(mb,R,H,n,colTop,colBot,band){dome(mb,R,H,n,4,(i,k)=>band&&i===0?(k%2?band:colTop):colTop,0);
+ mb.push().S(1,-1,1);dome(mb,R,H*.75,n,3,()=>colBot,0);mb.pop()}
+// paredes cilíndricas com janelas (faixas)
+function wallCyl(mb,r,h,n,base,win,rows){const fl=h/rows;for(let f=0;f<rows;f++){mb.push().T(0,f*fl,0).cyl(r,r,fl*.32,n,base,0,{cap0:f===0,cap1:false}).pop();
+  mb.push().T(0,f*fl+fl*.32,0).cyl(r,r,fl*.5,n,base,0,{cap0:false,cap1:false,cs:Array.from({length:n},(_,k)=>k%3===2?base:win)}).pop();
+  mb.push().T(0,f*fl+fl*.82,0).cyl(r,r,fl*.18,n,base,0,{cap0:false,cap1:f===rows-1}).pop()}}
+
+// ---------- árvores ----------
+const LEAF=[[70,168,62],[84,184,70],[60,150,58],[96,196,80],[52,140,64]];
+function tree(mb,x,z,s,r){const y=floorY(x,z),c=LEAF[(r()*LEAF.length)|0];mb.push().T(x,y-.5,z).S(s,s,s);
+ mb.cyl(2.4,1.7,13,6,'#7a5230',0,{cap0:false});
+ mb.push().T(0,20,0).S(1,.86,1).sph(11,3,7,c,0).pop();
+ mb.push().T(5,16,3).sph(7,2,6,c.map(v=>v*.88),0).pop();mb.push().T(-5,18,-3).sph(7.5,2,6,c.map(v=>min(255,v*1.08)),0).pop();
+ mb.pop()}
+function palm(mb,x,z,s,r){const y=floorY(x,z),lean=(r()-.5)*.5,a0=r()*TAU;mb.push().T(x,y-.5,z).RY(a0).S(s,s,s);
+ const pts=[],rs=[];for(let i=0;i<=5;i++){const u=i/5;pts.push([sin(u*1.4)*8*lean*4,u*34,0]);rs.push(2.2-u*.9)}
+ mb.tube(pts,rs,6,'#9a7a4c',0,{cols:['#9a7a4c','#7e6038']});
+ const top=pts[5];for(let k=0;k<8;k++){const a=k/8*TAU,ca=cos(a),sa=sin(a),L=17;
+  const p0=[top[0],top[1],top[2]],p1=[top[0]+ca*L*.55,top[1]+3,top[2]+sa*L*.55],p2=[top[0]+ca*L,top[1]-6,top[2]+sa*L],w=3.2,px=-sa*w,pz=ca*w;
+  mb.quad([p0[0],p0[1],p0[2]],[p1[0]+px,p1[1],p1[2]+pz],[p2[0],p2[1],p2[2]],[p1[0]-px,p1[1],p1[2]-pz],k%2?'#3f9a3a':'#52b048')}
+ mb.pop()}
+function cactus(mb,x,z,s,r){const y=floorY(x,z);mb.push().T(x,y-.6,z).RY(r()*TAU).S(s,s,s);const G='#4f9a4a',G2='#3e8040';
+ mb.cyl(2.6,2.3,22,7,G,0,{cs:[G,G2]});mb.push().T(0,22,0).sph(2.3,2,7,G,0).pop();
+ for(const sd of[-1,1])if(r()<.8){const hy=7+r()*7;mb.push().T(sd*2.2,hy,0).RZ(-sd*PI/2).cyl(1.5,1.5,5,6,G2,0).pop();mb.push().T(sd*6.8,hy,0).cyl(1.6,1.4,6+r()*5,6,G,0).pop()}
+ mb.pop()}
+function shrub(mb,x,z,s,r){const y=floorY(x,z);mb.push().T(x,y-.6,z).S(s,s*.6,s);mb.sph(5,2,6,r()<.5?'#8a8a3e':'#7a7034',0);mb.pop()}
+function boulder(mb,x,z,s,r){const y=floorY(x,z);mb.push().T(x,y-1,z).RY(r()*TAU).S(s,s*.7,s*1.2);mb.cyl(5,3.5,5,6,ROCK[(r()*4)|0],0);mb.pop()}
+
+// ---------- prédios da cidade ----------
+// casa-cúpula: parede branca com janelas + cúpula colorida + porta
+function domeHouse(mb,x,z,R,roof,yaw,r){const y=floorY(x,z);mb.push().T(x,y,z).RY(yaw);
+ const wall=WALL[(r()*WALL.length)|0],h=R*.42;
+ wallCyl(mb,R,h,16,wall,WIN,1);
+ mb.push().T(0,h,0);dome(mb,R*1.02,R*.8,16,4,(i,k)=>i===1&&k%4===1?WIN:(i===0?roof:roof),0);mb.pop();
+ mb.push().T(0,h-.3,0).cyl(R*1.06,R*1.03,1.6,16,'#ffffff',0).pop();
+ mb.push().T(0,0,R-1).box(R*.45,h*.75,4,'#3b5f9a',0,true).pop();mb.push().T(0,h*.75,R+.5).box(R*.55,1.4,5,wall,0,true).pop();
+ mb.pop()}
+// casa redonda em cima de um poste (as do desenho)
+function stiltHouse(mb,x,z,R,roof,yaw,r){const y=floorY(x,z);mb.push().T(x,y,z).RY(yaw);
+ const ph=R*1.7;mb.cyl(R*.22,R*.18,ph,10,'#d9dde3',0);mb.push().T(0,ph*.35,0).cyl(R*.32,R*.32,2,10,roof,0).pop();
+ mb.push().T(0,ph+R*.55,0);ball(mb,R,R*.8,16,'#f2f3f5','#e2e5ea',WIN);mb.pop();
+ mb.push().T(0,ph+R*.55+R*.62,0);dome(mb,R*.72,R*.5,14,3,()=>roof,0);mb.pop();
+ mb.pop()}
+// torre-cápsula (cilindro com faixas de janelas e cúpula)
+function capTower(mb,x,z,R,H,roof,yaw,r){const y=floorY(x,z);mb.push().T(x,y,z).RY(yaw);
+ const rows=max(2,round(H/24));wallCyl(mb,R,H,14,'#f2f3f5',WIN,rows);
+ mb.push().T(0,H,0);dome(mb,R*1.05,R*.85,14,4,()=>roof,0);mb.pop();
+ if(r()<.6){mb.push().T(R*.95,H*.55,0).cyl(R*.5,R*.5,H*.3,10,'#e7eaee',0).pop();mb.push().T(R*.95,H*.85,0);dome(mb,R*.52,R*.4,10,3,()=>roof,0);mb.pop()}
+ mb.pop()}
+// prédio alto branco com cantos arredondados e grade de janelas
+function tower(mb,x,z,w,d,H,yaw,r){const y=floorY(x,z);mb.push().T(x,y,z).RY(yaw);
+ const base=WALL[(r()*WALL.length)|0],fl=12,rows=floor(H/fl);
+ mb.box(w,H,d,base,0,true);
+ const cw=7,nx=max(1,floor((w-6)/cw)),nz=max(1,floor((d-6)/cw));
+ const wq=(cx,cy,cz,ax,hw,hh,col)=>{const x=cx,y0=cy-hh,y1=cy+hh;
+  if(ax==='+z')mb.quad([x-hw,y0,cz],[x+hw,y0,cz],[x+hw,y1,cz],[x-hw,y1,cz],col,.12);
+  else if(ax==='-z')mb.quad([x+hw,y0,cz],[x-hw,y0,cz],[x-hw,y1,cz],[x+hw,y1,cz],col,.12);
+  else if(ax==='+x')mb.quad([cx,y0,cz+hw],[cx,y0,cz-hw],[cx,y1,cz-hw],[cx,y1,cz+hw],col,.12);
+  else mb.quad([cx,y0,cz-hw],[cx,y0,cz+hw],[cx,y1,cz+hw],[cx,y1,cz-hw],col,.12)};
+ for(let f=0;f<rows;f++){const yy=f*fl+fl*.55,hh=fl*.25,col=f%5===4?WINL:GLASS;
+  for(let i=0;i<nx;i++){const xx=-w/2+3+cw*(i+.5)+((w-6)-nx*cw)/2;wq(xx,yy,d/2+.2,'+z',cw*.33,hh,col);wq(xx,yy,-d/2-.2,'-z',cw*.33,hh,col)}
+  for(let i=0;i<nz;i++){const zz=-d/2+3+cw*(i+.5)+((d-6)-nz*cw)/2;wq(w/2+.2,yy,zz,'+x',cw*.33,hh,col);wq(-w/2-.2,yy,zz,'-x',cw*.33,hh,col)}}
+ mb.push().T(0,H,0).box(w+2,2,d+2,'#d5d9df',0,true).pop();
+ if(r()<.7){mb.push().T(0,H+2,0).cyl(min(w,d)*.3,min(w,d)*.3,8,12,'#cfd4da',0).pop();mb.push().T(0,H+10,0);dome(mb,min(w,d)*.3,min(w,d)*.22,12,3,()=>ROOF[(r()*ROOF.length)|0],0);mb.pop()}
+ // porta
+ mb.push().T(0,0,d/2+.3).box(10,10,.6,'#3b5f9a',0,true).pop();
+ mb.pop()}
+
+// ---------- Corporação Cápsula ----------
+const CCX=760,CCZ=560,CCR=190,CCH=150;
+function capsuleCorp(mb){const y=0;mb.push().T(CCX,y,CCZ);
+ // base (anel azul) e cúpula amarela com faixas de janelas
+ mb.cyl(CCR+4,CCR+2,8,40,CCB,0);
+ mb.push().T(0,8,0);dome(mb,CCR,CCH,40,9,(i,k)=>{if(i===1||i===3)return k%5===2||k%5===4?CCY:WIN;if(i===5)return k%4===1?'#2b4a86':CCY2;return i%2?CCY2:CCY},0);mb.pop();
+ // anel branco no topo (claraboia)
+ mb.push().T(0,8+CCH*.985,0).cyl(CCR*.2,CCR*.18,3,20,'#ffffff',0).pop();
+ // logo: círculo azul com o "C" no alto da frente; letreiro CAPSULE CORP. acompanhando a curva da cúpula
+ {const yL=8+CCH*.75,rL=CCR*sqrt(1-.75*.75);
+  mb.push().T(0,yL,rL+3).RX(-.85);mb.push().RX(PI/2).cyl(17,17,2,24,CCB,0).pop();mb.push().T(0,0,1.3).RX(PI/2).cyl(12,12,1,24,'#ffffff',0).pop();
+  mb.push().T(-.5,-11,2.4);text(mb,'C',3.2,1.2,CCB,0);mb.pop();mb.pop();
+  const yl=8+CCH*.42,px=3.2,rb=CCR*sqrt(1-((yl-10-8)/CCH)**2)+1.5,str='CAPSULE CORP.',n=str.length,step=6*px/rb;
+  for(let k=0;k<n;k++){const ak=(k-(n-1)/2)*step;mb.push().T(sin(ak)*rb,yl-10,cos(ak)*rb).RY(ak).RX(-.54);text(mb,str[k],px,1.6,CCB2,0);mb.pop()}}
+ // entrada: túnel em arco com porta
+ mb.push().T(0,0,CCR-14);mb.box(52,30,40,CCY,0,true);mb.push().T(0,30,-20).RX(PI/2).cyl(26,26,40,12,CCY2,0).pop();
+ mb.push().T(0,0,20.2).box(30,22,1,'#3b5f9a',0,true).pop();mb.push().T(0,24,20.4).box(36,3,1.2,CCB,0,true).pop();mb.pop();
+ // torres laterais com janelas e cúpula branca
+ for(const sd of[-1,1]){mb.push().T(sd*230,0,40);wallCyl(mb,34,210,18,CCY,WIN,8);mb.push().T(0,210,0);dome(mb,36,28,18,4,(i,k)=>i===0&&k%3===0?WIN:'#f4f6f8',0);mb.pop();
+  mb.push().T(0,130,0).cyl(40,40,6,18,CCB,0).pop();mb.pop();
+  // cúpulas menores do conjunto
+  mb.push().T(sd*170,0,-150);wallCyl(mb,46,22,16,'#f2f3f5',WIN,1);mb.push().T(0,22,0);dome(mb,47,38,16,4,(i,k)=>i===1&&k%4===1?WIN:sd>0?'#56b870':'#5aa0e8',0);mb.pop();mb.pop();
+  // passarela da torre para a cúpula
+  mb.push().T(sd*196,60,40).box(40,10,14,CCY2,0,true).pop()}
+ // calçada em volta
+ mb.push().T(0,.15,0).cyl(CCR+40,CCR+40,.3,40,'#d9d6cc',0).pop();
+ mb.pop()}
+
+// ---------- arena do Torneio de Artes Marciais ----------
+const AX0=470,AX1=1050,AZ0=1370,AZ1=1920;
+function arena(mb,r){
+ // plataforma
+ mb.push().T(ACX,0,ACZ);
+ mb.box(AH*2+6,APH-1.2,AH*2+6,'#2f4aa8',0,true);
+ mb.push().T(0,APH-1.2,0).box(AH*2,1.2,AH*2,'#c8d2dc',0,true).pop();
+ const tn=11,ts=AH*2/tn;for(let i=0;i<tn;i++)for(let j=0;j<tn;j++){const c=(i+j)%2?[198,210,220]:[184,198,210];mb.push().T(-AH+ts*(i+.5),APH+.02,-AH+ts*(j+.5)).box(ts-1,.25,ts-1,c,0,true).pop()}
+ // escadas norte e sul
+ for(const sd of[-1,1])for(let s=0;s<4;s++){mb.push().T(0,0,sd*(AH+3+(3-s)*5)).box(60,APH*(s+1)/4,5.2,s%2?'#d9dde3':'#c9ced6',0,true).pop()}
+ mb.pop();
+ // caminho de pedra do portão até a plataforma e da plataforma ao templo
+ mb.push().T(ACX,.2,(ACZ+AH+AZ1)/2).box(46,.4,AZ1-ACZ-AH,'#d6d0c2',0,true).pop();
+ mb.push().T(ACX,.2,(AZ0+60+ACZ-AH)/2).box(46,.4,ACZ-AH-AZ0-60,'#d6d0c2',0,true).pop();
+ // templo (norte): paredes brancas, colunas vermelhas, telhados de palha em camadas e a placa
+ mb.push().T(ACX,0,AZ0+46);
+ mb.box(300,24,56,'#f1ece0',0,true);mb.push().T(0,0,28.3).box(300,6,1,'#c0392b',0,true).pop();
+ for(let i=0;i<11;i++){mb.push().T(-150+15+i*27,0,30).cyl(2,2,24,8,'#a8322a',0).pop()}
+ const thatch=(w,d,h,col)=>{mb.push().S(w/(2*0.7071*1.05),1,d/(2*0.7071*1.05)).RY(PI/4).cyl(1.05,0,h,4,col,0).pop()};
+ mb.push().T(0,24,0);thatch(320,76,26,'#9a6a3a');mb.pop();
+ mb.push().T(0,30,10);mb.box(90,22,40,'#f1ece0',0,true);mb.pop();mb.push().T(0,52,10);thatch(110,56,22,'#8c5e32');mb.pop();
+ mb.push().T(0,62,10);mb.box(40,14,24,'#f1ece0',0,true);mb.pop();mb.push().T(0,76,10);thatch(52,34,18,'#7e542c');mb.pop();
+ // placa
+ mb.push().T(0,40,31).box(70,14,2,'#b8322a',0,true).pop();mb.push().T(0,42.5,32.2);text(mb,'TORNEIO',1.35,.8,'#ffd84a',.6);mb.pop();
+ // porta central
+ mb.push().T(0,0,28.6).box(30,20,1,'#5a2a1a',0,true).pop();
+ mb.pop();
+ // arquibancadas leste e oeste, lotadas
+ const pop=['#e53935','#1e88e5','#fdd835','#43a047','#fb8c00','#8e24aa','#ffffff','#f06292','#6d4c41','#26c6da','#212121'];
+ for(const sd of[-1,1]){const cx=ACX+sd*(AH+80),L=300;mb.push().T(cx,0,ACZ);
+  for(let s=0;s<7;s++){const dx=sd*(-36+s*12);mb.push().T(dx,0,0).box(12.4,4+s*5,L,s%2?'#e6e8ec':'#d3d7de',0,true).pop();
+   for(let k=0;k<44;k++){const zz=-L/2+4+k*(L-8)/43+(r()-.5)*2;mb.push().T(dx+(r()-.5)*5,4+s*5,zz).box(3.2,5+r()*1.5,3.2,pop[(r()*pop.length)|0],0,true).pop();
+    if(r()<.6)mb.push().T(dx+(r()-.5)*5,4+s*5+5.5,zz).sph(1.5,2,5,['#f2c9a0','#d9a67a','#8d5a3b','#f7d9b8'][(r()*4)|0],0).pop()}}
+  // muro da frente (vermelho), costas e toldo
+  mb.push().T(sd*-44,0,0).box(3,8,L+6,'#c0392b',0,true).pop();
+  mb.push().T(sd*46,0,0).box(4,44,L+6,'#f1ece0',0,true).pop();
+  mb.push().T(sd*22,52,0).RZ(sd*.18).box(80,2,L+10,sd>0?'#1e88e5':'#43a047',0,true).pop();
+  for(let k=0;k<6;k++)mb.push().T(sd*-8,0,-L/2+k*L/5).cyl(1.3,1.3,52,6,'#d0d4da',0).pop();
+  mb.pop()}
+ // muros do pátio (vermelho com topo branco), lanternas e o portão sul
+ const wallSeg=(x0,z0,x1,z1)=>{const L=hypot(x1-x0,z1-z0),a=atan2(x1-x0,z1-z0);mb.push().T((x0+x1)/2,0,(z0+z1)/2).RY(a).box(5,14,L,'#c0392b',0,true).push().T(0,14,0).box(7,2,L+1,'#f4f1ea',0,true).pop().pop()};
+ wallSeg(AX0,AZ0,AX0,AZ1);wallSeg(AX1,AZ0,AX1,AZ1);wallSeg(AX0,AZ0,AX1,AZ0);
+ wallSeg(AX0,AZ1,ACX-40,AZ1);wallSeg(ACX+40,AZ1,AX1,AZ1);
+ mb.push().T(ACX,0,AZ1);for(const sd of[-1,1])mb.push().T(sd*40,0,0).box(10,34,10,'#c0392b',0,true).pop();
+ mb.push().T(0,34,0).box(100,5,16,'#7e542c',0,true).pop();mb.push().T(0,39,0);mb.push().S(56/(.7071*1.05),1,12/(.7071*1.05)).RY(PI/4).cyl(1.05,0,10,4,'#9a6a3a',0).pop();mb.pop();
+ mb.push().T(0,26,8.5).box(50,7,1.5,'#ffd84a',0,true).pop();mb.push().T(0,27,9.4);text(mb,'BUDOKAI',.8,.6,'#b8322a',.3);mb.pop();mb.pop();
+ // lanternas nos muros
+ const lantern=(x,z)=>{mb.push().T(x,14,z).cyl(.8,.8,8,5,'#5a2a1a',0).push().T(0,10,0).sph(3.4,3,8,'#ff9a3a',.9).pop().pop()};
+ for(let z=AZ0+40;z<AZ1;z+=70){lantern(AX0+3,z);lantern(AX1-3,z)}
+ for(let x=AX0+60;x<AX1-40;x+=80)lantern(x,AZ1-3);
+ // bandeiras compridas
+ const flag=(x,z,c)=>{mb.push().T(x,0,z).cyl(1,1,70,6,'#e0e0e0',0);mb.push().T(0,48,1.5).box(.6,40,12,c,0,false).pop();mb.pop()};
+ flag(AX0+30,AZ0+30,'#fdd835');flag(AX1-30,AZ0+30,'#f06292');flag(AX0+30,AZ1-30,'#e53935');flag(AX1-30,AZ1-30,'#fdd835');
+ flag(AX0+30,(AZ0+AZ1)/2,'#f06292');flag(AX1-30,(AZ0+AZ1)/2,'#e53935');
+}
+
+// ---------- deserto: mesas de pedra em camadas ----------
+function mesa(mb,x,z,R,H,r,yaw){const y=floorY(x,z)-2;mb.push().T(x,y,z).RY(yaw);
+ const nL=max(4,round(H/26)),sx=.8+r()*.4,sz=.8+r()*.4,shape=r();let yy=0;
+ for(let L=0;L<nL;L++){const u=L/(nL-1);
+  // perfil: base larga, cintura, topo que se abre (cogumelo) em algumas
+  let rr=R*(shape<.35?(1-.35*u+.45*sm(.7,1,u)):shape<.7?(1-.5*u):(1-.18*u));rr*=1+(r()-.5)*.12;
+  const h=H/nL*(.8+r()*.4),col=ROCK[(L+((r()*2)|0))%ROCK.length],n=9;
+  mb.push().T((r()-.5)*R*.08,yy,(r()-.5)*R*.08).S(sx,1,sz).cyl(rr*1.04,rr,h,n,col,0,{rot:r()*TAU,cap0:false,cap1:L===nL-1,ct:'#c97c45'}).pop();
+  // borda saliente (estrato)
+  if(r()<.5)mb.push().T(0,yy+h-1.2,0).S(sx,1,sz).cyl(rr*1.09,rr*1.06,2.4,n,ROCK[5],0,{rot:r()*TAU}).pop();
+  yy+=h}
+ // pedras caídas na base
+ for(let k=0;k<5;k++){const a=r()*TAU,d=R*(1+r()*.3);mb.push().T(cos(a)*d*sx,0,sin(a)*d*sz).RY(r()*TAU).S(1,.7,1.2).cyl(5+r()*6,3+r()*3,5+r()*4,6,ROCK[(r()*5)|0],0).pop()}
+ mb.pop();return yy}
+// paredão do penhasco entre a cidade e o deserto
+function cliffWall(mb,r){for(let z=40;z<MH-40;z+=26){if(passK(z+13)>0.02)continue;
+  const top=4+r()*6,x=CLX0+6+r()*10;let yy=DY-6;const n=6;
+  for(let L=0;L<n;L++){const h=(top-yy)/(n-L)*(.8+r()*.4),w=26+r()*16,d=30+r()*12;mb.push().T(x+L*6+r()*6,yy,z+13).RY((r()-.5)*.3).box(w+20-L*3,h,d,ROCK[(L+(r()*3|0))%6],0,true).pop();yy+=h}}
+ // paredões da passagem (os dois lados da rampa)
+ for(const sd of[-1,1])for(let x=1520;x<1840;x+=22){const z=PZC+sd*(62+r()*8),h=Math.max(10,(x<CLX0?14:14+(x-CLX0)*.25))+r()*10,y=floorY(x,PZC)-2;
+  mb.push().T(x,y,z).RY((r()-.5)*.4).box(26,h+(x>CLX0?(-DY)*sm(CLX0,CLX1,x):0),18+r()*8,ROCK[(r()*5)|0],0,true).pop()}}
+
+// ---------- ruas ----------
+const ROADS=[[150,150,1520,150],[150,2110,1520,2110],[150,150,150,2110],[1520,150,1520,2110],[150,PZC,1560,PZC],[420,150,420,2110],[1100,150,1100,2110]];
+const RWH=25,SWK=8;
+function onRoad(x,z,pad){pad=pad||0;for(const[x0,z0,x1,z1]of ROADS){if(x>=min(x0,x1)-RWH-pad&&x<=max(x0,x1)+RWH+pad&&z>=min(z0,z1)-RWH-pad&&z<=max(z0,z1)+RWH+pad)return true}
+ if(abs(z-PZC)<RWH+pad&&x>1540&&x<1840)return true;return false}
+function roads(mb){
+ for(const[x0,z0,x1,z1]of ROADS){const hx=x0===x1,cx=(x0+x1)/2,cz=(z0+z1)/2,L=hypot(x1-x0,z1-z0)+RWH*2;
+  mb.push().T(cx,.32,cz).RY(hx?0:PI/2);
+  mb.box((RWH+SWK)*2,.3,L+SWK*2,'#cfcfc8',0,true);
+  mb.push().T(0,.3,0).box(RWH*2,.3,L,'#5e6168',0,true).pop();
+  for(let s=-L/2+12;s<L/2-10;s+=26){const wx=hx?cx:cx+s,wz=hx?cz+s:cz;let inter=false;for(const R of ROADS){if(R===ROADS.find(q=>q[0]===x0&&q[1]===z0&&q[2]===x1&&q[3]===z1))continue;const rx=R[0]===R[2];if(rx&&!hx&&abs(wx-R[0])<RWH+4)inter=true;if(!rx&&hx&&abs(wz-R[1])<RWH+4)inter=true}
+   if(!inter)mb.push().T(0,.6,s).box(1.6,.12,12,'#f4f4f0',.15,true).pop()}
+  mb.pop()}
+ // rampa da passagem: asfalto que desce até o deserto e vira estrada de terra
+ for(let x=1540;x<1800;x+=10){const y0=floorY(x,PZC),y1=floorY(x+10,PZC);mb.quad([x,y0+.35,PZC-RWH],[x,y0+.35,PZC+RWH],[x+10,y1+.35,PZC+RWH],[x+10,y1+.35,PZC-RWH],x<1700?'#5e6168':'#b8935e')}}
+
+// ---------- chão ----------
+const CS=512,NCX=Math.ceil(MW/CS),NCZ=Math.ceil(MH/CS),GC=24;
+const deserted=x=>x>CLX0+20;
+function pathD(x,z){const pz=PZC+sin((x-1800)/260)*150+sin((x-1800)/97)*30;return abs(z-pz)}
+function gcol(x,z){const y=baseH(x,z);
+ if(x>CLX0+10||(passK(z)>.5&&x>1700)){const n=vn(x/90,z/90,9),n2=vn(x/23,z/23,11);let c=[lerp(SAND2[0],SAND[0],n),lerp(SAND2[1],SAND[1],n),lerp(SAND2[2],SAND[2],n)];
+  const k=n2*.12+.94;c=c.map(v=>v*k);if(x>1760&&pathD(x,z)<30){const t=1-sm(18,30,pathD(x,z));c=c.map((v,i)=>lerp(v,PATH[i],t))}
+  if(passK(z)>.2&&x>1760&&x<1840){const t=passK(z);c=c.map((v,i)=>lerp(v,PATH[i],t*.7))}
+  return c}
+ if(x>CLX0-6)return[176,104,62];
+ const n=vn(x/110,z/110,2),n2=vn(x/31,z/31,4);let c=[lerp(GRASS[0],GRASS2[0],n),lerp(GRASS[1],GRASS2[1],n),lerp(GRASS[2],GRASS2[2],n)];c=c.map(v=>v*(.93+n2*.12));
+ if(x>AX0&&x<AX1&&z>AZ0&&z<AZ1)c=[110,196,82];
+ return c}
+function ground(mb,cx,cz){const x0=cx*CS,z0=cz*CS,x1=min(MW,x0+CS),z1=min(MH,z0+CS);
+ for(let z=z0;z<z1;z+=GC)for(let x=x0;x<x1;x+=GC){const xa=x,xb=min(x1,x+GC),za=z,zb=min(z1,z+GC);
+  const p=(X,Z)=>[X,baseH(X,Z),Z],a=p(xa,za),b=p(xb,za),c=p(xb,zb),d=p(xa,zb);
+  const ca=gcol(xa,za),cb=gcol(xb,za),cc=gcol(xb,zb),cd=gcol(xa,zb);
+  mb.wt(a,d,c,ca,cd,cc);mb.wt(a,c,b,ca,cc,cb)}}
+
+// ---------- portais (o mesmo modelo nos dois mundos) ----------
+function portalMB(){const mb=new MB(777);mb.jit=.03;
+ mb.cyl(26,28,4,16,'#8a8f99',0);mb.push().T(0,4,0).cyl(22,24,2,16,'#b4b9c2',0).pop();
+ // anel laranja (esfera do dragão) em pé
+ const n=28,R=20,r0=3.2,pts=[],rs=[];for(let i=0;i<=n;i++){const a=i/n*TAU;pts.push([cos(a)*R,26+sin(a)*R,0]);rs.push(r0)}
+ mb.tube(pts,rs,8,'#f39c12',.5,{capEnd:false,cols:['#f5a623','#e8871c']});
+ // pilares
+ for(const sd of[-1,1])mb.push().T(sd*24,4,0).cyl(3.4,3,30,8,'#9aa0aa',0).push().T(0,30,0).sph(4.4,3,8,'#ffb43a',.8).pop().pop();
+ return mb}
+
+// ---------- montagem (aos poucos, em fatias de tempo) ----------
+let CH=[],OBJ=[],LIGHTS=[],PMESH=null,building=null;
+const CHK=(x,z)=>{const i=clp(floor(x/CS),0,NCX-1),j=clp(floor(z/CS),0,NCZ-1);return CH[j*NCX+i]};
+function* gen(gl){
+ CG.fill(0);LIGHTS=[];OBJ=[];
+ const r=rng(20261026);
+ CH=[];for(let j=0;j<NCZ;j++)for(let i=0;i<NCX;i++)CH.push({i,j,g:new MB(100+j*NCX+i),o:new MB(500+j*NCX+i),gm:null,om:null,cx:(i+.5)*CS,cz:(j+.5)*CS});
+ DBW.pct=.02;yield;
+ // bordas do mundo
+ rect(0,0,MW-1,44);rect(0,MH-45,MW-1,MH-1);rect(0,0,44,MH-1);rect(MW-45,0,MW-1,MH-1);
+ // penhasco (fora da passagem)
+ for(let z=0;z<MH;z+=4)if(passK(z)<.6)rect(CLX0-4,z,CLX1+6,z+3);
+ // paredões da passagem
+ rect(1520,PZC-80,1840,PZC-52);rect(1520,PZC+52,1840,PZC+80);
+ // chão
+ for(const c of CH){ground(c.g,c.i,c.j);}
+ DBW.pct=.12;yield;
+ // ruas e penhasco
+ {const c=CHK(760,1120);roads(c.o);}
+ {const mbs={};for(const c of CH)mbs[c.i+','+c.j]=c;cliffWall(CHK(CLX0,PZC).o,r)}
+ // Corporação Cápsula
+ capsuleCorp(CHK(CCX,CCZ).o);
+ circ(CCX,CCZ,CCR+4);circ(CCX-230,CCZ+40,36);circ(CCX+230,CCZ+40,36);circ(CCX-170,CCZ-150,48);circ(CCX+170,CCZ-150,48);
+ rect(CCX-26,CCZ+CCR-20,CCX+26,CCZ+CCR+24);
+ LIGHTS.push({x:CCX,y:40,z:CCZ+CCR+30,r:120,cr:1,cg:.9,cb:.6,k:.35});
+ // parque com chafariz na frente da Corporação Cápsula
+ {const mb=CHK(760,900).o,fx=760,fz=900;
+  mb.push().T(fx,.2,fz).cyl(70,70,.4,32,'#d8d3c6',0);mb.cyl(26,27,4.5,24,'#e9e6dd',0);mb.push().T(0,3.4,0).cyl(24,24,.6,24,'#4aa3df',.15).pop();
+  mb.push().T(0,0,0).cyl(4,3,14,10,'#e9e6dd',0).pop();mb.push().T(0,14,0).cyl(3,10,3,14,'#e9e6dd',0).pop();mb.push().T(0,16.5,0).cyl(9,9,.6,14,'#4aa3df',.2).pop();mb.pop();
+  circ(fx,fz,28);
+  // canteiros e cerca-viva
+  for(const[dx,dz]of[[-150,-40],[150,-40],[-150,60],[150,60]]){mb.push().T(fx+dx,0,fz+dz).box(110,5,26,'#3f8f3a',0,true).pop();for(let k=0;k<8;k++)mb.push().T(fx+dx-46+k*13,5.5,fz+dz).sph(2.6,2,6,['#e53935','#fdd835','#f06292','#ffffff'][k%4],.1).pop();rect(fx+dx-56,fz+dz-14,fx+dx+56,fz+dz+14)}
+  mb.push().T(fx,.25,(CCZ+CCR+fz)/2).box(40,.4,fz-CCZ-CCR,'#d8d3c6',0,true).pop()}
+ // heliponto
+ {const mb=CHK(1000,1000).o;mb.push().T(980,.3,1010).box(90,.6,90,'#7a7f88',0,true);mb.push().T(0,.65,0).cyl(34,34,.2,32,'#f4f4f0',0).pop();mb.push().T(0,.7,0).cyl(30,30,.2,32,'#7a7f88',0).pop();
+  mb.push().T(0,.8,-12).RX(-PI/2);text(mb,'C',4.2,.2,'#f4f4f0',0);mb.pop();mb.pop()}
+ DBW.pct=.25;yield;
+ // arena do torneio
+ arena(CHK(ACX,ACZ).o,r);
+ // colisão da arena: muros (com portão), templo, arquibancadas
+ rect(AX0-4,AZ0,AX0+4,AZ1);rect(AX1-4,AZ0,AX1+4,AZ1);rect(AX0,AZ0-4,AX1,AZ0+4);rect(AX0,AZ1-4,ACX-36,AZ1+4);rect(ACX+36,AZ1-4,AX1,AZ1+4);
+ rect(ACX-152,AZ0+16,ACX+152,AZ0+80);
+ for(const sd of[-1,1]){const cx=ACX+sd*(AH+80);rect(cx-50,ACZ-154,cx+50,ACZ+154)}
+ for(let z=AZ0+40;z<AZ1;z+=70){LIGHTS.push({x:AX0+3,y:26,z,r:46,cr:1,cg:.62,cb:.25,k:.25})}
+ // palmeiras do pátio
+ {const mb=CHK(ACX,ACZ).o;for(const[x,z]of[[AX0+40,AZ0+90],[AX1-40,AZ0+90],[AX0+40,AZ1-80],[AX1-40,AZ1-80],[AX0+120,AZ0+80],[AX1-120,AZ0+80],[ACX-80,AZ1-50],[ACX+80,AZ1-50],[AX0+36,ACZ],[AX1-36,ACZ]]){palm(mb,x,z,1.15,r);circ(x,z,4)}}
+ DBW.pct=.35;yield;
+ // casas e prédios nos quarteirões
+ const BLK=[[180,180,390,1090,'w'],[1130,180,1490,1090,'e'],[180,1150,390,2080,'w'],[1130,1150,1490,2080,'e'],[450,180,1070,330,'n'],[450,1150,1070,1340,'m'],[450,1950,1070,2080,'s']];
+ const occ=[];const free=(x,z,R)=>{for(const o of occ)if(hypot(o[0]-x,o[1]-z)<o[2]+R+14)return false;if(onRoad(x,z,R+6))return false;if(hypot(x-SPAWN.x,z-SPAWN.z)<60||hypot(x-BACK.x,z-BACK.z)<70)return false;return true};
+ // as cúpulas do conjunto da Corporação Cápsula ocupam espaço
+ occ.push([CCX,CCZ,CCR+10],[CCX-230,CCZ+40,40],[CCX+230,CCZ+40,40],[760,900,90],[980,1010,60]);
+ let nb=0;
+ for(const[bx0,bz0,bx1,bz1,kind]of BLK){for(let tries=0;tries<260;tries++){const x=bx0+r()*(bx1-bx0),z=bz0+r()*(bz1-bz0);
+   const t=r();let R,fn;
+   if(t<.38){R=26+r()*18;fn='dome'}else if(t<.55){R=18+r()*8;fn='stilt'}else if(t<.75){R=18+r()*10;fn='cap'}else{R=26+r()*14;fn='tower'}
+   if(kind==='n'||kind==='s'||kind==='m'){if(fn==='tower'&&r()<.5)fn='dome'}
+   if(!free(x,z,R))continue;occ.push([x,z,R]);nb++;
+   const mb=CHK(x,z).o,roof=ROOF[(r()*ROOF.length)|0],yaw=atan2(760-x,1120-z)+(r()-.5)*.6;
+   if(fn==='dome'){domeHouse(mb,x,z,R,roof,yaw,r);circ(x,z,R+2)}
+   else if(fn==='stilt'){stiltHouse(mb,x,z,R,roof,yaw,r);circ(x,z,R*.3+2)}
+   else if(fn==='cap'){capTower(mb,x,z,R,60+r()*90,roof,yaw,r);circ(x,z,R+2)}
+   else{const w=R*1.6,d=R*1.3,H=90+r()*150;tower(mb,x,z,w,d,H,round(yaw/(PI/2))*(PI/2),r);orect(x,z,w/2+2,d/2+2,-round(yaw/(PI/2))*(PI/2))}}}
+ DBW.pct=.5;yield;
+ // árvores: ao longo das ruas, nos quarteirões e a floresta da borda
+ let nt=0;const treeAt=(x,z,s)=>{if(blocked(x,z))return;for(const o of occ)if(hypot(o[0]-x,o[1]-z)<o[2]+8)return;if(onRoad(x,z,4))return;if(x>AX0-6&&x<AX1+6&&z>AZ0-6&&z<AZ1+6)return;
+  tree(CHK(x,z).o,x,z,s,r);circ(x,z,3.5*s);occ.push([x,z,9*s]);nt++};
+ for(const[x0,z0,x1,z1]of ROADS){const hx=x0===x1,L=hypot(x1-x0,z1-z0);for(let s=30;s<L;s+=58){for(const sd of[-1,1]){const x=hx?x0+sd*(RWH+SWK+12):x0+s,z=hx?z0+s:z0+sd*(RWH+SWK+12);if(r()<.8)treeAt(x,z,.9+r()*.3)}}}
+ for(let k=0;k<700;k++){const x=60+r()*(CLX0-80),z=60+r()*(MH-120);const edge=x<140||z<140||z>MH-140;if(!edge&&r()<.55)continue;treeAt(x,z,edge?1.1+r()*.6:.9+r()*.4)}
+ DBW.pct=.62;yield;
+ // deserto: mesas, torres de pedra, cactos, arbustos e pedras
+ const docc=[];const dfree=(x,z,R)=>{for(const o of docc)if(hypot(o[0]-x,o[1]-z)<o[2]+R+40)return false;if(pathD(x,z)<R+50)return false;if(abs(z-PZC)<R+90&&x<1950)return false;return true};
+ let nm=0;
+ // anel de mesas na borda (paredão do deserto)
+ for(let x=CLX1+80;x<MW-60;x+=150){for(const z of[60,MH-60]){const R=70+r()*50;const H=mesa(CHK(x,z).o,x+(r()-.5)*40,z,R,140+r()*120,r,r()*TAU);docc.push([x,z,R]);nm++}}
+ for(let z=200;z<MH-150;z+=150){const x=MW-60,R=70+r()*50;mesa(CHK(x,z).o,x,z+(r()-.5)*40,R,140+r()*120,r,r()*TAU);docc.push([x,z,R]);nm++}
+ DBW.pct=.7;yield;
+ for(let tries=0;tries<900&&nm<70;tries++){const x=CLX1+60+r()*(MW-CLX1-200),z=120+r()*(MH-240),R=r()<.3?24+r()*20:50+r()*80;if(!dfree(x,z,R))continue;
+  const H=R<45?110+r()*120:120+r()*200;mesa(CHK(x,z).o,x,z,R,H,r,r()*TAU);docc.push([x,z,R]);circ(x,z,R*.95);nm++;
+  if(nm%10===0){DBW.pct=.7+nm/70*.15;yield}}
+ for(const[x,z,R]of docc)circ(x,z,R*.95);
+ const dok=(x,z,pad)=>{if(blocked(x,z))return false;for(const o of docc)if(hypot(o[0]-x,o[1]-z)<o[2]*1.2+pad)return false;return true};
+ for(let k=0;k<180;k++){const x=CLX1+40+r()*(MW-CLX1-120),z=80+r()*(MH-160);if(!dok(x,z,10)||pathD(x,z)<24)continue;cactus(CHK(x,z).o,x,z,.9+r()*.6,r);circ(x,z,3.5)}
+ for(let k=0;k<260;k++){const x=CLX1+40+r()*(MW-CLX1-120),z=80+r()*(MH-160);if(!dok(x,z,4))continue;(r()<.55?shrub:boulder)(CHK(x,z).o,x,z,.8+r()*1.2,r)}
+ DBW.pct=.88;yield;
+ // portão da Cápsula no alto da passagem
+ {const mb=CHK(1560,PZC).o;mb.push().T(1580,0,PZC);for(const sd of[-1,1])mb.push().T(0,0,sd*40).box(24,40,16,'#eef0f2',0,true).pop();
+  mb.push().T(0,40,0).box(30,14,100,'#eef0f2',0,true).pop();mb.push().T(15.2,47,0).box(.6,10,40,CCB,0,true).pop();
+  mb.push().T(15.8,42,0).RY(PI/2);text(mb,'C',1.6,.4,'#ffffff',0);mb.pop();mb.pop();
+  rect(1568,PZC-50,1592,PZC-32);rect(1568,PZC+32,1592,PZC+50)}
+ // portal de volta
+ {const mb=CHK(BACK.x,BACK.z).o;mb.push().T(BACK.x,floorY(BACK.x,BACK.z),BACK.z).RY(PI/2);mb.inst(portalMB(),mb.m);mb.push().T(0,61,0).box(92,22,1.6,'#3a2a1a',0);for(const ry of[0,PI])mb.push().RY(ry).T(0,-7,.8).push();text(mb,'MUNDO 1',2,.8,'#ffd84a',.5);mb.pop().pop();mb.pop();mb.pop();
+  for(const sd of[-1,1])circ(BACK.x,BACK.z+sd*24,5)}
+ DBW.pct=.94;yield;
+ // sobe tudo para a placa de vídeo
+ for(const c of CH){c.gm=c.g.count?H3.upload(gl,c.g.pack()):null;c.om=c.o.count?H3.upload(gl,c.o.pack()):null;c.g=null;c.o=null}
+ PMESH=H3.upload(gl,portalMB().pack());
+ DBW.pct=1;DBW.ready=true}
+function step(ms){const gl=H3.gl();if(!gl)return false;if(DBW.ready)return true;if(!building)building=gen(gl);const t0=performance.now();
+ while(performance.now()-t0<ms){const s=building.next();if(s.done){building=null;return true}}return DBW.ready}
+function freeAll(){const gl=H3.gl();if(gl&&!gl.isContextLost())for(const c of CH){if(c.gm)gl.deleteBuffer(c.gm.vbo);if(c.om)gl.deleteBuffer(c.om.vbo)}CH=[];DBW.ready=false;building=null;DBW.pct=0}
+
+DBW.stats=()=>{let g=0,o=0;for(const c of CH){if(c.gm)g+=c.gm.n;if(c.om)o+=c.om.n}return{g:g/3|0,o:o/3|0}};
+// ---------- desenho ----------
+const FAR=2600;
+function draw(t,dyn){H3.skyDraw();const F=H3.S.foc||H3.S.cam;
+ for(const c of CH){const d=hypot(c.cx-F.x,c.cz-F.z);if(d>FAR+CS)continue;
+  if(c.gm&&H3.vis(c.gm.cx,c.gm.cy,c.gm.cz,c.gm.rad))H3.mesh(c.gm,null,LIGHTS,dyn,{});
+  if(c.om&&H3.vis(c.om.cx,c.om.cy,c.om.cz,c.om.rad))H3.mesh(c.om,null,LIGHTS,dyn,{})}}
+function shadow(t,F){for(const c of CH)if(c.om&&H3.shVis(c.om.cx,c.om.cy,c.om.cz,c.om.rad))H3.shMesh(c.om,null,false)}
+function sprites(t){const T=H3.tex;if(!T)return;const s=t/1000;
+ // brilho do portal de volta
+ const y=floorY(BACK.x,BACK.z)+26;H3.spr(T.glow,BACK.x,y,BACK.z,52,52,null,[1,.65,.2,.35+.1*sin(s*3)],true,0,true);
+ H3.spr(T.glow,BACK.x,y,BACK.z,30,30,null,[1,.9,.5,.5],true,0,true)}
+function frameFx(t,Cm){const FX=H3.fx;if(!FX)return;
+ // poeira no deserto
+ if(Cm.x>CLX0&&Math.random()<.25)FX.emit({x:Cm.x+(Math.random()-.5)*300,y:floorY(Cm.x,Cm.z)+2+Math.random()*8,z:Cm.z+(Math.random()-.5)*300,vx:.25+Math.random()*.3,vy:.02,vz:(Math.random()-.5)*.1,g:0,life:2200,s0:4,s1:9,c:[.86,.66,.42],a:.25,add:false,tex:'dot',drag:.999});
+ // faíscas no portal
+ if(Math.random()<.35&&hypot(Cm.x-BACK.x,Cm.z-BACK.z)<500)FX.emit({x:BACK.x+(Math.random()-.5)*4,y:floorY(BACK.x,BACK.z)+8+Math.random()*36,z:BACK.z+(Math.random()-.5)*36,vx:0,vy:.25,vz:0,g:0,life:900,s0:2.4,s1:.4,c:[1,.75,.3],a:.9,tex:'dot'})}
+
+// ---------- a cena 3D ----------
+const SUN=[-.45,.78,.42],SUNC=[1.12,1.0,.84],SKYA=[.36,.6,.92],SKYB=[.78,.88,.98],GNDA=[.36,.32,.24];
+const SCN=H3.scenes=H3.scenes||{};
+SCN.db={id:'db',K:1,OX:0,OY:0,eye:25,camD:92,p3:-.18,pl:[[-.95,.85],[-1.0,.4]],amb:[1.08,1.05,.98],camLight:[0,0,0],iso:false,
+ get fx(){return typeof fight!=='undefined'&&fight?fight.x+8:0},get fz(){return typeof fight!=='undefined'&&fight?fight.y+14:0},
+ get lights(){return LIGHTS},
+ active:()=>typeof world!=='undefined'&&world===WID,
+ built:()=>DBW.ready,
+ build:gl=>{while(!step(50)){}},
+ stepBuild:ms=>{try{return step(max(ms,14))}catch(e){console.error('DBW',e);return true}},progress:()=>DBW.pct,
+ free:()=>freeAll(),
+ env:()=>{H3.env({fog:[.78,.86,.95,.00072],ambT:[1.1,1.08,1],ambB:[.6,.6,.55],sun:SUN,sunC:SUNC,skyA:SKYA,skyB:SKYB,gndA:GNDA,wind:[1.4,.6]})},
+ floorY:(x,z)=>floorY(x,z),
+ step:o=>{const ok=(x,z)=>!blocked(x,z);if(ok(o.x,o.z))return;if(ok(o.x,o.oz)){o.z=o.oz;return}if(ok(o.ox,o.z)){o.x=o.ox;return}o.x=o.ox;o.z=o.oz},
+ camOk:pz=>(x,z)=>x>8&&z>8&&x<MW-8&&z<MH-8&&!(hypot(x-CCX,z-CCZ)<CCR-6),
+ camY:(cy,cz,cx)=>max(cy,floorY(cx===undefined?MW/2:cx,cz)+6),
+ enter(){},leave(){},clear(){},
+ boss:()=>null,isTgt:e=>!!e,tgt:e=>e?[e.x+8,floorY(e.x+8,e.y+14)+16,e.y+14,30,floorY(e.x+8,e.y+14)]:null,bossPlan:()=>null,
+ flicker:()=>{},draw,sprites,frameFx,shadow,shake:()=>null,flash:()=>0,
+ fbPos:()=>null};
+
+// ---------- o mundo no jogo (índice 4) ----------
+const map4=[];for(let y=0;y<TH;y++){map4[y]=new Array(TW).fill(0)}
+try{WD[WID]={map:map4,EN:[]};QS[WID]=QS[0]}catch(e){console.error('DBW mundo',e)}
+DBW.map=map4;
+// entrar e sair pelos portais
+let cool=0;
+function toast_(m){try{if(typeof toast==='function')toast(m)}catch(e){}}
+DBW.go=function(){if(world!==0||Date.now()<cool)return;cool=Date.now()+4000;
+ goWorld(WID);P.x=SPAWN.x-8;P.y=SPAWN.z-14;P.dir=3;try{save()}catch(e){}toast_('Mundo 2 · Dragon Ball! Cidade do Oeste')};
+DBW.back=function(){if(world!==WID||Date.now()<cool)return;cool=Date.now()+4000;
+ goWorld(0);P.x=M1P.x-8;P.y=M1P.z+46-14;P.dir=2;try{save()}catch(e){}toast_('De volta ao Mundo 1')};
+setInterval(()=>{try{if(typeof world==='undefined'||lock)return;const x=P.x+8,z=P.y+14;
+ if(world===0&&hypot(x-M1P.x,z-M1P.z)<16)DBW.go();
+ else if(world===WID&&hypot(x-BACK.x,z-BACK.z)<16)DBW.back()}catch(e){}},120);
+// voltar para o Mundo 2 ao abrir o jogo, se foi lá que parou
+setTimeout(()=>{try{const sv=typeof SV!=='undefined'?SV:null;if(sv&&sv.w===WID){goWorld(WID);if(typeof sv.px==='number'&&!DBW.solid(sv.px+8,sv.py+14)){P.x=sv.px;P.y=sv.py}else{P.x=SPAWN.x-8;P.y=SPAWN.z-14}}}catch(e){}},0);
+
+// ---------- o portal no Mundo 1 (parte do campo 3D) ----------
+const FLD=H3.fld;
+if(FLD&&FLD.reg){let pm=null,py=0;
+ FLD.reg({build:function*(gl){py=FLD.hAt(M1P.x,M1P.z);const mb=new MB(778);mb.push().T(M1P.x,py-.4,M1P.z);mb.inst(portalMB(),mb.m);mb.pop();
+   mb.push().T(M1P.x,py+61,M1P.z);mb.box(92,22,1.6,'#3a2a1a',0);for(const ry of[0,PI])mb.push().RY(ry).T(0,-7,.8).push();text(mb,'MUNDO 2',2,.8,'#ffd84a',.5);mb.pop().pop();mb.pop();
+   pm=H3.upload(gl,mb.pack());yield 1},
+  draw:(t,dyn)=>{if(pm&&H3.vis(pm.cx,pm.cy,pm.cz,pm.rad))H3.mesh(pm,null,FLD.lights,dyn,{})},
+  sprites:t=>{const T=H3.tex;if(!T||!pm)return;const s=t/1000;H3.spr(T.glow,M1P.x,py+26,M1P.z,52,52,null,[1,.65,.2,.35+.1*sin(s*3)],true,0,true)},
+  frame:(t,C,dt)=>{const FX=H3.fx;if(FX&&pm&&Math.random()<.35&&hypot(C.x-M1P.x,C.z-M1P.z)<500)FX.emit({x:M1P.x+(Math.random()-.5)*36,y:py+8+Math.random()*36,z:M1P.z+(Math.random()-.5)*4,vx:0,vy:.25,vz:0,g:0,life:900,s0:2.4,s1:.4,c:[1,.75,.3],a:.9,tex:'dot'})},
+  free:()=>{const gl=H3.gl();if(gl&&pm)gl.deleteBuffer(pm.vbo);pm=null}});
+ // colisão dos pilares do portal no Mundo 1 fica livre (dá para atravessar o anel)
+}
+})();
+
 </script>
 <script>
 // ===== Editor do ADM: edits.js (aplica os ajustes publicados, todo mundo) · editor.js (painel de edição, só ADM) =====
