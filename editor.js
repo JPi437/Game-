@@ -107,13 +107,15 @@ function undo(){if(!ED.hs.length)return;ED.rs.push(E.json());E.setData(JSON.pars
 function redo(){if(!ED.rs.length)return;ED.hs.push(E.json());E.setData(JSON.parse(ED.rs.pop()));fixSel();render()}
 
 // ============================================================ cena / câmera ============================================================
-const inField=()=>typeof world!=='undefined'&&world===0&&!!(S.mode&&H3.fld&&H3.fld.ready&&H3.fld.nat&&H3.fld.nat.trees);
+const inField=()=>typeof world!=='undefined'&&((world===0&&!!(S.mode&&H3.fld&&H3.fld.ready&&H3.fld.nat&&H3.fld.nat.trees))||(world===4&&!!(S.mode&&window.DBW&&DBW.ready)));
+const W4=()=>typeof world!=='undefined'&&world===4&&!!window.DBW;
+const gh=(x,z)=>W4()?DBW.floorY(x,z):H3.fld.hAt(x,z);
 const focalPx=()=>{const C=S.cam;return (S.cssH/2)/tan((C&&C.fov||1)/2)};
 function basis(C){const cp=cos(C.pitch),fw=[sin(C.yaw)*cp,sin(C.pitch),-cos(C.yaw)*cp],rt=[cos(C.yaw),0,sin(C.yaw)],up=[rt[1]*fw[2]-rt[2]*fw[1],rt[2]*fw[0]-rt[0]*fw[2],rt[0]*fw[1]-rt[1]*fw[0]];return{fw,rt,up}}
 function rayAt(cx,cy){const C=S.cam,b=basis(C),th=tan(C.fov/2),a=S.cssW/S.cssH,nx=(cx/S.cssW)*2-1,ny=1-(cy/S.cssH)*2;
  const d=[b.fw[0]+b.rt[0]*nx*th*a+b.up[0]*ny*th,b.fw[1]+b.rt[1]*nx*th*a+b.up[1]*ny*th,b.fw[2]+b.rt[2]*nx*th*a+b.up[2]*ny*th],l=hypot(d[0],d[1],d[2]);
  return{o:[C.x,C.y,C.z],d:[d[0]/l,d[1]/l,d[2]/l]}}
-function groundAt(cx,cy){const r=rayAt(cx,cy),hA=H3.fld.hAt;let t=2,pt=0;
+function groundAt(cx,cy){const r=rayAt(cx,cy),hA=gh;let t=2,pt=0;
  for(let i=0;i<400&&t<6000;i++){const x=r.o[0]+r.d[0]*t,y=r.o[1]+r.d[1]*t,z=r.o[2]+r.d[2]*t;
   if(y<hA(x,z)){let a=pt,b=t;for(let k=0;k<14;k++){const m=(a+b)/2,xm=r.o[0]+r.d[0]*m,ym=r.o[1]+r.d[1]*m,zm=r.o[2]+r.d[2]*m;if(ym<hA(xm,zm))b=m;else a=m}
    const x2=r.o[0]+r.d[0]*b,z2=r.o[2]+r.d[2]*b;return[x2,hA(x2,z2),z2]}
@@ -121,30 +123,31 @@ function groundAt(cx,cy){const r=rayAt(cx,cy),hA=H3.fld.hAt;let t=2,pt=0;
  return null}
 
 // ============================================================ seleção ============================================================
-const NM={tree:'Árvore',bush:'Arbusto',rock:'Pedra',decor:'Decoração',scn:'Cenário'};
+const NM={tree:'Árvore',bush:'Arbusto',rock:'Pedra',decor:'Decoração',scn:'Cenário',db:'Construção'};
 const PALN={g:'Carvalho',d:'Verde escuro',s:'Doente',r:'Morrendo',a:'Salmão',x:'Seca',p:'Abeto'};
-function varLabel(kind,k){if(kind==='tree'){const n=PALN[k.charAt(0)]||'';return (n?n+' ':'')+k}
+function varLabel(kind,k){if(W4())return DBW.label(kind,k);if(kind==='tree'){const n=PALN[k.charAt(0)]||'';return (n?n+' ':'')+k}
  if(kind==='bush')return ({bg:'Verde',bd:'Verde escuro',bs:'Doente',bx:'Seco'})[k]+' ('+k+')';
  if(kind==='rock')return (k.charAt(1)==='d'?'Escura ':'Pedra ')+k.slice(2)+' ('+k+')';return 'Decoração '+k.slice(2)+' ('+k+')'}
 const okey=o=>o.key||(o.v&&o.v.key)||'';
+const olab=(kind,o)=>W4()?DBW.label(kind,okey(o)):okey(o);
 function enList(){try{return WD[0].EN}catch(e){return[]}}
 function fixSel(){const s=ED.sel;if(!s)return;
  if(s.type==='obj'){const o=[...E.objects()].find(q=>q._e.key===s.key&&q._e.kind===s.kind&&!q._add);if(!o){ED.sel=null}else s.o=o}
- else if(s.type==='add'){const o=E.adds.get(s.id);if(!o)ED.sel=null;else s.o=o}
+ else if(s.type==='add'){const o=E.addOf(s.id);if(!o)ED.sel=null;else s.o=o}
  else if(s.type==='mon'){if(!enList()[s.idx])ED.sel=null}}
 function selObj(o){if(o._add)ED.sel={type:'add',id:o._add,o,kind:o._a.k};else ED.sel={type:'obj',kind:o._e.kind,key:o._e.key,o}}
 function pickAt(cx,cy){const f=focalPx();let best=null,bs=1e9;
  const test=(wx,wy,wz,rad,ref)=>{const p=H3.proj(wx,wy,wz);if(!p||p[2]<2)return;const d=hypot(p[0]-cx,p[1]-cy),r=max(12,rad*f/p[2]);if(d>r)return;const sc=d/r+p[2]*.0004;if(sc<bs){bs=sc;best=ref}};
  if(ED.tab!=='mon')for(const o of E.objects())test(o.wx,o.wy,o.wz,o.rad*.8,o);
- const EN0=enList();EN0.forEach((e,i)=>{if(e.off||e.dead&&!e._o3)return;const o=e._o3;if(!o)return;test(o.x,o.y+14,o.z,18,{mon:i})});
+ const EN0=W4()?[]:enList();EN0.forEach((e,i)=>{if(e.off||e.dead&&!e._o3)return;const o=e._o3;if(!o)return;test(o.x,o.y+14,o.z,18,{mon:i})});
  return best}
 function onPick(cx,cy){if(ED.tab==='cam'||ED.tab==='save'||ED.tab==='mod')return;const r=pickAt(cx,cy);
  if(!r){ED.sel=null;render();return}
  if(r.mon!==undefined){ED.sel={type:'mon',idx:r.mon};ED.tab='mon'}else{selObj(r);if(ED.tab==='mon')ED.tab='map'}
  render()}
 function selCenter(){const s=ED.sel;if(!s)return null;
- if(s.type==='mon'){const e=enList()[s.idx];if(!e)return null;const o=e._o3,x=o?o.x:e.x+8,z=o?o.z:e.y+15;return{x,y:H3.fld.hAt(x,z)+14,z,r:20,t:'Monstro '+(e.mon||'')+' #'+s.idx}}
- const o=s.o;if(!o)return null;return{x:o.wx,y:o.wy,z:o.wz,r:o.rad*.8,t:NM[s.kind]+' '+okey(o)}}
+ if(s.type==='mon'){const e=enList()[s.idx];if(!e)return null;const o=e._o3,x=o?o.x:e.x+8,z=o?o.z:e.y+15;return{x,y:gh(x,z)+14,z,r:20,t:'Monstro '+(e.mon||'')+' #'+s.idx}}
+ const o=s.o;if(!o)return null;return{x:o.wx,y:o.wy,z:o.wz,r:o.rad*.8,t:NM[s.kind]+' '+olab(s.kind,o)}}
 
 // ============================================================ edição do selecionado ============================================================
 function ovOfSel(){const s=ED.sel;if(!s)return{};if(s.type==='obj'){const a=E.data.o['0'];return(a&&a[s.kind]&&a[s.kind][s.key])||{}}
@@ -169,7 +172,7 @@ function delSel(){const s=ED.sel;if(!s)return;hist();
  if(s.type==='obj'){E.setObj(s.kind,s.key,{d:1})}else if(s.type==='add'){E.delAdd(s.id)}else if(s.type==='mon'){E.setMon(s.idx,{d:1})}
  ED.sel=null;render()}
 function resetSel(){const s=ED.sel;if(!s)return;hist();if(s.type==='obj')E.resetObj(s.kind,s.key);else if(s.type==='mon'){const M=E.data.m['0'];if(M&&M[s.idx]){delete M[s.idx];E.touch()}}render()}
-function placeNew(kind,v,mode){if(!inField()){toast('Entre no 3D do Mundo 1');return}
+function placeNew(kind,v,mode){if(!inField()){toast('Entre no 3D do Mundo 1 ou do Mundo 2');return}
  let x,z;if(mode==='aim'){const g=groundAt(S.cssW/2,S.cssH/2);if(!g){toast('Mire para o chão');return}x=g[0];z=g[2]}
  else{const y=S.yaw||0;x=P.x+8+sin(y)*42;z=P.y+14-cos(y)*42}
  hist();const id=E.addObj({k:kind,v,x,z,r:Math.random()*PI*2});if(!id){toast('Limite de objetos adicionados');return}
@@ -177,7 +180,7 @@ function placeNew(kind,v,mode){if(!inField()){toast('Entre no 3D do Mundo 1');re
 
 // ============================================================ abas ============================================================
 function tabMap(B){
- if(!inField()){B.appendChild(hint('Entre no modo 3D do Mundo 1 para editar o mapa (botão Perspectiva).'));return}
+ if(!inField()){B.appendChild(hint('Entre no modo 3D do Mundo 1 ou do Mundo 2 para editar o mapa (botão Perspectiva).'));return}
  B.appendChild(h4('Ferramenta'));
  B.appendChild(row(btn('👆 Selecionar',()=>{ED.tool='sel';render()},ED.tool==='sel'?'on':''),btn('✥ Mover arrastando',()=>{ED.tool='mov';render()},ED.tool==='mov'?'on':''),btn('↶',undo,'sm'),btn('↷',redo,'sm')));
  B.appendChild(hint(ED.tool==='sel'?'Toque num objeto, árvore ou monstro do mapa para selecionar. Arraste a tela para olhar.':'Com um objeto selecionado, arraste no chão para movê-lo (a câmera fica parada).'));
@@ -186,7 +189,7 @@ function tabMap(B){
  if(!s||s.type==='mon'){B.appendChild(hint(s?'Monstro selecionado: veja a aba Monstros.':'Nada selecionado.'))}
  else{
   const o=s.o,ov=ovOfSel(),isAdd=s.type==='add';
-  const t=el('div');t.style.cssText='font-weight:900;color:#ffe84a;margin:2px 0';t.textContent=NM[s.kind]+' · '+okey(o)+(isAdd?' (adicionado)':'');B.appendChild(t);
+  const t=el('div');t.style.cssText='font-weight:900;color:#ffe84a;margin:2px 0';t.textContent=NM[s.kind]+' · '+olab(s.kind,o)+(isAdd?' (adicionado)':'');B.appendChild(t);
   const e=o._e.o;
   const g=k=>{const v=ovOfSel();return v[k]!==undefined?v[k]:(k==='c'?[1,1,1]:(k[0]==='s'?1:0))};
   B.appendChild(el('div','hint','Posição '+round(o.x)+' , '+round(o.z)+' · altura '+fmt(o.y,1)));
@@ -203,27 +206,27 @@ function tabMap(B){
   const isScn=!!o._scn;
   const cc=k=>sld({label:({0:'Cor R',1:'Cor G',2:'Cor B'})[k],min:0,max:2,step:.05,def:1,get:()=>g('c')[k],set:v=>{const c=(ovOfSel().c||[1,1,1]).slice();c[k]=v;patchSel({c})},start:hist});
   if(!isScn){B.appendChild(cc(0));B.appendChild(cc(1));B.appendChild(cc(2))}
-  const solid=(e0=>{const def=isScn?(o._scn.solid?1:0):(s.kind==='tree'||s.kind==='rock'||s.kind==='bush')?1:0;return ov.col!==undefined?ov.col:def})();
+  const solid=(e0=>{const def=W4()?1:isScn?(o._scn.solid?1:0):(s.kind==='tree'||s.kind==='rock'||s.kind==='bush')?1:0;return ov.col!==undefined?ov.col:def})();
   const ck=el('label');ck.style.cssText='display:flex;gap:6px;align-items:center;margin:6px 0';const cb=el('input');cb.type='checkbox';cb.checked=!!solid;
   cb.onchange=()=>{hist();patchSel({col:cb.checked?1:0})};ck.append(cb,el('span','','Bloqueia o andar (colisão) — vale para o objeto movido/adicionado'));B.appendChild(ck);
   B.appendChild(row(isScn?null:btn('⧉ Duplicar',dupSel,'blu'),btn(isScn?'🙈 Esconder':'🗑 Apagar',delSel,'red'),isAdd?null:btn('↺ Original',resetSel)));
   if(isScn&&(o._e.key==='star'||o._e.key==='mach'))B.appendChild(hint('O botão de '+(o._e.key==='star'?'roletar':'passivas')+' passa a aparecer perto do novo lugar.'))
  }
- B.appendChild(h4('Cenário fixo (estrela, máquina, fonte, pilares)'));
+ if(!W4()){B.appendChild(h4('Cenário fixo (estrela, máquina, fonte, pilares)'));
  {const L=el('div','lst');L.style.maxHeight='140px';const ls=[...E.scn].filter(p=>!p.hid);
   if(!ls.length)L.appendChild(hint(E.scn.length?'Tudo escondido (veja a lixeira).':'Carregando o cenário…'));
   ls.forEach(p=>{const d=el('div',ED.sel&&ED.sel.o===p?'on':''),sp=el('span');const ov=(E.data.o['0']&&E.data.o['0'].scn&&E.data.o['0'].scn[p._e.key])||null;sp.textContent=p.key+(ov?' •':'');d.append(sp);d.onclick=()=>{ED.sel={type:'obj',kind:'scn',key:p._e.key,o:p};render();moveCamTo(p.x,p.z)};L.appendChild(d)});
-  B.appendChild(L)}
+  B.appendChild(L)}}
  B.appendChild(h4('Adicionar objeto'));
- const kinds=[['tree','Árvore'],['bush','Arbusto'],['rock','Pedra'],['decor','Decoração']];
- let kind=ED._addKind||'tree';const vs=()=>E.variants(kind);
+ const kinds=W4()?[['tree','Árvore (do Mundo 1)'],['db','Construção / planta']]:[['tree','Árvore'],['bush','Arbusto'],['rock','Pedra'],['decor','Decoração']];
+ let kind=ED._addKind||'tree';if(!kinds.some(k=>k[0]===kind))kind='tree';const vs=()=>E.variants(kind);
  const ksel=sel(kinds,kind,v=>{ED._addKind=v;ED._addVar=null;render()});
  const arr=vs();let cv=ED._addVar&&arr.includes(ED._addVar)?ED._addVar:arr[0];
  const vsel=sel(arr.map(k=>[k,varLabel(kind,k)]),cv,v=>{ED._addVar=v});
  B.appendChild(row(ksel,vsel));
  B.appendChild(row(btn('+ Na mira (centro da tela)',()=>placeNew(kind,ED._addVar&&arr.includes(ED._addVar)?ED._addVar:arr[0],'aim'),'grn'),btn('+ Na frente do jogador',()=>placeNew(kind,ED._addVar&&arr.includes(ED._addVar)?ED._addVar:arr[0],'front'),'grn')));
  B.appendChild(h4('Lixeira'));
- const gone=[...E.gone.entries()];
+ const gone=E.goneList();
  if(!gone.length)B.appendChild(hint('Nenhum objeto original apagado.'));
  else{const L=el('div','lst');gone.forEach(([key,g])=>{const d=el('div');const sp=el('span');sp.textContent=NM[g.kind]+' '+okey(g.obj)+(key.split(':')[1]?' @'+key.split(':')[1]:'');d.append(sp,btn('Voltar',()=>{hist();E.setObj(g.kind,key,{d:0})},'sm'));
    d.onclick=()=>{moveCamTo(g.o.x,g.o.z)};L.appendChild(d)});B.appendChild(L)}
@@ -328,12 +331,12 @@ function startFly(mode){if(!S.mode){toast('Entre no modo 3D primeiro');return}
  D.body.classList.add('edFlyOn');flyApply()}
 function stopFly(){if(!ED.fly)return;ED.fly=null;S.dbg=null;D.body.classList.remove('edFlyOn')}
 function camClose(stay){startFly('orbit');if(!ED.fly)return;ED.fly.od=48;ED.fly.pitch=-.12;if(!stay)ED.tab='cam';render()}
-function moveCamTo(x,z){if(!ED.fly)return;const y=H3.fld.hAt(x,z);const b=basis(ED.fly);ED.fly.x=x-b.fw[0]*90;ED.fly.z=z-b.fw[2]*90;ED.fly.y=max(y+40,ED.fly.y);flyApply()}
+function moveCamTo(x,z){if(!ED.fly)return;const y=gh(x,z);const b=basis(ED.fly);ED.fly.x=x-b.fw[0]*90;ED.fly.z=z-b.fw[2]*90;ED.fly.y=max(y+40,ED.fly.y);flyApply()}
 function flyApply(){const f=ED.fly;if(!f)return;
- if(f.mode==='orbit'){const px=P.x+8,pz=P.y+14,py=H3.fld.hAt(px,pz)+14,cp=cos(f.pitch);f.x=px-sin(f.yaw)*cp*f.od;f.y=py-sin(f.pitch)*f.od;f.z=pz+cos(f.yaw)*cp*f.od;
+ if(f.mode==='orbit'){const px=P.x+8,pz=P.y+14,py=gh(px,pz)+14,cp=cos(f.pitch);f.x=px-sin(f.yaw)*cp*f.od;f.y=py-sin(f.pitch)*f.od;f.z=pz+cos(f.yaw)*cp*f.od;
   const off=ED.on&&!ED.play&&!ED.min?(ED.left?-1:1)*Math.atan((P_.offsetWidth/2)/focalPx()):0; // deixa o jogador na parte visível (fora do painel)
-  S.dbg={x:f.x,y:max(f.y,H3.fld.hAt(f.x,f.z)+3),z:f.z,yaw:f.yaw+off,pitch:f.pitch,fov:f.fov};return}
- if(f.ground)f.y=max(f.y,H3.fld.hAt(f.x,f.z)+2.5);
+  S.dbg={x:f.x,y:max(f.y,gh(f.x,f.z)+3),z:f.z,yaw:f.yaw+off,pitch:f.pitch,fov:f.fov};return}
+ if(f.ground)f.y=max(f.y,gh(f.x,f.z)+2.5);
  S.dbg={x:f.x,y:f.y,z:f.z,yaw:f.yaw,pitch:f.pitch,fov:f.fov}}
 let upHeld=0;
 function flyStep(jx_,jy_){const f=ED.fly;if(!f||ED.play)return;const dt=1/60,sp=f.speed*(ED.turbo||ED.turboKey?3.5:1)*dt;
@@ -511,8 +514,8 @@ if(typeof tick==='function'){const t0=tick;tick=function(){
 function frameUi(){requestAnimationFrame(frameUi);
  if(ED.on&&(S.mfree!==true||document.pointerLockElement))freeMouse();
  if(ED.on){ // o motor aplica as mudanças no próximo quadro: seleciona o objeto recém-criado e refaz o painel se a lista mudou
-  if(ED.pend){const n=E.adds.get(ED.pend);if(n){selObj(n);ED.pend=null;render()}else if(Date.now()-ED.pendT>6000)ED.pend=null}
-  const sg=E.gone.size+':'+E.adds.size;if(ED._sg!==sg){ED._sg=sg;fixSel();if(!drag)render()}}
+  if(ED.pend){const n=E.addOf(ED.pend);if(n){selObj(n);ED.pend=null;render()}else if(Date.now()-ED.pendT>6000)ED.pend=null}
+  const sg=E.sig()+':'+(typeof world!=='undefined'?world:0);if(ED._sg!==sg){ED._sg=sg;fixSel();if(!drag)render()}}
  const can=!!(S&&S.mode&&!S.dead&&!S.ld&&typeof world!=='undefined'),vis=can&&E.admin!==undefined;
  if(L_._v!==can){L_._v=can;L_.style.display=can?'block':'none';if(!can&&ED.on)toggle(false)}
  if(ED.fly&&(!S.mode||S.dead)){stopFly();if(ED.on)render()}

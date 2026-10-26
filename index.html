@@ -2301,7 +2301,7 @@ const wbCan=()=>!!(window.MP&&MP.uid&&!MP.offline&&MP.db);
 const WCFG=[{w:W0,h:H0,s:[SX0,SY0],to:[TOX0,TOY0],gt:[GX0,GY0],np:[NX0,NY0],p:[SPX,SPY],d:2},
  {w:W1,h:H1,s:[SX1,SY1],to:[TOX1,TOY1],gt:[GX1,GY1],np:[13,103],p:[13*T,100*T],d:2},
  {w:W2,h:H2,s:[-50,-50],to:[-50,-50],gt:[20,19],np:[-99,-99],p:[15*T+8,20*T],d:0},
- null,{w:188,h:141,s:[-50,-50],to:[-50,-50],gt:[-50,-50],np:[-99,-99],p:[292,1106],d:3}];   // 4: Mundo 2 · Dragon Ball (só 3D, js do fim do arquivo)
+ null,{w:376,h:282,s:[-50,-50],to:[-50,-50],gt:[-50,-50],np:[-99,-99],p:[592,2226],d:3}];   // 4: Mundo 2 · Dragon Ball (só 3D, js do fim do arquivo)
 goWorld=function(n){if(n===world||!WCFG[n])return;if(n===1&&!ups.gate)return;if(n===2&&!wbCan()){toast('A Arena do Boss Mundial precisa de internet: entre na sua conta');return}
  const c=WCFG[n];world=n;W=c.w;H=c.h;SX=c.s[0];SY=c.s[1];TOX=c.to[0];TOY=c.to[1];GX=c.gt[0];GY=c.gt[1];NPC.x=c.np[0]*T;NPC.y=c.np[1]*T;
  map=WD[n].map;EN=WD[n].EN;qs=QS[n];fight=null;for(const k in fpos)delete fpos[k];P.x=c.p[0];P.y=c.p[1];P.dir=c.d;DY.length=0;PT.length=0;
@@ -18793,7 +18793,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261026144313;
+const GAME_BUILD=20261026150252;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
@@ -18956,34 +18956,40 @@ const wt=$('wM').querySelector('h2');if(wt)wt.textContent='Mundos';
 </script>
 <script>
 // ===================== Mundo 2 · Dragon Ball (só em 3D) =====================
-// Um mundo novo, feito direto em 3D (sem mapa 2D): ~5x a área do Mundo 1 (3008 x 2256 unidades; 1 unidade = 1 pixel do 2D, o jogador tem ~28).
+// Um mundo novo, feito direto em 3D (sem mapa 2D). O desenho é feito numa escala de projeto (3008 x 2256) e o mundo de verdade é K = 2 vezes maior
+// (6016 x 4512 unidades; 1 unidade = 1 pixel do 2D, o jogador tem ~28): as construções ficam do tamanho certo para o personagem.
 //  · a Cidade do Oeste: avenidas com calçadas e faixas, a Corporação Cápsula (cúpula amarela gigante com janelas azuis, letreiro "CAPSULE CORP.",
-//    torres e cúpulas menores), parque com chafariz, heliponto, casas-cúpula coloridas, torres-cápsula e prédios brancos, árvores redondas;
+//    torres e cúpulas menores), parque com chafariz, heliponto, casas-cúpula coloridas, casas em poste, torres-cápsula e prédios brancos,
+//    e as mesmas árvores do Mundo 1 (carvalho, verde escuro, salmão, abeto...);
 //  · a arena do Torneio de Artes Marciais: plataforma de ladrilhos com borda azul, templo de telhado de palha com a placa, arquibancadas lotadas,
 //    muros vermelhos com lanternas, palmeiras e bandeiras;
 //  · depois do penhasco (descida pela passagem com o portão da Cápsula), o Deserto de Yajirobe: dunas, mesas e torres de pedra gigantes em camadas,
 //    cactos, arbustos secos e pedras.
+// Prédios, casas, árvores, palmeiras, cactos e mesas são OBJETOS separados (cada um com a sua malha e a sua colisão) e o Editor do ADM mexe neles
+// (mover, girar, tamanho, cor, apagar, adicionar): os ajustes ficam em EDITS.data.o['4'] / EDITS.data.a['4'] (editor.json).
 // Entrada/saída: portal no Mundo 1 (a sudoeste da praça) e portal de volta perto do ponto de chegada.
-// O jogo continua todo no 2D por baixo (posição P em pixels); aqui: colisão (DBW.solid), altura do chão, a cena 3D (SCN.db) e os portais.
 (function(){
 'use strict';
 const H3=window.H3;
 if(!H3||!H3.MB)return;
-const MB=H3.MB;
+const MB=H3.MB,M4=H3.M4;
 const PI=Math.PI,TAU=PI*2,sin=Math.sin,cos=Math.cos,abs=Math.abs,min=Math.min,max=Math.max,floor=Math.floor,round=Math.round,sqrt=Math.sqrt,hypot=Math.hypot,atan2=Math.atan2;
 const clp=(v,a,b)=>v<a?a:v>b?b:v,lerp=(a,b,t)=>a+(b-a)*t,sm=(a,b,v)=>{v=clp((v-a)/(b-a),0,1);return v*v*(3-2*v)};
-const WID=4,MW=3008,MH=2256,TW=MW/16,TH=MH/16;
-const CLX0=1600,CLX1=1668,DY=-44,PZC=1120;            // penhasco (cidade em cima, deserto embaixo) e a passagem (rampa) no meio
-const SPAWN={x:300,z:1120},BACK={x:150,z:1120};       // chegada e portal de volta (coordenadas 3D: x = P.x+8, z = P.y+14)
+const K=2;                                             // escala: mundo = projeto x K
+const WID=4,MW=3008,MH=2256,WW=MW*K,WH=MH*K,TW=WW/16,TH=WH/16;
+const CLX0=1600,CLX1=1668,DY=-44,PZC=1120;            // (projeto) penhasco (cidade em cima, deserto embaixo) e a passagem (rampa) no meio
+const SPAWN={x:300*K,z:1120*K},BACK={x:150*K,z:1120*K};   // (mundo) chegada e portal de volta (x = P.x+8, z = P.y+14)
+const SPd={x:300,z:1120},BKd={x:150,z:1120};
 const M1P={x:352,z:584};                              // portal no Mundo 1
-const DBW=window.DBW={WID,MW,MH,ready:false,pct:0,M1P,SPAWN,BACK};
+const DBW=window.DBW={WID,K,MW:WW,MH:WH,ready:false,pct:0,M1P,SPAWN,BACK,rev:0};
 
 // ---------- ruído ----------
 function h2(i,j,s){let h=(i*374761393+j*668265263+((s|0)*1442695041))|0;h=Math.imul(h^(h>>>13),1274126177);h^=h>>>16;return(h>>>0)/4294967296}
 function vn(x,z,s){const i=floor(x),j=floor(z),fx=x-i,fz=z-j,u=fx*fx*(3-2*fx),v=fz*fz*(3-2*fz),a=h2(i,j,s),b=h2(i+1,j,s),c=h2(i,j+1,s),d=h2(i+1,j+1,s);return a+(b-a)*u+(c-a)*v+(a-b-c+d)*u*v}
 function rng(s){s=s>>>0;return()=>{s=(s+0x6D2B79F5)>>>0;let t=s;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296}}
+function hstr(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0}
 
-// ---------- relevo ----------
+// ---------- relevo (projeto) ----------
 const desertH=(x,z)=>DY+(vn(x/240,z/240,3)-.5)*16+(vn(x/70,z/70,5)-.5)*4;
 const passK=z=>1-sm(40,62,abs(z-PZC));
 function baseH(x,z){
@@ -18993,21 +18999,27 @@ function baseH(x,z){
  return h}
 // arena do torneio (plataforma de ladrilhos, 7 de altura) com escadas no norte e no sul
 const ACX=760,ACZ=1640,AH=110,APH=7;
-function floorY(x,z){let h=baseH(x,z);
+function floorD(x,z){let h=baseH(x,z);
  if(abs(x-ACX)<=AH&&abs(z-ACZ)<=AH)return h+APH;
  if(abs(x-ACX)<=34){const d=abs(z-ACZ)-AH;if(d>0&&d<22)return h+APH*(1-d/22)}
  return h}
-DBW.floorY=floorY;DBW.baseH=baseH;
+// dentro das funções de desenho (escala de projeto, a malha toda leva S(K)): o chão embaixo de um objeto feito na origem é 0
+let LOCAL=false;
+const floorY=(x,z)=>LOCAL?0:floorD(x,z);
+// mundo de verdade
+const floorW=(x,z)=>floorD(x/K,z/K)*K;
+DBW.floorY=floorW;
 
-// ---------- colisão: grade de 4 x 4 ----------
-const GW=MW>>2,GH=MH>>2,CG=new Uint8Array(GW*GH);
+// ---------- colisão: grade de 4 x 4 (projeto); CG0 = só o fixo, CG = fixo + objetos ----------
+const GW=MW>>2,GH=MH>>2,CG=new Uint8Array(GW*GH),CG0=new Uint8Array(GW*GH);
+let CGT=CG;   // onde as formas são gravadas
 function circ(x,z,r,v){v=v===undefined?1:v;const x0=max(0,(x-r)>>2),x1=min(GW-1,(x+r)>>2),z0=max(0,(z-r)>>2),z1=min(GH-1,(z+r)>>2);
- for(let j=z0;j<=z1;j++)for(let i=x0;i<=x1;i++){if(hypot(i*4+2-x,j*4+2-z)<=r)CG[j*GW+i]=v}}
-function rect(x0,z0,x1,z1,v){v=v===undefined?1:v;const a=max(0,x0>>2),b=min(GW-1,x1>>2),c=max(0,z0>>2),d=min(GH-1,z1>>2);for(let j=c;j<=d;j++)for(let i=a;i<=b;i++)CG[j*GW+i]=v}
-// retângulo girado (yaw) em volta do centro
+ for(let j=z0;j<=z1;j++)for(let i=x0;i<=x1;i++){if(hypot(i*4+2-x,j*4+2-z)<=r)CGT[j*GW+i]=v}}
+function rect(x0,z0,x1,z1,v){v=v===undefined?1:v;const a=max(0,x0>>2),b=min(GW-1,x1>>2),c=max(0,z0>>2),d=min(GH-1,z1>>2);for(let j=c;j<=d;j++)for(let i=a;i<=b;i++)CGT[j*GW+i]=v}
 function orect(cx,cz,hw,hd,yaw,v){const r=hypot(hw,hd),c=cos(yaw),s=sin(yaw);v=v===undefined?1:v;
- for(let j=max(0,(cz-r)>>2);j<=min(GH-1,(cz+r)>>2);j++)for(let i=max(0,(cx-r)>>2);i<=min(GW-1,(cx+r)>>2);i++){const dx=i*4+2-cx,dz=j*4+2-cz,lx=dx*c-dz*s,lz=dx*s+dz*c;if(abs(lx)<=hw&&abs(lz)<=hd)CG[j*GW+i]=v}}
-function blocked(x,z){if(x<0||z<0||x>=MW||z>=MH)return true;return CG[(z>>2)*GW+(x>>2)]===1}
+ for(let j=max(0,(cz-r)>>2);j<=min(GH-1,(cz+r)>>2);j++)for(let i=max(0,(cx-r)>>2);i<=min(GW-1,(cx+r)>>2);i++){const dx=i*4+2-cx,dz=j*4+2-cz,lx=dx*c-dz*s,lz=dx*s+dz*c;if(abs(lx)<=hw&&abs(lz)<=hd)CGT[j*GW+i]=v}}
+function blockedD(x,z){if(x<0||z<0||x>=MW||z>=MH)return true;return CG[(z>>2)*GW+(x>>2)]===1}
+const blocked=(x,z)=>blockedD(x/K,z/K);
 DBW.solid=(px,py)=>blocked(px,py);DBW.blocked=blocked;
 
 // ---------- cores ----------
@@ -19043,13 +19055,7 @@ function wallCyl(mb,r,h,n,base,win,rows){const fl=h/rows;for(let f=0;f<rows;f++)
   mb.push().T(0,f*fl+fl*.32,0).cyl(r,r,fl*.5,n,base,0,{cap0:false,cap1:false,cs:Array.from({length:n},(_,k)=>k%3===2?base:win)}).pop();
   mb.push().T(0,f*fl+fl*.82,0).cyl(r,r,fl*.18,n,base,0,{cap0:false,cap1:f===rows-1}).pop()}}
 
-// ---------- árvores ----------
-const LEAF=[[70,168,62],[84,184,70],[60,150,58],[96,196,80],[52,140,64]];
-function tree(mb,x,z,s,r){const y=floorY(x,z),c=LEAF[(r()*LEAF.length)|0];mb.push().T(x,y-.5,z).S(s,s,s);
- mb.cyl(2.4,1.7,13,6,'#7a5230',0,{cap0:false});
- mb.push().T(0,20,0).S(1,.86,1).sph(11,3,7,c,0).pop();
- mb.push().T(5,16,3).sph(7,2,6,c.map(v=>v*.88),0).pop();mb.push().T(-5,18,-3).sph(7.5,2,6,c.map(v=>min(255,v*1.08)),0).pop();
- mb.pop()}
+
 function palm(mb,x,z,s,r){const y=floorY(x,z),lean=(r()-.5)*.5,a0=r()*TAU;mb.push().T(x,y-.5,z).RY(a0).S(s,s,s);
  const pts=[],rs=[];for(let i=0;i<=5;i++){const u=i/5;pts.push([sin(u*1.4)*8*lean*4,u*34,0]);rs.push(2.2-u*.9)}
  mb.tube(pts,rs,6,'#9a7a4c',0,{cols:['#9a7a4c','#7e6038']});
@@ -19063,6 +19069,7 @@ function cactus(mb,x,z,s,r){const y=floorY(x,z);mb.push().T(x,y-.6,z).RY(r()*TAU
  mb.pop()}
 function shrub(mb,x,z,s,r){const y=floorY(x,z);mb.push().T(x,y-.6,z).S(s,s*.6,s);mb.sph(5,2,6,r()<.5?'#8a8a3e':'#7a7034',0);mb.pop()}
 function boulder(mb,x,z,s,r){const y=floorY(x,z);mb.push().T(x,y-1,z).RY(r()*TAU).S(s,s*.7,s*1.2);mb.cyl(5,3.5,5,6,ROCK[(r()*4)|0],0);mb.pop()}
+
 
 // ---------- prédios da cidade ----------
 // casa-cúpula: parede branca com janelas + cúpula colorida + porta
@@ -19104,6 +19111,7 @@ function tower(mb,x,z,w,d,H,yaw,r){const y=floorY(x,z);mb.push().T(x,y,z).RY(yaw
  mb.push().T(0,0,d/2+.3).box(10,10,.6,'#3b5f9a',0,true).pop();
  mb.pop()}
 
+
 // ---------- Corporação Cápsula ----------
 const CCX=760,CCZ=560,CCR=190,CCH=150;
 function capsuleCorp(mb){const y=0;mb.push().T(CCX,y,CCZ);
@@ -19131,6 +19139,7 @@ function capsuleCorp(mb){const y=0;mb.push().T(CCX,y,CCZ);
  // calçada em volta
  mb.push().T(0,.15,0).cyl(CCR+40,CCR+40,.3,40,'#d9d6cc',0).pop();
  mb.pop()}
+
 
 // ---------- arena do Torneio de Artes Marciais ----------
 const AX0=470,AX1=1050,AZ0=1370,AZ1=1920;
@@ -19188,6 +19197,7 @@ function arena(mb,r){
  flag(AX0+30,(AZ0+AZ1)/2,'#f06292');flag(AX1-30,(AZ0+AZ1)/2,'#e53935');
 }
 
+
 // ---------- deserto: mesas de pedra em camadas ----------
 function mesa(mb,x,z,R,H,r,yaw){const y=floorY(x,z)-2;mb.push().T(x,y,z).RY(yaw);
  const nL=max(4,round(H/26)),sx=.8+r()*.4,sz=.8+r()*.4,shape=r();let yy=0;
@@ -19210,6 +19220,7 @@ function cliffWall(mb,r){for(let z=40;z<MH-40;z+=26){if(passK(z+13)>0.02)continu
  for(const sd of[-1,1])for(let x=1520;x<1840;x+=22){const z=PZC+sd*(62+r()*8),h=Math.max(10,(x<CLX0?14:14+(x-CLX0)*.25))+r()*10,y=floorY(x,PZC)-2;
   mb.push().T(x,y,z).RY((r()-.5)*.4).box(26,h+(x>CLX0?(-DY)*sm(CLX0,CLX1,x):0),18+r()*8,ROCK[(r()*5)|0],0,true).pop()}}
 
+
 // ---------- ruas ----------
 const ROADS=[[150,150,1520,150],[150,2110,1520,2110],[150,150,150,2110],[1520,150,1520,2110],[150,PZC,1560,PZC],[420,150,420,2110],[1100,150,1100,2110]];
 const RWH=25,SWK=8;
@@ -19226,9 +19237,7 @@ function roads(mb){
  // rampa da passagem: asfalto que desce até o deserto e vira estrada de terra
  for(let x=1540;x<1800;x+=10){const y0=floorY(x,PZC),y1=floorY(x+10,PZC);mb.quad([x,y0+.35,PZC-RWH],[x,y0+.35,PZC+RWH],[x+10,y1+.35,PZC+RWH],[x+10,y1+.35,PZC-RWH],x<1700?'#5e6168':'#b8935e')}}
 
-// ---------- chão ----------
-const CS=512,NCX=Math.ceil(MW/CS),NCZ=Math.ceil(MH/CS),GC=24;
-const deserted=x=>x>CLX0+20;
+
 function pathD(x,z){const pz=PZC+sin((x-1800)/260)*150+sin((x-1800)/97)*30;return abs(z-pz)}
 function gcol(x,z){const y=baseH(x,z);
  if(x>CLX0+10||(passK(z)>.5&&x>1700)){const n=vn(x/90,z/90,9),n2=vn(x/23,z/23,11);let c=[lerp(SAND2[0],SAND[0],n),lerp(SAND2[1],SAND[1],n),lerp(SAND2[2],SAND[2],n)];
@@ -19239,13 +19248,7 @@ function gcol(x,z){const y=baseH(x,z);
  const n=vn(x/110,z/110,2),n2=vn(x/31,z/31,4);let c=[lerp(GRASS[0],GRASS2[0],n),lerp(GRASS[1],GRASS2[1],n),lerp(GRASS[2],GRASS2[2],n)];c=c.map(v=>v*(.93+n2*.12));
  if(x>AX0&&x<AX1&&z>AZ0&&z<AZ1)c=[110,196,82];
  return c}
-function ground(mb,cx,cz){const x0=cx*CS,z0=cz*CS,x1=min(MW,x0+CS),z1=min(MH,z0+CS);
- for(let z=z0;z<z1;z+=GC)for(let x=x0;x<x1;x+=GC){const xa=x,xb=min(x1,x+GC),za=z,zb=min(z1,z+GC);
-  const p=(X,Z)=>[X,baseH(X,Z),Z],a=p(xa,za),b=p(xb,za),c=p(xb,zb),d=p(xa,zb);
-  const ca=gcol(xa,za),cb=gcol(xb,za),cc=gcol(xb,zb),cd=gcol(xa,zb);
-  mb.wt(a,d,c,ca,cd,cc);mb.wt(a,c,b,ca,cc,cb)}}
 
-// ---------- portais (o mesmo modelo nos dois mundos) ----------
 function portalMB(){const mb=new MB(777);mb.jit=.03;
  mb.cyl(26,28,4,16,'#8a8f99',0);mb.push().T(0,4,0).cyl(22,24,2,16,'#b4b9c2',0).pop();
  // anel laranja (esfera do dragão) em pé
@@ -19255,129 +19258,225 @@ function portalMB(){const mb=new MB(777);mb.jit=.03;
  for(const sd of[-1,1])mb.push().T(sd*24,4,0).cyl(3.4,3,30,8,'#9aa0aa',0).push().T(0,30,0).sph(4.4,3,8,'#ffb43a',.8).pop().pop();
  return mb}
 
-// ---------- montagem (aos poucos, em fatias de tempo) ----------
-let CH=[],OBJ=[],LIGHTS=[],PMESH=null,building=null;
+
+// ---------- chão (pedaços de 512 de projeto = 1024 do mundo) ----------
+const CS=512,NCX=Math.ceil(MW/CS),NCZ=Math.ceil(MH/CS),GC=24;
+function ground(mb,cx,cz){const x0=cx*CS,z0=cz*CS,x1=min(MW,x0+CS),z1=min(MH,z0+CS);
+ for(let z=z0;z<z1;z+=GC)for(let x=x0;x<x1;x+=GC){const xa=x,xb=min(x1,x+GC),za=z,zb=min(z1,z+GC);
+  const p=(X,Z)=>[X*K,baseH(X,Z)*K,Z*K],a=p(xa,za),b=p(xb,za),c=p(xb,zb),d=p(xa,zb);
+  const ca=gcol(xa,za),cb=gcol(xb,za),cc=gcol(xb,zb),cd=gcol(xa,zb);
+  mb.wt(a,d,c,ca,cd,cc);mb.wt(a,c,b,ca,cc,cb)}}
+
+// ============================================================ objetos (editáveis) ============================================================
+// tipos de construção/planta do Mundo 2 (o Editor do ADM adiciona estes) e as árvores do Mundo 1
+const DBT={casa:'Casa-cúpula',poste:'Casa em poste',capsula:'Torre-cápsula',predio:'Prédio',palmeira:'Palmeira',cacto:'Cacto',mesa:'Pedra gigante'};
+const TKEYS=['g13.0','g16.1','g19.0','d13.1','d16.0','d19.1','a13.0','a16.1','s16.0','r15.0','p13','p16','p19','x15','x21'];
+const TNAME={g:'Carvalho',d:'Verde escuro',a:'Salmão',s:'Doente',r:'Morrendo',p:'Abeto',x:'Seca'};
+DBW.TYPES=DBT;DBW.TNAME=TNAME;
+let TV={};   // variantes de árvore: key -> {m:[lod0,lod1,lod2],cx,cy,cz,rad}
+function treeVar(gl,key){if(TV[key])return TV[key];const G=H3.fld&&H3.fld.nat&&H3.fld.nat.gen;if(!G)return null;
+ const k0=key[0],v={m:[],cx:0,cy:0,cz:0,rad:1};
+ for(let l=0;l<3;l++){let mb;
+  if(k0==='x')mb=G.dead(+key.slice(1),900+(+key.slice(1))*7,l);
+  else if(k0==='p')mb=G.spruce(+key.slice(1),310+(+key.slice(1))*3,l);
+  else{const R=+key.slice(1).split('.')[0],q=+key.split('.')[1];mb=G.broadleaf(k0,R,((k0.charCodeAt(0)*17+R)*73856093^((q+3)*19349663))>>>0,l)}
+  const pk=mb.pack();v.m.push(H3.upload(gl,pk));if(l===0){v.cx=pk.cx;v.cy=pk.cy;v.cz=pk.cz;v.rad=pk.rad}}
+ return TV[key]=v}
+// parâmetros de uma construção a partir de uma semente (para as adicionadas pelo editor)
+function dbParams(type,seed){const r=rng(seed);
+ if(type==='casa')return{R:26+r()*18,roof:ROOF[(r()*ROOF.length)|0]};
+ if(type==='poste')return{R:18+r()*8,roof:ROOF[(r()*ROOF.length)|0]};
+ if(type==='capsula')return{R:18+r()*10,H:60+r()*90,roof:ROOF[(r()*ROOF.length)|0]};
+ if(type==='predio'){const R=26+r()*14;return{w:R*1.6,d:R*1.3,H:90+r()*150}}
+ if(type==='mesa'){const R=50+r()*60;return{R,H:120+r()*180}}
+ return{}}
+// malha de uma construção, feita na origem (escala de projeto x K)
+function dbMesh(gl,type,p,seed){const mb=new MB(seed);mb.push().S(K,K,K);const r=rng(seed^0x9e3779b9);LOCAL=true;
+ try{
+  if(type==='casa')domeHouse(mb,0,0,p.R,p.roof,0,r);
+  else if(type==='poste')stiltHouse(mb,0,0,p.R,p.roof,0,r);
+  else if(type==='capsula')capTower(mb,0,0,p.R,p.H,p.roof,0,r);
+  else if(type==='predio')tower(mb,0,0,p.w,p.d,p.H,0,r);
+  else if(type==='palmeira')palm(mb,0,0,1.15,r);
+  else if(type==='cacto')cactus(mb,0,0,1,r);
+  else if(type==='mesa')mesa(mb,0,0,p.R,p.H,r,0);
+ }finally{LOCAL=false}
+ mb.pop();return H3.upload(gl,mb.pack())}
+// forma de colisão (projeto, relativa ao centro, antes de girar e mudar de tamanho)
+function dbCol(type,p){
+ if(type==='casa')return{c:p.R+2};if(type==='poste')return{c:p.R*.3+2};if(type==='capsula')return{c:p.R+2};
+ if(type==='predio')return{hw:p.w/2+2,hd:p.d/2+2};if(type==='palmeira')return{c:4};if(type==='cacto')return{c:3.5};if(type==='mesa')return{c:p.R*.95};return{c:4}}
+const FARK={casa:3200,poste:3200,capsula:3800,predio:4200,palmeira:1600,cacto:1300,mesa:5600,tree:1500};
+// OBJ: {kind:'db'|'tree', v, key, xd, zd, rot, s, p, seed, mesh|tv, col, tint0} + estado do mundo (x,y,z,m,wx,wy,wz,rad,hid)
+let OBJ=[],ADDS=new Map(),GONE=[];
+function mkObj(kind,v,xd,zd,rot,s,p,seed,tint){const uk=kind+':'+round(xd*K)+','+round(zd*K);
+ return{kind,v,key:v,xd,zd,rot,s:s||1,p:p||{},seed:seed||1,tint0:tint||[1,1,1],m:new Float32Array(16),x:xd*K,y:0,z:zd*K,wx:0,wy:0,wz:0,rad:10,hid:0,
+  _e:{kind,key:uk,o:{x:xd*K,z:zd*K,y:0,by:0,rot,sx:s||1,sy:s||1,sz:s||1}}}}
+function meshOf(o){return o.kind==='tree'?(TV[o.v]?TV[o.v].m[0]:null):o.mesh}
+// coloca um objeto no mundo (posição/giro/tamanho/cor do editor)
+function place(o,x,z,yo,rot,sx,sy,sz,c){const y=floorW(x,z)+(yo||0)-(o.kind==='tree'?.4:0);o.x=x;o.z=z;o.y=y;M4.trs(o.m,x,y,z,0,rot,0,sx,sy,sz);
+ const ms=meshOf(o),cx=ms?ms.cx:0,cy=ms?ms.cy:10,cz=ms?ms.cz:0,rad=ms?ms.rad:10,M=o.m;
+ o.wx=M[0]*cx+M[4]*cy+M[8]*cz+M[12];o.wy=M[1]*cx+M[5]*cy+M[9]*cz+M[13];o.wz=M[2]*cx+M[6]*cy+M[10]*cz+M[14];o.rad=rad*max(sx,sy,sz)*1.02;
+ o.tint=c?[o.tint0[0]*c[0],o.tint0[1]*c[1],o.tint0[2]*c[2]]:o.tint0;o.cur={x,z,rot,sx,sz}}
+function stampCol(o){const c=o.col;if(!c)return;const xd=o.cur.x/K,zd=o.cur.z/K,s=max(o.cur.sx,o.cur.sz);
+ if(c.c)circ(xd,zd,c.c*s);else orect(xd,zd,c.hw*o.cur.sx,c.hd*o.cur.sz,-o.cur.rot)}
+// aplica os ajustes do editor (EDITS.data.o['4'] e a['4']) e refaz a colisão
+let appliedRev=-1;
+function applyEdits(){const E=window.EDITS,gl=H3.gl();if(!DBW.ready||!gl)return;
+ const O=(E&&E.data&&E.data.o&&E.data.o['4'])||{},A=(E&&E.data&&E.data.a&&E.data.a['4'])||[];
+ GONE=[];
+ for(const o of OBJ){const ov=(O[o.kind]&&O[o.kind][o._e.key])||null,e=o._e.o;
+  o.hid=ov&&ov.d?1:0;if(o.hid)GONE.push([o._e.key,{kind:o.kind,o:e,obj:o}]);
+  o.colOn=ov&&ov.col!==undefined?!!ov.col:true;
+  place(o,e.x+(ov&&ov.x||0),e.z+(ov&&ov.z||0),ov&&ov.y||0,e.rot+(ov&&ov.r||0),e.sx*(ov&&ov.sx||1),e.sy*(ov&&ov.sy||1),e.sz*(ov&&ov.sz||1),ov&&ov.c||null)}
+ // adicionados
+ const want=new Map();for(const a of A)if(a&&a.i)want.set(a.i,a);
+ for(const[id,o]of[...ADDS])if(!want.has(id)||want.get(id).v!==o.v||want.get(id).k!==o.kind){if(o.mesh)try{gl.deleteBuffer(o.mesh.vbo)}catch(x){}ADDS.delete(id)}
+ for(const[id,a]of want){let o=ADDS.get(id);
+  if(!o){const kind=a.k==='tree'?'tree':'db';if(kind==='tree'&&!TKEYS.includes(a.v)&&!TV[a.v])continue;if(kind==='db'&&!DBT[a.v])continue;
+   const seed=hstr(id);o=mkObj(kind,a.v,a.x/K,a.z/K,0,1,kind==='db'?dbParams(a.v,seed):{},seed);o._add=id;
+   if(kind==='tree'){treeVar(gl,a.v);o.col={c:3}}else{o.mesh=dbMesh(gl,a.v,o.p,seed);o.col=dbCol(a.v,o.p)}
+   ADDS.set(id,o)}
+  o._a=a;o.colOn=a.col!==undefined?!!a.col:true;o._e.o.x=a.x;o._e.o.z=a.z;
+  place(o,a.x,a.z,a.y||0,a.r||0,a.sx||1,a.sy||1,a.sz||1,a.c||null)}
+ // colisão
+ CG.set(CG0);CGT=CG;for(const o of OBJ)if(!o.hid&&o.colOn)stampCol(o);for(const o of ADDS.values())if(o.colOn)stampCol(o);
+ DBW.rev++}
+DBW.apply=()=>{appliedRev=-1};
+function editTick(){const E=window.EDITS,r=E?E.rev:0;if(r!==appliedRev){appliedRev=r;try{applyEdits()}catch(e){console.error('DBW edits',e)}}}
+// API para o editor
+DBW.objects=function*(){for(const o of OBJ)if(!o.hid)yield o;for(const o of ADDS.values())yield o};
+DBW.addOf=id=>ADDS.get(id)||null;
+DBW.gone=()=>GONE;
+DBW.counts=()=>GONE.length+':'+ADDS.size;
+DBW.variants=kind=>kind==='tree'?TKEYS.slice():Object.keys(DBT);
+DBW.label=(kind,v)=>kind==='tree'?((TNAME[v[0]]||'Árvore')+' '+v):(DBT[v]||v);
+
+// ============================================================ montagem (aos poucos) ============================================================
+let CH=[],LIGHTS=[],building=null;
 const CHK=(x,z)=>{const i=clp(floor(x/CS),0,NCX-1),j=clp(floor(z/CS),0,NCZ-1);return CH[j*NCX+i]};
+function newChunkMB(seed){const mb=new MB(seed);mb.push().S(K,K,K);return mb}
 function* gen(gl){
- CG.fill(0);LIGHTS=[];OBJ=[];
+ CGT=CG0;CG0.fill(0);LIGHTS=[];OBJ=[];ADDS=new Map();GONE=[];
  const r=rng(20261026);
- CH=[];for(let j=0;j<NCZ;j++)for(let i=0;i<NCX;i++)CH.push({i,j,g:new MB(100+j*NCX+i),o:new MB(500+j*NCX+i),gm:null,om:null,cx:(i+.5)*CS,cz:(j+.5)*CS});
+ CH=[];for(let j=0;j<NCZ;j++)for(let i=0;i<NCX;i++)CH.push({i,j,g:new MB(100+j*NCX+i),o:newChunkMB(500+j*NCX+i),gm:null,om:null,cx:(i+.5)*CS*K,cz:(j+.5)*CS*K});
  DBW.pct=.02;yield;
- // bordas do mundo
+ // bordas do mundo, penhasco e paredões da passagem
  rect(0,0,MW-1,44);rect(0,MH-45,MW-1,MH-1);rect(0,0,44,MH-1);rect(MW-45,0,MW-1,MH-1);
- // penhasco (fora da passagem)
  for(let z=0;z<MH;z+=4)if(passK(z)<.6)rect(CLX0-4,z,CLX1+6,z+3);
- // paredões da passagem
  rect(1520,PZC-80,1840,PZC-52);rect(1520,PZC+52,1840,PZC+80);
- // chão
- for(const c of CH){ground(c.g,c.i,c.j);}
- DBW.pct=.12;yield;
- // ruas e penhasco
- {const c=CHK(760,1120);roads(c.o);}
- {const mbs={};for(const c of CH)mbs[c.i+','+c.j]=c;cliffWall(CHK(CLX0,PZC).o,r)}
- // Corporação Cápsula
+ for(const c of CH){ground(c.g,c.i,c.j)}
+ DBW.pct=.1;yield;
+ roads(CHK(760,1120).o);cliffWall(CHK(CLX0,PZC).o,r);
+ // Corporação Cápsula (fixa)
  capsuleCorp(CHK(CCX,CCZ).o);
  circ(CCX,CCZ,CCR+4);circ(CCX-230,CCZ+40,36);circ(CCX+230,CCZ+40,36);circ(CCX-170,CCZ-150,48);circ(CCX+170,CCZ-150,48);
  rect(CCX-26,CCZ+CCR-20,CCX+26,CCZ+CCR+24);
- LIGHTS.push({x:CCX,y:40,z:CCZ+CCR+30,r:120,cr:1,cg:.9,cb:.6,k:.35});
- // parque com chafariz na frente da Corporação Cápsula
+ LIGHTS.push({x:CCX*K,y:80,z:(CCZ+CCR+30)*K,r:240,cr:1,cg:.9,cb:.6,k:.35});
+ // parque com chafariz
  {const mb=CHK(760,900).o,fx=760,fz=900;
   mb.push().T(fx,.2,fz).cyl(70,70,.4,32,'#d8d3c6',0);mb.cyl(26,27,4.5,24,'#e9e6dd',0);mb.push().T(0,3.4,0).cyl(24,24,.6,24,'#4aa3df',.15).pop();
   mb.push().T(0,0,0).cyl(4,3,14,10,'#e9e6dd',0).pop();mb.push().T(0,14,0).cyl(3,10,3,14,'#e9e6dd',0).pop();mb.push().T(0,16.5,0).cyl(9,9,.6,14,'#4aa3df',.2).pop();mb.pop();
   circ(fx,fz,28);
-  // canteiros e cerca-viva
   for(const[dx,dz]of[[-150,-40],[150,-40],[-150,60],[150,60]]){mb.push().T(fx+dx,0,fz+dz).box(110,5,26,'#3f8f3a',0,true).pop();for(let k=0;k<8;k++)mb.push().T(fx+dx-46+k*13,5.5,fz+dz).sph(2.6,2,6,['#e53935','#fdd835','#f06292','#ffffff'][k%4],.1).pop();rect(fx+dx-56,fz+dz-14,fx+dx+56,fz+dz+14)}
   mb.push().T(fx,.25,(CCZ+CCR+fz)/2).box(40,.4,fz-CCZ-CCR,'#d8d3c6',0,true).pop()}
  // heliponto
  {const mb=CHK(1000,1000).o;mb.push().T(980,.3,1010).box(90,.6,90,'#7a7f88',0,true);mb.push().T(0,.65,0).cyl(34,34,.2,32,'#f4f4f0',0).pop();mb.push().T(0,.7,0).cyl(30,30,.2,32,'#7a7f88',0).pop();
   mb.push().T(0,.8,-12).RX(-PI/2);text(mb,'C',4.2,.2,'#f4f4f0',0);mb.pop();mb.pop()}
- DBW.pct=.25;yield;
- // arena do torneio
+ DBW.pct=.2;yield;
+ // arena do torneio (fixa) e a colisão dela
  arena(CHK(ACX,ACZ).o,r);
- // colisão da arena: muros (com portão), templo, arquibancadas
  rect(AX0-4,AZ0,AX0+4,AZ1);rect(AX1-4,AZ0,AX1+4,AZ1);rect(AX0,AZ0-4,AX1,AZ0+4);rect(AX0,AZ1-4,ACX-36,AZ1+4);rect(ACX+36,AZ1-4,AX1,AZ1+4);
  rect(ACX-152,AZ0+16,ACX+152,AZ0+80);
  for(const sd of[-1,1]){const cx=ACX+sd*(AH+80);rect(cx-50,ACZ-154,cx+50,ACZ+154)}
- for(let z=AZ0+40;z<AZ1;z+=70){LIGHTS.push({x:AX0+3,y:26,z,r:46,cr:1,cg:.62,cb:.25,k:.25})}
- // palmeiras do pátio
- {const mb=CHK(ACX,ACZ).o;for(const[x,z]of[[AX0+40,AZ0+90],[AX1-40,AZ0+90],[AX0+40,AZ1-80],[AX1-40,AZ1-80],[AX0+120,AZ0+80],[AX1-120,AZ0+80],[ACX-80,AZ1-50],[ACX+80,AZ1-50],[AX0+36,ACZ],[AX1-36,ACZ]]){palm(mb,x,z,1.15,r);circ(x,z,4)}}
- DBW.pct=.35;yield;
- // casas e prédios nos quarteirões
- const BLK=[[180,180,390,1090,'w'],[1130,180,1490,1090,'e'],[180,1150,390,2080,'w'],[1130,1150,1490,2080,'e'],[450,180,1070,330,'n'],[450,1150,1070,1340,'m'],[450,1950,1070,2080,'s']];
- const occ=[];const free=(x,z,R)=>{for(const o of occ)if(hypot(o[0]-x,o[1]-z)<o[2]+R+14)return false;if(onRoad(x,z,R+6))return false;if(hypot(x-SPAWN.x,z-SPAWN.z)<60||hypot(x-BACK.x,z-BACK.z)<70)return false;return true};
- // as cúpulas do conjunto da Corporação Cápsula ocupam espaço
- occ.push([CCX,CCZ,CCR+10],[CCX-230,CCZ+40,40],[CCX+230,CCZ+40,40],[760,900,90],[980,1010,60]);
- let nb=0;
- for(const[bx0,bz0,bx1,bz1,kind]of BLK){for(let tries=0;tries<260;tries++){const x=bx0+r()*(bx1-bx0),z=bz0+r()*(bz1-bz0);
-   const t=r();let R,fn;
-   if(t<.38){R=26+r()*18;fn='dome'}else if(t<.55){R=18+r()*8;fn='stilt'}else if(t<.75){R=18+r()*10;fn='cap'}else{R=26+r()*14;fn='tower'}
-   if(kind==='n'||kind==='s'||kind==='m'){if(fn==='tower'&&r()<.5)fn='dome'}
-   if(!free(x,z,R))continue;occ.push([x,z,R]);nb++;
-   const mb=CHK(x,z).o,roof=ROOF[(r()*ROOF.length)|0],yaw=atan2(760-x,1120-z)+(r()-.5)*.6;
-   if(fn==='dome'){domeHouse(mb,x,z,R,roof,yaw,r);circ(x,z,R+2)}
-   else if(fn==='stilt'){stiltHouse(mb,x,z,R,roof,yaw,r);circ(x,z,R*.3+2)}
-   else if(fn==='cap'){capTower(mb,x,z,R,60+r()*90,roof,yaw,r);circ(x,z,R+2)}
-   else{const w=R*1.6,d=R*1.3,H=90+r()*150;tower(mb,x,z,w,d,H,round(yaw/(PI/2))*(PI/2),r);orect(x,z,w/2+2,d/2+2,-round(yaw/(PI/2))*(PI/2))}}}
- DBW.pct=.5;yield;
- // árvores: ao longo das ruas, nos quarteirões e a floresta da borda
- let nt=0;const treeAt=(x,z,s)=>{if(blocked(x,z))return;for(const o of occ)if(hypot(o[0]-x,o[1]-z)<o[2]+8)return;if(onRoad(x,z,4))return;if(x>AX0-6&&x<AX1+6&&z>AZ0-6&&z<AZ1+6)return;
-  tree(CHK(x,z).o,x,z,s,r);circ(x,z,3.5*s);occ.push([x,z,9*s]);nt++};
- for(const[x0,z0,x1,z1]of ROADS){const hx=x0===x1,L=hypot(x1-x0,z1-z0);for(let s=30;s<L;s+=58){for(const sd of[-1,1]){const x=hx?x0+sd*(RWH+SWK+12):x0+s,z=hx?z0+s:z0+sd*(RWH+SWK+12);if(r()<.8)treeAt(x,z,.9+r()*.3)}}}
- for(let k=0;k<700;k++){const x=60+r()*(CLX0-80),z=60+r()*(MH-120);const edge=x<140||z<140||z>MH-140;if(!edge&&r()<.55)continue;treeAt(x,z,edge?1.1+r()*.6:.9+r()*.4)}
- DBW.pct=.62;yield;
- // deserto: mesas, torres de pedra, cactos, arbustos e pedras
- const docc=[];const dfree=(x,z,R)=>{for(const o of docc)if(hypot(o[0]-x,o[1]-z)<o[2]+R+40)return false;if(pathD(x,z)<R+50)return false;if(abs(z-PZC)<R+90&&x<1950)return false;return true};
- let nm=0;
- // anel de mesas na borda (paredão do deserto)
- for(let x=CLX1+80;x<MW-60;x+=150){for(const z of[60,MH-60]){const R=70+r()*50;const H=mesa(CHK(x,z).o,x+(r()-.5)*40,z,R,140+r()*120,r,r()*TAU);docc.push([x,z,R]);nm++}}
- for(let z=200;z<MH-150;z+=150){const x=MW-60,R=70+r()*50;mesa(CHK(x,z).o,x,z+(r()-.5)*40,R,140+r()*120,r,r()*TAU);docc.push([x,z,R]);nm++}
- DBW.pct=.7;yield;
- for(let tries=0;tries<900&&nm<70;tries++){const x=CLX1+60+r()*(MW-CLX1-200),z=120+r()*(MH-240),R=r()<.3?24+r()*20:50+r()*80;if(!dfree(x,z,R))continue;
-  const H=R<45?110+r()*120:120+r()*200;mesa(CHK(x,z).o,x,z,R,H,r,r()*TAU);docc.push([x,z,R]);circ(x,z,R*.95);nm++;
-  if(nm%10===0){DBW.pct=.7+nm/70*.15;yield}}
- for(const[x,z,R]of docc)circ(x,z,R*.95);
- const dok=(x,z,pad)=>{if(blocked(x,z))return false;for(const o of docc)if(hypot(o[0]-x,o[1]-z)<o[2]*1.2+pad)return false;return true};
- for(let k=0;k<180;k++){const x=CLX1+40+r()*(MW-CLX1-120),z=80+r()*(MH-160);if(!dok(x,z,10)||pathD(x,z)<24)continue;cactus(CHK(x,z).o,x,z,.9+r()*.6,r);circ(x,z,3.5)}
- for(let k=0;k<260;k++){const x=CLX1+40+r()*(MW-CLX1-120),z=80+r()*(MH-160);if(!dok(x,z,4))continue;(r()<.55?shrub:boulder)(CHK(x,z).o,x,z,.8+r()*1.2,r)}
- DBW.pct=.88;yield;
+ for(let z=AZ0+40;z<AZ1;z+=70){LIGHTS.push({x:(AX0+3)*K,y:52,z:z*K,r:92,cr:1,cg:.62,cb:.25,k:.25})}
  // portão da Cápsula no alto da passagem
  {const mb=CHK(1560,PZC).o;mb.push().T(1580,0,PZC);for(const sd of[-1,1])mb.push().T(0,0,sd*40).box(24,40,16,'#eef0f2',0,true).pop();
   mb.push().T(0,40,0).box(30,14,100,'#eef0f2',0,true).pop();mb.push().T(15.2,47,0).box(.6,10,40,CCB,0,true).pop();
   mb.push().T(15.8,42,0).RY(PI/2);text(mb,'C',1.6,.4,'#ffffff',0);mb.pop();mb.pop();
   rect(1568,PZC-50,1592,PZC-32);rect(1568,PZC+32,1592,PZC+50)}
- // portal de volta
- {const mb=CHK(BACK.x,BACK.z).o;mb.push().T(BACK.x,floorY(BACK.x,BACK.z),BACK.z).RY(PI/2);mb.inst(portalMB(),mb.m);mb.push().T(0,61,0).box(92,22,1.6,'#3a2a1a',0);for(const ry of[0,PI])mb.push().RY(ry).T(0,-7,.8).push();text(mb,'MUNDO 1',2,.8,'#ffd84a',.5);mb.pop().pop();mb.pop();mb.pop();
-  for(const sd of[-1,1])circ(BACK.x,BACK.z+sd*24,5)}
- DBW.pct=.94;yield;
- // sobe tudo para a placa de vídeo
+ // portal de volta (no tamanho do Mundo 1: desfaz a escala)
+ {const mb=CHK(BKd.x,BKd.z).o;mb.push().T(BKd.x,0,BKd.z).S(1/K,1/K,1/K).RY(PI/2);mb.inst(portalMB(),mb.m);mb.push().T(0,61,0).box(92,22,1.6,'#3a2a1a',0);for(const ry of[0,PI])mb.push().RY(ry).T(0,-7,.8).push();text(mb,'MUNDO 1',2,.8,'#ffd84a',.5);mb.pop().pop();mb.pop();mb.pop();
+  for(const sd of[-1,1])circ(BKd.x,BKd.z+sd*12,2.5)}
+ DBW.pct=.3;yield;
+ // variantes de árvore (as mesmas do Mundo 1)
+ for(let i=0;i<TKEYS.length;i++){treeVar(gl,TKEYS[i]);DBW.pct=.3+.12*(i+1)/TKEYS.length;yield}
+ // ---- objetos: casas e prédios nos quarteirões ----
+ const BLK=[[180,180,390,1090,'w'],[1130,180,1490,1090,'e'],[180,1150,390,2080,'w'],[1130,1150,1490,2080,'e'],[450,180,1070,330,'n'],[450,1150,1070,1340,'m'],[450,1950,1070,2080,'s']];
+ const occ=[];const free=(x,z,R)=>{for(const o of occ)if(hypot(o[0]-x,o[1]-z)<o[2]+R+14)return false;if(onRoad(x,z,R+6))return false;if(hypot(x-SPd.x,z-SPd.z)<60||hypot(x-BKd.x,z-BKd.z)<70)return false;return true};
+ occ.push([CCX,CCZ,CCR+10],[CCX-230,CCZ+40,40],[CCX+230,CCZ+40,40],[760,900,90],[980,1010,60]);
+ const addDb=(type,x,z,yaw,p)=>{const seed=hstr(type+':'+round(x)+','+round(z));const o=mkObj('db',type,x,z,yaw,1,p,seed);o.mesh=dbMesh(gl,type,p,seed);o.col=dbCol(type,p);OBJ.push(o);return o};
+ let nb=0;
+ for(const[bx0,bz0,bx1,bz1,kind]of BLK){for(let tries=0;tries<260;tries++){const x=bx0+r()*(bx1-bx0),z=bz0+r()*(bz1-bz0);
+   const t=r();let R,fn;
+   if(t<.38){R=26+r()*18;fn='casa'}else if(t<.55){R=18+r()*8;fn='poste'}else if(t<.75){R=18+r()*10;fn='capsula'}else{R=26+r()*14;fn='predio'}
+   if(kind==='n'||kind==='s'||kind==='m'){if(fn==='predio'&&r()<.5)fn='casa'}
+   if(!free(x,z,R))continue;occ.push([x,z,R]);nb++;
+   const roof=ROOF[(r()*ROOF.length)|0],yaw=atan2(760-x,1120-z)+(r()-.5)*.6;
+   if(fn==='predio'){const H=90+r()*150;addDb('predio',x,z,round(yaw/(PI/2))*(PI/2),{w:R*1.6,d:R*1.3,H})}
+   else if(fn==='capsula')addDb('capsula',x,z,yaw,{R,H:60+r()*90,roof});
+   else addDb(fn,x,z,yaw,{R,roof})}
+  DBW.pct=.42+.18*nb/220;yield}
+ // palmeiras do pátio da arena
+ for(const[x,z]of[[AX0+40,AZ0+90],[AX1-40,AZ0+90],[AX0+40,AZ1-80],[AX1-40,AZ1-80],[AX0+120,AZ0+80],[AX1-120,AZ0+80],[ACX-80,AZ1-50],[ACX+80,AZ1-50],[AX0+36,ACZ],[AX1-36,ACZ]])addDb('palmeira',x,z,r()*TAU,{});
+ DBW.pct=.62;yield;
+ // ---- árvores do Mundo 1: ao longo das ruas, nos quarteirões, no parque e a floresta da borda ----
+ const tKey=edge=>{const u=r();if(edge)return u<.35?'p'+[13,16,19][(r()*3)|0]:u<.6?['d13.1','d16.0','d19.1'][(r()*3)|0]:u<.85?['g13.0','g16.1','g19.0'][(r()*3)|0]:['s16.0','r15.0','x15','x21'][(r()*4)|0];
+  return u<.5?['g13.0','g16.1','g19.0'][(r()*3)|0]:u<.72?['d13.1','d16.0'][(r()*2)|0]:u<.88?['a13.0','a16.1'][(r()*2)|0]:'p'+[13,16][(r()*2)|0]};
+ const treeAt=(x,z,s,edge)=>{for(const o of occ)if(hypot(o[0]-x,o[1]-z)<o[2]+6)return;if(onRoad(x,z,4))return;if(x>AX0-6&&x<AX1+6&&z>AZ0-6&&z<AZ1+6)return;if(x>CLX0-30)return;
+  const tn=.93+r()*.14,o=mkObj('tree',tKey(edge),x,z,r()*TAU,s,{},1,[tn*(.97+r()*.06),tn,tn*(.96+r()*.08)]);o.col={c:3};OBJ.push(o);occ.push([x,z,8*s])};
+ for(const[x0,z0,x1,z1]of ROADS){const hx=x0===x1,L=hypot(x1-x0,z1-z0);for(let s=30;s<L;s+=50){for(const sd of[-1,1]){const x=hx?x0+sd*(RWH+SWK+10):x0+s,z=hx?z0+s:z0+sd*(RWH+SWK+10);if(r()<.85)treeAt(x,z,1+r()*.3,false)}}}
+ for(let k=0;k<1800;k++){const x=50+r()*(CLX0-90),z=50+r()*(MH-100);const edge=x<140||z<140||z>MH-140||x>CLX0-110;if(!edge&&r()<.4)continue;treeAt(x,z,edge?1.1+r()*.5:1+r()*.35,edge);if(k%300===0){DBW.pct=.62+.1*k/1800;yield}}
+ DBW.pct=.74;yield;
+ // ---- deserto: mesas (objetos), cactos (objetos), arbustos e pedras (fixos) ----
+ const docc=[];const dfree=(x,z,R)=>{for(const o of docc)if(hypot(o[0]-x,o[1]-z)<o[2]+R+40)return false;if(pathD(x,z)<R+50)return false;if(abs(z-PZC)<R+90&&x<1950)return false;return true};
+ let nm=0;const addMesa=(x,z,R,H)=>{addDb('mesa',x,z,r()*TAU,{R,H});docc.push([x,z,R]);nm++};
+ for(let x=CLX1+80;x<MW-60;x+=150){for(const z of[60,MH-60])addMesa(x+(r()-.5)*40,z,70+r()*50,140+r()*120)}
+ for(let z=200;z<MH-150;z+=150)addMesa(MW-60,z+(r()-.5)*40,70+r()*50,140+r()*120);
+ DBW.pct=.8;yield;
+ for(let tries=0;tries<900&&nm<70;tries++){const x=CLX1+60+r()*(MW-CLX1-200),z=120+r()*(MH-240),R=r()<.3?24+r()*20:50+r()*80;if(!dfree(x,z,R))continue;
+  addMesa(x,z,R,R<45?110+r()*120:120+r()*200);if(nm%10===0){DBW.pct=.8+nm/70*.1;yield}}
+ const dok=(x,z,pad)=>{for(const o of docc)if(hypot(o[0]-x,o[1]-z)<o[2]*1.2+pad)return false;return true};
+ for(let k=0;k<180;k++){const x=CLX1+40+r()*(MW-CLX1-120),z=80+r()*(MH-160);if(!dok(x,z,10)||pathD(x,z)<24)continue;addDb('cacto',x,z,r()*TAU,{})}
+ for(let k=0;k<260;k++){const x=CLX1+40+r()*(MW-CLX1-120),z=80+r()*(MH-160);if(!dok(x,z,4))continue;(r()<.55?shrub:boulder)(CHK(x,z).o,x,z,.8+r()*1.2,r)}
+ DBW.pct=.92;yield;
+ // sobe o fixo para a placa de vídeo
  for(const c of CH){c.gm=c.g.count?H3.upload(gl,c.g.pack()):null;c.om=c.o.count?H3.upload(gl,c.o.pack()):null;c.g=null;c.o=null}
- PMESH=H3.upload(gl,portalMB().pack());
- DBW.pct=1;DBW.ready=true}
+ CGT=CG;CG.set(CG0);
+ DBW.pct=1;DBW.ready=true;appliedRev=-1;editTick()}
 function step(ms){const gl=H3.gl();if(!gl)return false;if(DBW.ready)return true;if(!building)building=gen(gl);const t0=performance.now();
  while(performance.now()-t0<ms){const s=building.next();if(s.done){building=null;return true}}return DBW.ready}
-function freeAll(){const gl=H3.gl();if(gl&&!gl.isContextLost())for(const c of CH){if(c.gm)gl.deleteBuffer(c.gm.vbo);if(c.om)gl.deleteBuffer(c.om.vbo)}CH=[];DBW.ready=false;building=null;DBW.pct=0}
+function freeAll(){const gl=H3.gl();if(gl&&!gl.isContextLost()){const del=m=>{if(m)try{gl.deleteBuffer(m.vbo)}catch(e){}};
+  for(const c of CH){del(c.gm);del(c.om)}for(const o of OBJ)del(o.mesh);for(const o of ADDS.values())del(o.mesh);for(const k in TV)for(const m of TV[k].m)del(m)}
+ CH=[];OBJ=[];ADDS=new Map();TV={};GONE=[];DBW.ready=false;building=null;DBW.pct=0}
 
-DBW.stats=()=>{let g=0,o=0;for(const c of CH){if(c.gm)g+=c.gm.n;if(c.om)o+=c.om.n}return{g:g/3|0,o:o/3|0}};
+DBW.stats=()=>{let g=0,o=0,n=0;for(const c of CH){if(c.gm)g+=c.gm.n;if(c.om)o+=c.om.n}for(const q of OBJ){const m=meshOf(q);if(m)n+=m.n}return{g:g/3|0,o:o/3|0,obj:OBJ.length,objTri:n/3|0}};
+
 // ---------- desenho ----------
-const FAR=2600;
-function draw(t,dyn){H3.skyDraw();const F=H3.S.foc||H3.S.cam;
- for(const c of CH){const d=hypot(c.cx-F.x,c.cz-F.z);if(d>FAR+CS)continue;
+const FAR=5200,LODD=[300,700];
+function drawObj(o,F,dyn){const far=FARK[o.kind==='tree'?'tree':o.v]||3000,dx=o.wx-F.x,dz=o.wz-F.z,d2=dx*dx+dz*dz;if(d2>(far+o.rad)*(far+o.rad))return;if(!H3.vis(o.wx,o.wy,o.wz,o.rad))return;
+ if(o.kind==='tree'){const v=TV[o.v];if(!v)return;const l=d2<LODD[0]*LODD[0]?0:d2<LODD[1]*LODD[1]?1:2;H3.mesh(v.m[l]||v.m[2],o.m,LIGHTS,dyn,{tint:o.tint,tr:.55,rad:o.rad,cx:o.wx,cy:o.wy,cz:o.wz})}
+ else if(o.mesh)H3.mesh(o.mesh,o.m,LIGHTS,dyn,{tint:o.tint,rad:o.rad,cx:o.wx,cy:o.wy,cz:o.wz})}
+function draw(t,dyn){H3.skyDraw();editTick();const F=H3.S.foc||H3.S.cam;
+ for(const c of CH){const d=hypot(c.cx-F.x,c.cz-F.z);if(d>FAR+CS*K)continue;
   if(c.gm&&H3.vis(c.gm.cx,c.gm.cy,c.gm.cz,c.gm.rad))H3.mesh(c.gm,null,LIGHTS,dyn,{});
-  if(c.om&&H3.vis(c.om.cx,c.om.cy,c.om.cz,c.om.rad))H3.mesh(c.om,null,LIGHTS,dyn,{})}}
-function shadow(t,F){for(const c of CH)if(c.om&&H3.shVis(c.om.cx,c.om.cy,c.om.cz,c.om.rad))H3.shMesh(c.om,null,false)}
+  if(c.om&&H3.vis(c.om.cx,c.om.cy,c.om.cz,c.om.rad))H3.mesh(c.om,null,LIGHTS,dyn,{})}
+ for(const o of OBJ)if(!o.hid)drawObj(o,F,dyn);
+ for(const o of ADDS.values())drawObj(o,F,dyn)}
+function shadow(t,F){for(const c of CH)if(c.om&&H3.shVis(c.om.cx,c.om.cy,c.om.cz,c.om.rad))H3.shMesh(c.om,null,false);
+ const sh=o=>{if(!H3.shVis(o.wx,o.wy,o.wz,o.rad))return;if(o.kind==='tree'){const v=TV[o.v];if(v)H3.shMesh(v.m[1]||v.m[0],o.m,true)}else if(o.mesh)H3.shMesh(o.mesh,o.m,false)};
+ for(const o of OBJ)if(!o.hid)sh(o);for(const o of ADDS.values())sh(o)}
 function sprites(t){const T=H3.tex;if(!T)return;const s=t/1000;
- // brilho do portal de volta
- const y=floorY(BACK.x,BACK.z)+26;H3.spr(T.glow,BACK.x,y,BACK.z,52,52,null,[1,.65,.2,.35+.1*sin(s*3)],true,0,true);
+ const y=floorW(BACK.x,BACK.z)+26;H3.spr(T.glow,BACK.x,y,BACK.z,52,52,null,[1,.65,.2,.35+.1*sin(s*3)],true,0,true);
  H3.spr(T.glow,BACK.x,y,BACK.z,30,30,null,[1,.9,.5,.5],true,0,true)}
 function frameFx(t,Cm){const FX=H3.fx;if(!FX)return;
- // poeira no deserto
- if(Cm.x>CLX0&&Math.random()<.25)FX.emit({x:Cm.x+(Math.random()-.5)*300,y:floorY(Cm.x,Cm.z)+2+Math.random()*8,z:Cm.z+(Math.random()-.5)*300,vx:.25+Math.random()*.3,vy:.02,vz:(Math.random()-.5)*.1,g:0,life:2200,s0:4,s1:9,c:[.86,.66,.42],a:.25,add:false,tex:'dot',drag:.999});
- // faíscas no portal
- if(Math.random()<.35&&hypot(Cm.x-BACK.x,Cm.z-BACK.z)<500)FX.emit({x:BACK.x+(Math.random()-.5)*4,y:floorY(BACK.x,BACK.z)+8+Math.random()*36,z:BACK.z+(Math.random()-.5)*36,vx:0,vy:.25,vz:0,g:0,life:900,s0:2.4,s1:.4,c:[1,.75,.3],a:.9,tex:'dot'})}
+ if(Cm.x>CLX0*K&&Math.random()<.25)FX.emit({x:Cm.x+(Math.random()-.5)*300,y:floorW(Cm.x,Cm.z)+2+Math.random()*8,z:Cm.z+(Math.random()-.5)*300,vx:.25+Math.random()*.3,vy:.02,vz:(Math.random()-.5)*.1,g:0,life:2200,s0:4,s1:9,c:[.86,.66,.42],a:.25,add:false,tex:'dot',drag:.999});
+ if(Math.random()<.35&&hypot(Cm.x-BACK.x,Cm.z-BACK.z)<500)FX.emit({x:BACK.x+(Math.random()-.5)*4,y:floorW(BACK.x,BACK.z)+8+Math.random()*36,z:BACK.z+(Math.random()-.5)*36,vx:0,vy:.25,vz:0,g:0,life:900,s0:2.4,s1:.4,c:[1,.75,.3],a:.9,tex:'dot'})}
 
 // ---------- a cena 3D ----------
 const SUN=[-.45,.78,.42],SUNC=[1.12,1.0,.84],SKYA=[.36,.6,.92],SKYB=[.78,.88,.98],GNDA=[.36,.32,.24];
 const SCN=H3.scenes=H3.scenes||{};
+const insideCC=(x,z)=>hypot(x/K-CCX,z/K-CCZ)<CCR-6;
 SCN.db={id:'db',K:1,OX:0,OY:0,eye:25,camD:92,p3:-.18,pl:[[-.95,.85],[-1.0,.4]],amb:[1.08,1.05,.98],camLight:[0,0,0],iso:false,
  get fx(){return typeof fight!=='undefined'&&fight?fight.x+8:0},get fz(){return typeof fight!=='undefined'&&fight?fight.y+14:0},
  get lights(){return LIGHTS},
@@ -19386,13 +19485,13 @@ SCN.db={id:'db',K:1,OX:0,OY:0,eye:25,camD:92,p3:-.18,pl:[[-.95,.85],[-1.0,.4]],a
  build:gl=>{while(!step(50)){}},
  stepBuild:ms=>{try{return step(max(ms,14))}catch(e){console.error('DBW',e);return true}},progress:()=>DBW.pct,
  free:()=>freeAll(),
- env:()=>{H3.env({fog:[.78,.86,.95,.00072],ambT:[1.1,1.08,1],ambB:[.6,.6,.55],sun:SUN,sunC:SUNC,skyA:SKYA,skyB:SKYB,gndA:GNDA,wind:[1.4,.6]})},
- floorY:(x,z)=>floorY(x,z),
+ env:()=>{H3.env({fog:[.78,.86,.95,.00042],ambT:[1.1,1.08,1],ambB:[.6,.6,.55],sun:SUN,sunC:SUNC,skyA:SKYA,skyB:SKYB,gndA:GNDA,wind:[1.4,.6],gscale:[1/WW,1/WH]})},
+ floorY:(x,z)=>floorW(x,z),
  step:o=>{const ok=(x,z)=>!blocked(x,z);if(ok(o.x,o.z))return;if(ok(o.x,o.oz)){o.z=o.oz;return}if(ok(o.ox,o.z)){o.x=o.ox;return}o.x=o.ox;o.z=o.oz},
- camOk:pz=>(x,z)=>x>8&&z>8&&x<MW-8&&z<MH-8&&!(hypot(x-CCX,z-CCZ)<CCR-6),
- camY:(cy,cz,cx)=>max(cy,floorY(cx===undefined?MW/2:cx,cz)+6),
+ camOk:pz=>(x,z)=>x>8&&z>8&&x<WW-8&&z<WH-8&&!insideCC(x,z),
+ camY:(cy,cz,cx)=>max(cy,floorW(cx===undefined?WW/2:cx,cz)+6),
  enter(){},leave(){},clear(){},
- boss:()=>null,isTgt:e=>!!e,tgt:e=>e?[e.x+8,floorY(e.x+8,e.y+14)+16,e.y+14,30,floorY(e.x+8,e.y+14)]:null,bossPlan:()=>null,
+ boss:()=>null,isTgt:e=>!!e,tgt:e=>e?[e.x+8,floorW(e.x+8,e.y+14)+16,e.y+14,30,floorW(e.x+8,e.y+14)]:null,bossPlan:()=>null,
  flicker:()=>{},draw,sprites,frameFx,shadow,shake:()=>null,flash:()=>0,
  fbPos:()=>null};
 
@@ -19400,7 +19499,6 @@ SCN.db={id:'db',K:1,OX:0,OY:0,eye:25,camD:92,p3:-.18,pl:[[-.95,.85],[-1.0,.4]],a
 const map4=[];for(let y=0;y<TH;y++){map4[y]=new Array(TW).fill(0)}
 try{WD[WID]={map:map4,EN:[]};QS[WID]=QS[0]}catch(e){console.error('DBW mundo',e)}
 DBW.map=map4;
-// entrar e sair pelos portais
 let cool=0;
 function toast_(m){try{if(typeof toast==='function')toast(m)}catch(e){}}
 DBW.go=function(){if(world!==0||Date.now()<cool)return;cool=Date.now()+4000;
@@ -19410,8 +19508,7 @@ DBW.back=function(){if(world!==WID||Date.now()<cool)return;cool=Date.now()+4000;
 setInterval(()=>{try{if(typeof world==='undefined'||lock)return;const x=P.x+8,z=P.y+14;
  if(world===0&&hypot(x-M1P.x,z-M1P.z)<16)DBW.go();
  else if(world===WID&&hypot(x-BACK.x,z-BACK.z)<16)DBW.back()}catch(e){}},120);
-// voltar para o Mundo 2 ao abrir o jogo, se foi lá que parou
-setTimeout(()=>{try{const sv=typeof SV!=='undefined'?SV:null;if(sv&&sv.w===WID){goWorld(WID);if(typeof sv.px==='number'&&!DBW.solid(sv.px+8,sv.py+14)){P.x=sv.px;P.y=sv.py}else{P.x=SPAWN.x-8;P.y=SPAWN.z-14}}}catch(e){}},0);
+setTimeout(()=>{try{const sv=typeof SV!=='undefined'?SV:null;if(sv&&sv.w===WID){goWorld(WID);if(typeof sv.px==='number'&&!DBW.solid(sv.px+8,sv.py+14)&&sv.px<WW&&sv.py<WH){P.x=sv.px;P.y=sv.py}else{P.x=SPAWN.x-8;P.y=SPAWN.z-14}}}catch(e){}},0);
 
 // ---------- o portal no Mundo 1 (parte do campo 3D) ----------
 const FLD=H3.fld;

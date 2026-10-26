@@ -28,12 +28,12 @@ function cOv(s,abs){const o={};if(!s||typeof s!=='object')return o;
 const okKey=k=>typeof k==='string'&&k.length>0&&k.length<=40&&k!=='__proto__'&&k!=='constructor'&&k!=='prototype';
 function clean(raw){const d=blank();if(!raw||typeof raw!=='object')return d;d.t=nm(raw.t,0,9e15,0);
  try{
- if(raw.o&&typeof raw.o==='object')for(const w of Object.keys(raw.o)){if(!/^[0-3]$/.test(w))continue;const wo=raw.o[w];if(!wo||typeof wo!=='object')continue;
-  for(const k of KINDS.concat('scn')){const L=wo[k];if(!L||typeof L!=='object')continue;
+ if(raw.o&&typeof raw.o==='object')for(const w of Object.keys(raw.o)){if(!/^[0-4]$/.test(w))continue;const wo=raw.o[w];if(!wo||typeof wo!=='object')continue;
+  for(const k of KINDS.concat('scn','db')){const L=wo[k];if(!L||typeof L!=='object')continue;
    for(const key of Object.keys(L).slice(0,8000)){if(!okKey(key))continue;const ov=cOv(L[key]);if(!Object.keys(ov).length)continue;
     const A=d.o[w]||(d.o[w]=mp()),B=A[k]||(A[k]=mp());B[key]=ov}}}
- if(raw.a&&typeof raw.a==='object')for(const w of Object.keys(raw.a)){if(!/^[0-3]$/.test(w)||!Array.isArray(raw.a[w]))continue;const arr=[],seen=new Set();
-  for(const s of raw.a[w].slice(0,3000)){if(!s||typeof s!=='object'||!KINDS.includes(s.k)||typeof s.v!=='string'||!/^[A-Za-z0-9.]{1,12}$/.test(s.v))continue;
+ if(raw.a&&typeof raw.a==='object')for(const w of Object.keys(raw.a)){if(!/^[0-4]$/.test(w)||!Array.isArray(raw.a[w]))continue;const arr=[],seen=new Set();
+  for(const s of raw.a[w].slice(0,3000)){if(!s||typeof s!=='object'||!(KINDS.includes(s.k)||(w==='4'&&s.k==='db'))||typeof s.v!=='string'||!/^[A-Za-z0-9.]{1,12}$/.test(s.v))continue;
    const i=String(s.i||'').replace(/[^A-Za-z0-9]/g,'').slice(0,12);if(!i||seen.has(i))continue;seen.add(i);const o=cOv(s,true);o.i=i;o.k=s.k;o.v=s.v;arr.push(o)}
   d.a[w]=arr}
  if(raw.m&&typeof raw.m==='object')for(const w of Object.keys(raw.m)){if(!/^[0-3]$/.test(w))continue;const M=raw.m[w];if(!M||typeof M!=='object')continue;
@@ -112,7 +112,7 @@ E.setPart=function(key,patch){if(!/^[a-z0-9_]{1,12}$/.test(key))return;const p=E
 // ---------- objetos do Mundo 1 (a lista NAT do motor 3D) ----------
 let H3,FLD,NAT,M4;
 const TREEK=v=>!(/^b[gdsx]$/.test(v)||/^r[kd]\d$/.test(v)||/^dc\d$/.test(v));
-E.variants=function(kind){const out=[];if(!NAT||!NAT.VAR)return out;for(const k of Object.keys(NAT.VAR)){const b=/^b[gdsx]$/.test(k),r=/^r[kd]\d$/.test(k),d=/^dc\d$/.test(k);
+E.variants=function(kind){if(E.W()==='4')return window.DBW.variants(kind);const out=[];if(!NAT||!NAT.VAR)return out;for(const k of Object.keys(NAT.VAR)){const b=/^b[gdsx]$/.test(k),r=/^r[kd]\d$/.test(k),d=/^dc\d$/.test(k);
   if(kind==='bush'?b:kind==='rock'?r:kind==='decor'?d:(!b&&!r&&!d))out.push(k)}return out};
 const ovOf=(w,kind,key)=>{const a=E.data.o[w];return a&&a[kind]&&a[kind][key]||null};
 function dKey(kind,o,cnt){const b=kind+':'+round(o.x*2)/2+','+round(o.z*2)/2,n=(cnt[b]=(cnt[b]||0)+1);return n>1?b+'#'+n:b}
@@ -136,8 +136,11 @@ function mkAdd(a){const v=NAT.VAR[a.v];if(!v)return null;const kind=a.k;
  o._e=e;return o}
 function applyAdd(o,a){const e=o._e;e.o.x=a.x;e.o.z=a.z;place(o,e.o,a.x,a.z,a.y||0,a.r||0,a.sx||1,a.sy||1,a.sz||1,a.c||null)}
 E.listOf=kind=>{const L=NAT&&({tree:NAT.trees,bush:NAT.bushes,rock:NAT.rocks,decor:NAT.decor})[kind];return L||null};
-E.objects=function*(){for(const k of KINDS){const L=E.listOf(k);if(L)for(const o of L)if(o._e)yield o}for(const p of E.scn)if(!p.hid)yield p};
+E.objects=function*(){if(E.W()==='4'){yield*window.DBW.objects();return}for(const k of KINDS){const L=E.listOf(k);if(L)for(const o of L)if(o._e)yield o}for(const p of E.scn)if(!p.hid)yield p};
 E.keyOf=o=>o._e?o._e.key:null;
+E.addOf=id=>E.W()==='4'?window.DBW.addOf(id):E.adds.get(id);
+E.goneList=()=>E.W()==='4'?window.DBW.gone():[...E.gone.entries()];
+E.sig=()=>E.W()==='4'?'4:'+window.DBW.counts():E.gone.size+':'+E.adds.size;
 
 // ---------- cenário fixo do Mundo 1: estátua da estrela, máquina de passivas, chafariz (fonte) e pilares da praça ----------
 // Cada um vira um "objeto" editável como os outros (mover, girar, tamanho, apagar, colisão). A estrela e o cristal giram sozinhos no motor:
@@ -234,18 +237,19 @@ function frame(){if(!FLD||!FLD.ready||!NAT||!NAT.trees)return;
 E.hookCM=function(){
  // o mapa guardado no aparelho (cache) tem de levar sempre a colisão original, nunca a editada
  try{if(typeof mcSave==='function'&&!mcSave._ed){const _s=mcSave;mcSave=function(){if(!CM0)return _s.apply(this,arguments);const cur=CM.slice();CM.set(CM0);try{return _s.apply(this,arguments)}finally{CM.set(cur)}};mcSave._ed=1}}catch(e){}};
-E.setObj=function(kind,key,patch){const w='0',O=E.data.o[w]||(E.data.o[w]=mp()),K=O[kind]||(O[kind]=mp());let ov=K[key]||(K[key]={});
+E.W=()=>(typeof world!=='undefined'&&world===4&&window.DBW)?'4':'0';
+E.setObj=function(kind,key,patch){const w=E.W(),O=E.data.o[w]||(E.data.o[w]=mp()),K=O[kind]||(O[kind]=mp());let ov=K[key]||(K[key]={});
  const c=cOv(Object.assign({},ov,patch));
  const same=(a,b)=>Math.abs(a-b)<1e-6;
  if(c.x!==undefined&&same(c.x,0))delete c.x;if(c.z!==undefined&&same(c.z,0))delete c.z;if(c.y!==undefined&&same(c.y,0))delete c.y;if(c.r!==undefined&&same(c.r,0))delete c.r;
  for(const k of['sx','sy','sz'])if(c[k]!==undefined&&same(c[k],1))delete c[k];
  if(c.c&&same(c.c[0],1)&&same(c.c[1],1)&&same(c.c[2],1))delete c.c;
  if(!Object.keys(c).length){delete K[key]}else K[key]=c;E.touch()};
-E.resetObj=(kind,key)=>{const O=E.data.o['0'];if(O&&O[kind]&&O[kind][key]){delete O[kind][key];E.touch()}};
-E.addObj=function(a){const L=E.data.a['0']||(E.data.a['0']=[]);if(L.length>=3000)return null;const i=Math.random().toString(36).slice(2,8)+Date.now().toString(36).slice(-4);
+E.resetObj=(kind,key)=>{const O=E.data.o[E.W()];if(O&&O[kind]&&O[kind][key]){delete O[kind][key];E.touch()}};
+E.addObj=function(a){const w=E.W(),L=E.data.a[w]||(E.data.a[w]=[]);if(L.length>=3000)return null;const i=Math.random().toString(36).slice(2,8)+Date.now().toString(36).slice(-4);
  const o=cOv(a,true);o.i=i;o.k=a.k;o.v=a.v;L.push(o);E.touch();return i};
-E.setAdd=function(id,patch){const L=E.data.a['0']||[];const a=L.find(q=>q.i===id);if(!a)return;const c=cOv(Object.assign({},a,patch),true);c.i=a.i;c.k=a.k;c.v=a.v;L[L.indexOf(a)]=c;E.touch()};
-E.delAdd=id=>{const L=E.data.a['0']||[];const i=L.findIndex(q=>q.i===id);if(i>=0){L.splice(i,1);E.touch()}};
+E.setAdd=function(id,patch){const L=E.data.a[E.W()]||[];const a=L.find(q=>q.i===id);if(!a)return;const c=cOv(Object.assign({},a,patch),true);c.i=a.i;c.k=a.k;c.v=a.v;L[L.indexOf(a)]=c;E.touch()};
+E.delAdd=id=>{const L=E.data.a[E.W()]||[];const i=L.findIndex(q=>q.i===id);if(i>=0){L.splice(i,1);E.touch()}};
 E.setMon=function(idx,patch){const M=E.data.m['0']||(E.data.m['0']=mp());const c=Object.assign({},M[idx]||{},patch);
  if(!c.d)delete c.d;if(!c.x)delete c.x;if(!c.y)delete c.y;if(!c.s||Math.abs(c.s-1)<1e-6)delete c.s;if(Object.keys(c).length)M[idx]=c;else delete M[idx];E.touch()};
 
