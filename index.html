@@ -10009,15 +10009,17 @@ H3.shMesh=function(m,mt,pk){gl.uniformMatrix4fv(USH.uM,false,mt||IDM);gl.uniform
 H3.shEnd=function(){gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.viewport(0,0,W,Hh);SHS.pend=true};
 // o sol bate neste ponto? (0 = sombra, 1 = sol) — lê o mapa de sombras no lugar (usado na luz dos personagens: jogador, outros jogadores, lutadores)
 // O ponto é levado um pouco na direção do sol para o próprio corpo não fazer sombra nele. Poucas leituras por quadro; o resto reaproveita a vizinhança.
-const SUNV={cells:new Map(),t:0,px:new Uint8Array(16)};
+const SUNV={cells:new Map(),t:0,f:-1,n:0,px:new Uint8Array(16)};
 // leitura do mapa de sombras é cara (faz a placa de vídeo esperar): no máximo 1 a cada 110 ms, priorizando quem está perto do jogador.
 // Cada pedaço de 12 unidades guarda o valor por 0,8 s e muda devagar (sem piscar).
 H3.sunVis=(x,y,z)=>{if(!H3.charSh||!SHS.on||!SHS.ok||!RTS.sh||ISO||!gl)return null;
  const now=performance.now(),k=Math.floor(x/12)*100003+Math.floor(z/12),c=SUNV.cells.get(k);
  const nearP=Math.hypot(x-FOC[0],z-FOC[2])<30;
- if((!c||now-c.t>(nearP?160:800))&&now-SUNV.t>110){SUNV.t=now;const v=sunRead(x,y,z);
-  if(c){c.v=v;c.t=now}else SUNV.cells.set(k,{v,s:v,t:now,u:now});if(SUNV.cells.size>400)SUNV.cells.clear()}
- const e=SUNV.cells.get(k);if(!e)return 1;const dt=Math.min(.1,(now-(e.u||now))/1000);e.u=now;e.s+=(e.v-e.s)*Math.min(1,dt*8);return e.s};
+ if(SUNV.f!==frameId){SUNV.f=frameId;SUNV.n=0}
+ // Ultra no máximo: lê de novo a cada quadro (até 10 leituras por quadro; o jogador sempre)
+ if((!c||c.f!==frameId)&&(SUNV.n<10||nearP)){SUNV.n++;const v=sunRead(x,y,z);
+  if(c){c.v=v;c.t=now;c.f=frameId}else SUNV.cells.set(k,{v,s:v,t:now,u:now,f:frameId});if(SUNV.cells.size>400)SUNV.cells.clear()}
+ const e=SUNV.cells.get(k);if(!e)return 1;const dt=Math.min(.1,(now-(e.u||now))/1000);e.u=now;e.s+=(e.v-e.s)*Math.min(1,dt*20);return e.s};
 function sunRead(x,y,z){const px=x+SUN[0]*14,py=y+SUN[1]*14,pz=z+SUN[2]*14,m=SHS.mat;
  const qx=m[0]*px+m[4]*py+m[8]*pz+m[12],qy=m[1]*px+m[5]*py+m[9]*pz+m[13],qz=m[2]*px+m[6]*py+m[10]*pz+m[14];
  const sx=qx*.5+.5,sy=qy*.5+.5,sz=qz*.5+.5;if(!(sx>.003&&sx<.997&&sy>.003&&sy<.997&&sz<1))return 1;
@@ -18935,7 +18937,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261027144238;
+const GAME_BUILD=20261027144716;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
