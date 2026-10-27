@@ -9442,7 +9442,7 @@ let curFov=1;
 // Cada malha estática com 150+ triângulos ganha até 3 versões mais simples (agrupando vértices numa grade do tamanho de uma fração do raio dela).
 // A troca depende do tamanho dela na tela (raio / distância), não da distância pura: vale igual para uma casa e para uma montanha.
 // Na faixa de troca as duas versões são desenhadas juntas com pontilhado complementar (uma some enquanto a outra aparece): não dá para ver o "pulo".
-const LOD={on:true,q:[],job:null,ms:4,built:0,
+const LOD={on:true,q:[],job:null,ms:2,built:0,
  L:[{s:.30,c:.028,nb:true},{s:.14,c:.065,nb:true},{s:.06,c:.15,nb:false}],   // s: tamanho na tela abaixo do qual entra o nível · c: grade (fração do raio) · nb: separa por direção da face
  band:.28,minN:450};
 H3.LOD=LOD;
@@ -10009,19 +10009,21 @@ H3.shMesh=function(m,mt,pk){gl.uniformMatrix4fv(USH.uM,false,mt||IDM);gl.uniform
 H3.shEnd=function(){gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.viewport(0,0,W,Hh);SHS.pend=true};
 // o sol bate neste ponto? (0 = sombra, 1 = sol) — lê o mapa de sombras no lugar (usado na luz dos personagens: jogador, outros jogadores, lutadores)
 // O ponto é levado um pouco na direção do sol para o próprio corpo não fazer sombra nele. Poucas leituras por quadro; o resto reaproveita a vizinhança.
-const SUNV={f:-1,n:0,cur:new Map(),old:new Map(),px:new Uint8Array(16)};
+const SUNV={cells:new Map(),t:0,px:new Uint8Array(16)};
+// leitura do mapa de sombras é cara (faz a placa de vídeo esperar): no máximo 1 a cada 110 ms, priorizando quem está perto do jogador.
+// Cada pedaço de 12 unidades guarda o valor por 0,8 s e muda devagar (sem piscar).
 H3.sunVis=(x,y,z)=>{if(!SHS.on||!SHS.ok||!RTS.sh||ISO||!gl)return null;
- if(SUNV.f!==frameId){SUNV.f=frameId;SUNV.n=0;SUNV.old=SUNV.cur.size?SUNV.cur:SUNV.old;SUNV.cur=new Map()}
- const kf=((x/4)|0)*73856093^((y/4)|0)*19349663^((z/4)|0)*83492791,kc=((x/16)|0)*73856093^((z/16)|0)*83492791;
- if(SUNV.cur.has(kf))return SUNV.cur.get(kf);
- if(SUNV.n>=6){const o=SUNV.old.get(kc);return o===undefined?1:o}
- SUNV.n++;const px=x+SUN[0]*14,py=y+SUN[1]*14,pz=z+SUN[2]*14,m=SHS.mat;
+ const now=performance.now(),k=Math.floor(x/12)*100003+Math.floor(z/12),c=SUNV.cells.get(k);
+ const nearP=Math.hypot(x-FOC[0],z-FOC[2])<30;
+ if((!c||now-c.t>(nearP?160:800))&&now-SUNV.t>110){SUNV.t=now;const v=sunRead(x,y,z);
+  if(c){c.v=v;c.t=now}else SUNV.cells.set(k,{v,s:v,t:now,u:now});if(SUNV.cells.size>400)SUNV.cells.clear()}
+ const e=SUNV.cells.get(k);if(!e)return 1;const dt=Math.min(.1,(now-(e.u||now))/1000);e.u=now;e.s+=(e.v-e.s)*Math.min(1,dt*8);return e.s};
+function sunRead(x,y,z){const px=x+SUN[0]*14,py=y+SUN[1]*14,pz=z+SUN[2]*14,m=SHS.mat;
  const qx=m[0]*px+m[4]*py+m[8]*pz+m[12],qy=m[1]*px+m[5]*py+m[9]*pz+m[13],qz=m[2]*px+m[6]*py+m[10]*pz+m[14];
- const sx=qx*.5+.5,sy=qy*.5+.5,sz=qz*.5+.5;let v=1;
- if(sx>.003&&sx<.997&&sy>.003&&sy<.997&&sz<1){const R=RTS.sh.w,ix=Math.min(R-2,Math.max(0,Math.floor(sx*R-.5))),iy=Math.min(R-2,Math.max(0,Math.floor(sy*R-.5)));
-  gl.bindFramebuffer(gl.FRAMEBUFFER,RTS.sh.fb);gl.readPixels(ix,iy,2,2,gl.RGBA,gl.UNSIGNED_BYTE,SUNV.px);gl.bindFramebuffer(gl.FRAMEBUFFER,curFB);
-  const zz=sz-SHS.bias*2;let k=0;for(let i=0;i<4;i++){const P_=SUNV.px,o=i*4,d=P_[o]/255+P_[o+1]/65025+P_[o+2]/16581375+P_[o+3]/4228250625;if(zz<=d)k++}v=k/4}
- SUNV.cur.set(kf,v);SUNV.cur.set(kc,v);return v};
+ const sx=qx*.5+.5,sy=qy*.5+.5,sz=qz*.5+.5;if(!(sx>.003&&sx<.997&&sy>.003&&sy<.997&&sz<1))return 1;
+ const R=RTS.sh.w,ix=Math.min(R-2,Math.max(0,Math.floor(sx*R-.5))),iy=Math.min(R-2,Math.max(0,Math.floor(sy*R-.5)));
+ gl.bindFramebuffer(gl.FRAMEBUFFER,RTS.sh.fb);gl.readPixels(ix,iy,2,2,gl.RGBA,gl.UNSIGNED_BYTE,SUNV.px);gl.bindFramebuffer(gl.FRAMEBUFFER,curFB);
+ const zz=sz-SHS.bias*2;let k=0;for(let i=0;i<4;i++){const P_=SUNV.px,o=i*4,d=P_[o]/255+P_[o+1]/65025+P_[o+2]/16581375+P_[o+3]/4228250625;if(zz<=d)k++}return k/4}
 
 // ---------- raios de sol (só no gráfico Alto) ----------
 // Depois do quadro: H3.raysOcc(desenho) desenha o céu (opaco onde não tem nuvem) e o que tapa o sol numa textura pequena; H3.raysApply soma na tela o
@@ -18932,7 +18934,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261027143103;
+const GAME_BUILD=20261027143633;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
