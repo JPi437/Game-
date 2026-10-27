@@ -18793,7 +18793,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261027133441;
+const GAME_BUILD=20261027133804;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
@@ -19120,7 +19120,7 @@ const CCX=760,CCZ=560,CCR=190,CCH=150;
 const CCLX=308.0,CCLZ=205.9,CCG=[-11.5,22.8],CCMX=5.4,CCMZ=-0.2;   // meia largura/profundidade do terreno · portão na frente (+z) · centro da cúpula
 const CCBLD=[[5.4, -0.2, 138.8], [225.9, 0.0, 44.8], [209.2, -114.6, 40.4], [-203.0, -114.3, 40.5], [-183.0, 0.0, 34.4], [-227.7, 98.1, 54.0]];   // [x,z,raio] das construções em volta do centro (colisão)
 const CCM={st:0,buf:null};   // st: 0 carregando · 1 pronto · -1 falhou (usa a Cápsula antiga, feita em código)
-try{fetch('capsula.bin').then(r=>{if(!r.ok)throw 0;return r.arrayBuffer()}).then(b=>{if(new Uint32Array(b,0,1)[0]!==0x31435043)throw 0;CCM.buf=b;CCM.st=1}).catch(()=>{CCM.st=-1})}catch(e){CCM.st=-1}
+try{fetch('capsula.bin?v=2',{cache:'no-cache'}).then(r=>{if(!r.ok)throw 0;return r.arrayBuffer()}).then(b=>{if(new Uint32Array(b,0,1)[0]!==0x31435043)throw 0;CCM.buf=b;CCM.st=1}).catch(()=>{CCM.st=-1})}catch(e){CCM.st=-1}
 // monta direto o buffer da placa de vídeo (28 bytes por vértice, igual ao MB.pack), sem passar por listas grandes
 function ccUpload(gl){const b=CCM.buf,h=new Uint32Array(b,0,3),nv=h[1],nf=h[2],P=new Int16Array(b,12,nv*3),N=new Int8Array(b,12+nv*6,nv*3),C=new Uint8Array(b,12+nv*9,nv*3),
   io=12+nv*12+((4-(12+nv*12)%4)%4),I=new Uint32Array(b,io,nf*3),n=nf*3,buf=new ArrayBuffer(n*28),f=new Float32Array(buf),u=new Uint8Array(buf);
