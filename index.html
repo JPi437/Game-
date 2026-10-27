@@ -4065,13 +4065,13 @@ function join(force){if(!MP.db||!MP.uid||MP.offline||MP.kicked)return;if(!force&
  MP.refs=[pr,cr];
  MP.me=MP.db.ref('players/'+w+'/'+MP.uid);MP.me.onDisconnect().remove();{const me=MP.me,cb=me.on('value',s=>{if(!s.exists()&&MP.me===me&&!MP.hidden&&MP.conn&&!MP.kicked){MP.last='';setTimeout(()=>send(true),300)}},()=>{});MP.refs.push({off:()=>me.off('value',cb)})}MP.last='';send(true);if(w==='w0'||w==='w1')shStart(w);else shStop();stat()}
 function payload(){const k=equipped.map(id=>chars.find(c=>c.id===id)).filter(Boolean).slice(0,4).map(c=>[c.rar,c.sh?1:0,String(c.name).slice(0,16)]);   // 16: 'Jeff the Killer' tem 15 letras
- return {n:MP.nick,x:Math.round(P.x),y:Math.round(P.y),d:P.dir|0,m:mounted?(mountEq==='vassoura'?2:1):0,k:JSON.stringify(window.LOOKX?k.concat([['L',LOOKX.code()]]):k),f:fight?EN.indexOf(fight):-1,s:window.V6S?V6S():0}}
+ return {n:MP.nick,x:Math.round(P.x),y:Math.round(P.y),d:P.dir|0,m:mounted?(mountEq==='vassoura'?2:1):0,k:JSON.stringify(window.LOOKX?k.concat([['L',LOOKX.code()]]):k),f:fight?EN.indexOf(fight):-1,s:window.V6S?V6S():0,j:window.H3&&H3.S&&H3.S.mode&&H3.S.jt&&Date.now()-H3.S.jt<3000+(MP.off||0)?Math.round(H3.S.jt):0,h:window.H3&&H3.S&&H3.S.mode?Math.round((H3.S.hs||0)*2)/2:0}}
 function send(force){if(!MP.me||!MP.conn||MP.hidden||MP.kicked)return;if(window.ADM&&(ADM.noOnline()||ADM.banLock))return;const p=payload(),key=JSON.stringify(p),t=Date.now();
  if(!force&&key===MP.last&&t-MP.lastT<20000)return;MP.last=key;MP.lastT=t;p.t=firebase.database.ServerValue.TIMESTAMP;
  MP.me.set(p).catch(e=>{MP.err=e.code||'erro';stat()})}
 function upsert(s){const v=s.val();if(!v||s.key===MP.uid)return;let r=MP.others[s.key];
  if(!r)r=MP.others[s.key]={x:+v.x||0,y:+v.y||0,fp:[],st:0};
- r.tx=+v.x||0;r.ty=+v.y||0;r.d=[0,1,2,3].includes(v.d)?v.d:2;r.m=v.m===1||v.m===2?v.m:0;r.n=cleanNick(v.n)||'?';r.t=v.t;r.f=Number.isInteger(v.f)?v.f:-1;r.s=(+v.s|0)&15;
+ r.tx=+v.x||0;r.ty=+v.y||0;r.d=[0,1,2,3].includes(v.d)?v.d:2;r.m=v.m===1||v.m===2?v.m:0;r.n=cleanNick(v.n)||'?';r.t=v.t;r.f=Number.isInteger(v.f)?v.f:-1;r.s=(+v.s|0)&15;{const j=+v.j||0;if(j&&j!==r.jt)r.jt=j;r.hh=Math.max(0,Math.min(60,+v.h||0))}
  let k=[];try{k=JSON.parse(v.k||'[]')}catch(e){}
  if(Array.isArray(k)&&typeof LKE!=='undefined'){const lk=k.find(c=>Array.isArray(c)&&c[0]==='L');if(lk){const o=LKE.unpack(String(lk[1]||''));if(o)r.lk=o}}r.__id=s.key;
  r.k=(Array.isArray(k)?k:[]).slice(0,4).filter(c=>Array.isArray(c)&&c[0]>=0&&c[0]<=4).map(c=>[c[0]|0,c[1]?1:0,String(c[2]||'').slice(0,16)]);stat()}
@@ -9508,13 +9508,16 @@ precision highp float;
 precision mediump float;
 #endif
 varying vec3 vP;varying vec3 vN;varying vec4 vC;uniform vec3 uCam;uniform vec4 uL[${nl}];uniform vec3 uLC[${nl}];uniform vec3 uAT;uniform vec3 uAB;uniform vec4 uFog;uniform vec4 uFl;uniform float uEG;uniform float uDi;uniform float uAl;uniform float uFO;uniform vec3 uFC;
-uniform sampler2D uDetL;uniform float uDLK;uniform vec3 uMoD;uniform vec3 uMoL;uniform vec2 uNC;
+uniform sampler2D uDetL;uniform float uDLK;uniform vec3 uMoD;uniform vec3 uMoL;uniform vec2 uNC;uniform vec4 uSunL;uniform vec3 uSunCL;
+${SH_COMMON}
 void main(){
  if(uDi<1.0){float b=fract(52.9829189*fract(dot(gl_FragCoord.xy,vec2(0.06711056,0.00583715))));if(uDi>=0.0?b>uDi:b<=1.0+uDi)discard;}
  vec3 n=normalize(vN);vec3 V=uCam-vP;float dV=length(V);if(uNC.y>0.5&&dV<uNC.y)discard;if(dot(n,V)<0.0)n=-n;
  vec3 col=vC.rgb;vec3 lg=mix(uAB,uAT,n.y*0.5+0.5);
  if(uDLK>0.0&&vC.a<0.5){vec3 an=abs(n);vec2 uv=an.y>max(an.x,an.z)?vP.xz:(an.x>an.z?vP.zy:vP.xy);float d1=texture2D(uDetL,uv*0.13).r-0.5;float d2=texture2D(uDetL,uv*0.021).r-0.5;col*=max(0.0,1.0+(d1*0.55+d2*0.6)*uDLK);}
  lg+=uMoL*max(dot(n,uMoD),0.0);
+ // sol: no claro fica mais iluminado, na sombra (de árvore, casa, morro) fica só com a luz do céu, mais escuro
+ if(uSunL.w>0.5){float sd=max(dot(n,uSunL.xyz),0.0)*0.8+0.2;float sh=shadowAt(vP,n);lg=lg*0.6+uSunCL*(sd*0.8*sh);}
  for(int i=0;i<${nl};i++){vec3 d=uL[i].xyz-vP;float d2=dot(d,d);float r=uL[i].w;float a=1.0-d2/(r*r);if(a<=0.0)continue;a*=a;
   float nd=dot(n,d*inversesqrt(d2+0.0001));nd=max(nd*0.62+0.38,0.0);lg+=uLC[i]*(a*nd);}
  vec3 c=col*lg*(1.0-vC.a)+col*(vC.a*uEG);
@@ -9524,15 +9527,17 @@ void main(){
  if(uFC.x>0.0)f=min(f,uFC.x*(1.0-exp(-dF*uFC.y)))*(1.0-vC.a*uFC.z);
  c=mix(c,uFog.rgb,f);
  gl_FragColor=vec4(c,uAl);}`;
-const VS_SPR=`attribute vec3 aP;attribute vec2 aT;attribute vec4 aC;uniform mat4 uVP;uniform vec3 uCam;varying vec2 vT;varying vec4 vC;varying float vD;
-void main(){vT=aT;vC=aC;vec3 d=aP-uCam;vD=length(d);gl_Position=uVP*vec4(aP,1.0);}`;
-const FS_SPR=`#ifdef GL_FRAGMENT_PRECISION_HIGH
+const VS_SPR=`attribute vec3 aP;attribute vec2 aT;attribute vec4 aC;uniform mat4 uVP;uniform vec3 uCam;varying vec2 vT;varying vec4 vC;varying float vD;varying vec3 vP;
+void main(){vT=aT;vC=aC;vP=aP;vec3 d=aP-uCam;vD=length(d);gl_Position=uVP*vec4(aP,1.0);}`;
+const FS_SPR=()=>`#ifdef GL_FRAGMENT_PRECISION_HIGH
 precision highp float;
 #else
 precision mediump float;
 #endif
-varying vec2 vT;varying vec4 vC;varying float vD;uniform sampler2D uTex;uniform vec4 uFog;uniform float uAdd;uniform float uFO;
-void main(){vec4 t=texture2D(uTex,vT);float nf=vC.a<0.0?1.0:0.0;float a=t.a*abs(vC.a);if(a<0.02)discard;vec3 c=t.rgb*vC.rgb;float dF=max(vD-uFO,0.0);float f=(1.0-exp(-dF*dF*uFog.a*uFog.a))*(1.0-nf);
+varying vec2 vT;varying vec4 vC;varying float vD;varying vec3 vP;uniform sampler2D uTex;uniform vec4 uFog;uniform float uAdd;uniform float uFO;uniform float uShK;
+${SH_COMMON}
+void main(){vec4 t=texture2D(uTex,vT);float nf=vC.a<0.0?1.0:0.0;float a=t.a*abs(vC.a);if(a<0.02)discard;vec3 c=t.rgb*vC.rgb;
+ if(uShK>0.5){float sh=shadowAt(vP,vec3(0.0,1.0,0.0));c*=mix(0.6,1.1,sh);}float dF=max(vD-uFO,0.0);float f=(1.0-exp(-dF*dF*uFog.a*uFog.a))*(1.0-nf);
  if(uAdd>0.5){c*=a*(1.0-f);gl_FragColor=vec4(c,1.0);}else{c=mix(c,uFog.rgb,f);gl_FragColor=vec4(c,a);}}`;
 
 // ---------- ao ar livre (js/31-h3-field.js): sol + céu, vento nas folhas, água, sombras de nuvem, névoa ----------
@@ -9805,8 +9810,12 @@ function flat(t,x,y,z,w,d,uv,rgba,add,rot){SL.push({t,x,y,z,w,h:d,uv:uv||[0,0,1,
 function strip(t,ax,ay,az,bx,by,bz,w,rgba,add,uv){const mx=(ax+bx)/2-camP[0],my=(ay+by)/2-camP[1],mz=(az+bz)/2-camP[2];
  SL.push({t,x:ax,y:ay,z:az,x2:bx,y2:by,z2:bz,w,h:0,uv:uv||[0,0,1,1],c:rgba||[1,1,1,1],add:add?1:0,st:true,d:mx*mx+my*my+mz*mz-(add?1e6:0)})}
 H3.spr=spr;H3.flat=flat;H3.strip=strip;H3.pick=(...a)=>pickLights(...a);
+// sol e sombra do sol para os personagens (programa P.lit e figurinhas): só onde o mapa de sombras está ligado (ao ar livre)
+function shUni(u){const on=!!(SHS.on&&SHS.ok&&RTS.sh&&!ISO);gl.activeTexture(gl.TEXTURE3);gl.bindTexture(gl.TEXTURE_2D,on?RTS.sh.t:shTex1);gl.activeTexture(gl.TEXTURE0);
+ gl.uniform1i(u.uShT,3);gl.uniformMatrix4fv(u.uSM,false,SHS.mat);gl.uniform4f(u.uSh,on?SHS.on:0,SHS.nOff,SHS.f0,SHS.f1);gl.uniform2f(u.uShR,SHS.texel,SHS.bias);gl.uniform3f(u.uFoc,FOC[0],FOC[1],FOC[2]);return on}
+function litSun(u){const on=shUni(u);gl.uniform4f(u.uSunL,SUN[0],SUN[1],SUN[2],on?1:0);gl.uniform3f(u.uSunCL,SUNC[0],SUNC[1],SUNC[2])}
 function flushSprites(fogv){
- if(!SL.length)return;gl.useProgram(P.spr);gl.uniform4fv(U.sFog,fogv);gl.uniform1f(U.sFO,FOGO);gl.uniform3fv(U.sCam,camP);gl.uniform1i(U.sTex,0);
+ if(!SL.length)return;gl.useProgram(P.spr);const spOn=U.spSh&&U.spSh.uShT?shUni(U.spSh):false;gl.uniform4fv(U.sFog,fogv);gl.uniform1f(U.sFO,FOGO);gl.uniform3fv(U.sCam,camP);gl.uniform1i(U.sTex,0);
  gl.bindBuffer(gl.ARRAY_BUFFER,sbuf);gl.enableVertexAttribArray(0);gl.enableVertexAttribArray(1);gl.enableVertexAttribArray(2);
  gl.vertexAttribPointer(0,3,gl.FLOAT,false,36,0);gl.vertexAttribPointer(1,2,gl.FLOAT,false,36,12);gl.vertexAttribPointer(2,4,gl.FLOAT,false,36,20);
  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,sidx);gl.depthMask(false);
@@ -9814,7 +9823,7 @@ function flushSprites(fogv){
   const L=pass<2?SL.filter(s=>s.add===pass):SL.filter(s=>s.xr>0&&!s.add);if(!L.length)continue;
   if(pass!==1)L.sort((a,b)=>b.d-a.d);
   const ad=pass===1?1:0;if(pass===2)gl.depthFunc(gl.GREATER);
-  gl.blendFunc(ad?gl.ONE:gl.SRC_ALPHA,ad?gl.ONE:gl.ONE_MINUS_SRC_ALPHA);gl.uniform1f(U.sAdd,ad);
+  gl.blendFunc(ad?gl.ONE:gl.SRC_ALPHA,ad?gl.ONE:gl.ONE_MINUS_SRC_ALPHA);gl.uniform1f(U.sAdd,ad);if(U.spSh&&U.spSh.uShK)gl.uniform1f(U.spSh.uShK,spOn&&pass===0?1:0);
   let n=0,run=0,cur=null;
   const flush=()=>{if(!n)return;gl.bindTexture(gl.TEXTURE_2D,cur.t);gl.bufferSubData(gl.ARRAY_BUFFER,0,SV.subarray(0,n*36));gl.drawElements(gl.TRIANGLES,n*6,gl.UNSIGNED_SHORT,0);n=0};
   for(let i=0;i<L.length;i++){const s=L[i];if(cur!==s.t||n>=MAXS-1){flush();cur=s.t}
@@ -9848,8 +9857,8 @@ function init(canvas){
 function setup(){
  const mu=gl.getParameter(gl.MAX_FRAGMENT_UNIFORM_VECTORS)||16;NL=mu>=64?NLMAX:mu>=40?8:4;
  try{
-  P.lit=program(VS_LIT,FS_LIT(NL),['aP','aN','aC']);P.spr=program(VS_SPR,FS_SPR,['aP','aT','aC'])}catch(e){console.error('H3',e&&e.message||e);return false}
- gl.useProgram(P.lit);Object.assign(U,uloc(P.lit,['uVP','uM','uCam','uL','uLC','uAT','uAB','uFog','uFl','uEG','uDi','uAl','uFO','uFC','uDetL','uDLK','uMoD','uMoL','uNC']));gl.uniform1f(U.uAl,1);gl.uniform2f(U.uNC,0,0);gl.uniform1f(U.uFO,0);gl.uniform3f(U.uFC,0,0,0);gl.uniform1f(U.uDLK,0);gl.uniform3f(U.uMoL,0,0,0);
+  P.lit=program(VS_LIT,FS_LIT(NL),['aP','aN','aC']);P.spr=program(VS_SPR,FS_SPR(),['aP','aT','aC'])}catch(e){console.error('H3',e&&e.message||e);return false}
+ gl.useProgram(P.lit);Object.assign(U,uloc(P.lit,['uVP','uM','uCam','uL','uLC','uAT','uAB','uFog','uFl','uEG','uDi','uAl','uFO','uFC','uDetL','uDLK','uMoD','uMoL','uNC','uSunL','uSunCL','uShT','uSM','uSh','uShR','uFoc']));gl.uniform4f(U.uSunL,0,1,0,0);gl.uniform1f(U.uAl,1);gl.uniform2f(U.uNC,0,0);gl.uniform1f(U.uFO,0);gl.uniform3f(U.uFC,0,0,0);gl.uniform1f(U.uDLK,0);gl.uniform3f(U.uMoL,0,0,0);
  tex.cloud=tex.det=null;H3.outOK=false;try{                          // programas do mundo ao ar livre: se este aparelho não compilar, só o 3D do primeiro mundo fica de fora
   NLO_=mu>=48?NLO:2;
   P.out=program(VS_OUT,FS_OUT(NLO_),['aP','aN','aC']);P.ter=program(VS_TER,FS_TER(NLO_),['aP','aN','aC']);P.sky=program(VS_SKY,FS_SKY,['aP']);
@@ -9870,7 +9879,7 @@ function setup(){
  {const t=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,t);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,1,1,0,gl.RGBA,gl.UNSIGNED_BYTE,new Uint8Array([255,255,255,255]));shTex1=t}
  MAXT=Math.min(gl.getParameter(gl.MAX_TEXTURE_SIZE)||2048,gl.getParameter(gl.MAX_RENDERBUFFER_SIZE)||2048);
  gl.useProgram(P.lit);
- const s=uloc(P.spr,['uVP','uCam','uTex','uFog','uAdd','uFO']);U.sFO=s.uFO;U.sVP=s.uVP;U.sCam=s.uCam;U.sTex=s.uTex;U.sFog=s.uFog;U.sAdd=s.uAdd;
+ const s=uloc(P.spr,['uVP','uCam','uTex','uFog','uAdd','uFO','uShK','uShT','uSM','uSh','uShR','uFoc']);U.spSh=s;U.sFO=s.uFO;U.sVP=s.uVP;U.sCam=s.uCam;U.sTex=s.uTex;U.sFog=s.uFog;U.sAdd=s.uAdd;
  sbuf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,sbuf);gl.bufferData(gl.ARRAY_BUFFER,SV.byteLength,gl.DYNAMIC_DRAW);
  sidx=gl.createBuffer();gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,sidx);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,SI,gl.STATIC_DRAW);
  gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);gl.enable(gl.BLEND);gl.disable(gl.CULL_FACE);return true}
@@ -9945,6 +9954,7 @@ function begin(ex,ey,ez,yaw,pitch,fov,roll){
  gl.useProgram(P.lit);gl.uniformMatrix4fv(U.uVP,false,VP);gl.uniform3f(U.uCam,ex,ey,ez);gl.uniform3fv(U.uAT,ambT);gl.uniform3fv(U.uAB,ambB);gl.uniform4fv(U.uFog,fog);gl.uniform1f(U.uFO,FOGO);gl.uniform3f(U.uFC,0,0,0);
  gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,tex.det?tex.det.t:null);gl.uniform1i(U.uDetL,2);gl.activeTexture(gl.TEXTURE0);gl.uniform1f(U.uDLK,tex.det?DETKL:0);gl.uniform3fv(U.uMoD,MOOND);gl.uniform3fv(U.uMoL,MOONL);
  gl.uniform4f(U.uFl,0,0,0,0);gl.uniform1f(U.uEG,1);gl.uniform1f(U.uDi,1);gl.uniformMatrix4fv(U.uM,false,IDM);
+ litSun(U);
  gl.enableVertexAttribArray(0);gl.enableVertexAttribArray(1);gl.enableVertexAttribArray(2)}
 // desenha uma malha com a matriz m (ou a identidade); lights = luzes fixas, dyn = luzes temporárias; o = {fl:[r,g,b,a] clarão, eg: brilho próprio, di: transparência 0..1}
 function mesh(m,mt,lights,dyn,o){
@@ -10694,8 +10704,16 @@ function mkBtn(){if(btn)return;css();btn=document.createElement('button');btn.cl
  const jd=e=>{e.preventDefault();e.stopPropagation();jb.classList.add('on');jump()},ju=()=>jb.classList.remove('on');
  jb.addEventListener('pointerdown',jd);jb.addEventListener('pointerup',ju);jb.addEventListener('pointercancel',ju);jb.addEventListener('pointerleave',ju)}
 // pulo: só visual (o jogo 2D continua no chão), com gravidade; a câmera e o boneco sobem juntos
-function jump(){if(!S.mode||lock||(window.STUN&&STUN())||S.jh>.01||S.jv>0)return;S.jv=3.15;S.jh=.01;try{bp(520,.07,'triangle',.05,0,760)}catch(e){}}
-function jumpTick(){if(S.jh<=0&&S.jv<=0)return;S.jv-=.19;S.jh+=S.jv;if(S.jh<=0){S.jh=0;S.jv=0;S.land=Date.now();try{bp(140,.06,'square',.03,0,90)}catch(e){}}}
+// altura do apoio embaixo do jogador (acima do chão): pedra, arbusto, caixote... (SC.lowAt) — só conta se os pés já estão em cima dele
+function supportH(){if(!SC||!SC.lowAt)return 0;const x=P.x+8-SC.OX,z=(P.y+14-SC.OY)*SC.K,gy=floorAt(x,z),L=SC.lowAt(x,z);return L&&gy+S.jh>=L.top-3?max(0,L.top-gy):0}
+S.hs=0;S.jair=0;
+function jump(){if(!S.mode||lock||(window.STUN&&STUN()))return;const hs=supportH();if(S.jv!==0||S.jh>hs+.6)return;
+ S.jv=3.45;S.jh=hs+.01;S.jt=Date.now()+(window.MP&&MP.off||0);try{bp(520,.07,'triangle',.05,0,760)}catch(e){}}
+function jumpTick(){const hs=supportH();S.hs=hs;
+ if(S.jv===0&&S.jh<=hs+.02){S.jh=hs;S.jair=0;return}                 // parado no chão ou em cima de uma pedra
+ S.jv-=.19;S.jh+=S.jv;                                                // no ar (pulando ou caindo de uma borda)
+ if(S.jh<=hs){const fall=-S.jv;S.jh=hs;S.jv=0;S.land=Date.now();if(fall>1.2)try{bp(140,.06,'square',.03,0,90)}catch(e){}}
+ S.jair=max(0,S.jh-hs)}
 H3.jump=jump;H3.floorAt=(x,z)=>floorAt(x,z);H3.setMode=m=>setMode(m);H3.setModeQ=m=>{S.quiet=1;try{setMode(m)}finally{S.quiet=0}};
 function mkCanvases(){if(glc)return;const cv0=$$('c');
  glc=document.createElement('canvas');glc.id='h3gl';ovc=document.createElement('canvas');ovc.id='h3ov';cv0.parentNode.insertBefore(glc,cv0.nextSibling);glc.parentNode.insertBefore(ovc,glc.nextSibling);
@@ -10817,7 +10835,10 @@ addEventListener('keydown',e=>{if(!S.mode||lock)return;const t=e.target,tg=t&&t.
 // ============================================================ andar (a cada passo de 1/60 s) ============================================================
 // colisão feita direto no 3D (cada cena tem a sua: círculos no salão, mapa de blocos na caverna); encostando, o jogador desliza
 const SO={x:0,z:0,ox:0,oz:0};
-function step3(dx,dz){const ox=P.x+8-SC.OX,oz=(P.y+14-SC.OY)*SC.K;SO.ox=ox;SO.oz=oz;SO.x=ox+dx;SO.z=oz+dz;SC.step(SO);P.x=SO.x-8+SC.OX;P.y=SO.z/SC.K-14+SC.OY}
+function step3(dx,dz){const ox=P.x+8-SC.OX,oz=(P.y+14-SC.OY)*SC.K,tx=ox+dx,tz=oz+dz;SO.ox=ox;SO.oz=oz;SO.x=tx;SO.z=tz;SC.step(SO);
+ // bateu em algo baixo (pedra, arbusto) com os pés acima do topo dele: passa por cima / sobe nele
+ if(SC.lowAt&&(SO.x!==tx||SO.z!==tz)){const feet=floorAt(ox,oz)+S.jh,L=SC.lowAt(tx,tz,14);if(L&&feet>=L.top-2.5){SO.x=tx;SO.z=tz}}
+ P.x=SO.x-8+SC.OX;P.y=SO.z/SC.K-14+SC.OY}
 function unstick(){if(!hit(P.x,P.y))return;                       // ao voltar para o 2D, sai de dentro de qualquer objeto sólido do 2D
  for(let rr=1;rr<=48;rr++)for(let a=0;a<12;a++){const x=P.x+round(cos(a/12*TAU)*rr),y=P.y+round(sin(a/12*TAU)*rr);if(!hit(x,y)){P.x=x;P.y=y;return}}}
 function updOff(){
@@ -10931,10 +10952,13 @@ const AT=document.createElement('canvas');AT.width=COLS*CW*CS;AT.height=ROWS*CH*
 function atRows(n){const r=clp(Math.ceil(n/COLS),1,ROWS);if(r!==rowsNow){rowsNow=r;AT.height=r*CH*CS;ATX.imageSmoothingEnabled=false}}
 const H3C=window.H3C={on:false,list:[],SF:[]};H3.AT=AT;
 const DV=[[0,-1],[-1,0],[0,1],[1,0]];                             // direção 2D (0 cima,1 esq.,2 baixo,3 dir.) → sentido no mundo 3D (X leste, Z sul)
+// pulo dos outros jogadores: chega só a hora em que pularam (j) e a altura de onde estão em pé (h); o arco é calculado aqui, igual ao do jogador
+function remJump(q){const o={h:+q.hh||0,air:0,v:0};if(!q.jt)return o;const n=(Date.now()+(window.MP&&MP.off||0)-q.jt)/16.67;if(n<0||n>60)return o;
+ const v0=3.45,g=.19,h=v0*n-g*n*(n+1)/2;if(h>0){o.air=h;o.v=v0-g*n}return o}
 function prep(m){const q=m.q;if(!q||q.x===undefined)return null;
  const x=q.x+8-SC.OX,z=(q.y+14-SC.OY)*SC.K,dk=m.dk||'dir',d0=q[dk],A={m,q,k:m.k,x,z,y:floorAt(x,z),h3d:m.nm===NM3||m.nm==='Herobrine',m3:!!(window.HM3&&m.k&&m.k.charAt(0)==='E'&&HM3.own(q)),dk,px:q.x,py:q.y,d0};
  let fx0,fz0;const kind=m.k.charAt(0),iso=S.mode===3;
- if(kind==='P'){if(iso){const v=DV[P.dir|0]||DV[2];fx0=v[0];fz0=v[1]}else{fx0=sin(S.yaw);fz0=-cos(S.yaw)}A.y+=S.jh;A.jh=S.jh}
+ if(kind==='P'){if(iso){const v=DV[P.dir|0]||DV[2];fx0=v[0];fz0=v[1]}else{fx0=sin(S.yaw);fz0=-cos(S.yaw)}A.y+=S.jh;A.jh=S.jair;A.jv=S.jv}
  else if((kind==='F'&&fight)||(kind==='R'&&q.rfe)){const dx=SC.fx-x,dz=SC.fz-z,l=hypot(dx,dz)||1;fx0=dx/l;fz0=dz/l}
  else if(kind==='F'){if(iso){const v=DV[q.dir|0]||DV[2];fx0=v[0];fz0=v[1]}
   else{// igual ao jogador: olha para onde está andando; parado, continua virado para onde parou (não gira junto com a câmera)
@@ -10944,6 +10968,7 @@ function prep(m){const q=m.q;if(!q||q.x===undefined)return null;
    if(o.fy===null){const hs=P&&P._hero;o.fy=hs&&isFinite(hs.yaw)?hs.yaw:atan2(sin(S.yaw),-cos(S.yaw))}
    fx0=sin(o.fy);fz0=cos(o.fy)}}
  else if(kind==='N'){const dx=P.x+8-x,dz=P.y+14-z,l=hypot(dx,dz)||1;fx0=dx/l;fz0=dz/l}
+ if(kind==='B'){const J=remJump(q);A.y+=J.h+J.air;A.jh=J.air;A.jv=J.v}
  else{const v=DV[d0|0]||DV[2];fx0=v[0];fz0=v[1]}
  A.fx=fx0;A.fz=fz0;A.yaw=atan2(fx0,fz0);
  A.guts=!!((kind==='F'||kind==='R')&&m.nm==='Guts'&&window.GUTS3&&GUTS3.on());
@@ -11101,7 +11126,7 @@ function frame(){
  // raios de sol (gráfico Alto, olhando para o lado do sol)
  if(!C.iso&&SC.rays)try{SC.rays(t,C)}catch(e){console.error('H3 raios',e);SC.rays=null}
  H3.post();
- if(S.mode===1&&!S.ctrOn){const pp=S.punchT?(t-S.punchT)/260:1;MOD.drawArm({ex:C.x,ey:C.y,ez:C.z,yaw:C.yaw,pitch:C.pitch,t,mv:S.moving&&S.jh<=0?1:0,pu:pp<1?pp:0,fov:1.15,jv:S.jv,jh:S.jh},SC.lights,FX.L)}
+ if(S.mode===1&&!S.ctrOn){const pp=S.punchT?(t-S.punchT)/260:1;MOD.drawArm({ex:C.x,ey:C.y,ez:C.z,yaw:C.yaw,pitch:C.pitch,t,mv:S.moving&&S.jair<=0?1:0,pu:pp<1?pp:0,fov:1.15,jv:S.jv,jh:S.jair},SC.lights,FX.L)}
  overlay(t,C);blend2D();
  // 4) qualidade: se o aparelho está lento, desenha o 3D em menos pixels (a vista de cima já usa a resolução do 2D)
  const dt=pf-S.lastT;S.lastT=pf;if(dt>0&&dt<250&&!C.iso){S.ft+=(dt-S.ft)*.05;
@@ -12019,6 +12044,7 @@ SCN.field={id:'field',K:1,OX:0,OY:0,eye:25,camD:92,p3:-.2,pl:[[-.95,.85],[-1.0,.
  floorY:(x,z)=>floorY(x,z),
  step:o=>{const ok=(x,z)=>!blocked(x,z);if(ok(o.x,o.z))return;if(ok(o.x,o.oz)){o.z=o.oz;return}if(ok(o.ox,o.z)){o.x=o.ox;return}o.x=o.ox;o.z=o.oz},
  camOk:pz=>{const f=FLD.camOk;return f?f:(x,z)=>x>-20&&z>-20&&x<MW+20&&z<MH+20},
+ lowAt:(x,z,pad)=>FLD.lowAt?FLD.lowAt(x,z,pad):null,
  camSolid:(x,z)=>{for(const zn of ZN)if(x>=zn.x0&&x<=zn.x1&&z>=zn.z0&&z<=zn.z1)return zn.block(x,z);const ty=FLD.typeAt(x,z);if(ty===4||ty===7||ty===9)return false;return solid(x|0,(z-3)|0)||(FLD.extra?FLD.extra(x,z):false)},
  camY:(cy,cz,cx)=>max(cy,hAt(cx===undefined?MW/2:cx,cz)+7),
  enter(){for(const p of FLD.parts)if(p.enter)p.enter()},leave(){for(const p of FLD.parts)if(p.leave)p.leave()},clear(){for(const p of FLD.parts)if(p.clear)p.clear()},
@@ -12274,6 +12300,14 @@ NAT.build=function*(gl){
  yield 1};
 
 NAT.free=function(){NAT.VAR={};NAT.trees=[];NAT.bushes=[];NAT.rocks=[];NAT.decor=[]};
+// coisas baixas onde dá para subir/pular por cima (pedras e arbustos): grade de 32 px com [x,z,raio,topo]
+let LOWG=null,LOWK=null;
+function lowBuild(){LOWK=NAT.rocks;LOWG=new Map();
+ for(const L of[NAT.rocks,NAT.bushes])for(const T of L){const mm=T.v&&T.v.m&&T.v.m[0];if(!mm||!mm.bb)continue;const M=T.m,sx=Math.hypot(M[0],M[1],M[2]),sy=Math.hypot(M[4],M[5],M[6]),b=mm.bb;
+  const top=M[13]+b[4]*sy,r=Math.max(b[3],-b[0],b[5],-b[2])*sx*.82;if(top-T.y>34||r<2)continue;   // alto demais: continua sendo parede
+  const it=[T.x,T.z,r,top],R=r+14;for(let gx=Math.floor((T.x-R)/32);gx<=Math.floor((T.x+R)/32);gx++)for(let gz=Math.floor((T.z-R)/32);gz<=Math.floor((T.z+R)/32);gz++){const k=gx*4096+gz;let a=LOWG.get(k);if(!a)LOWG.set(k,a=[]);a.push(it)}}}
+FLD.lowAt=(x,z,pad)=>{pad=pad||0;if(!NAT.rocks.length&&!NAT.bushes.length)return null;if(LOWK!==NAT.rocks)lowBuild();const a=LOWG.get(Math.floor(x/32)*4096+Math.floor(z/32));if(!a)return null;
+ let best=null;for(const it of a){const dx=x-it[0],dz=z-it[1];const rr=it[2]+pad;if(dx*dx+dz*dz<rr*rr&&(!best||it[3]>best.top))best={top:it[3]}}return best};
 
 // ---------- sumiço das copas na frente da câmera (a cada quadro) ----------
 const SEG={ax:0,ay:0,az:0,bx:0,by:0,bz:0};
@@ -16788,7 +16822,7 @@ function place(A,s,dt){
  s.yaw+=clp(angd(s.yaw,tg),-dt*16,dt*16);
  const mv=A.mv>.5||s.spd>14;
  // pulo (só o jogador pula; H3.S.jv = velocidade vertical, A.jh = altura): subindo → Jump_Start, no ar/caindo → Jump_Loop, chegando no chão → Jump_Land
- const air=A.k==='P'&&(A.jh||0)>.05,JS=H3.S||{};
+ const air=(A.k==='P'||A.k.charAt(0)==='B')&&(A.jh||0)>.05,JS={jv:A.jv!==undefined?A.jv:(H3.S||{}).jv};
  if(air){s.airT=s.air?s.airT+dt:0;s.landT=0;if((JS.jv>0&&s.airT<.5)||s.airT<.12)pick(s,'Jump_Start',.07);else pick(s,'Jump_Loop',.1)}
  else{if(s.air)s.landT=.5;if(s.landT>0){s.landT-=dt;if(mv&&s.landT<.4)pick(s,'Jog_Fwd_Loop',.12);else pick(s,mv?'Jog_Fwd_Loop':'Jump_Land',.08)}else pick(s,mv?'Jog_Fwd_Loop':'Idle_Loop',.16)}
  s.air=air;
@@ -18879,7 +18913,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261027140427;
+const GAME_BUILD=20261027142234;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
