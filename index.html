@@ -9813,8 +9813,8 @@ H3.spr=spr;H3.flat=flat;H3.strip=strip;H3.pick=(...a)=>pickLights(...a);
 // sol e sombra do sol para os personagens (programa P.lit e figurinhas): só onde o mapa de sombras está ligado (ao ar livre)
 function shUni(u){const on=!!(SHS.on&&SHS.ok&&RTS.sh&&!ISO);gl.activeTexture(gl.TEXTURE3);gl.bindTexture(gl.TEXTURE_2D,on?RTS.sh.t:shTex1);gl.activeTexture(gl.TEXTURE0);
  gl.uniform1i(u.uShT,3);gl.uniformMatrix4fv(u.uSM,false,SHS.mat);gl.uniform4f(u.uSh,on?SHS.on:0,SHS.nOff,SHS.f0,SHS.f1);gl.uniform2f(u.uShR,SHS.texel,SHS.bias);gl.uniform3f(u.uFoc,FOC[0],FOC[1],FOC[2]);return on}
-function litSun(u){const on=shUni(u),out=on||PFR.out>=frameId-2;   // ao ar livre: luz do sol sempre; a sombra só com as Sombras ligadas
- gl.uniform4f(u.uSunL,SUN[0],SUN[1],SUN[2],out&&!ISO?1:0);gl.uniform3f(u.uSunCL,SUNC[0],SUNC[1],SUNC[2])}
+function litSun(u){const on=shUni(u);   // luz e sombra do sol nos personagens: só com Sombras em Ultra (H3.charSh)
+ gl.uniform4f(u.uSunL,SUN[0],SUN[1],SUN[2],on&&H3.charSh&&!ISO?1:0);gl.uniform3f(u.uSunCL,SUNC[0],SUNC[1],SUNC[2])}
 function flushSprites(fogv){
  if(!SL.length)return;gl.useProgram(P.spr);const spOn=U.spSh&&U.spSh.uShT?shUni(U.spSh):false;gl.uniform4fv(U.sFog,fogv);gl.uniform1f(U.sFO,FOGO);gl.uniform3fv(U.sCam,camP);gl.uniform1i(U.sTex,0);
  gl.bindBuffer(gl.ARRAY_BUFFER,sbuf);gl.enableVertexAttribArray(0);gl.enableVertexAttribArray(1);gl.enableVertexAttribArray(2);
@@ -10012,7 +10012,7 @@ H3.shEnd=function(){gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.viewport(0,0,W,Hh
 const SUNV={cells:new Map(),t:0,px:new Uint8Array(16)};
 // leitura do mapa de sombras é cara (faz a placa de vídeo esperar): no máximo 1 a cada 110 ms, priorizando quem está perto do jogador.
 // Cada pedaço de 12 unidades guarda o valor por 0,8 s e muda devagar (sem piscar).
-H3.sunVis=(x,y,z)=>{if(!SHS.on||!SHS.ok||!RTS.sh||ISO||!gl)return null;
+H3.sunVis=(x,y,z)=>{if(!H3.charSh||!SHS.on||!SHS.ok||!RTS.sh||ISO||!gl)return null;
  const now=performance.now(),k=Math.floor(x/12)*100003+Math.floor(z/12),c=SUNV.cells.get(k);
  const nearP=Math.hypot(x-FOC[0],z-FOC[2])<30;
  if((!c||now-c.t>(nearP?160:800))&&now-SUNV.t>110){SUNV.t=now;const v=sunRead(x,y,z);
@@ -13375,16 +13375,17 @@ const SHT=[
  {sh:0,bake:1},
  {sh:1,res:1024,ext:110,f0:78,f1:104},
  {sh:2,res:1024,ext:170,f0:118,f1:165},
- {sh:2,res:2048,ext:520,f0:440,f1:510}];
+ {sh:2,res:2048,ext:520,f0:440,f1:510},
+ {sh:2,res:2048,ext:520,f0:440,f1:510,cs:1}];   // Ultra: igual ao Alto + luz/sombra de verdade nos personagens (mais pesado)
 const ILT=[{cap:0,capIn:2,rays:0,motes:0},{cap:1,capIn:4,rays:0,motes:0},{cap:2,capIn:8,rays:0,motes:30},{cap:4,capIn:12,rays:1,motes:60}];
 const VGT=[
  {grass:0,bush:0,far:1150,fog:.0016,tFar:650,sFar:300,lod:[200,450],pFar:950,tFarD:700,distK:.7,hc:300,mob:450,leaves:0},
  {grass:1,bush:1,R:140,RF:260,fade:[72,128],far:1500,fog:.0013,tFar:900,sFar:360,lod:[220,520],pFar:1100,tFarD:1100,distK:.85,hc:360,mob:560,leaves:60},
  {grass:1,bush:1,R:228,RF:400,fade:[128,214],far:1900,fog:.00115,tFar:1150,sFar:430,lod:[260,600],pFar:1350,tFarD:1500,distK:1,hc:420,mob:700,leaves:140},
  {grass:2,bush:1,R:760,RF:880,fade:[660,750],glod:250,far:3400,fog:.00068,tFar:2400,sFar:850,lod:[380,950],pFar:2800,tFarD:2600,distK:1.7,hc:700,mob:1150,leaves:260}];
-const ck=v=>v>=0&&v<=3?v|0:null;
+const ck=v=>v>=0&&v<=3?v|0:null,ckS=v=>v>=0&&v<=4?v|0:null;
 try{const o=JSON.parse(localStorage.getItem('mp_3d')||'{}')||{};
- if(ck(o.sh)!==null&&ck(o.il)!==null&&ck(o.veg)!==null){G3.sh=o.sh|0;G3.il=o.il|0;G3.veg=o.veg|0}
+ if(ckS(o.sh)!==null&&ck(o.il)!==null&&ck(o.veg)!==null){G3.sh=o.sh|0;G3.il=o.il|0;G3.veg=o.veg|0}
  else if(o.lvl>=0&&o.lvl<=2){const l=o.lvl|0;G3.sh=[0,2,3][l];G3.il=[1,2,3][l];G3.veg=[0,2,3][l]}}catch(e){}       // versão antiga: um nível só
 if(G3.sh===undefined){G3.sh=mob?1:3;G3.il=mob?2:3;G3.veg=mob?2:3}
 const save=()=>{try{localStorage.setItem('mp_3d',JSON.stringify({sh:G3.sh,il:G3.il,veg:G3.veg,fov1:G3.fov1,fov3:G3.fov3}))}catch(e){}};
@@ -13420,7 +13421,7 @@ function apply(force){const L=cur(),S=H3.S,key=CFGK,inFld=!(S&&S.sc)||S.sc===SCN
   if(!off){FL.R=L.R;FL.RF=L.RF;FL.fade=L.fade;FL.lod=L.glod||0;FL.perF=L.grass===2?6:2;FL.msF=L.grass===2?7:4}
   if(!off&&S&&S.mode&&FLD.ready&&typeof P!=='undefined'){try{FL.step({x:P.x+8,z:P.y+14},L.grass===2?90:60,140)}catch(e){}}}
  // sombras
- H3.shadowCfg({on:L.sh,res:L.res||1024,ext:L.ext||170,f0:L.f0||120,f1:L.f1||160});
+ H3.shadowCfg({on:L.sh,res:L.res||1024,ext:L.ext||170,f0:L.f0||120,f1:L.f1||160});H3.charSh=!!L.cs;
  groundTex(!!L.bake||!H3.shadowOn());
  // névoa
  if(S&&S.mode&&S.sc===SCN.field){const f=H3.fogv();H3.env({fog:[f[0],f[1],f[2],L.fog]})}
@@ -13463,7 +13464,7 @@ SCN.field.rays=function(t,C){const L=cur();if(!L.rays||!H3.raysOk())return;
  H3.raysApply(sp[0],sp[1],look,SUNC)};
 
 // ---------- tela de configurações: Gráficos 3D ----------
-const ROWS=[['sh','Sombras',['Sem sombras de verdade: o chão usa as sombras pintadas do 2D.','Sombras duras, só bem perto do personagem.','Sombras suaves em volta do personagem.','Sombras suaves e longas, até longe.']],
+const ROWS=[['sh','Sombras',['Sem sombras de verdade: o chão usa as sombras pintadas do 2D.','Sombras duras, só bem perto do personagem.','Sombras suaves em volta do personagem.','Sombras suaves e longas, até longe.','Como o Alto e mais: os personagens ficam claros no sol e escuros na sombra de árvores e casas. É o mais pesado.']],
  ['il','Iluminação',['Só o sol e o céu, sem tochas nem chamas iluminando.','Uma luz de tocha/chama por objeto.','Tochas, lava e chamas iluminando em volta, pólen brilhando.','Todas as luzes e raios de sol ao olhar para o céu.']],
  ['veg','Vegetação',['Sem capim, sem arbustos e sem folhas caindo; vista curta.','Capim só bem perto, poucas folhas caindo.','Capim em volta do personagem, folhas caindo.','Capim caprichado até onde a vista alcança, vista longa.']]];
 function ui(){const box=document.querySelector('#cfgM .box');if(!box||document.getElementById('g3Sec'))return;
@@ -13478,11 +13479,11 @@ function ui(){const box=document.querySelector('#cfgM .box');if(!box||document.g
 .g3D{font-size:10.5px;opacity:.72;margin:5px 2px 0;min-height:14px}
 #g3Sec .vRow{margin:6px 0;background:#00000030}`;document.head.appendChild(st);
  const sec=document.createElement('div');sec.id='g3Sec';
- sec.innerHTML=`<h3>Gráficos 3D</h3>${ROWS.map(([k,l])=>`<div class="g3Row" data-k="${k}"><div class="g3T">${l}<i></i></div><div class="g3Lv">${NM.map((n,i)=>`<button data-l="${i}">${n}</button>`).join('')}</div><div class="g3D"></div></div>`).join('')}
+ sec.innerHTML=`<h3>Gráficos 3D</h3>${ROWS.map(([k,l])=>`<div class="g3Row" data-k="${k}"><div class="g3T">${l}<i></i></div><div class="g3Lv">${(k==='sh'?NM.concat(['Ultra']):NM).map((n,i)=>`<button data-l="${i}">${n}</button>`).join('')}</div><div class="g3D"></div></div>`).join('')}
 <div class="vRow"><span class="lb">FOV 1ª pessoa</span><input type="range" min="45" max="110" step="1" id="g3F1"><span class="pc" id="g3F1v"></span></div>
 <div class="vRow"><span class="lb">FOV 3ª pessoa</span><input type="range" min="45" max="110" step="1" id="g3F3"><span class="pc" id="g3F3v"></span></div>`;
  const tip=box.querySelector('div[style*="font-size:11px"]');if(tip)box.insertBefore(sec,tip);else box.appendChild(sec);
- const sync=()=>{for(const[k,,ds]of ROWS){const r=sec.querySelector('.g3Row[data-k="'+k+'"]'),v=G3[k];r.querySelectorAll('button').forEach(b=>b.classList.toggle('on',+b.dataset.l===v));r.querySelector('.g3D').textContent=ds[v];r.querySelector('.g3T i').textContent=NM[v]}
+ const sync=()=>{for(const[k,,ds]of ROWS){const r=sec.querySelector('.g3Row[data-k="'+k+'"]'),v=G3[k];r.querySelectorAll('button').forEach(b=>b.classList.toggle('on',+b.dataset.l===v));r.querySelector('.g3D').textContent=ds[v];r.querySelector('.g3T i').textContent=(k==='sh'?NM.concat(['Ultra']):NM)[v]}
   const f1=sec.querySelector('#g3F1'),f3=sec.querySelector('#g3F3');f1.value=G3.fov1;f3.value=G3.fov3;sec.querySelector('#g3F1v').textContent=G3.fov1+'°';sec.querySelector('#g3F3v').textContent=G3.fov3+'°'};
  for(const[k]of ROWS)sec.querySelectorAll('.g3Row[data-k="'+k+'"] button').forEach(b=>b.onclick=()=>{G3[k]=+b.dataset.l;save();sync();try{if(H3.S&&H3.S.mode)apply(true)}catch(e){console.error('H3 gfx',e)}});
  const f1=sec.querySelector('#g3F1'),f3=sec.querySelector('#g3F3');
@@ -18934,7 +18935,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261027143633;
+const GAME_BUILD=20261027144238;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
