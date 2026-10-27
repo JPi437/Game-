@@ -9824,7 +9824,7 @@ function flushSprites(fogv){
   const L=pass<2?SL.filter(s=>s.add===pass):SL.filter(s=>s.xr>0&&!s.add);if(!L.length)continue;
   if(pass!==1)L.sort((a,b)=>b.d-a.d);
   const ad=pass===1?1:0;if(pass===2)gl.depthFunc(gl.GREATER);
-  gl.blendFunc(ad?gl.ONE:gl.SRC_ALPHA,ad?gl.ONE:gl.ONE_MINUS_SRC_ALPHA);gl.uniform1f(U.sAdd,ad);if(U.spSh&&U.spSh.uShK)gl.uniform1f(U.spSh.uShK,spOn&&pass===0?1:0);
+  gl.blendFunc(ad?gl.ONE:gl.SRC_ALPHA,ad?gl.ONE:gl.ONE_MINUS_SRC_ALPHA);gl.uniform1f(U.sAdd,ad);if(U.spSh&&U.spSh.uShK)gl.uniform1f(U.spSh.uShK,0);
   let n=0,run=0,cur=null;
   const flush=()=>{if(!n)return;gl.bindTexture(gl.TEXTURE_2D,cur.t);gl.bufferSubData(gl.ARRAY_BUFFER,0,SV.subarray(0,n*36));gl.drawElements(gl.TRIANGLES,n*6,gl.UNSIGNED_SHORT,0);n=0};
   for(let i=0;i<L.length;i++){const s=L[i];if(cur!==s.t||n>=MAXS-1){flush();cur=s.t}
@@ -10007,6 +10007,21 @@ H3.shVis=(x,y,z,r)=>{const A=SHS.ax,E=SHS.ext+r;return abs(A[0]*x+A[1]*z-SHS.a)<
 H3.shMesh=function(m,mt,pk){gl.uniformMatrix4fv(USH.uM,false,mt||IDM);gl.uniform1f(USH.uPk,pk?1:0);
  gl.bindBuffer(gl.ARRAY_BUFFER,m.vbo);gl.vertexAttribPointer(0,3,gl.FLOAT,false,28,0);gl.vertexAttribPointer(1,3,gl.FLOAT,false,28,12);gl.vertexAttribPointer(2,4,gl.UNSIGNED_BYTE,true,28,24);gl.drawArrays(gl.TRIANGLES,0,m.n)};
 H3.shEnd=function(){gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.viewport(0,0,W,Hh);SHS.pend=true};
+// o sol bate neste ponto? (0 = sombra, 1 = sol) — lê o mapa de sombras no lugar (usado na luz dos personagens: jogador, outros jogadores, lutadores)
+// O ponto é levado um pouco na direção do sol para o próprio corpo não fazer sombra nele. Poucas leituras por quadro; o resto reaproveita a vizinhança.
+const SUNV={f:-1,n:0,cur:new Map(),old:new Map(),px:new Uint8Array(16)};
+H3.sunVis=(x,y,z)=>{if(!SHS.on||!SHS.ok||!RTS.sh||ISO||!gl)return null;
+ if(SUNV.f!==frameId){SUNV.f=frameId;SUNV.n=0;SUNV.old=SUNV.cur.size?SUNV.cur:SUNV.old;SUNV.cur=new Map()}
+ const kf=((x/4)|0)*73856093^((y/4)|0)*19349663^((z/4)|0)*83492791,kc=((x/16)|0)*73856093^((z/16)|0)*83492791;
+ if(SUNV.cur.has(kf))return SUNV.cur.get(kf);
+ if(SUNV.n>=6){const o=SUNV.old.get(kc);return o===undefined?1:o}
+ SUNV.n++;const px=x+SUN[0]*14,py=y+SUN[1]*14,pz=z+SUN[2]*14,m=SHS.mat;
+ const qx=m[0]*px+m[4]*py+m[8]*pz+m[12],qy=m[1]*px+m[5]*py+m[9]*pz+m[13],qz=m[2]*px+m[6]*py+m[10]*pz+m[14];
+ const sx=qx*.5+.5,sy=qy*.5+.5,sz=qz*.5+.5;let v=1;
+ if(sx>.003&&sx<.997&&sy>.003&&sy<.997&&sz<1){const R=RTS.sh.w,ix=Math.min(R-2,Math.max(0,Math.floor(sx*R-.5))),iy=Math.min(R-2,Math.max(0,Math.floor(sy*R-.5)));
+  gl.bindFramebuffer(gl.FRAMEBUFFER,RTS.sh.fb);gl.readPixels(ix,iy,2,2,gl.RGBA,gl.UNSIGNED_BYTE,SUNV.px);gl.bindFramebuffer(gl.FRAMEBUFFER,curFB);
+  const zz=sz-SHS.bias*2;let k=0;for(let i=0;i<4;i++){const P_=SUNV.px,o=i*4,d=P_[o]/255+P_[o+1]/65025+P_[o+2]/16581375+P_[o+3]/4228250625;if(zz<=d)k++}v=k/4}
+ SUNV.cur.set(kf,v);SUNV.cur.set(kc,v);return v};
 
 // ---------- raios de sol (só no gráfico Alto) ----------
 // Depois do quadro: H3.raysOcc(desenho) desenha o céu (opaco onde não tem nuvem) e o que tapa o sol numa textura pequena; H3.raysApply soma na tela o
@@ -11007,7 +11022,10 @@ H3C.run=function(L,f,t,SF){H3C.SF=SF;const list=H3C.list;list.length=0;let any=f
 function lightAt(x,y,z,o){const AMB=SC.amb;let r=AMB[0],gg=AMB[1],b=AMB[2];
  const add=l=>{const dx=l.x-x,dy=l.y-y,dz=l.z-z,a=1-(dx*dx+dy*dy+dz*dz)/(l.r*l.r);if(a>0){const w=a*a*l.k*.78;r+=l.cr*w;gg+=l.cg*w;b+=l.cb*w}};
  for(const l of SC.lights)add(l);for(const l of FX.L)add(l);
- o[0]=clp(r/(1+r*.22)*1.15,.2,1.15);o[1]=clp(gg/(1+gg*.22)*1.15,.2,1.15);o[2]=clp(b/(1+b*.22)*1.15,.2,1.15);return o}
+ o[0]=clp(r/(1+r*.22)*1.15,.2,1.15);o[1]=clp(gg/(1+gg*.22)*1.15,.2,1.15);o[2]=clp(b/(1+b*.22)*1.15,.2,1.15);
+ // ao ar livre com sombras ligadas: no sol fica mais claro, na sombra (árvore, casa, morro) fica escuro como o chão em volta. Suave (não pisca).
+ const sv=H3.sunVis?H3.sunVis(x,y,z):null;if(sv!==null){const k=.58+.6*sv;o[0]=min(1.35,o[0]*k);o[1]=min(1.35,o[1]*k);o[2]=min(1.35,o[2]*k)}
+ return o}
 
 // ============================================================ Herobrine 3D e as habilidades ============================================================
 const GL=[];                                                       // Ghasts a desenhar neste quadro
@@ -18914,7 +18932,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261027142705;
+const GAME_BUILD=20261027143103;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
