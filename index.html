@@ -9432,11 +9432,72 @@ class MB{
  build(gl){return H3.upload(gl,this.pack())}
 }
 H3.MB=MB;
-H3.upload=(gl,p)=>{const vbo=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,vbo);gl.bufferData(gl.ARRAY_BUFFER,p.buf,gl.STATIC_DRAW);return{vbo,n:p.n,cx:p.cx,cy:p.cy,cz:p.cz,rad:p.rad,pk:p.pk,bb:p.bb}};
+H3.upload=(gl,p)=>{const vbo=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,vbo);gl.bufferData(gl.ARRAY_BUFFER,p.buf,gl.STATIC_DRAW);const m={vbo,n:p.n,cx:p.cx,cy:p.cy,cz:p.cz,rad:p.rad,pk:p.pk,bb:p.bb};try{H3.lodKeep&&H3.lodKeep(p,m,gl)}catch(e){}return m};
 
 // ---------- WebGL ----------
 const NLMAX=12;                       // luzes de ponto por desenho
 let cv=null,gl=null,W=1,Hh=1,qs=1,lost=false;
+let curFov=1;
+// ---------- LOD automático: de longe as malhas usam versões com menos polígonos ----------
+// Cada malha estática com 150+ triângulos ganha até 3 versões mais simples (agrupando vértices numa grade do tamanho de uma fração do raio dela).
+// A troca depende do tamanho dela na tela (raio / distância), não da distância pura: vale igual para uma casa e para uma montanha.
+// Na faixa de troca as duas versões são desenhadas juntas com pontilhado complementar (uma some enquanto a outra aparece): não dá para ver o "pulo".
+const LOD={on:true,q:[],job:null,ms:4,built:0,
+ L:[{s:.30,c:.028,nb:true},{s:.14,c:.065,nb:true},{s:.06,c:.15,nb:false}],   // s: tamanho na tela abaixo do qual entra o nível · c: grade (fração do raio) · nb: separa por direção da face
+ band:.28,minN:450};
+H3.LOD=LOD;
+function lodKeep(p,m){if(!LOD.on||p.ter||p.n<LOD.minN||p.n>2400000)return;m.src=p;m.lod=null;LOD.q.push(m)}
+// agrupa vértices: um gerador (faz o trabalho aos pouquinhos, sem travar a tela)
+function* lodGen(m){const p=m.src,n=p.n,f=new Float32Array(p.buf),u=new Uint8Array(p.buf),out=[m];
+ let prevTri=n/3;
+ for(const lv of LOD.L){const cell=max(.25,m.rad*lv.c),ic=1/cell,map=new Map(),cl=[];   // cl: x,y,z,nx,ny,nz,r,g,b,cnt,e
+  const id=new Int32Array(n);
+  for(let i=0;i<n;i++){const d=i*7,x=f[d],y=f[d+1],z=f[d+2],nx=f[d+3],ny=f[d+4],nz=f[d+5];
+   let b=0;if(lv.nb){const ax=abs(nx),ay=abs(ny),az=abs(nz);b=ax>=ay&&ax>=az?(nx>0?1:2):ay>=az?(ny>0?3:4):(nz>0?5:6)}
+   const k=((floor(x*ic)+32768)*65536+(floor(y*ic)+32768))*65536*8+(floor(z*ic)+32768)*8+b;
+   let c=map.get(k);if(c===undefined){c=cl.length/11;map.set(k,c);const o=i*28+24;cl.push(0,0,0,0,0,0,0,0,0,0,u[o+3])}
+   const q=c*11;cl[q]+=x;cl[q+1]+=y;cl[q+2]+=z;cl[q+3]+=nx;cl[q+4]+=ny;cl[q+5]+=nz;const o=i*28+24;cl[q+6]+=u[o];cl[q+7]+=u[o+1];cl[q+8]+=u[o+2];cl[q+9]++;id[i]=c;
+   if((i&16383)===16383)yield}
+  // triângulos que sobram (os três cantos em grupos diferentes), sem repetidos
+  const tri=[],seen=new Set();
+  for(let t=0;t<n;t+=3){const a=id[t],b=id[t+1],c=id[t+2];if(a===b||b===c||a===c)continue;
+   const lo=min(a,b,c),hi=max(a,b,c),mi=a+b+c-lo-hi,key=(lo*4194304+mi)*4194304+hi;if(seen.has(key))continue;seen.add(key);tri.push(a,b,c);if((t&49151)===49149)yield}
+  if(tri.length/3>prevTri*.8){out.push(out[out.length-1]);continue}      // quase não reduziu: repete o nível anterior
+  prevTri=tri.length/3;
+  const nv=tri.length,buf=new ArrayBuffer(nv*28),F=new Float32Array(buf),U8=new Uint8Array(buf);
+  for(let i=0;i<nv;i++){const q=tri[i]*11,k=1/cl[q+9],d=i*7,o=i*28+24;F[d]=cl[q]*k;F[d+1]=cl[q+1]*k;F[d+2]=cl[q+2]*k;
+   let nx=cl[q+3],ny=cl[q+4],nz=cl[q+5];const l=Math.hypot(nx,ny,nz)||1;F[d+3]=nx/l;F[d+4]=ny/l;F[d+5]=nz/l;
+   U8[o]=cl[q+6]*k;U8[o+1]=cl[q+7]*k;U8[o+2]=cl[q+8]*k;U8[o+3]=cl[q+10]}
+  const vbo=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,vbo);gl.bufferData(gl.ARRAY_BUFFER,buf,gl.STATIC_DRAW);
+  out.push({vbo,n:nv,cx:m.cx,cy:m.cy,cz:m.cz,rad:m.rad,pk:m.pk,bb:m.bb,lodOf:m});yield}
+ m.lod=out;m.src=null;LOD.built++}
+// roda a fila com um limite de tempo por quadro
+function lodWork(){if(!LOD.q.length&&!LOD.job)return;const t0=performance.now();
+ while(performance.now()-t0<LOD.ms){if(!LOD.job){const m=LOD.q.shift();if(!m)return;if(!m.src||m.dead)continue;LOD.job=lodGen(m)}
+  try{if(LOD.job.next().done)LOD.job=null}catch(e){LOD.job=null}}}
+// escolhe o nível (e o quanto misturar com o próximo) pelo tamanho na tela
+const LODO={};
+function lodPick(m,M){const L=m.lod;if(!L||ISO)return null;
+ let cx=m.cx,cy=m.cy,cz=m.cz,sc=1;if(M&&M!==IDM){cx=M[0]*m.cx+M[4]*m.cy+M[8]*m.cz+M[12];cy=M[1]*m.cx+M[5]*m.cy+M[9]*m.cz+M[13];cz=M[2]*m.cx+M[6]*m.cy+M[10]*m.cz+M[14];sc=Math.hypot(M[0],M[1],M[2])}
+ const r=m.rad*sc,d=Math.hypot(cx-camP[0],cy-camP[1],cz-camP[2]);if(d<=r*1.5)return null;
+ const s=r/d*(1.1/max(.3,curFov)),T=LOD.L,B=LOD.band;     // tamanho aparente (lente mais fechada = objeto maior)
+ let lv=0;while(lv<T.length&&s<T[lv].s)lv++;
+ if(lv<T.length){const th=T[lv].s;if(s<th*(1+B))return{a:lv,b:lv+1,t:Math.min(1,Math.max(0,(th*(1+B)-s)/(th*B)))}}
+ return lv?{a:lv,b:lv,t:0}:null}
+
+// apaga junto as versões simples quando o jogo apaga a malha (gl.deleteBuffer)
+const LODV=new Map();
+H3.lodKeep=(p,m,g)=>{if(!LOD.on||p.ter||p.n<LOD.minN||p.n>2400000)return;
+ if(!g.__lodDel){const db=g.deleteBuffer.bind(g);g.__lodDel=1;g.deleteBuffer=b=>{const mm=LODV.get(b);if(mm){LODV.delete(b);mm.dead=1;mm.src=null;if(mm.lod)for(const l of mm.lod)if(l!==mm)db(l.vbo);mm.lod=null}db(b)}}
+ LODV.set(m.vbo,m);lodKeep(p,m)};
+// desenha uma lista de níveis feitos à mão (ms[0] perto ... ms[n] longe) com troca suave (pontilhado) perto de cada limite de distância
+H3.lodDraw=(ms,d,edges,mt,lights,dyn,o)=>{const BF=.16;let l=0;while(l<edges.length&&d>=edges[l])l++;
+ const A=ms[min(l,ms.length-1)];let t=0,B=A;if(l<edges.length){const e=edges[l],s0=e*(1-BF);if(d>s0){t=(d-s0)/(e-s0);B=ms[min(l+1,ms.length-1)]}}
+ if(t<=.002||A===B)return mesh(A,mt,lights,dyn,o);
+ const di=o&&o.di!==undefined?o.di:1;if(di<.999)return mesh(t<.5?A:B,mt,lights,dyn,o);
+ mesh(A,mt,lights,dyn,Object.assign({},o,{di:1-t}));mesh(B,mt,lights,dyn,Object.assign({},o,{di:-t}))};
+// some/aparece suave perto do limite de distância (em vez de sumir de uma vez)
+H3.farFade=(d,far)=>{const k=far*.12;return d<far-k?1:max(0,(far-d)/k)};
 const P={lit:null,spr:null,out:null,ter:null,sky:null,sh:null,pix:null,rays:null},U={},UO={},UT={},US={},USH={},UPX={},URY={},tex={};
 const RTS={main:null,sh:null,occ:null};let qbuf=null,shTex1=null,MAXT=2048;      // alvos de desenho fora da tela (filtro de pixels, sombras, raios de sol)
 const VS_LIT=`attribute vec3 aP;attribute vec3 aN;attribute vec4 aC;uniform mat4 uVP;uniform mat4 uM;varying vec3 vP;varying vec3 vN;varying vec4 vC;
@@ -9449,7 +9510,7 @@ precision mediump float;
 varying vec3 vP;varying vec3 vN;varying vec4 vC;uniform vec3 uCam;uniform vec4 uL[${nl}];uniform vec3 uLC[${nl}];uniform vec3 uAT;uniform vec3 uAB;uniform vec4 uFog;uniform vec4 uFl;uniform float uEG;uniform float uDi;uniform float uAl;uniform float uFO;uniform vec3 uFC;
 uniform sampler2D uDetL;uniform float uDLK;uniform vec3 uMoD;uniform vec3 uMoL;uniform vec2 uNC;
 void main(){
- if(uDi<1.0){float b=fract(52.9829189*fract(dot(gl_FragCoord.xy,vec2(0.06711056,0.00583715))));if(b>uDi)discard;}
+ if(uDi<1.0){float b=fract(52.9829189*fract(dot(gl_FragCoord.xy,vec2(0.06711056,0.00583715))));if(uDi>=0.0?b>uDi:b<=1.0+uDi)discard;}
  vec3 n=normalize(vN);vec3 V=uCam-vP;float dV=length(V);if(uNC.y>0.5&&dV<uNC.y)discard;if(dot(n,V)<0.0)n=-n;
  vec3 col=vC.rgb;vec3 lg=mix(uAB,uAT,n.y*0.5+0.5);
  if(uDLK>0.0&&vC.a<0.5){vec3 an=abs(n);vec2 uv=an.y>max(an.x,an.z)?vP.xz:(an.x>an.z?vP.zy:vP.xy);float d1=texture2D(uDetL,uv*0.13).r-0.5;float d2=texture2D(uDetL,uv*0.021).r-0.5;col*=max(0.0,1.0+(d1*0.55+d2*0.6)*uDLK);}
@@ -9528,7 +9589,7 @@ void main(){
  vec3 V=uCam-vP;float dV=length(V);V/=dV;
  if(cutAt(vP))discard;
  float dd=uDi*(uFd.y>0.5?1.0-smoothstep(uFd.x,uFd.y,length(vP-uFoc)):1.0);if(uNC.y>0.5)dd*=smoothstep(uNC.x,uNC.y,dV);
- if(dd<1.0){float b=fract(52.9829189*fract(dot(gl_FragCoord.xy,vec2(0.06711056,0.00583715))));if(b>dd)discard;}
+ if(dd<1.0){float b=fract(52.9829189*fract(dot(gl_FragCoord.xy,vec2(0.06711056,0.00583715))));if(dd>=0.0?b>dd:b<=1.0+dd)discard;}
  vec3 n=normalize(vN);if(dot(n,V)<0.0)n=-n;
  float cs=cloudSh(vP)*shadowAt(vP,n);vec3 col=vC*uTint;vec3 c;
  if(uDetK>0.0&&vWat<0.5){vec3 an=abs(n);vec2 uv=an.y>max(an.x,an.z)?vP.xz:(an.x>an.z?vP.zy:vP.xy);float d1=texture2D(uDet,uv*0.13).r-0.5;float d2=texture2D(uCloud,uv*0.0061).r-0.5;col*=max(0.0,1.0+(d1*0.62+d2*0.72)*uDetK);}
@@ -9870,11 +9931,11 @@ function rtMake(o,w,h,depth,lin){if(o&&o.w===w&&o.h===h)return o;if(o)rtFree(o);
 function rtFree(o){gl.deleteFramebuffer(o.fb);gl.deleteTexture(o.t);if(o.rb)gl.deleteRenderbuffer(o.rb)}
 function quad(){gl.bindBuffer(gl.ARRAY_BUFFER,qbuf);gl.enableVertexAttribArray(0);gl.disableVertexAttribArray(1);gl.disableVertexAttribArray(2);gl.vertexAttribPointer(0,2,gl.FLOAT,false,8,0);gl.drawArrays(gl.TRIANGLES,0,6);gl.enableVertexAttribArray(1);gl.enableVertexAttribArray(2)}
 function begin(ex,ey,ez,yaw,pitch,fov,roll){
- frameId++;resize();
+ frameId++;resize();try{lodWork()}catch(e){}
  let fb=null;if(PIX&&P.pix){RTS.main=rtMake(RTS.main,W,Hh,true,false);if(RTS.main)fb=RTS.main.fb}
  gl.bindFramebuffer(gl.FRAMEBUFFER,fb);curFB=fb;
  if(ISO){isoMat(VP,ISO);PM.set(IDM);VM.set(IDM);camP=[ISO.x,ISO.y+3000,ISO.z+3000];camR=[1,0,0];camU=[0,1,0]}
- else{M4.persp(PM,fov,W/Hh,NEAR,FAR);M4.view(VM,ex,ey,ez,yaw,pitch);M4.mul(VP,PM,VM);
+ else{curFov=fov;M4.persp(PM,fov,W/Hh,NEAR,FAR);M4.view(VM,ex,ey,ez,yaw,pitch);M4.mul(VP,PM,VM);
   camP=[ex,ey,ez];camR=[cos(yaw),0,sin(yaw)];const cp=cos(pitch),sp=sin(pitch);camU=[-sin(yaw)*sp,cp,cos(yaw)*sp];
   if(ISOB){isoMat(TMPM,ISOB.I);const k=ISOB.k;for(let i=0;i<16;i++)VP[i]+=(TMPM[i]-VP[i])*k}}
  if(!focNext){FOC[0]=camP[0];FOC[1]=camP[1];FOC[2]=camP[2]}focNext=false;SHS.ok=SHS.pend;SHS.pend=false;OCC.list.length=0;OCC.al=1;
@@ -9888,6 +9949,9 @@ function begin(ex,ey,ez,yaw,pitch,fov,roll){
 // desenha uma malha com a matriz m (ou a identidade); lights = luzes fixas, dyn = luzes temporárias; o = {fl:[r,g,b,a] clarão, eg: brilho próprio, di: transparência 0..1}
 function mesh(m,mt,lights,dyn,o){
  o=o||{};
+ if(m.lod&&LOD.on){const k=lodPick(m,mt);if(k){const A=m.lod[min(k.a,m.lod.length-1)],B=m.lod[min(k.b,m.lod.length-1)],di=o.di===undefined?1:o.di;
+  if(A===B||k.t<=.002)m=A;else if(k.t>=.998)m=B;else if(di<.999||di<0)m=k.t<.5?A:B;
+  else{mesh(A,mt,lights,dyn,Object.assign({},o,{di:1-k.t}));m=B;o=Object.assign({},o,{di:-k.t})}}}
  if(m.pk||m.ter)return meshO(m,mt,lights,dyn,o);
  if(o.occ&&OCC.on&&!OCC.pass&&occTest(m,mt)){OCC.list.push({m,mt:mt?mt.slice():null,lights,dyn,o:Object.assign({},o)});return}
  gl.useProgram(P.lit);curUL=U.uL;curULC=U.uLC;curN=NL;gl.uniform1f(U.uAl,OCC.al);
@@ -10636,7 +10700,8 @@ H3.jump=jump;H3.floorAt=(x,z)=>floorAt(x,z);H3.setMode=m=>setMode(m);H3.setModeQ
 function mkCanvases(){if(glc)return;const cv0=$$('c');
  glc=document.createElement('canvas');glc.id='h3gl';ovc=document.createElement('canvas');ovc.id='h3ov';cv0.parentNode.insertBefore(glc,cv0.nextSibling);glc.parentNode.insertBefore(ovc,glc.nextSibling);
  ovx=ovc.getContext('2d');JG=document.createElement('canvas');JG.width=VW;JG.height=VH;JG.getContext('2d').imageSmoothingEnabled=false;JG=JG.getContext('2d');
- glc.addEventListener('pointerdown',pd);glc.addEventListener('pointermove',pm);glc.addEventListener('pointerup',pu);glc.addEventListener('pointercancel',pu)}
+ glc.addEventListener('pointerdown',pd);glc.addEventListener('pointermove',pm);glc.addEventListener('pointerup',pu);glc.addEventListener('pointercancel',pu);
+ glc.style.touchAction='none';glc.addEventListener('wheel',e=>{if(!S.mode||lock)return;e.preventDefault();zoomBy(Math.exp(clp(e.deltaY,-120,120)*(e.deltaMode===1?.05:.0009)))},{passive:false})}
 function syncBtn(){mkBtn();const sc=sceneNow(),on=!!(sc&&sc.active()&&!S.dead);if(btn._on!==on){btn._on=on;btn.style.display=on?'block':'none'}
  if(!on&&S.mode)setMode(0);loadScr(on&&!S.mode&&!lock&&S.err<2&&Date.now()>(S.failT||0),sc)}
 // tela de carregamento: cobre o jogo enquanto o 3D é montado (início do jogo, campo do primeiro mundo, troca de cena), já que não existe mais o 2D nessas cenas
@@ -10722,15 +10787,21 @@ H3.onLost=()=>{if(S.mode){setMode(0);toastS('Os gráficos 3D foram interrompidos
 H3.onRestore=()=>{S.built=false;MOD.free();FX.free();for(const k in SCN)if(SCN[k].free)SCN[k].free();S.dead=false};
 
 // ============================================================ arrastar para olhar · tocar para bater ============================================================
-let lp=null,glcLock=null;
-function pd(e){if(!S.mode||lp)return;
+let lp=null,glcLock=null;const PTS=new Map();let pinch=null;
+const pDist=()=>{const a=[...PTS.values()];return a.length<2?0:hypot(a[0].x-a[1].x,a[0].y-a[1].y)};
+function pd(e){if(e.pointerType!=='mouse')PTS.set(e.pointerId,{x:e.clientX,y:e.clientY});
+ if(S.mode&&PTS.size===2){pinch={d:pDist()};lp=null;try{glc.setPointerCapture(e.pointerId)}catch(x){}e.preventDefault();return}
+ if(!S.mode||lp||pinch)return;
  if(e.pointerType==='mouse'&&S.mode!==3&&!S.mfree&&document.pointerLockElement!==glc&&glc.requestPointerLock){try{glc.requestPointerLock()}catch(x){}e.preventDefault();return}      // PC: o primeiro clique prende o mouse (ESC solta)
 lp={id:e.pointerId,x:e.clientX,y:e.clientY,x0:e.clientX,y0:e.clientY,t:Date.now(),mv:0};try{glc.setPointerCapture(e.pointerId)}catch(x){}e.preventDefault()}
-function pm(e){if(!lp||e.pointerId!==lp.id)return;const dx=e.clientX-lp.x,dy=e.clientY-lp.y;lp.x=e.clientX;lp.y=e.clientY;lp.mv=max(lp.mv,hypot(e.clientX-lp.x0,e.clientY-lp.y0));
+function pm(e){const pt=PTS.get(e.pointerId);if(pt){pt.x=e.clientX;pt.y=e.clientY}
+ if(pinch&&pt&&PTS.size>=2){const d=pDist();if(d>8&&pinch.d>8)zoomBy(pinch.d/d);pinch.d=d;e.preventDefault();return}
+ if(!lp||e.pointerId!==lp.id)return;const dx=e.clientX-lp.x,dy=e.clientY-lp.y;lp.x=e.clientX;lp.y=e.clientY;lp.mv=max(lp.mv,hypot(e.clientX-lp.x0,e.clientY-lp.y0));
  if(S.mode===3||!SC)return;const pl=SC.pl[S.mode-1];S.yaw+=dx*.0056;S.pitch=clp(S.pitch-dy*.0046,pl[0],pl[1]);e.preventDefault()}
 document.addEventListener('mousemove',e=>{if(!S.mode||S.mode===3||!glc||document.pointerLockElement!==glc||!SC)return;const pl=SC.pl[S.mode-1];S.yaw+=e.movementX*.0026;S.pitch=clp(S.pitch-e.movementY*.0022,pl[0],pl[1])});
 glcLock=()=>{S.mfree=false;if(S.mode!==3&&glc&&glc.requestPointerLock&&matchMedia('(pointer:fine)').matches){try{glc.requestPointerLock()}catch(x){}}};
-function pu(e){if(!lp||e.pointerId!==lp.id)return;const tap=lp.mv<14&&Date.now()-lp.t<500;lp=null;try{glc.releasePointerCapture(e.pointerId)}catch(x){}
+function pu(e){PTS.delete(e.pointerId);if(pinch){if(PTS.size<2)pinch=null;lp=null;try{glc.releasePointerCapture(e.pointerId)}catch(x){}return}
+ if(!lp||e.pointerId!==lp.id)return;const tap=lp.mv<14&&Date.now()-lp.t<500;lp=null;try{glc.releasePointerCapture(e.pointerId)}catch(x){}
  if(tap&&SC&&SC.tap&&!lock){try{if(SC.tap(e.clientX,e.clientY))return}catch(x){}}                       // tocar no quadro de ranking (Caverna de Gelo)
  if(tap&&fight&&!lock){try{punch()}catch(x){}}}
 addEventListener('keydown',e=>{const t=e.target,tg=t&&t.tagName;if(tg==='INPUT'||tg==='TEXTAREA'||(t&&t.isContentEditable)||e.ctrlKey||e.metaKey||e.altKey)return;const k=e.key.toLowerCase();
@@ -10785,6 +10856,14 @@ tick=function(){
 
 // ============================================================ câmera ============================================================
 function floorAt(x,z){return SC.floorY(x,z)}
+// ---------- zoom: pinça com dois dedos (celular) e rodinha do mouse (PC) ----------
+// 3ª pessoa: aproxima/afasta a câmera (0,45x a 2,2x) · 1ª pessoa: fecha/abre a lente (zoom de luneta, até 2,5x). Fica salvo no aparelho.
+S.zoom=1;S.zoom1=1;try{const z=JSON.parse(localStorage.getItem('mp_zoom')||'null');if(z){S.zoom=clp(+z[0]||1,.45,2.2);S.zoom1=clp(+z[1]||1,1,2.5)}}catch(e){}
+S.zs=S.zoom;S.zf=1/S.zoom1;
+function zoomBy(k){if(!S.mode||S.mode===3)return;if(S.mode===1)S.zoom1=clp(S.zoom1/k,1,2.5);else S.zoom=clp(S.zoom*k,.45,2.2);
+ clearTimeout(S.zsv);S.zsv=setTimeout(()=>{try{localStorage.setItem('mp_zoom',JSON.stringify([S.zoom,S.zoom1]))}catch(e){}},600)}
+function zoomTick(){const now=performance.now(),dt=min(.1,(now-(S.zt||now))/1000);S.zt=now;const k=1-Math.exp(-dt*12);S.zs+=(S.zoom-S.zs)*k;S.zf+=(1/S.zoom1-S.zf)*k}
+H3.zoomBy=zoomBy;
 const DEG=PI/180;
 function camRaw(){
  if(S.dbg){S.foc={x:S.dbg.x,y:S.dbg.y,z:S.dbg.z};return S.dbg}                 // câmera fixa (só para testes)
@@ -10794,14 +10873,22 @@ function camRaw(){
  // vista de cima (igual ao 2D): projeção oblíqua centrada no jogador; a altura do chão acompanha devagar (morros não fazem a tela pular)
  if(S.mode===3){if(S.isoY===null)S.isoY=gy;S.isoY+=(gy-S.isoY)*.08;const w=max(2,H3.size()[0]),h=max(2,H3.size()[1]);
   S.foc={x,y:S.isoY,z};return{x,y:S.isoY+3000,z:z+3000,yaw:0,pitch:-PI/4,fov:1,iso:{x,y:S.isoY,z,w,h}}}
- if(S.mode===1){const bob=S.moving&&jh<=0?sin(S.step*.55)*.75:0;S.step=P.step;S.foc={x,y:gy,z};return{x,y:gy+SC.eye+bob+jh-land,z,yaw:S.yaw,pitch:S.pitch-kick,fov:G3.fov1*DEG}}
+ if(S.mode===1){const bob=S.moving&&jh<=0?sin(S.step*.55)*.75:0;S.step=P.step;S.foc={x,y:gy,z};zoomTick();return{x,y:gy+SC.eye+bob+jh-land,z,yaw:S.yaw,pitch:S.pitch-kick,fov:G3.fov1*DEG*S.zf}}
  S.foc={x,y:gy,z};
- const d=SC.camD,cp=cos(S.pitch),fx0=sin(S.yaw)*cp,fy0=sin(S.pitch),fz0=-cos(S.yaw)*cp,ty=gy+24+jh*.7-land;
+ zoomTick();
+ const d=SC.camD*S.zs,cp=cos(S.pitch),fx0=sin(S.yaw)*cp,fy0=sin(S.pitch),fz0=-cos(S.yaw)*cp,ty=gy+24+jh*.7-land;
  let cx=x-fx0*d,cy=ty-fy0*d,cz=z-fz0*d;
+ // nada sólido entre o personagem e a câmera: anda do personagem até o ponto ideal (com uma folguinha dos lados) e para antes do primeiro obstáculo.
+ // Chega perto na hora (nunca atravessa) e volta para longe devagar (sem tranco).
+ if(SC.camSolid||SC.camOk){const ok0=SC.camOk?SC.camOk(z):null,sd=SC.camSolid,okP=(px,pz)=>(!ok0||ok0(px,pz))&&!(sd&&sd(px,pz)),
+   okR=(px,pz)=>okP(px,pz)&&okP(px+3,pz)&&okP(px-3,pz)&&okP(px,pz+3)&&okP(px,pz-3),N=28;
+  let t=1;for(let i=1;i<=N;i++){const u=i/N;if(!okR(x+(cx-x)*u,z+(cz-z)*u)){t=max(0,(i-1.6)/N);break}}
+  const now=performance.now(),dt=min(.1,(now-(S.camTT||now))/1000);S.camTT=now;
+  if(S.camT===undefined||t<S.camT||S.camSc!==SC)S.camT=t;else S.camT+=(t-S.camT)*min(1,dt*3.2);S.camSc=SC;
+  t=max(S.camT,.1);cx=x+(cx-x)*t;cz=z+(cz-z)*t;cy=ty+(cy-ty)*t+(1-t)*16}
+ else S.camT=1;
  // a câmera de trás do personagem não atravessa a parede: anda do personagem até o ponto ideal e para onde sairia da arena (o corredor da porta também vale)
  // SC.camFar: a câmera fica no ponto livre mais longe (pode ficar atrás de uma casa; o personagem aparece através dela) e só não entra dentro das coisas
- if(SC.camOk){const ok=SC.camOk(z);let t=1;if(SC.camFar){t=0;for(let i=16;i>=1;i--){const u=i/16;if(ok(x+(cx-x)*u,z+(cz-z)*u)){t=u;break}}}else for(let i=1;i<=16;i++){const u=i/16;if(!ok(x+(cx-x)*u,z+(cz-z)*u)){t=(i-1)/16;break}}
-  t=max(t,.2);cx=x+(cx-x)*t;cz=z+(cz-z)*t;cy=gy+24+(cy-gy-24)*t+(1-t)*22}
  cy=SC.camY?SC.camY(cy,cz,cx):clp(cy,3,120);return{x:cx,y:cy,z:cz,yaw:S.yaw,pitch:S.pitch-kick*.5,fov:G3.fov3*DEG}}
 // ---------- transição entre as câmeras: 1ª pessoa ⇄ 3ª pessoa ⇄ vista de cima, e ao entrar no 3D (a câmera sobe e desce em arco, suave) ----------
 // Vindo do 2D ou da vista de cima, a câmera começa lá no alto, olhando para baixo como o 2D, e desce até o lugar dela; da 1ª para a 3ª pessoa ela sai da cabeça,
@@ -11932,6 +12019,7 @@ SCN.field={id:'field',K:1,OX:0,OY:0,eye:25,camD:92,p3:-.2,pl:[[-.95,.85],[-1.0,.
  floorY:(x,z)=>floorY(x,z),
  step:o=>{const ok=(x,z)=>!blocked(x,z);if(ok(o.x,o.z))return;if(ok(o.x,o.oz)){o.z=o.oz;return}if(ok(o.ox,o.z)){o.x=o.ox;return}o.x=o.ox;o.z=o.oz},
  camOk:pz=>{const f=FLD.camOk;return f?f:(x,z)=>x>-20&&z>-20&&x<MW+20&&z<MH+20},
+ camSolid:(x,z)=>{for(const zn of ZN)if(x>=zn.x0&&x<=zn.x1&&z>=zn.z0&&z<=zn.z1)return zn.block(x,z);const ty=FLD.typeAt(x,z);if(ty===4||ty===7||ty===9)return false;return solid(x|0,(z-3)|0)||(FLD.extra?FLD.extra(x,z):false)},
  camY:(cy,cz,cx)=>max(cy,hAt(cx===undefined?MW/2:cx,cz)+7),
  enter(){for(const p of FLD.parts)if(p.enter)p.enter()},leave(){for(const p of FLD.parts)if(p.leave)p.leave()},clear(){for(const p of FLD.parts)if(p.clear)p.clear()},
  boss:()=>null,isTgt:e=>!!e,tgt:e=>FLD.tgt?FLD.tgt(e):null,bossPlan:(t,C)=>null,
@@ -12209,8 +12297,7 @@ NAT.frame=function(t,C,dt){
 function drawList(list,far,cam,dyn,tr){
  const far2=far*far;
  for(const T of list){const dx=T.wx-cam.x,dz=T.wz-cam.z,d2=dx*dx+dz*dz;if(d2>far2)continue;if(!H3.vis(T.wx,T.wy,T.wz,T.rad))continue;
-  const l=d2<LODD[0]*LODD[0]?0:d2<LODD[1]*LODD[1]?1:2,ms=T.v.m,m=ms[l]||ms[ms.length-1];
-  H3.mesh(m,T.m,FLD.lights,dyn,{di:T.di===undefined?1:T.di,tint:T.tint,tr:tr,rad:T.rad,cx:T.wx,cy:T.wy,cz:T.wz})}}
+  const d=Math.sqrt(d2);H3.lodDraw(T.v.m,d,LODD,T.m,FLD.lights,dyn,{di:(T.di===undefined?1:T.di)*H3.farFade(d,far),tint:T.tint,tr:tr,rad:T.rad,cx:T.wx,cy:T.wy,cz:T.wz})}}
 NAT.draw=function(t,dyn){const cam=H3.S.foc||H3.S.cam;
  drawList(NAT.trees,TREE_FAR,cam,dyn,.55);
  drawList(NAT.bushes,SMALL_FAR,cam,dyn,.45);drawList(NAT.rocks,SMALL_FAR+60,cam,dyn,0);drawList(NAT.decor,200,cam,dyn,.2);
@@ -12865,8 +12952,8 @@ const MT=new Float32Array(16);
 const OCCK=new Set(['pil','ped','mach','tower','gtree','canopy','ruin','stake','gate']);   // o que pode ficar meio transparente na vista de cima
 SCE.draw=function(t,dyn){if(!SCE.ready)return;const F=H3.S.foc||H3.S.cam,s=t/1000;
  for(const it of SCE.st){const d=hypot(it.wx-F.x,it.wz-F.z)-it.rad;if(d>it.far*(FLD.distK||1))continue;if(!H3.vis(it.wx,it.wy,it.wz,it.rad))continue;
-  let m=it.m;if(it.lods){const dd=d+it.rad;m=it.lods[dd<520?0:dd<1100?1:2]}
-  H3.mesh(m,it.mt,FLD.lights,dyn,{di:it.di,tr:it.k==='canopy'?.5:it.k==='gtree'?.2:0,rad:it.rad,cx:it.wx,cy:it.wy,cz:it.wz,occ:OCCK.has(it.k)})}
+  const fd=(it.di===undefined?1:it.di)*H3.farFade(d,it.far*(FLD.distK||1)),op={di:fd,tr:it.k==='canopy'?.5:it.k==='gtree'?.2:0,rad:it.rad,cx:it.wx,cy:it.wy,cz:it.wz,occ:OCCK.has(it.k)};
+  if(it.lods)H3.lodDraw(it.lods,d+it.rad,[520,1100],it.mt,FLD.lights,dyn,op);else H3.mesh(it.m,it.mt,FLD.lights,dyn,op)}
  // estrela: gira (mais rápido com o jogador perto), sobe e desce
  const st=SCE.star;if(st&&hypot(st.x-F.x,st.z-F.z)<1100&&H3.vis(st.x,st.top-10,st.z,14)){const near=1-sm(30,90,hypot(st.x-F.x,st.z-F.z));
   st.a=(st.a||0)+(.018+.035*near);M4.trs(MT,st.x,st.y+25.5+sin(s*1.6)*1.1,st.z,0,st.a,0,1,1,1);
@@ -13290,8 +13377,7 @@ H3.gfx={apply:()=>apply(true),cur};
 // ---------- desenho das árvores, arbustos, pedras e abetos com as distâncias do nível ----------
 function drawList(list,far,cam,dyn,tr,lod,occ){const far2=far*far,l0=lod[0]*lod[0],l1=lod[1]*lod[1];
  for(const T of list){const dx=T.wx-cam.x,dz=T.wz-cam.z,d2=dx*dx+dz*dz;if(d2>far2)continue;if(!H3.vis(T.wx,T.wy,T.wz,T.rad))continue;
-  const l=d2<l0?0:d2<l1?1:2,ms=T.v.m,m=ms[l]||ms[ms.length-1];
-  H3.mesh(m,T.m,FLD.lights,dyn,{di:T.di===undefined?1:T.di,tint:T.tint,tr,rad:T.rad,cx:T.wx,cy:T.wy,cz:T.wz,occ})}}
+  const d=Math.sqrt(d2);H3.lodDraw(T.v.m,d,lod,T.m,FLD.lights,dyn,{di:(T.di===undefined?1:T.di)*H3.farFade(d,far),tint:T.tint,tr,rad:T.rad,cx:T.wx,cy:T.wy,cz:T.wz,occ})}}
 const NAT_D0=NAT.draw;
 NAT.draw=function(t,dyn){const cam=H3.S.foc||H3.S.cam,L=cur();
  drawList(NAT.trees,L.tFar,cam,dyn,.55,L.lod,true);if(L.bush)drawList(NAT.bushes,L.sFar,cam,dyn,.45,L.lod);drawList(NAT.rocks,L.sFar+60,cam,dyn,0,L.lod);drawList(NAT.decor,L.sFar*.5,cam,dyn,.2,L.lod);
@@ -15007,7 +15093,7 @@ SCN.hal={id:'hal',K:1,OX:0,OY:0,eye:25,camD:88,p3:-.16,pl:[[-.95,.9],[-1.0,.45]]
  env:()=>envOn(),
  floorY:(x,z)=>hAt(x,z),
  step:o=>{const ok=(x,z)=>!hit(x-8,z-14);if(ok(o.x,o.z))return;if(ok(o.x,o.oz)){o.z=o.oz;return}if(ok(o.ox,o.z)){o.x=o.ox;return}o.x=o.ox;o.z=o.oz},
- camOk:pz=>(x,z)=>!blockedCam(x,z)&&!camBlk(x,z),camFar:true,
+ camOk:pz=>(x,z)=>!blockedCam(x,z)&&!camBlk(x,z),camSolid:(x,z)=>solid(x|0,(z-3)|0),
  camY:(cy)=>clp(cy,4,240),
  enter(){envOn();BANKS.length=0;lastFx=0;document.body.classList.add('h3hal')},
  leave(){envOff();document.body.classList.remove('h3hal')},
@@ -18793,7 +18879,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261027134105;
+const GAME_BUILD=20261027140427;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
@@ -19489,8 +19575,9 @@ DBW.grass=GR;
 // ---------- desenho ----------
 const FAR=5200,LODD=[300,700];
 function drawObj(o,F,dyn){const far=FARK[o.kind==='tree'?'tree':o.v]||3000,dx=o.wx-F.x,dz=o.wz-F.z,d2=dx*dx+dz*dz;if(d2>(far+o.rad)*(far+o.rad))return;if(!H3.vis(o.wx,o.wy,o.wz,o.rad))return;
- if(o.kind==='tree'){const v=TV[o.v];if(!v)return;const l=d2<LODD[0]*LODD[0]?0:d2<LODD[1]*LODD[1]?1:2;H3.mesh(v.m[l]||v.m[2],o.m,LIGHTS,dyn,{tint:o.tint,tr:.55,rad:o.rad,cx:o.wx,cy:o.wy,cz:o.wz})}
- else if(o.mesh)H3.mesh(o.mesh,o.m,LIGHTS,dyn,{tint:o.tint,rad:o.rad,cx:o.wx,cy:o.wy,cz:o.wz})}
+ const d=Math.sqrt(d2),fd=H3.farFade(d,far+o.rad);
+ if(o.kind==='tree'){const v=TV[o.v];if(!v)return;H3.lodDraw(v.m,d,LODD,o.m,LIGHTS,dyn,{di:fd,tint:o.tint,tr:.55,rad:o.rad,cx:o.wx,cy:o.wy,cz:o.wz})}
+ else if(o.mesh)H3.mesh(o.mesh,o.m,LIGHTS,dyn,{di:fd,tint:o.tint,rad:o.rad,cx:o.wx,cy:o.wy,cz:o.wz})}
 function draw(t,dyn){H3.skyDraw();editTick();const F=H3.S.foc||H3.S.cam;
  for(const c of CH){const d=hypot(c.cx-F.x,c.cz-F.z);if(d>FAR+CS*K)continue;
   if(c.gm&&H3.vis(c.gm.cx,c.gm.cy,c.gm.cz,c.gm.rad))H3.mesh(c.gm,null,LIGHTS,dyn,{});
@@ -19530,7 +19617,7 @@ SCN.db={id:'db',K:1,OX:0,OY:0,eye:25,camD:92,p3:-.18,pl:[[-.95,.85],[-1.0,.4]],a
  env:()=>{H3.env({fog:[.78,.86,.95,.00042],ambT:[1.1,1.08,1],ambB:[.6,.6,.55],sun:SUN,sunC:SUNC,skyA:SKYA,skyB:SKYB,gndA:GNDA,wind:[1.4,.6],gscale:[1/WW,1/WH]})},
  floorY:(x,z)=>floorW(x,z),
  step:o=>{const ok=(x,z)=>!blocked(x,z);if(ok(o.x,o.z))return;if(ok(o.x,o.oz)){o.z=o.oz;return}if(ok(o.ox,o.z)){o.x=o.ox;return}o.x=o.ox;o.z=o.oz},
- camOk:pz=>(x,z)=>x>8&&z>8&&x<WW-8&&z<WH-8&&!insideCC(x,z),
+ camOk:pz=>(x,z)=>x>8&&z>8&&x<WW-8&&z<WH-8&&!insideCC(x,z),camSolid:(x,z)=>blocked(x,z),
  camY:(cy,cz,cx)=>max(cy,floorW(cx===undefined?WW/2:cx,cz)+6),
  enter(){shKey='';if(typeof P!=='undefined'&&P&&DBW.ready)grassStep({x:P.x+8,z:P.y+14},60,120)},leave(){grassClear();shKey='';try{if(H3.gfx&&H3.gfx.apply)H3.gfx.apply()}catch(e){}},clear(){},
  boss:()=>null,isTgt:e=>!!e,tgt:e=>e?[e.x+8,floorW(e.x+8,e.y+14)+16,e.y+14,30,floorW(e.x+8,e.y+14)]:null,bossPlan:()=>null,
