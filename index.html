@@ -18793,7 +18793,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261026154247;
+const GAME_BUILD=20261027133441;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
@@ -19114,6 +19114,22 @@ function tower(mb,x,z,w,d,H,yaw,r){const y=floorY(x,z);mb.push().T(x,y,z).RY(yaw
 
 // ---------- Corporação Cápsula ----------
 const CCX=760,CCZ=560,CCR=190,CCH=150;
+// ---- modelo 3D da Corporação Cápsula (capsula.bin, ao lado do index.html): o original completo, com todos os polígonos ----
+// formato: 'CPC1', nº de vértices, nº de triângulos · posições int16 (x16, em unidades de projeto, centro do terreno na origem) · normais int8 · cores RGB · índices uint32
+// O terreno do modelo (gramado, cerca, palmeiras, caminhos) ocupa a praça inteira entre as avenidas: 616 x 412.
+const CCLX=308.0,CCLZ=205.9,CCG=[-11.5,22.8],CCMX=5.4,CCMZ=-0.2;   // meia largura/profundidade do terreno · portão na frente (+z) · centro da cúpula
+const CCBLD=[[5.4, -0.2, 138.8], [225.9, 0.0, 44.8], [209.2, -114.6, 40.4], [-203.0, -114.3, 40.5], [-183.0, 0.0, 34.4], [-227.7, 98.1, 54.0]];   // [x,z,raio] das construções em volta do centro (colisão)
+const CCM={st:0,buf:null};   // st: 0 carregando · 1 pronto · -1 falhou (usa a Cápsula antiga, feita em código)
+try{fetch('capsula.bin').then(r=>{if(!r.ok)throw 0;return r.arrayBuffer()}).then(b=>{if(new Uint32Array(b,0,1)[0]!==0x31435043)throw 0;CCM.buf=b;CCM.st=1}).catch(()=>{CCM.st=-1})}catch(e){CCM.st=-1}
+// monta direto o buffer da placa de vídeo (28 bytes por vértice, igual ao MB.pack), sem passar por listas grandes
+function ccUpload(gl){const b=CCM.buf,h=new Uint32Array(b,0,3),nv=h[1],nf=h[2],P=new Int16Array(b,12,nv*3),N=new Int8Array(b,12+nv*6,nv*3),C=new Uint8Array(b,12+nv*9,nv*3),
+  io=12+nv*12+((4-(12+nv*12)%4)%4),I=new Uint32Array(b,io,nf*3),n=nf*3,buf=new ArrayBuffer(n*28),f=new Float32Array(buf),u=new Uint8Array(buf);
+ let sx=0,sy=0,sz=0;const bb=[1e9,1e9,1e9,-1e9,-1e9,-1e9];
+ for(let i=0;i<n;i++){const v=I[i]*3,d=i*7,o=i*28+24,x=(CCX+P[v]/16)*K,y=P[v+1]/16*K+.4,z=(CCZ+P[v+2]/16)*K;
+  f[d]=x;f[d+1]=y;f[d+2]=z;f[d+3]=N[v]/127;f[d+4]=N[v+1]/127;f[d+5]=N[v+2]/127;u[o]=C[v];u[o+1]=C[v+1];u[o+2]=C[v+2];u[o+3]=0;
+  sx+=x;sy+=y;sz+=z;if(x<bb[0])bb[0]=x;if(y<bb[1])bb[1]=y;if(z<bb[2])bb[2]=z;if(x>bb[3])bb[3]=x;if(y>bb[4])bb[4]=y;if(z>bb[5])bb[5]=z}
+ const cx=sx/n,cy=sy/n,cz=sz/n,rad=Math.hypot(max(bb[3]-cx,cx-bb[0]),max(bb[4]-cy,cy-bb[1]),max(bb[5]-cz,cz-bb[2]));
+ CCM.buf=null;return H3.upload(gl,{buf,n,cx,cy,cz,rad,pk:true,bb})}
 function capsuleCorp(mb){const y=0;mb.push().T(CCX,y,CCZ);
  // base (anel azul) e cúpula amarela com faixas de janelas
  mb.cyl(CCR+4,CCR+2,8,40,CCB,0);
@@ -19368,18 +19384,21 @@ function* gen(gl){
  for(const c of CH){ground(c.g,c.i,c.j)}
  DBW.pct=.1;yield;
  roads(CHK(760,1120).o);cliffWall(CHK(CLX0,PZC).o,r);
- // Corporação Cápsula (fixa)
- capsuleCorp(CHK(CCX,CCZ).o);
- circ(CCX,CCZ,CCR+4);circ(CCX-230,CCZ+40,36);circ(CCX+230,CCZ+40,36);circ(CCX-170,CCZ-150,48);circ(CCX+170,CCZ-150,48);
- rect(CCX-26,CCZ+CCR-20,CCX+26,CCZ+CCR+24);
- LIGHTS.push({x:CCX*K,y:80,z:(CCZ+CCR+30)*K,r:240,cr:1,cg:.9,cb:.6,k:.35});
+ // Corporação Cápsula (fixa): o modelo 3D completo (capsula.bin); se não carregar, a antiga feita em código
+ {const t0=Date.now();while(CCM.st===0&&Date.now()-t0<25000){DBW.pct=.1;yield}}
+ if(CCM.st!==1)capsuleCorp(CHK(CCX,CCZ).o);
+ for(const b of CCBLD)circ(CCX+b[0],CCZ+b[1],b[2]-2);
+ // cerca do terreno (portão aberto na frente, virado para o parque)
+ rect(CCX-CCLX,CCZ-CCLZ,CCX+CCLX,CCZ-CCLZ+3);rect(CCX-CCLX,CCZ-CCLZ,CCX-CCLX+3,CCZ+CCLZ);rect(CCX+CCLX-3,CCZ-CCLZ,CCX+CCLX,CCZ+CCLZ);
+ rect(CCX-CCLX,CCZ+CCLZ-3,CCX+CCG[0]-2,CCZ+CCLZ);rect(CCX+CCG[1]+2,CCZ+CCLZ-3,CCX+CCLX,CCZ+CCLZ);
+ LIGHTS.push({x:(CCX+CCMX)*K,y:80,z:(CCZ+CCMZ+CCR)*K,r:240,cr:1,cg:.9,cb:.6,k:.35});
  // parque com chafariz
  {const mb=CHK(760,900).o,fx=760,fz=900;
   mb.push().T(fx,.2,fz).cyl(70,70,.4,32,'#d8d3c6',0);mb.cyl(26,27,4.5,24,'#e9e6dd',0);mb.push().T(0,3.4,0).cyl(24,24,.6,24,'#4aa3df',.15).pop();
   mb.push().T(0,0,0).cyl(4,3,14,10,'#e9e6dd',0).pop();mb.push().T(0,14,0).cyl(3,10,3,14,'#e9e6dd',0).pop();mb.push().T(0,16.5,0).cyl(9,9,.6,14,'#4aa3df',.2).pop();mb.pop();
   circ(fx,fz,28);
   for(const[dx,dz]of[[-150,-40],[150,-40],[-150,60],[150,60]]){mb.push().T(fx+dx,0,fz+dz).box(110,5,26,'#3f8f3a',0,true).pop();for(let k=0;k<8;k++)mb.push().T(fx+dx-46+k*13,5.5,fz+dz).sph(2.6,2,6,['#e53935','#fdd835','#f06292','#ffffff'][k%4],.1).pop();rect(fx+dx-56,fz+dz-14,fx+dx+56,fz+dz+14)}
-  mb.push().T(fx,.25,(CCZ+CCR+fz)/2).box(40,.4,fz-CCZ-CCR,'#d8d3c6',0,true).pop()}
+  mb.push().T(CCX+(CCG[0]+CCG[1])/2,.25,(CCZ+CCLZ+fz)/2).box(40,.4,fz-CCZ-CCLZ,'#d8d3c6',0,true).pop()}
  // heliponto
  {const mb=CHK(1000,1000).o;mb.push().T(980,.3,1010).box(90,.6,90,'#7a7f88',0,true);mb.push().T(0,.65,0).cyl(34,34,.2,32,'#f4f4f0',0).pop();mb.push().T(0,.7,0).cyl(30,30,.2,32,'#7a7f88',0).pop();
   mb.push().T(0,.8,-12).RX(-PI/2);text(mb,'C',4.2,.2,'#f4f4f0',0);mb.pop();mb.pop()}
@@ -19404,7 +19423,7 @@ function* gen(gl){
  // ---- objetos: casas e prédios nos quarteirões ----
  const BLK=[[180,180,390,1090,'w'],[1130,180,1490,1090,'e'],[180,1150,390,2080,'w'],[1130,1150,1490,2080,'e'],[450,180,1070,330,'n'],[450,1150,1070,1340,'m'],[450,1950,1070,2080,'s']];
  const occ=[];const free=(x,z,R)=>{for(const o of occ)if(hypot(o[0]-x,o[1]-z)<o[2]+R+14)return false;if(onRoad(x,z,R+6))return false;if(hypot(x-SPd.x,z-SPd.z)<60||hypot(x-BKd.x,z-BKd.z)<70)return false;return true};
- occ.push([CCX,CCZ,CCR+10],[CCX-230,CCZ+40,40],[CCX+230,CCZ+40,40],[760,900,90],[980,1010,60]);
+ occ.push(...[-1,-.5,0,.5,1].map(t=>[CCX+t*(CCLX-CCLZ),CCZ,CCLZ+6]),[760,900,90],[980,1010,60]);
  const addDb=(type,x,z,yaw,p)=>{const seed=hstr(type+':'+round(x)+','+round(z));const o=mkObj('db',type,x,z,yaw,1,p,seed);o.mesh=dbMesh(gl,type,p,seed);o.col=dbCol(type,p);OBJ.push(o);return o};
  let nb=0;
  for(const[bx0,bz0,bx1,bz1,kind]of BLK){for(let tries=0;tries<260;tries++){const x=bx0+r()*(bx1-bx0),z=bz0+r()*(bz1-bz0);
@@ -19442,6 +19461,7 @@ function* gen(gl){
  DBW.pct=.92;yield;
  // sobe o fixo para a placa de vídeo
  for(const c of CH){c.gm=c.g.count?H3.upload(gl,c.g.pack()):null;c.om=c.o.count?H3.upload(gl,c.o.pack()):null;c.g=null;c.o=null}
+ if(CCM.st===1&&CCM.buf){const m=ccUpload(gl);CH.push({i:-1,j:-1,g:null,o:null,gm:null,om:m,cx:CCX*K,cz:CCZ*K,cc:1})}
  CGT=CG;CG.set(CG0);
  DBW.pct=1;DBW.ready=true;appliedRev=-1;editTick()}
 function step(ms){const gl=H3.gl();if(!gl)return false;if(DBW.ready)return true;if(!building)building=gen(gl);const t0=performance.now();
@@ -19465,7 +19485,7 @@ function flower(mb,x,y,z,ci,rnd){const h=2.5+rnd()*1.9,a=rnd()*TAU,tip=[0,0,0];b
  for(let i=0;i<5;i++){const a0=i/5*TAU+a,a1=(i+1)/5*TAU+a;mb.raw([ex,ey+.5,ez],[ex+cos(a0)*R,ey,ez+sin(a0)*R],[ex+cos(a1)*R,ey,ez+sin(a1)*R],nn,nn,nn,cen,col,col,18,18,18)}}
 // onde tem grama (mundo): fora do deserto/penhasco, das ruas, da praça da Cápsula, do parque, do heliponto, da plataforma da arena e de dentro das construções
 function grassy(x,z){const xd=x/K,zd=z/K;if(xd>CLX0-14||xd<46||zd<46||zd>MH-46)return false;if(onRoad(xd,zd,8))return false;
- if(hypot(xd-CCX,zd-CCZ)<CCR+44)return false;if(hypot(xd-760,zd-900)<74)return false;if(abs(xd-760)<20&&zd>CCZ+CCR&&zd<900)return false;
+ if(abs(xd-CCX)<CCLX+6&&abs(zd-CCZ)<CCLZ+6)return false;if(hypot(xd-760,zd-900)<74)return false;if(abs(xd-760)<20&&zd>CCZ+CCR&&zd<900)return false;
  if(abs(xd-980)<48&&abs(zd-1010)<48)return false;if(abs(xd-ACX)<AH+30&&abs(zd-ACZ)<AH+30)return false;if(abs(xd-ACX)<26&&zd>AZ0&&zd<AZ1+4)return false;
  if(blockedD(xd,zd))return false;return true}
 function grassChunk(ci,cj){const cs=GR.cs,x0=ci*cs,z0=cj*cs,mb=new MB(((ci*7919)^(cj*104729))+31,{pk:true}),rnd=mb.r,GS=5.1,N=Math.ceil(cs/GS);
@@ -19518,7 +19538,7 @@ function frameFx(t,Cm){shadowTune();{const C=H3.S.foc||Cm,F=FLO();grassStep(C,F.
 // ---------- a cena 3D ----------
 const SUN=[-.45,.78,.42],SUNC=[1.12,1.0,.84],SKYA=[.36,.6,.92],SKYB=[.78,.88,.98],GNDA=[.36,.32,.24];
 const SCN=H3.scenes=H3.scenes||{};
-const insideCC=(x,z)=>hypot(x/K-CCX,z/K-CCZ)<CCR-6;
+const insideCC=(x,z)=>{const dx=x/K-CCX,dz=z/K-CCZ;for(const b of CCBLD)if(hypot(dx-b[0],dz-b[1])<b[2]-4)return true;return false};
 SCN.db={id:'db',K:1,OX:0,OY:0,eye:25,camD:92,p3:-.18,pl:[[-.95,.85],[-1.0,.4]],amb:[1.08,1.05,.98],camLight:[0,0,0],iso:false,
  get fx(){return typeof fight!=='undefined'&&fight?fight.x+8:0},get fz(){return typeof fight!=='undefined'&&fight?fight.y+14:0},
  get lights(){return LIGHTS},
