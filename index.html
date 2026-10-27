@@ -9813,7 +9813,8 @@ H3.spr=spr;H3.flat=flat;H3.strip=strip;H3.pick=(...a)=>pickLights(...a);
 // sol e sombra do sol para os personagens (programa P.lit e figurinhas): só onde o mapa de sombras está ligado (ao ar livre)
 function shUni(u){const on=!!(SHS.on&&SHS.ok&&RTS.sh&&!ISO);gl.activeTexture(gl.TEXTURE3);gl.bindTexture(gl.TEXTURE_2D,on?RTS.sh.t:shTex1);gl.activeTexture(gl.TEXTURE0);
  gl.uniform1i(u.uShT,3);gl.uniformMatrix4fv(u.uSM,false,SHS.mat);gl.uniform4f(u.uSh,on?SHS.on:0,SHS.nOff,SHS.f0,SHS.f1);gl.uniform2f(u.uShR,SHS.texel,SHS.bias);gl.uniform3f(u.uFoc,FOC[0],FOC[1],FOC[2]);return on}
-function litSun(u){const on=shUni(u);gl.uniform4f(u.uSunL,SUN[0],SUN[1],SUN[2],on?1:0);gl.uniform3f(u.uSunCL,SUNC[0],SUNC[1],SUNC[2])}
+function litSun(u){const on=shUni(u),out=on||PFR.out>=frameId-2;   // ao ar livre: luz do sol sempre; a sombra só com as Sombras ligadas
+ gl.uniform4f(u.uSunL,SUN[0],SUN[1],SUN[2],out&&!ISO?1:0);gl.uniform3f(u.uSunCL,SUNC[0],SUNC[1],SUNC[2])}
 function flushSprites(fogv){
  if(!SL.length)return;gl.useProgram(P.spr);const spOn=U.spSh&&U.spSh.uShT?shUni(U.spSh):false;gl.uniform4fv(U.sFog,fogv);gl.uniform1f(U.sFO,FOGO);gl.uniform3fv(U.sCam,camP);gl.uniform1i(U.sTex,0);
  gl.bindBuffer(gl.ARRAY_BUFFER,sbuf);gl.enableVertexAttribArray(0);gl.enableVertexAttribArray(1);gl.enableVertexAttribArray(2);
@@ -18913,7 +18914,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261027142234;
+const GAME_BUILD=20261027142705;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
