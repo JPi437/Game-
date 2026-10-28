@@ -20724,7 +20724,7 @@ function mkKartTex(ci){if(TEXS.kart[ci]||!KIMGD)return;const src=KIMGD.data,c=D.
 
 // ============================================================ estado e regras ============================================================
 const VMAX=20,VREV=-7,GRAV=32,KR=1.05;
-const T_DRIFT=[1.0,2.1,3.4],B_DUR=[.75,1.25,1.9],B_POW=[27,31,35],NIT_DUR=2.4,NIT_POW=33;
+const T_DRIFT=[1.0,2.1,3.4],B_DUR=[.5,.8,1.2],B_POW=[23,25,27.5],NIT_DUR=2.4,NIT_POW=33;
 const TIERC=[[255,236,170],[255,150,40],[70,170,255],[220,90,255]];          // faíscas por nível
 const S={st:'off',pause:false,mode:'solo',laps:3,raceT:0,cd:0,t:0,shake:0,fl:[0,0,0],fa:0,msgs:[],finT:0,overT:0,frost:0,boostFx:0,room:null,bestLap:0,lapTimes:[],pop:null,wrongT:0};
 const IN={thr:0,rev:0,steer:0,drift:0,dig:0,jx:0,key:{},itemEdge:0};
@@ -20747,7 +20747,7 @@ function gridSlot(i){const row=i>>1,col=i&1,d=3.2+row*5.4,p=clAt(TR.L-d),lat=(co
 function placeKart(k,slot){const g=gridSlot(slot);k.x=g.x;k.z=g.z;k.y=g.y;k.h=g.hd;k.vx=k.vz=k.vy=0;k.sp=0;k.hint=clNear(k.x,k.z,0,TR.n>>1);k.hint=clNear(k.x,k.z,TR.n-3,6);
  const pr=clProj(k.x,k.z,k.hint);k.sPrev=pr.s;k.cum=pr.s-TR.L;k.maxCum=k.cum;k.lap=0;k.fin=0;k.pitch=k.roll=0;k.camInit=false}
 
-function buildBoxes(){BOXES=[];const fr=[.06,.17,.285,.4,.52,.64,.755,.865,.95];
+function buildBoxes(){BOXES=[];const fr=[.285,.755];
  for(const f of fr){const p=clAt(f*TR.L);for(const off of[-5.2,-2.6,0,2.6,5.2]){BOXES.push({x:p.x+cos(p.hd)*off,z:p.z-sin(p.hd)*off,y:p.y+1.25,on:1,t:0,ph:rnd()*TAU,row:f})}}}
 function clearEntities(){PROJ=[];BANS=[];for(let i=0;i<NP;i++)PON[i]=0}
 
@@ -21030,7 +21030,7 @@ function drawHUD(){
  // --- slot de item ---
  {const cx=W/2,cy=46*u,r=34*u;const act=k.item||k.rollT>0,col=k.item?ITC[k.item]:'#ffd23f';
   c.fillStyle='rgba(8,12,28,.7)';c.beginPath();c.arc(cx,cy,r,0,TAU);c.fill();c.lineWidth=4;c.strokeStyle=act?col:'rgba(255,255,255,.35)';c.stroke();
-  if(k.item&&!k.rollT){c.save();c.shadowColor=col;c.shadowBlur=18+8*sin(S.t*8);const bob=sin(S.t*7)*2;icon(c,k.item,cx,cy+bob,.85*u);c.restore();tx(c,ITN[k.item],cx,cy+r+14*u,13*u,col,'center')}
+  if(k.item&&k.rollT<=0){c.save();c.shadowColor=col;c.shadowBlur=18+8*sin(S.t*8);const bob=sin(S.t*7)*2;icon(c,k.item,cx,cy+bob,.85*u);c.restore();tx(c,ITN[k.item],cx,cy+r+14*u,13*u,col,'center')}
   else if(k.rollT>0){const ks=['fire','ban','ice','nit'],pick=ks[floor(S.t*14)%4];icon(c,pick,cx+(rnd()-.5)*3,cy+(rnd()-.5)*3,.8*u);}
   else tx(c,'ITEM',cx,cy,13*u,'rgba(255,255,255,.35)','center',0)}
  // --- minimapa ---
@@ -21108,7 +21108,7 @@ function simStep(dt){
  if(S.go){if(S.mode==='solo')S.raceT+=dt;else S.raceT=max(0,(nowS()-S.startAt)/1000)}else S.raceT=0;
  const I=readInput();
  if(PL){
-  if(S.st==='race'&&PL.rollT>0){PL.rollT-=dt;PL.rollK+=dt;if(floor(PL.rollK*12)!==floor((PL.rollK-dt)*12))snd('roll',floor(PL.rollK*12)%5);if(PL.rollT<=0){PL.item=rollItem(PL);snd('got');popup(ITN[PL.item],ITC[PL.item])}}
+  if(S.st==='race'&&PL.rollT>0){PL.rollT-=dt;PL.rollK+=dt;if(floor(PL.rollK*12)!==floor((PL.rollK-dt)*12))snd('roll',floor(PL.rollK*12)%5);if(PL.rollT<=0){PL.rollT=0;PL.item=rollItem(PL);snd('got');popup(ITN[PL.item],ITC[PL.item])}}
   if(IN.itemEdge){IN.itemEdge=0;useItem(PL)}
   stepKart(PL,dt,I);PL.gy=TR.road.at(PL.x,PL.z,PL.y,1.2);if(PL.gy===null)PL.gy=PL.y;
   // caixas
@@ -21500,7 +21500,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261028011038;
+const GAME_BUILD=20261028012127;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
