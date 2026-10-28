@@ -11005,16 +11005,16 @@ function prep(m){const q=m.q;if(!q||q.x===undefined)return null;
  let fx0,fz0;const kind=m.k.charAt(0),iso=S.mode===3;
  if(kind==='P'){if(iso){const v=DV[P.dir|0]||DV[2];fx0=v[0];fz0=v[1]}else{fx0=sin(S.yaw);fz0=-cos(S.yaw)}A.y+=S.jh;A.jh=S.jair;A.jv=S.jv}
  else if((kind==='F'&&fight)||(kind==='R'&&q.rfe)){const dx=SC.fx-x,dz=SC.fz-z,l=hypot(dx,dz)||1;fx0=dx/l;fz0=dz/l}
- else if(kind==='F'){if(iso){const v=DV[q.dir|0]||DV[2];fx0=v[0];fz0=v[1]}
-  else{// igual ao jogador: olha para onde está andando; parado, continua virado para onde parou (não gira junto com a câmera)
+ else if(kind==='F'||kind==='R'||kind==='B'){if(iso){const v=DV[(kind==='F'?q.dir:d0)|0]||DV[2];fx0=v[0];fz0=v[1]}
+  else{// igual ao jogador (segue o joystick, não a câmera): olha para onde está andando; parado, continua virado para onde parou
    const o=q._fv||(q._fv={x,z,vx:0,vz:0,fy:null});const ddx=x-o.x,ddz=z-o.z;o.x=x;o.z=z;
    if(hypot(ddx,ddz)<20){o.vx=o.vx*.75+ddx*.25;o.vz=o.vz*.75+ddz*.25}else{o.vx=o.vz=0}
    if(hypot(o.vx,o.vz)>.12)o.fy=atan2(o.vx,o.vz);
-   if(o.fy===null){const hs=P&&P._hero;o.fy=hs&&isFinite(hs.yaw)?hs.yaw:atan2(sin(S.yaw),-cos(S.yaw))}
+   if(o.fy===null){if(kind==='F'){const hs=P&&P._hero;o.fy=hs&&isFinite(hs.yaw)?hs.yaw:atan2(sin(S.yaw),-cos(S.yaw))}else{const v=DV[d0|0]||DV[2];o.fy=atan2(v[0],v[1])}}
    fx0=sin(o.fy);fz0=cos(o.fy)}}
  else if(kind==='N'){const dx=P.x+8-x,dz=P.y+14-z,l=hypot(dx,dz)||1;fx0=dx/l;fz0=dz/l}
  if(kind==='B'){const J=remJump(q);A.y+=J.h+J.air;A.jh=J.air;A.jv=J.v}
- else{const v=DV[d0|0]||DV[2];fx0=v[0];fz0=v[1]}
+ if(fx0===undefined||kind==='P'){const v=DV[d0|0]||DV[2];fx0=v[0];fz0=v[1]}   // jogador e os outros (inimigos etc.): direção 2D de sempre (o jogador 3D vira pelo próprio movimento)
  A.fx=fx0;A.fz=fz0;A.yaw=atan2(fx0,fz0);
  A.guts=!!((kind==='F'||kind==='R')&&m.nm==='Guts'&&window.GUTS3&&GUTS3.on());
  A.spr=!!((kind==='F'||kind==='R')&&m.nm==='Springtrap'&&window.SPR3&&SPR3.on());
@@ -21734,7 +21734,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261028183531;
+const GAME_BUILD=20261028184723;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
