@@ -260,16 +260,16 @@ function tabMon(B){
 // ----- modelo: personagens, roupas, cabelo, acessórios -----
 const CHARS=[['player','Jogador (todos os humanos)'],['Guts','Guts'],['Springtrap','Springtrap'],['Naruto','Naruto'],['Goku','Goku'],['Luffy','Luffy'],['Gon','Gon'],['Itadori','Itadori']];
 // as peças que existem no modelo do jogador, em grupos
-const GROUPS=[['Cabelo',[['h1','Cabelo 1'],['h2','Cabelo 2'],['h3','Cabelo 3'],['h4','Cabelo 4']]],['Cabeça',[['chm','Chapéu de mago']]],
+const GROUPS=[['Cabelo',[['h1','Cabelo 1'],['h2','Cabelo 2'],['h3','Cabelo 3'],['h4','Cabelo 4']]],['Cabeça',[['chm','Chapéu de mago'],['frm','Máscara do Freddy']]],
  ['Tronco',[['cam','Camiseta'],['av0','Aventureiro: peito']]],['Pernas',[['av1','Aventureiro: calça'],['av3','Aventureiro: barra da calça']]],
  ['Pés',[['bot','Botas padrão'],['av2','Aventureiro: botas']]],['Capas',[['capm','Capa de mago'],['capr','Capa do Lich (remake)']]]];
 const PNAME={};GROUPS.forEach(g=>g[1].forEach(([k,t])=>PNAME[k]=t));
-const PY0={bot:0,av2:0,chm:0,av0:1,av1:1,av3:1,cam:1,capm:1,capr:1};
+const PY0={bot:0,av2:0,chm:0,frm:0,av0:1,av1:1,av3:1,cam:1,capm:1,capr:1};
 const SYMP={bot:1,av2:1};                       // peças com um lado esquerdo e um direito (pés)
 // o "look de teste": o que o SEU personagem veste enquanto você ajusta (não salva; só você vê)
 const look=()=>{if(!ED.look||window.EDFORCE!==ED.look)ED.look={o:0,k:0,a:0,w:0,hc:0,...(window.EDFORCE&&window.EDFORCE.o!==undefined?window.EDFORCE:{})};return ED.look};
 function wear(key){const L=look();
- if(/^h\d$/.test(key))L.a=+key[1];else if(key==='chm')L.w=1;else if(key==='cam')L.o|=8;else if(key==='bot')L.o|=16;else if(key==='capm')L.k=2;else if(key==='capr')L.k=1;
+ if(/^h\d$/.test(key))L.a=+key[1];else if(key==='chm')L.w=1;else if(key==='frm')L.w=2;else if(key==='cam')L.o|=8;else if(key==='bot')L.o|=16;else if(key==='capm')L.k=2;else if(key==='capr')L.k=1;
  else if(key==='av0')L.o|=1;else if(key==='av1'||key==='av3')L.o|=2;else if(key==='av2')L.o|=4;window.EDFORCE=L}
 function lookBtn(txt,on,fn){return btn(txt,fn,'sm '+(on?'on':''))}
 function tabMod(B){
