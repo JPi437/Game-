@@ -17089,7 +17089,8 @@ function animate(s,dt,rate){
   for(let c=0;c<3;c++)TT[c]=P1[c]+(TT[c]-P1[c])*e}}
 // matrizes dos ossos: posição, direção (o modelo olha para +Z) e escala do personagem
 function bones(yaw,px,py,pz){const c=cos(yaw),sn=sin(yaw),S=SC0,Z=window.EDSZ?EDSZ('player'):[1,1,1];
- MODEL.set([c*S*Z[0],0,-sn*S*Z[0],0, 0,S*Z[1],0,0, sn*S*Z[2],0,c*S*Z[2],0, px,py,pz,1]);
+ MODEL.set([c*S*Z[0],0,-sn*S*Z[0],0, 0,S*Z[1],0,0, sn*S*Z[2],0,c*S*Z[2],0, px,py,pz,1]);bonesM()}
+function bonesM(){   // matrizes dos ossos a partir de MODEL (posição, direção e escala já dentro dela)
  for(let k=0;k<NN;k++){TV[0]=D.rt[k][0];TV[1]=D.rt[k][1];TV[2]=D.rt[k][2];if(k===PEL){TV[0]=TT[0];TV[1]=TT[1];TV[2]=TT[2]}
   fromQT(LM,QQ.subarray(k*4,k*4+4),TV);const p=PAR[k];
   if(p<0)mul(W.subarray(k*16,k*16+16),MODEL,LM);else mul(W.subarray(k*16,k*16+16),W.subarray(p*16,p*16+16),LM);
@@ -17127,6 +17128,32 @@ HERO3.preview=function(cv){
    gl.uniformMatrix4fv(u.uB,false,BM);gl.uniform3f(u.uLt,1,1,1);gl.uniform4f(u.uFlc,1,1,1,0);gl.uniform3fv(u.uSk,skinRGB(o.skin));
    drawDressed(gl,G,Object.assign({},o.lk||{},{o:o.cl|0,k:o.k|0,a:o.a|0,w:o.w|0,hc:o.hc|0}));if((o.k|0)===1)drawCape(gl,G,s,now/1000);gl.disableVertexAttribArray(3);gl.disableVertexAttribArray(4);return true},
   ready:()=>!!G.tex}};
+// ---------- piloto do Star Kart: o mesmo boneco (pele, roupas, cabelo, chapéu, máscara e capa), sentado no kart, no WebGL do kart ----------
+// M = matriz do kart (frente = +z, em metros do kart); o quadril fica no banco, pernas esticadas para o pedal, mãos no volante, gira a cabeça e o volante com a direção
+const KLT=new Float32Array(16),KMM=new Float32Array(16),KPEL=[0,0,0];
+function kartPose(s,steer){OVK.fill(null);
+ ov('thigh_l',0,-.55);ov('thigh_r',0,-.55);ov('thigh_l',1,.12);ov('thigh_r',1,-.12);ov('calf_l',0,.95);ov('calf_r',0,.95);ov('foot_l',0,-.35);ov('foot_r',0,-.35);   // pernas para a frente (pedais)
+ const KP=[-.55,-.25,-.1];ov('upperarm_l',0,KP[0]);ov('upperarm_r',0,KP[0]);ov('upperarm_l',2,KP[1]);ov('upperarm_r',2,-KP[1]);ov('lowerarm_l',0,KP[2]);ov('lowerarm_r',0,KP[2]);   // braços para o volante
+ ov('spine_02',1,steer*.12);ov('Head',1,steer*.35);ov('spine_03',2,-steer*.1)}
+HERO3.kart=function(gl){
+ if(HERO3.fail||!gl)return null;const G=makeG();try{build(gl,G)}catch(e){console.error('HERO3 kart',e);return null}
+ const ST=new Map();
+ return{ready:()=>!!G.tex&&!gl.isContextLost(),
+  // o: {id, VP, cam:[x,y,z], M (matriz do kart), lk (visual), steer (-1..1), spd, dt, seat:[x,y,z], sc, fog:[r,g,b], fn, ff}
+  draw(o){if(!G.tex||gl.isContextLost())return false;
+   let s=ST.get(o.id);if(!s){s={yaw:0,cur:'Sitting_Idle_Loop',t:Math.random()*3,prev:null,tp:0,bl:1,bd:.2,spd:0};ST.set(o.id,s)}
+   if(ST.size>40)ST.clear();
+   s.spd=o.spd||0;animate(s,clp(o.dt||.016,0,.1),1);kartPose(s,clp(o.steer||0,-1,1));
+   const sc=o.sc||1.3,st=o.seat||[0,.18,-.25];
+   // 1ª passada: onde fica o quadril com o boneco na origem; 2ª: põe o quadril no banco, dentro do kart
+   KLT.set([sc,0,0,0, 0,sc,0,0, 0,0,sc,0, 0,0,0,1]);MODEL.set(KLT);bonesM();const pe=PEL*16;KPEL[0]=W[pe+12];KPEL[1]=W[pe+13];KPEL[2]=W[pe+14];
+   KLT[12]=st[0]-KPEL[0];KLT[13]=st[1]-KPEL[1];KLT[14]=st[2]-KPEL[2];mul(KMM,o.M,KLT);MODEL.set(KMM);bonesM();
+   const L=o.lk||NOLOOK,u=G.u,F=o.fog||[.7,.8,.95],c=o.cam;
+   bindAll(gl,G);gl.uniformMatrix4fv(u.uVP,false,o.VP);gl.uniform3f(u.uCam,c[0],c[1],c[2]);gl.uniform4f(u.uFog,F[0],F[1],F[2],1/((o.ff||260)-(o.fn||90))*1.6);gl.uniform1f(u.uFO,o.fn||90);gl.uniform3fv(u.uMD,MD);
+   gl.uniformMatrix4fv(u.uB,false,BM);gl.uniform3f(u.uLt,1,1,1);gl.uniform4f(u.uFlc,1,1,1,0);gl.uniform3fv(u.uSk,skinRGB(L.s));
+   gl.disable(gl.BLEND);gl.enable(gl.DEPTH_TEST);gl.depthMask(true);gl.disable(gl.CULL_FACE);
+   drawDressed(gl,G,L);if((L.k|0)===1)drawCape(gl,G,s,performance.now()/1000);
+   OVK.fill(null);gl.disableVertexAttribArray(3);gl.disableVertexAttribArray(4);return true}}};
 HERO3.info={tris:D.ni/3,verts:D.n,bones:NB,height:HEIGHT};
 })();
 
@@ -21194,7 +21221,16 @@ function drawKart(k){
  // chamas dos escapamentos
  if(k.boostT>0||(k.me===false&&k.tbt)){const c=FCOL[k.bcol||1],fl=.8+.35*sin(S.t*60+k.x)+rnd()*.15,len=1+clp(k.boostT/1.2,0,1)*.8;
   for(const e of FPOS){M4.trs(WM2,e[0],e[1],e[2],0,0,0,1.15,1.15,len*fl*1.6);M4.mul(MM,KM,WM2);drawMesh(ME.flame,MM,{blend:2,em:1,tint:[c[0],c[1],c[2],.85]})}}
+ drawDriver(k);
  if(k.frzT>0){M4.trs(WM2,0,0,0,0,0,0,1,1,1);M4.mul(MM,KM,WM2);drawMesh(ME.iceBlk,MM,{blend:1,em:.35,tint:[.75,.92,1,.82]})}}
+// piloto: o personagem 3D do jogador (com o visual dele) sentado no kart; os outros jogadores aparecem com o visual que mandaram ao entrar na sala
+let DRV=null,drvT=0;
+function drvLook(k){if(k.me||k===S.show){try{return window.LOOKX&&LOOKX.cur||null}catch(e){return null}}return k.lk||null}
+function drawDriver(k){if(DRV===false)return;if(!DRV){try{DRV=window.HERO3&&HERO3.kart?HERO3.kart(gl):null}catch(e){DRV=null}if(!DRV){DRV=false;return}}
+ if(!DRV.ready())return;const now=performance.now(),dt=drvT?min(.1,(now-drvT)/1000):.016;if(k===KL0)drvT=now;
+ try{DRV.draw({id:k.id||'show',VP,cam:camPos,M:KM,lk:drvLook(k),steer:k.steer||0,spd:hypot(k.vx||0,k.vz||0)*6,dt,fog:LIGHT.fog,fn:LIGHT.fn,ff:LIGHT.ff})}catch(e){console.error('piloto',e);DRV=false}
+ curP=null}
+let KL0=null;
 function drawShadow(k){const gy=(k.gy!==undefined?k.gy:k.y);M4.trs(MM,k.x,gy+.06,k.z,k.h,0,0,1,1,1);drawMesh(ME.shadow,MM,{blend:1,em:1,tint:[1,1,1,k.air?.7:1]})}
 function render(dt){
  gl.viewport(0,0,cvG.width,cvG.height);gl.clearColor(LIGHT.fog[0],LIGHT.fog[1],LIGHT.fog[2],1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
@@ -21207,7 +21243,7 @@ function render(dt){
  drawMesh(ME.banner,null,{tx:TEXS.banner,em:.55});
  const KL=(S.st==='menu'&&S.show)?[S.show]:KARTS;
  for(const k of KL)drawShadow(k);
- for(const k of KL)drawKart(k);
+ KL0=KL[0];for(const k of KL)drawKart(k);
  // itens no chão e no ar
  for(const b of BANS){M4.trs(MM,b.x,b.y+.12+abs(sin(S.t*3+b.x))*.04,b.z,S.t*1.2+b.x,0,0,1.15,1.15,1.15);drawMesh(ME.ban,MM,{});M4.trs(MM,b.x,b.y+.06,b.z,0,0,0,.7,1,.7);drawMesh(ME.shadow,MM,{blend:1,em:1,tint:[1,1,1,.8]})}
  for(const p of PROJ){const pulse=1+.12*sin(S.t*30);if(p.k==='f'){M4.trs(MM,p.x,p.y+.95,p.z,S.t*6,0,0,pulse,pulse,pulse);drawMesh(ME.fire,MM,{em:1})}else{M4.trs(MM,p.x,p.y+1,p.z,S.t*7,sin(S.t*5)*.4,0,1,1,1);drawMesh(ME.ice,MM,{em:.55})}
@@ -21372,7 +21408,7 @@ function finishMe(){PL.fin=S.raceT;S.fin=true;S.finT=0;snd('finish');flash(255,2
 
 function enterRace(cfg){
  hideScreens();S.mode=cfg.mode;S.laps=cfg.laps;clearEntities();buildBoxes();KARTS=[];PL=null;S.msgs=[];S.lapTimes=[];S.bestLap=0;S.fin=false;S.finT=0;S.firstFin=0;S.thrT=0;S.go=false;S.goT=0;S.frost=0;S.fa=0;S.shake=0;S.boostFx=0;S.pause=false;
- cfg.players.forEach((p,i)=>{const k=mkKart({id:p.id,me:p.id===cfg.myId,nick:p.nick,col:p.col});placeKart(k,i);k.tt=0;KARTS.push(k);if(k.me)PL=k;k.lapT0=0;k.gy=k.y});
+ cfg.players.forEach((p,i)=>{const k=mkKart({id:p.id,me:p.id===cfg.myId,nick:p.nick,col:p.col,lk:p.lk||null});placeKart(k,i);k.tt=0;KARTS.push(k);if(k.me)PL=k;k.lapT0=0;k.gy=k.y});
  S.raceT=0;S.st='count';S.startAt=cfg.startAt||nowS()+4800;camS.init=false;beepN=-1;rkT=0;
  ctl(true);engStart();if(CFG.mus)musStart();if(window.MUSapi)try{if(MUSapi.on)MUSapi.toggle()}catch(e){}}
 function leaveRace(){S.st='menu';S.go=false;KARTS=[];PL=null;clearEntities();engStop();musStop();ctl(false);hideScreens();NETH.on=false}
@@ -21564,7 +21600,7 @@ const hpw=(pw,code)=>{if(!pw)return'';let h=2166136261;const t=code+'|'+pw+'|sk'
 const NET={code:'',room:null,rr:null,rcb:null,sr:null,er:null,rid:0,lobby:false,lcb:null,lref:null,lt:0,send:0,odr:null,lastList:null,joinPw:'',busy:false};
 const clean_=s=>String(s||'').replace(/[<>]/g,'').replace(/\s+/g,' ').trim();
 const earliest=p=>{let b=null,bt=1e18;for(const u in p){const t=+p[u].t||0;if(t<bt||b===null){bt=t;b=u}}return b};
-const plArr=r=>Object.keys(r.pl||{}).map(u=>({id:u,n:r.pl[u].n||'?',c:+r.pl[u].c||0,t:+r.pl[u].t||0})).sort((a,b)=>a.t-b.t||(a.id<b.id?-1:1));
+const plArr=r=>Object.keys(r.pl||{}).map(u=>({id:u,n:r.pl[u].n||'?',c:+r.pl[u].c||0,t:+r.pl[u].t||0,v:r.pl[u].v})).sort((a,b)=>a.t-b.t||(a.id<b.id?-1:1));
 function netErr(e,el){const c=e&&(e.code||e.message)||'';const m=/PERMISSION/i.test(c)?'O Firebase não deixou criar/entrar (faltam as regras de "kart"). Peça para o dono atualizar as regras.':'Sem conexão. Tente de novo.';if(el)el.textContent=m;else ktoast(m)}
 
 // ---------- menu online ----------
@@ -21626,7 +21662,8 @@ $('kPwNo').onclick=()=>{snd('back');showPub()};
 $('kPwOk').onclick=async()=>{const ok=await doJoin(pwCode,$('kPwI').value,$('kPwE'),false)};
 
 // ---------- sala (espera) ----------
-function netEnter(code){const db=NB();NET.code=code;NET.rid=0;NET.lobby=true;NET.room=null;stopPub();
+function netEnter(code){const db=NB();try{if(db&&typeof LKE!=='undefined'&&window.LOOKX)db.ref(RC+code+'/pl/'+myUid()+'/v').set(LKE.pack(LOOKX.cur)).catch(()=>{})}catch(e){}   // visual do piloto (para os outros verem)
+ NET.code=code;NET.rid=0;NET.lobby=true;NET.room=null;stopPub();
  try{NET.odr=db.ref(RC+code+'/pl/'+myUid());NET.odr.onDisconnect().remove()}catch(e){}
  NET.rr=db.ref(RC+code);NET.rcb=NET.rr.on('value',onRoom,e=>{ktoast('Perdi a conexão com a sala');netLeaveLocal();showOnline()});
  showScr('kLob');$('kLc').textContent=code;snd('join')}
@@ -21658,7 +21695,7 @@ NETH.leave=netLeave;
 // ---------- corrida online ----------
 function beginOnlineRace(r){const db=NB(),me=myUid();if(!db)return;NET.lobby=false;stopRaceSubs();
  const arr=plArr(r);if(!arr.find(p=>p.id===me))return;
- const players=arr.map(p=>({id:p.id,nick:p.n,col:p.c%COLS.length}));
+ const players=arr.map(p=>{let lk=null;try{lk=typeof p.v==='string'&&typeof LKE!=='undefined'?LKE.unpack(p.v):null}catch(e){}return{id:p.id,nick:p.n,col:p.c%COLS.length,lk}});
  mkKartTex(0);players.forEach(p=>mkKartTex(p.col));
  enterRace({mode:'online',laps:r.lp,startAt:r.s,players,myId:me});
  for(const k of KARTS){k.tx=k.x;k.tz=k.z;k.ty=k.y;k.th=k.h;k.tt=0}
@@ -21734,7 +21771,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261028184723;
+const GAME_BUILD=20261028191836;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
