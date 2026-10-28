@@ -16707,9 +16707,10 @@ function pick(s,want,bd){if(s.cur!==want){s.prev=s.cur;s.tp=s.t;s.cur=want;s.t=0
 // ---------- WebGL ----------
 const HP='#ifdef GL_FRAGMENT_PRECISION_HIGH\nprecision highp float;\n#else\nprecision mediump float;\n#endif\n';
 const VS=`attribute vec3 aP;attribute vec3 aN;attribute vec2 aT;attribute vec4 aJ;attribute vec4 aW;
-uniform mat4 uVP;uniform mat4 uB[${NB}];uniform vec3 uMin;uniform vec3 uSz;uniform vec2 uUm;uniform vec2 uUs;uniform vec4 uCp;uniform vec4 uHq;uniform mat3 uAm;uniform vec3 uAp;uniform vec3 uAo;uniform float uAs;
+uniform mat4 uVP;uniform mat4 uB[${NB}];uniform vec3 uMin;uniform vec3 uSz;uniform vec2 uUm;uniform vec2 uUs;uniform vec4 uCp;uniform vec4 uHq;uniform mat3 uAm;uniform vec3 uAp;uniform vec3 uAo;uniform float uAs;uniform float uPn;uniform vec4 uPl[24];
 varying vec3 vP;varying vec3 vN;varying vec2 vT;varying vec3 vO;
 void main(){vec4 p=vec4(uMin+aP*uSz,1.0);vO=p.xyz;
+  if(uPn>0.5){vec3 p0=p.xyz;for(int i=0;i<12;i++){if(float(i)<uPn){vec4 pa=uPl[i*2];vec4 pb=uPl[i*2+1];vec3 dd=p0-pa.xyz;float q=max(0.0,1.0-dot(dd,dd)/(pa.w*pa.w));p.xyz+=pb.xyz*q*q;}}}   // puxões feitos no Provador do Editor do ADM (esticar uma parte da peça)
  if(uCp.w>0.5){float k=pow(clamp((0.76-p.y)/0.74,0.0,1.0),1.35);if(uCp.w>1.5)k*=1.0-smoothstep(-0.08,0.06,p.z);p.z-=uCp.z*k;p.x+=sin(uCp.y*3.1+p.y*9.0)*uCp.x*k;p.z+=cos(uCp.y*2.3+p.y*7.0+p.x*6.0)*uCp.x*.7*k;}   // capa: balança no vento e vai para trás com a velocidade
  {vec3 pv=uAp;mat3 A=uAm;vec3 ao=uAo;if(uAs>0.0){float sg=p.x<uAp.x?-1.0:1.0;pv.x+=sg*uAs;if(sg<0.0){mat3 Sx=mat3(-1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,1.0);A=Sx*A*Sx;ao.x=-ao.x;}}p.xyz=A*(p.xyz-pv)+pv+ao;}   // ajuste da peça feito no Editor do ADM (identidade quando não há)
  mat4 b0=uB[int(aJ.x+0.5)];mat4 b1=uB[int(aJ.y+0.5)];mat4 b2=uB[int(aJ.z+0.5)];mat4 b3=uB[int(aJ.w+0.5)];
@@ -16731,7 +16732,7 @@ function sh(gl,t,s){const o=gl.createShader(t);gl.shaderSource(o,s);gl.compileSh
 function build(gl,G){G.gl=gl;G.ok=false;G.tex=null;
  const p=gl.createProgram();gl.attachShader(p,sh(gl,gl.VERTEX_SHADER,VS));gl.attachShader(p,sh(gl,gl.FRAGMENT_SHADER,FS));['aP','aN','aT','aJ','aW'].forEach((a,i)=>gl.bindAttribLocation(p,i,a));gl.linkProgram(p);
  if(!gl.getProgramParameter(p,gl.LINK_STATUS))throw new Error('HERO3 programa: '+gl.getProgramInfoLog(p));G.p=p;G.u={};
- for(const n of['uVP','uB','uMin','uSz','uUm','uUs','uTex','uCam','uFog','uFO','uLt','uMD','uFlc','uSk','uCl','uCp','uFr','uHq','uHt','uAm','uAp','uAo','uAs'])G.u[n]=gl.getUniformLocation(p,n);
+ for(const n of['uVP','uB','uMin','uSz','uUm','uUs','uTex','uCam','uFog','uFO','uLt','uMD','uFlc','uSk','uCl','uCp','uFr','uHq','uHt','uAm','uAp','uAo','uAs','uPn','uPl'])G.u[n]=gl.getUniformLocation(p,n);
  G.vb=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,G.vb);gl.bufferData(gl.ARRAY_BUFFER,b64(D.vb),gl.STATIC_DRAW);
  G.ib=gl.createBuffer();gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,G.ib);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,b64(D.ib),gl.STATIC_DRAW);
  loadTex(gl,G,D.tex,t=>{G.tex=t});
@@ -16751,9 +16752,9 @@ function ensure(){if(HERO3.fail)return null;const gl=H3.gl&&H3.gl();if(!gl||gl.i
 HERO3.on=()=>{const gl=ensure();return !!(gl&&GM.ok&&GM.tex&&!HERO3.fail)};
 // liga programa, buffers e atributos (comum ao jogo e à prévia)
 const ID3=new Float32Array([1,0,0,0,1,0,0,0,1]);
-function adjId(gl,G){const u=G.u;gl.uniformMatrix3fv(u.uAm,false,ID3);gl.uniform3f(u.uAp,0,0,0);gl.uniform3f(u.uAo,0,0,0);gl.uniform1f(u.uAs,0);G._ad=0}
+function adjId(gl,G){const u=G.u;gl.uniformMatrix3fv(u.uAm,false,ID3);gl.uniform3f(u.uAp,0,0,0);gl.uniform3f(u.uAo,0,0,0);gl.uniform1f(u.uAs,0);gl.uniform1f(u.uPn,0);G._ad=0}
 // ajuste de uma peça (cabelo, chapéu, camiseta, botas, capa...) feito no Editor do ADM
-function adjFor(gl,G,key,c){const E=window.EDITS,a=E&&key?E.partAdj(key,c):null;if(a){const u=G.u;gl.uniformMatrix3fv(u.uAm,false,a.m);gl.uniform3fv(u.uAp,a.p);gl.uniform3fv(u.uAo,a.o);gl.uniform1f(u.uAs,a.sm?a.hs:0);G._ad=1}else if(G._ad)adjId(gl,G)}
+function adjFor(gl,G,key,c){const E=window.EDITS,a=E&&key?E.partAdj(key,c):null;if(a){const u=G.u;gl.uniformMatrix3fv(u.uAm,false,a.m);gl.uniform3fv(u.uAp,a.p);gl.uniform3fv(u.uAo,a.o);gl.uniform1f(u.uAs,a.sm?a.hs:0);gl.uniform1f(u.uPn,a.pn||0);if(a.pn)gl.uniform4fv(u.uPl,a.pl);G._ad=1}else if(G._ad)adjId(gl,G)}
 function bindAll(gl,G){const u=G.u;gl.useProgram(G.p);gl.uniform1i(u.uTex,0);adjId(gl,G);for(let i=0;i<5;i++)gl.enableVertexAttribArray(i);bindGeo(gl,G,D,G.vb,G.ib,G.tex)}
 function bindGeo(gl,G,c,vb,ib,tex){const u=G.u;if(G._ad)adjId(gl,G);
  gl.uniform3fv(u.uMin,c.min);gl.uniform3fv(u.uSz,c.size);gl.uniform2fv(u.uUm,c.uvmin);gl.uniform2fv(u.uUs,c.uvsize);gl.uniform1f(u.uCl,c===D?0:1);
@@ -16799,6 +16800,55 @@ function drawDressed(gl,G,L){const m=L.o|0,c=D.cloth&&D.cloth[CLK],o=G.cl[CLK],a
  if(hat)drawItem(gl,G,hat);
  if((L.k|0)===2){const cp=itemGeo(gl,G,'capm');if(cp)drawItem(gl,G,cp)}
  bindGeo(gl,G,D,G.vb,G.ib,G.tex)}
+// ---------- Provador do Editor do ADM: tocar numa parte da peça e puxar/esticar (pontos de puxão com alcance, sem refazer a malha) ----------
+const PLY={on:false,BM:new Float32Array(NB*16),VP:new Float32Array(16)},PGC=new Map(),PNC=new Map();
+function pieceGeo(key){let g=PGC.get(key);if(g)return g;let c=null,reg=null;
+ if(key==='capr')c=D.cape;else if(/^av\d$/.test(key)){c=D.cloth&&D.cloth[CLK];if(c&&c.cnt&&c.ib){let off=0;const r=+key[2];for(let i=0;i<r;i++)off+=c.cnt[i]||0;reg=[off,off+(c.cnt[r]||0)]}}else c=ITD[key];
+ if(!c)return null;const raw=b64(c.vb),n=c.n||(raw.length/22|0),dv=new DataView(raw.buffer),P=new Float32Array(n*3);
+ for(let i=0;i<n;i++)for(let k=0;k<3;k++)P[i*3+k]=c.min[k]+dv.getUint16(i*22+k*2,true)/65535*c.size[k];
+ let vs;if(reg){const ib=new Uint16Array(b64(c.ib).buffer),set=new Set();for(let i=reg[0];i<reg[1];i++)set.add(ib[i]);vs=Int32Array.from(set)}else{vs=new Int32Array(n);for(let i=0;i<n;i++)vs[i]=i}
+ g={c,n,P,raw,vs};PGC.set(key,g);return g}
+const EP=[0,0,0];
+// posição de um vértice da peça no mundo, com os puxões e o ajuste da peça já aplicados (igual ao shader)
+function edShow(g,a,i,o){let x=g.P[i*3],y=g.P[i*3+1],z=g.P[i*3+2];const x0=x,y0=y,z0=z;
+ if(a&&a.pn)for(let k=0;k<a.pn;k++){const q=k*8,dx=x0-a.pl[q],dy=y0-a.pl[q+1],dz=z0-a.pl[q+2],r=a.pl[q+3],t=max(0,1-(dx*dx+dy*dy+dz*dz)/(r*r));if(t>0){const w=t*t;x+=a.pl[q+4]*w;y+=a.pl[q+5]*w;z+=a.pl[q+6]*w}}
+ if(a&&a.m&&!a.sm){const m=a.m,vx=x-a.p[0],vy=y-a.p[1],vz=z-a.p[2];x=m[0]*vx+m[3]*vy+m[6]*vz+a.p[0]+a.o[0];y=m[1]*vx+m[4]*vy+m[7]*vz+a.p[1]+a.o[1];z=m[2]*vx+m[5]*vy+m[8]*vz+a.p[2]+a.o[2]}
+ const B=PLY.BM,raw=g.raw,b=i*22+14;let X=0,Y=0,Z=0;
+ for(let k=0;k<4;k++){const w=raw[i*22+18+k]/255;if(!w)continue;const o2=raw[b+k]*16;X+=w*(B[o2]*x+B[o2+4]*y+B[o2+8]*z+B[o2+12]);Y+=w*(B[o2+1]*x+B[o2+5]*y+B[o2+9]*z+B[o2+13]);Z+=w*(B[o2+2]*x+B[o2+6]*y+B[o2+10]*z+B[o2+14])}
+ o[0]=X;o[1]=Y;o[2]=Z;return o}
+function edProj(w){const m=PLY.VP,S=H3.S||{},cw=m[3]*w[0]+m[7]*w[1]+m[11]*w[2]+m[15];if(cw<=.05)return null;
+ return[(((m[0]*w[0]+m[4]*w[1]+m[8]*w[2]+m[12])/cw)*.5+.5)*(S.cssW||innerWidth),(1-(((m[1]*w[0]+m[5]*w[1]+m[9]*w[2]+m[13])/cw)*.5+.5))*(S.cssH||innerHeight),cw]}
+function edAdj(key,g){const E=window.EDITS;return E&&E.partAdj?E.partAdj(key,g.c):null}
+function inv4(a){const o=new Array(16),A=a[0]*a[5]-a[1]*a[4],B=a[0]*a[6]-a[2]*a[4],C=a[0]*a[7]-a[3]*a[4],D_=a[1]*a[6]-a[2]*a[5],E_=a[1]*a[7]-a[3]*a[5],F=a[2]*a[7]-a[3]*a[6],G=a[8]*a[13]-a[9]*a[12],H=a[8]*a[14]-a[10]*a[12],I=a[8]*a[15]-a[11]*a[12],J=a[9]*a[14]-a[10]*a[13],K=a[9]*a[15]-a[11]*a[13],L=a[10]*a[15]-a[11]*a[14];
+ const d=A*L-B*K+C*J+D_*I-E_*H+F*G;if(!d)return null;const r=1/d;
+ o[0]=(a[5]*L-a[6]*K+a[7]*J)*r;o[1]=(-a[1]*L+a[2]*K-a[3]*J)*r;o[2]=(a[13]*F-a[14]*E_+a[15]*D_)*r;o[3]=(-a[9]*F+a[10]*E_-a[11]*D_)*r;
+ o[4]=(-a[4]*L+a[6]*I-a[7]*H)*r;o[5]=(a[0]*L-a[2]*I+a[3]*H)*r;o[6]=(-a[12]*F+a[14]*C-a[15]*B)*r;o[7]=(a[8]*F-a[10]*C+a[11]*B)*r;
+ o[8]=(a[4]*K-a[5]*I+a[7]*G)*r;o[9]=(-a[0]*K+a[1]*I-a[3]*G)*r;o[10]=(a[12]*E_-a[13]*C+a[15]*A)*r;o[11]=(-a[8]*E_+a[9]*C-a[11]*A)*r;
+ o[12]=(-a[4]*J+a[5]*H-a[6]*G)*r;o[13]=(a[0]*J-a[1]*H+a[2]*G)*r;o[14]=(-a[12]*D_+a[13]*B-a[14]*A)*r;o[15]=(a[8]*D_-a[9]*B+a[10]*A)*r;return o}
+function inv3(m){const a=m[0],b=m[1],c=m[2],d=m[3],e=m[4],f=m[5],g=m[6],h=m[7],i=m[8],A=e*i-f*h,B=-(d*i-f*g),C=d*h-e*g,det=a*A+b*B+c*C;if(!det)return null;const r=1/det;
+ return[A*r,-(b*i-c*h)*r,(b*f-c*e)*r,B*r,(a*i-c*g)*r,-(a*f-c*d)*r,C*r,-(a*h-b*g)*r,(a*e-b*d)*r]}   // por linhas
+function nearestTo(g,c){let bi=-1,bd=1e9;for(let k=0;k<g.vs.length;k++){const i=g.vs[k],dx=g.P[i*3]-c[0],dy=g.P[i*3+1]-c[1],dz=g.P[i*3+2]-c[2],d=dx*dx+dy*dy+dz*dz;if(d<bd){bd=d;bi=i}}return bi}
+HERO3.edit={
+ ok:()=>PLY.on,
+ // toque em (px,py): o vértice da peça mais perto do dedo (o da frente, se houver vários por perto); devolve a posição dele na peça (sem puxões)
+ pick(key,px,py,maxPx){const g=pieceGeo(key);if(!g||!PLY.on)return null;const a=edAdj(key,g),lim=maxPx||46,W=[0,0,0];let bi=-1,bd=1e9;const cand=[];
+  for(let k=0;k<g.vs.length;k++){const i=g.vs[k];edShow(g,a,i,W);const s=edProj(W);if(!s)continue;const d=hypot(s[0]-px,s[1]-py);if(d>lim)continue;cand.push(i,d,s[2]);if(d<bd){bd=d;bi=i}}
+  if(bi<0)return null;let bz=1e9,pi=bi;for(let k=0;k<cand.length;k+=3)if(cand[k+1]<=bd+10&&cand[k+2]<bz){bz=cand[k+2];pi=cand[k]}
+  return{i:pi,p:[g.P[pi*3],g.P[pi*3+1],g.P[pi*3+2]]}},
+ near(key,c){const g=pieceGeo(key);return g?nearestTo(g,c):-1},
+ // onde está (em px na tela) o ponto de puxão com centro c
+ mark(key,c){const g=pieceGeo(key);if(!g||!PLY.on)return null;const k=key+':'+c[0].toFixed(4)+','+c[1].toFixed(4)+','+c[2].toFixed(4);let i=PNC.get(k);if(i===undefined){i=nearestTo(g,c);if(PNC.size>200)PNC.clear();PNC.set(k,i)}
+  return edProj(edShow(g,edAdj(key,g),i,[0,0,0]))},
+ // quanto mover o ponto (no espaço da peça) para o vértice i andar (dx,dy) pixels na tela
+ delta(key,i,dx,dy){const g=pieceGeo(key);if(!g||!PLY.on||i<0)return null;const a=edAdj(key,g),w0=edShow(g,a,i,[0,0,0]),m=PLY.VP,S=H3.S||{},cw=m[3]*w0[0]+m[7]*w0[1]+m[11]*w0[2]+m[15];if(cw<=.05)return null;
+  const nx=(m[0]*w0[0]+m[4]*w0[1]+m[8]*w0[2]+m[12])/cw,ny=(m[1]*w0[0]+m[5]*w0[1]+m[9]*w0[2]+m[13])/cw,nz=(m[2]*w0[0]+m[6]*w0[1]+m[10]*w0[2]+m[14])/cw,iv=inv4(m);if(!iv)return null;
+  const v=[(nx+dx*2/(S.cssW||innerWidth))*cw,(ny-dy*2/(S.cssH||innerHeight))*cw,nz*cw,cw],W=[0,0,0,0];
+  for(let r=0;r<4;r++)W[r]=iv[r]*v[0]+iv[4+r]*v[1]+iv[8+r]*v[2]+iv[12+r]*v[3];if(!W[3])return null;
+  const d=[W[0]/W[3]-w0[0],W[1]/W[3]-w0[1],W[2]/W[3]-w0[2]],B=PLY.BM,raw=g.raw,M=[0,0,0,0,0,0,0,0,0];
+  for(let k=0;k<4;k++){const wt=raw[i*22+18+k]/255,o=raw[i*22+14+k]*16;if(!wt)continue;for(let r=0;r<3;r++)for(let c=0;c<3;c++)M[r*3+c]+=wt*B[o+c*4+r]}
+  const Mi=inv3(M);if(!Mi)return null;let p=[Mi[0]*d[0]+Mi[1]*d[1]+Mi[2]*d[2],Mi[3]*d[0]+Mi[4]*d[1]+Mi[5]*d[2],Mi[6]*d[0]+Mi[7]*d[1]+Mi[8]*d[2]];
+  if(a&&a.m&&!a.sm){const A=a.m,Ai=inv3([A[0],A[3],A[6],A[1],A[4],A[7],A[2],A[5],A[8]]);if(Ai)p=[Ai[0]*p[0]+Ai[1]*p[1]+Ai[2]*p[2],Ai[3]*p[0]+Ai[4]*p[1]+Ai[5]*p[2],Ai[6]*p[0]+Ai[7]*p[1]+Ai[8]*p[2]]}
+  return p}};
 const NOLOOK={o:0,k:0,a:0,w:0,hc:0};
 function lookOf(A){try{if(A.k==='P'&&window.EDFORCE)return window.EDFORCE;if(A.k==='P'){const X=window.LOOKX;return X&&X.cur?X.cur:NOLOOK}return (A.q&&A.q.lk)||NOLOOK}catch(e){return NOLOOK}}
 const HRC={};
@@ -16879,6 +16929,7 @@ HERO3.draw=function(list,lightAt,SC,t){const gl=ensure();if(!gl||!GM.tex)return;
   if(H3.flat&&H3.tex&&H3.tex.blob)H3.flat(H3.tex.blob,A.x,A.y-jh+.25,A.z,34*sk,34*sk,null,[1,1,1,.85*sk],false);   // sombra redonda no chão, como a dos cartazes
   lightAt(A.x,A.y+12,A.z,LT);if(SC&&SC.shadeAt)SC.shadeAt(A.x,A.y,A.z,LT);
   place(A,s,dt);
+  if(A.k==='P'){PLY.on=true;PLY.BM.set(BM);PLY.VP.set(VP)}
   gl.uniformMatrix4fv(u.uB,false,BM);gl.uniform3f(u.uLt,LT[0]*.92,LT[1]*.92,LT[2]*.92);gl.uniform4f(u.uFlc,1,1,1,0);gl.uniform3fv(u.uSk,skinOf(A));
   drawDressed(gl,GM,lookOf(A));
   if(capeOf(A)===1){const tm=now/1000;drawCape(gl,GM,s,tm);if(Math.random()<.85)capeFire(s,tm,s.spd>14)}}
@@ -21501,7 +21552,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261028111800;
+const GAME_BUILD=20261028113200;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;

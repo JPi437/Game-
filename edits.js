@@ -8,6 +8,7 @@
 if(window.EDITS)return;
 const PI=Math.PI,sin=Math.sin,cos=Math.cos,hypot=Math.hypot,max=Math.max,min=Math.min,round=Math.round;
 const nm=(v,a,b,d)=>{v=+v;return isFinite(v)?(v<a?a:v>b?b:v):d};
+const cleanPl=a=>{const o=[];if(Array.isArray(a))for(const q of a.slice(0,12)){if(!Array.isArray(q)||q.length<7)continue;o.push([nm(q[0],-1.5,1.5,0),nm(q[1],-.3,1.5,0),nm(q[2],-1.5,1.5,0),nm(q[3],.01,.6,.09),nm(q[4],-.7,.7,0),nm(q[5],-.7,.7,0),nm(q[6],-.7,.7,0)])}return o};
 const mp=()=>Object.create(null);
 const KINDS=['tree','bush','rock','decor'],KN={tree:'Árvore',bush:'Arbusto',rock:'Pedra',decor:'Decoração'};
 const E=window.EDITS={ver:1,KINDS,KN,data:null,pub:null,rev:1,admin:false,dirty:false,gone:new Map(),adds:new Map(),unb:[],blk:[],cb:[],sz:Object.create(null),
@@ -44,6 +45,7 @@ function clean(raw){const d=blank();if(!raw||typeof raw!=='object')return d;d.t=
   const o={sx:nm(s.sx,.2,6,1),sy:nm(s.sy,.2,6,1),sz:nm(s.sz,.2,6,1)};if(o.sx!==1||o.sy!==1||o.sz!==1)d.ch[n]=o}
  if(raw.pt&&typeof raw.pt==='object')for(const n of Object.keys(raw.pt).slice(0,60)){if(!/^[a-z0-9_]{1,12}$/.test(n))continue;const s=raw.pt[n];if(!s||typeof s!=='object')continue;
   const o={sx:nm(s.sx,.1,6,1),sy:nm(s.sy,.1,6,1),sz:nm(s.sz,.1,6,1),dx:nm(s.dx,-2,2,0),dy:nm(s.dy,-2,2,0),dz:nm(s.dz,-2,2,0),rx:nm(s.rx,-3.2,3.2,0),ry:nm(s.ry,-3.2,3.2,0),rz:nm(s.rz,-3.2,3.2,0),py:nm(s.py,0,1,.5),sm:s.sm?1:0};
+  const pl=cleanPl(s.pl);if(pl.length){o.pl=pl;o.mr=s.mr?1:0}
   d.pt[n]=o}
  if(Array.isArray(raw.cam))for(const c of raw.cam.slice(0,30)){if(!c||typeof c!=='object'||!Array.isArray(c.k))continue;
   const k=[];for(const f of c.k.slice(0,80)){if(!f||typeof f!=='object')continue;k.push({x:nm(f.x,-1e5,1e5,0),y:nm(f.y,-1e5,1e5,0),z:nm(f.z,-1e5,1e5,0),yaw:nm(f.yaw,-100,100,0),pitch:nm(f.pitch,-1.6,1.6,0),fov:nm(f.fov,.2,2.2,.9),t:nm(f.t,0,3600,0)})}
@@ -101,13 +103,15 @@ E.partAdj=function(key,c){const p=E.data.pt[key];if(!p)return null;let a=p._c;
   const r=[cy*cz,cy*sz,-sy, sx*sy*cz-cx*sz,sx*sy*sz+cx*cz,sx*cy, cx*sy*cz+sx*sz,cx*sy*sz-sx*cz,cx*cy];
   const m=new Float32Array([r[0]*p.sx,r[1]*p.sx,r[2]*p.sx, r[3]*p.sy,r[4]*p.sy,r[5]*p.sy, r[6]*p.sz,r[7]*p.sz,r[8]*p.sz]);
   const bx=boxOf(key,c),sm=p.sm?1:0,xc=sm?(bx.lx+bx.rx)/2:(bx.mn[0]+bx.mx[0])/2;
-  Object.defineProperty(p,'_c',{value:a={rev:E.rev,cs:c,m,p:[xc,bx.mn[1]+(bx.mx[1]-bx.mn[1])*p.py,(bx.mn[2]+bx.mx[2])/2],o:[p.dx,p.dy,p.dz],sm,hs:sm?max(1e-4,(bx.rx-bx.lx)/2):0},writable:true,enumerable:false,configurable:true})}
+  Object.defineProperty(p,'_c',{value:a={rev:E.rev,cs:c,m,p:[xc,bx.mn[1]+(bx.mx[1]-bx.mn[1])*p.py,(bx.mn[2]+bx.mx[2])/2],o:[p.dx,p.dy,p.dz],sm,hs:sm?max(1e-4,(bx.rx-bx.lx)/2):0,pn:0,pl:null},writable:true,enumerable:false,configurable:true})}
+ if(p.pl&&p.pl.length&&!a.pl){const L=[];for(const q of p.pl)L.push(q);if(p.mr)for(const q of p.pl)L.push([-q[0],q[1],q[2],q[3],-q[4],q[5],q[6]]);
+  const n=Math.min(12,L.length),f=new Float32Array(96);for(let i=0;i<n;i++){const q=L[i];f.set([q[0],q[1],q[2],q[3],q[4],q[5],q[6],0],i*8)}a.pl=f;a.pn=n}
  return a};
 E.ADJ_ID=ADJ_ID;
-E.setPart=function(key,patch){if(!/^[a-z0-9_]{1,12}$/.test(key))return;const p=E.data.pt[key]||(E.data.pt[key]={sx:1,sy:1,sz:1,dx:0,dy:0,dz:0,rx:0,ry:0,rz:0,py:.5,sm:0});Object.assign(p,patch);p.sm=p.sm?1:0;
+E.setPart=function(key,patch){if(!/^[a-z0-9_]{1,12}$/.test(key))return;const p=E.data.pt[key]||(E.data.pt[key]={sx:1,sy:1,sz:1,dx:0,dy:0,dz:0,rx:0,ry:0,rz:0,py:.5,sm:0});Object.assign(p,patch);p.sm=p.sm?1:0;if(patch.pl!==undefined||patch.mr!==undefined){p.pl=cleanPl(p.pl);p.mr=p.mr?1:0;if(!p.pl.length){delete p.pl;delete p.mr}}
  const L={sx:[.1,6,1],sy:[.1,6,1],sz:[.1,6,1],dx:[-2,2,0],dy:[-2,2,0],dz:[-2,2,0],rx:[-3.2,3.2,0],ry:[-3.2,3.2,0],rz:[-3.2,3.2,0],py:[0,1,.5]};
  for(const k in L)p[k]=nm(p[k],L[k][0],L[k][1],L[k][2]);
- if(p.sx===1&&p.sy===1&&p.sz===1&&!p.dx&&!p.dy&&!p.dz&&!p.rx&&!p.ry&&!p.rz&&!p.sm)delete E.data.pt[key];E.touch()};
+ if(p.sx===1&&p.sy===1&&p.sz===1&&!p.dx&&!p.dy&&!p.dz&&!p.rx&&!p.ry&&!p.rz&&!p.sm&&!(p.pl&&p.pl.length))delete E.data.pt[key];E.touch()};
 
 // ---------- objetos do Mundo 1 (a lista NAT do motor 3D) ----------
 let H3,FLD,NAT,M4;

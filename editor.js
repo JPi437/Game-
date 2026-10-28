@@ -53,6 +53,14 @@ const css=D.createElement('style');css.textContent=`
 #edP .lst div.on{background:#3b3b10}
 #edP .lst div span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #edRing{position:fixed;z-index:39;pointer-events:none;display:none;border:3px dashed #ffe84a;border-radius:50%;box-shadow:0 0 0 1px #000a,0 0 14px #ffe84acc;transform:translate(-50%,-50%)}
+#edPd{position:fixed;inset:0;z-index:38;pointer-events:none}
+#edPd b{position:absolute;width:16px;height:16px;margin:-8px 0 0 -8px;border-radius:50%;border:2px solid #fff;background:#3a9bffcc;box-shadow:0 0 0 1px #000a,0 0 8px #3a9bffcc}
+#edPd b.s{width:22px;height:22px;margin:-11px 0 0 -11px;background:#ffe84acc;box-shadow:0 0 0 1px #000a,0 0 12px #ffe84a}
+#edPd b.m{opacity:.55;border-style:dashed}
+#edPd{position:fixed;inset:0;z-index:38;pointer-events:none}
+#edPd b{position:absolute;width:16px;height:16px;margin:-8px 0 0 -8px;border-radius:50%;border:2px solid #fff;background:#3a9bffcc;box-shadow:0 0 0 1px #000a,0 0 8px #3a9bffcc}
+#edPd b.s{width:22px;height:22px;margin:-11px 0 0 -11px;background:#ffe84acc;box-shadow:0 0 0 1px #000a,0 0 12px #ffe84a}
+#edPd b.m{opacity:.55;border-style:dashed}
 #edRing i{position:absolute;left:50%;top:-22px;transform:translateX(-50%);font:900 11px system-ui,sans-serif;background:#000c;color:#ffe84a;padding:2px 6px;border-radius:6px;white-space:nowrap;font-style:normal}
 #edStop{position:fixed;right:14px;bottom:14px;z-index:60;display:none;background:#c62828;color:#fff;border:3px solid #fff;border-radius:12px;font-weight:900;padding:10px 16px;font-size:15px}
 #edFly{position:fixed;right:16px;bottom:96px;z-index:41;display:none;flex-direction:column;gap:8px}
@@ -358,6 +366,18 @@ function tabProv(B){
   lookBtn('Pés av.',!!(L.o&4),()=>{L.o^=4;window.EDFORCE=L;render()}),
   lookBtn('Capa: '+(['nenhuma','Lich','mago'][L.k|0]),L.k>0,()=>{L.k=((L.k|0)+1)%3;window.EDFORCE=L;render()})));
  B.appendChild(row(btn('Vestir só a peça',()=>{window.EDFORCE=ED.look={o:0,k:0,a:0,w:0,hc:0};wear(pk);render()},'sm blu'),btn('Voltar à minha roupa',()=>{window.EDFORCE=null;ED.look=null;ED._own=true;render();toast('Roupa normal.')},'sm')));
+ // puxar e esticar uma parte da peça
+ B.appendChild(el('div','grp','Puxar e esticar uma parte da peça'));
+ const PU=ED.pull||(ED.pull={on:false,r:.09,sel:-1,mir:true}),pp=E.data.pt[pk],pls=(pp&&pp.pl)||[];
+ B.appendChild(row(btn(PU.on?'✋ Puxar: LIGADO':'✋ Puxar: desligado',()=>{PU.on=!PU.on;if(PU.on){if(!(ED.fly&&ED.fly.mode==='orbit'))camClose(true);if(!window.EDPOSE)window.EDPOSE={anim:'Idle_Loop',spd:0};ED._spin=false}render()},'sm '+(PU.on?'on':''))));
+ B.appendChild(hint('Ligue, toque numa parte da peça (manga, barra, capuz…) e arraste: ela acompanha o dedo. Toque no mesmo ponto de novo para continuar puxando. Fora da peça, arrastar gira a câmera. Funciona melhor na pose Parado.'));
+ B.appendChild(sld({label:'Alcance (tamanho da área puxada)',min:.02,max:.3,step:.005,def:.09,dec:3,get:()=>PU.sel>=0&&pls[PU.sel]?pls[PU.sel][3]:PU.r,set:v=>{PU.r=v;if(PU.sel>=0&&pls[PU.sel]){const n=pls.map(q=>q.slice());n[PU.sel][3]=v;E.setPart(pk,{pl:n})}},start:hist}));
+ {const ck=el('label','ck'),cb=el('input');cb.type='checkbox';cb.checked=pls.length?!!(pp&&pp.mr):PU.mir!==false;cb.onchange=()=>{hist();PU.mir=cb.checked;if(pls.length){if(cb.checked&&pls.length>6)toast('Com espelho cabem 6 pontos; os últimos não serão espelhados');E.setPart(pk,{mr:cb.checked?1:0})}render()};
+  ck.append(cb,el('span','','Espelhar (puxar a manga esquerda puxa a direita igual)'));B.appendChild(ck)}
+ pls.forEach((q,i)=>B.appendChild(row(btn('Ponto '+(i+1)+(i===PU.sel?' ●':'')+'  ('+Math.round(Math.hypot(q[4],q[5],q[6])*100)+')',()=>{PU.sel=i;PU.r=q[3];render()},'sm '+(i===PU.sel?'on':'')),
+  btn('Soltar',()=>{hist();const n=pls.map(x=>x.slice());n[i][4]=n[i][5]=n[i][6]=0;E.setPart(pk,{pl:n});render()},'sm'),
+  btn('✕',()=>{hist();const n=pls.map(x=>x.slice());n.splice(i,1);PU.sel=-1;E.setPart(pk,{pl:n});render()},'sm red'))));
+ if(pls.length)B.appendChild(row(btn('Desfazer último ponto',()=>{hist();const n=pls.map(x=>x.slice());n.pop();PU.sel=-1;E.setPart(pk,{pl:n});render()},'sm'),two('Apagar todos os puxões',()=>{hist();PU.sel=-1;E.setPart(pk,{pl:[]});render()},'red')));
  adjPart(B,pk)}
 
 // ----- câmera: voo livre e cinemáticas -----
@@ -484,7 +504,7 @@ function render(){if(!ED.on){P_.classList.remove('on');return}
  hb(ED.min?'▢':'–',ED.min?'Abrir painel':'Minimizar painel',()=>{ED.min=!ED.min;render();if(ED.fly&&ED.fly.mode==='orbit')flyApply()});
  hb('✕','Fechar editor',()=>toggle(false));P_.appendChild(H);
  if(ED.min)return;
- const T=el('div','edT');TABS.forEach(([k,t])=>{const b=el('button',ED.tab===k?'on':'');b.textContent=t;b.onclick=()=>{if(ED.tab==='prov'&&k!=='prov'){window.EDPOSE=null;ED._spin=false}ED.tab=k;ED._rt=null;if(k==='prov'&&!ED._pk)ED._pk='capr';autoWear();if(k==='prov'&&!(ED.fly&&ED.fly.mode==='orbit'))camClose(true);render()};T.appendChild(b)});P_.appendChild(T);
+ const T=el('div','edT');TABS.forEach(([k,t])=>{const b=el('button',ED.tab===k?'on':'');b.textContent=t;b.onclick=()=>{if(ED.tab==='prov'&&k!=='prov'){window.EDPOSE=null;ED._spin=false;if(ED.pull)ED.pull.on=false}ED.tab=k;ED._rt=null;if(k==='prov'&&!ED._pk)ED._pk='capr';autoWear();if(k==='prov'&&!(ED.fly&&ED.fly.mode==='orbit'))camClose(true);render()};T.appendChild(b)});P_.appendChild(T);
  const B=el('div','edB');P_.appendChild(B);
  try{({map:tabMap,mon:tabMon,mod:tabMod,prov:tabProv,cam:tabCam,save:tabSave})[ED.tab](B)}catch(e){console.error('EDITOR',e);B.appendChild(hint('Erro: '+e.message))}
  if(keep)B.scrollTop=keep}
@@ -507,8 +527,15 @@ P_.addEventListener('touchmove',e=>{const c=tsc;if(!c||e.touches.length!==1)retu
  c.box.scrollTop=c.top-(e.touches[0].clientY-c.y0)},{passive:true});
 P_.addEventListener('touchend',()=>{tsc=null},{passive:true});P_.addEventListener('touchcancel',()=>{tsc=null},{passive:true});     // clicar no painel nunca chega no jogo
 function freeMouse(){try{S.mfree=true;if(document.pointerLockElement&&document.exitPointerLock)document.exitPointerLock()}catch(e){}}
-function toggle(on){ED.on=on===undefined?!ED.on:on;if(!ED.on){ED.look=null;ED._own=false}else autoWear();L_.classList.toggle('on',ED.on);if(ED.on)freeMouse();else{try{S.mfree=false}catch(e){}}if(!ED.on){window.EDFORCE=null;window.EDPOSE=null;ED._spin=false;if(ED.fly&&ED.fly.mode==='free'){/* mantém o voo? não: sai */}stopFly();ring.style.display='none'}render()}
+function toggle(on){ED.on=on===undefined?!ED.on:on;if(!ED.on){ED.look=null;ED._own=false}else autoWear();L_.classList.toggle('on',ED.on);if(ED.on)freeMouse();else{try{S.mfree=false}catch(e){}}if(!ED.on){window.EDFORCE=null;window.EDPOSE=null;ED._spin=false;if(ED.pull)ED.pull.on=false;if(ED.fly&&ED.fly.mode==='free'){/* mantém o voo? não: sai */}stopFly();ring.style.display='none'}render()}
 const L_=el('button');L_.id='edBtn';L_.textContent='🛠 Editor';L_.onclick=()=>toggle();D.body.appendChild(L_);
+const pdots=el('div');pdots.id='edPd';D.body.appendChild(pdots);
+function updDots(){const on=ED.on&&ED.tab==='prov'&&ED.pull&&ED.pull.on&&window.HERO3&&HERO3.edit&&HERO3.edit.ok();
+ if(!on){if(pdots.childNodes.length)pdots.innerHTML='';return}
+ const pk=ED._pk||'capr',p=E.data.pt[pk],pl=(p&&p.pl)||[],want=[];
+ pl.forEach((q,i)=>{const m=HERO3.edit.mark(pk,q);if(m)want.push([m[0],m[1],i===ED.pull.sel?'s':'']);if(p.mr){const m2=HERO3.edit.mark(pk,[-q[0],q[1],q[2]]);if(m2)want.push([m2[0],m2[1],(i===ED.pull.sel?'s ':'')+'m'])}});
+ while(pdots.childNodes.length>want.length)pdots.removeChild(pdots.lastChild);while(pdots.childNodes.length<want.length)pdots.appendChild(D.createElement('b'));
+ want.forEach((w,k)=>{const b=pdots.childNodes[k];b.style.left=w[0]+'px';b.style.top=w[1]+'px';if(b.className!==w[2])b.className=w[2]})}
 const ring=el('div');ring.id='edRing';ring.innerHTML='<i></i>';D.body.appendChild(ring);
 const stopB=el('button');stopB.id='edStop';stopB.textContent='■ Parar';stopB.onclick=stopCine;D.body.appendChild(stopB);
 const flyB=el('div');flyB.id='edFly';const fu=el('button');fu.textContent='▲';const fd=el('button');fd.textContent='▼';flyB.append(fu,fd);D.body.appendChild(flyB);
@@ -517,23 +544,33 @@ for(const [b,v] of [[fu,1],[fd,-1]]){b.addEventListener('pointerdown',e=>{e.prev
 // ============================================================ toques no mundo 3D ============================================================
 let drag=null;
 function glcEl(){return $('h3gl')}
+function pullPush(pk,pt){const p=E.data.pt[pk],pl=((p&&p.pl)||[]).map(q=>q.slice()),mr=pl.length?(p.mr?1:0):(ED.pull.mir===false?0:1);
+ if(pl.length>=(mr?6:12)){toast('Limite de pontos desta peça');return -1}
+ pl.push([pt[0],pt[1],pt[2],ED.pull.r,0,0,0]);E.setPart(pk,p?{pl,mr}:{pl,mr,py:PY0[pk]!=null?PY0[pk]:.5});return pl.length-1}
 addEventListener('pointerdown',e=>{if(!ED.on||!S.mode)return;const g=glcEl();if(!g||e.target!==g||ED.play)return;
  const ok=inField();
  if(ED.tab==='map'&&ED.tool==='mov'&&ED.sel&&ED.sel.type!=='mon'||ED.tab==='mon'&&ED.tool==='mov'&&ED.sel){
   const gr=groundAt(e.clientX,e.clientY),c=selCenter();if(!gr||!c)return;const sx=ED.sel.type==='mon'?(enList()[ED.sel.idx]||{}):ED.sel.o;
   const px=ED.sel.type==='mon'?enList()[ED.sel.idx].x+8:ED.sel.o.x,pz=ED.sel.type==='mon'?enList()[ED.sel.idx].y+15:ED.sel.o.z;
   drag={type:'move',id:e.pointerId,ox:px-gr[0],oz:pz-gr[2]};hist();E.hold(true);e.stopImmediatePropagation();e.preventDefault();try{g.setPointerCapture(e.pointerId)}catch(x){}return}
+ if(ED.tab==='prov'&&ED.pull&&ED.pull.on&&window.HERO3&&HERO3.edit&&HERO3.edit.ok()){const pk=ED._pk||'capr',h=HERO3.edit.pick(pk,e.clientX,e.clientY);
+  if(h){hist();const p=E.data.pt[pk],pl=(p&&p.pl)||[];let idx=-1,bd=1e9;pl.forEach((q,k)=>{const d=hypot(h.p[0]-q[0],h.p[1]-q[1],h.p[2]-q[2]);if(d<q[3]*.6&&d<bd){bd=d;idx=k}});
+   if(idx<0)idx=pullPush(pk,h.p);
+   if(idx>=0){const q=E.data.pt[pk].pl[idx];ED.pull.sel=idx;ED.pull.r=q[3];drag={type:'pull',id:e.pointerId,pk,idx,i:HERO3.edit.near(pk,q),x:e.clientX,y:e.clientY};E.hold(true);e.stopImmediatePropagation();e.preventDefault();try{g.setPointerCapture(e.pointerId)}catch(x){}return}}}
  if(ED.fly){drag={type:'look',id:e.pointerId,x:e.clientX,y:e.clientY,x0:e.clientX,y0:e.clientY,t:Date.now()};e.stopImmediatePropagation();e.preventDefault();try{g.setPointerCapture(e.pointerId)}catch(x){}return}
  if(ok&&(ED.tab==='map'||ED.tab==='mon'))drag={type:'tap',id:e.pointerId,x0:e.clientX,y0:e.clientY,t:Date.now()}},true);
 addEventListener('pointermove',e=>{if(!drag||e.pointerId!==drag.id)return;
  if(drag.type==='move'){const gr=groundAt(e.clientX,e.clientY);if(gr){moveTo(gr[0]+drag.ox,gr[2]+drag.oz);ED._dirtyUi=1}e.stopImmediatePropagation();e.preventDefault()}
+ else if(drag.type==='pull'){const dx=e.clientX-drag.x,dy=e.clientY-drag.y;drag.x=e.clientX;drag.y=e.clientY;const d=HERO3.edit.delta(drag.pk,drag.i,dx,dy),p=E.data.pt[drag.pk];
+  if(d&&p&&p.pl&&p.pl[drag.idx]){const pl=p.pl.map(q=>q.slice()),q=pl[drag.idx];q[4]+=d[0];q[5]+=d[1];q[6]+=d[2];E.setPart(drag.pk,{pl})}e.stopImmediatePropagation();e.preventDefault()}
  else if(drag.type==='look'&&ED.fly){const dx=e.clientX-drag.x,dy=e.clientY-drag.y;drag.x=e.clientX;drag.y=e.clientY;ED.fly.yaw+=dx*.0056;ED.fly.pitch=clp(ED.fly.pitch-dy*.0046,-1.5,1.5);if(!ED.play)flyApply();e.stopImmediatePropagation();e.preventDefault()}
  else if(drag.type==='tap'){if(hypot(e.clientX-drag.x0,e.clientY-drag.y0)>14)drag=null}},true);
 addEventListener('pointerup',e=>{if(!drag||e.pointerId!==drag.id)return;const d=drag;drag=null;
  if(d.type==='move'){E.hold(false);render();e.stopImmediatePropagation();return}
+ if(d.type==='pull'){E.hold(false);render();e.stopImmediatePropagation();return}
  if(d.type==='look'){if(hypot(e.clientX-d.x0,e.clientY-d.y0)<10&&Date.now()-d.t<450&&inField())onPick(e.clientX,e.clientY);e.stopImmediatePropagation();return}
  if(d.type==='tap'&&Date.now()-d.t<500)onPick(e.clientX,e.clientY)},true);
-addEventListener('pointercancel',e=>{if(drag&&e.pointerId===drag.id){if(drag.type==='move')E.hold(false);drag=null}},true);
+addEventListener('pointercancel',e=>{if(drag&&e.pointerId===drag.id){if(drag.type==='move'||drag.type==='pull')E.hold(false);drag=null}},true);
 
 addEventListener('keydown',e=>{if(!ED.fly||ED.play||!ED.on)return;const t=e.target;if(t&&/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))return;
  if(e.code==='Space'||e.code==='KeyC'||e.code==='ShiftLeft'||e.code==='ShiftRight'){if(e.code==='Space')upHeld=1;else if(e.code==='KeyC')upHeld=-1;else ED.turboKey=true;e.preventDefault();e.stopImmediatePropagation()}},true);
@@ -550,6 +587,7 @@ if(typeof tick==='function'){const t0=tick;tick=function(){
  return t0.apply(this,arguments)}}
 function frameUi(){requestAnimationFrame(frameUi);
  if(ED.on&&ED._spin&&ED.fly&&ED.fly.mode==='orbit'&&!ED.min){ED.fly.yaw+=.012;flyApply()}
+ try{updDots()}catch(x){}
  if(ED.on&&(S.mfree!==true||document.pointerLockElement))freeMouse();
  if(ED.on){ // o motor aplica as mudanças no próximo quadro: seleciona o objeto recém-criado e refaz o painel se a lista mudou
   if(ED.pend){const n=E.addOf(ED.pend);if(n){selObj(n);ED.pend=null;render()}else if(Date.now()-ED.pendT>6000)ED.pend=null}
