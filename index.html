@@ -18373,8 +18373,15 @@ const S={yaw:0,mode:'menu',night:1,t:0,power:100,door:{L:false,R:false},dAnim:{L
  A:{},inside:null,over:null,win:0,pout:0,glitch:0,hint:0,flash:0,last:0,usage:1,noises:[],paused:false};
 let open_=false,raf=0,lastLock=false,musWas=false;
 const SAVEK='mp_pz';
-const prog=()=>{try{const o=JSON.parse(localStorage.getItem(SAVEK)||'{}');return{u:clp(o.u|0,1,5)||1,w:o.w|0}}catch(e){return{u:1,w:0}}};
-const progSet=o=>{try{localStorage.setItem(SAVEK,JSON.stringify(o))}catch(e){}};
+// progresso das noites: fica no aparelho (mp_pz) E dentro do save da conta ('mp' -> nuvem). Vale sempre o maior dos dois,
+// assim atualizar o app, limpar o cache ou trocar de aparelho não volta para a Noite 1.
+const pzRd=k=>{try{const o=JSON.parse(localStorage.getItem(k)||'null');return o&&typeof o==='object'?o:null}catch(e){return null}};
+const prog=()=>{const a=pzRd(SAVEK)||{},m=pzRd('mp'),b=(m&&m.pz&&typeof m.pz==='object')?m.pz:{},bk=pzRd('mp_bak'),c=(bk&&bk.pz&&typeof bk.pz==='object')?bk.pz:{};
+ return{u:clp(Math.max(a.u|0,b.u|0,c.u|0),1,5)||1,w:clp(Math.max(a.w|0,b.w|0,c.w|0),0,6)}};
+const progSet=o=>{const p=prog();o={u:clp(Math.max(o.u|0,p.u),1,5),w:clp(Math.max(o.w|0,p.w),0,6)};
+ try{localStorage.setItem(SAVEK,JSON.stringify(o))}catch(e){}
+ try{if(typeof save==='function')save()}catch(e){}try{window.MP&&MP.saveNow&&MP.saveNow()}catch(e){}};   // grava já no save e manda para a nuvem
+{const _xs=window.XS;window.XS=()=>Object.assign(_xs?_xs():{},{pz:prog()})}
 // níveis de cada um por noite (0 = parado, 20 = máximo): [Lata, Sapão, Croco, Mola]
 // níveis iniciais do jogo original (Freddy/Bonnie/Chica/Foxy = Sapão/Lata/Mola/Croco); ordem aqui: [Lata, Sapão, Croco, Mola]
 const AI=[null,[0,0,0,0],[3,0,1,1],[0,1,2,5],[2,1,6,4],[5,3,5,7],[10,4,16,12]];
@@ -21726,7 +21733,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261028153549;
+const GAME_BUILD=20261028154535;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
