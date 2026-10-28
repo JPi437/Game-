@@ -4456,7 +4456,7 @@ const FW=23,FH=38,PX=5,PY=9; // arte de 13 colunas (centro 6) colocada em PX; p�
 const SKIN=['#f7cfa8','#efbd8f','#d99f6c','#bf8350','#9a6238','#6f4425','#4b2c18','#ffe6d5','#fbdcc2','#e9b98f','#c89466','#a6764d','#835535','#5d3a22','#3a2216','#9bd36f','#7fb6ea','#c79ae6'];
 const HAIRC=['#8a5530','#4a2c18','#1c1c1c','#e8c25a','#f3ead0','#c2461f','#a0a0a0','#e86aa6','#3f7fe0','#45b04f','#8e4fc4','#ffffff'];
 const EYEC=['#1e88e5','#6d4c2f','#2b2b2b','#2e9d4a','#7b8c96','#8e44ad','#d32f2f','#d4a017'];
-const CLOTH=['#df220f','#10a4e0','#1f3f99','#2e8b3a','#ffd23f','#ff8f00','#8e44ad','#ec6aa8','#f4f4f4','#8d8d8d','#2a2a2a','#753007','#14a3a3','#a0522d'];
+const CLOTH=['#df220f','#10a4e0','#1f3f99','#2e8b3a','#ffd23f','#ff8f00','#8e44ad','#ec6aa8','#f4f4f4','#8d8d8d','#2a2a2a','#753007','#14a3a3','#a0522d','#d6c2a0','#3e4426'];   // 14 bege (túnica) · 15 verde-oliva (calça com tiras)
 // cabelos: [id, nome, gênero sugerido]
 const HAIR=[['curto','Curto','m'],['lateral','Franja de lado','m'],['espetado','Espetado','m'],['topete','Topete','m'],['moicano','Moicano','m'],['raspado','Raspado','m'],
  ['samurai','Samurai','m'],['afro','Black power','u'],['careca','Careca','m'],
@@ -4465,8 +4465,8 @@ const HAIR=[['curto','Curto','m'],['lateral','Franja de lado','m'],['espetado','
 const STY={
  g:[['m','Masculino'],['f','Feminino'],['tv','TV (exclusivo)',{adm:1}],['fh','Feminino HD (teste)',{adm:1}],['fhc','Feminino HD + Capa (teste)',{adm:1}]],
  h:HAIR.map(a=>[a[0],a[1]]),
- t:[['camiseta','Camiseta'],['longa','Manga longa'],['regata','Regata'],['listrada','Listrada'],['jaqueta','Jaqueta'],['xadrez','Xadrez'],['moletom','Moletom'],['social','Social'],['time','Camisa de time']],   // sem a opção "sem camisa": quem salvou assim volta com camiseta (norm)
- b:[['calca','Calça'],['bermuda','Bermuda'],['saia','Saia'],['jeans','Jeans'],['moletom','Moletom'],['camuflada','Camuflada']],
+ t:[['camiseta','Camiseta'],['longa','Manga longa'],['regata','Regata'],['listrada','Listrada'],['jaqueta','Jaqueta'],['xadrez','Xadrez'],['moletom','Moletom'],['social','Social'],['time','Camisa de time'],['colete','Túnica com colete']],   // sem a opção "sem camisa": quem salvou assim volta com camiseta (norm)
+ b:[['calca','Calça'],['bermuda','Bermuda'],['saia','Saia'],['jeans','Jeans'],['moletom','Moletom'],['camuflada','Camuflada'],['tiras','Calça com tiras']],
  f:[['sapato','Sapato'],['bota','Bota'],['descalco','Descalço'],['tenis','Tênis'],['cano','Cano alto'],['chinelo','Chinelo']],
  c:[['nenhum','Nenhum'],['bone','Boné'],['gorro','Gorro'],['cartola','Cartola'],['bruxa','Bruxa'],['faixa','Faixa'],['coroa','Coroa',{loja:1,cor:0}],['chifres','Chifres',{loja:1,cor:0}],['quepe','Quepe de segurança',{loja:1,cor:0,premio:'Noite 5'}]]};
 const DEF={g:'m',s:0,h:'curto',hc:0,e:0,t:'camiseta',tc:0,b:'calca',bc:1,f:'sapato',fc:11,c:'nenhum',cc:2,o:0,k:0,a:0,w:0};   // o = roupa 3D vestida (bits: 1 camisa de aventureiro, 2 calça, 4 botas de aventureiro, 8 camiseta padrão, 16 botas padrão) · k = acessório de costas 3D (0 nenhum, 1 capa do Lich, 2 capa de mago) · a = cabelo 3D (0 nenhum, 1..4; cor = hc) · w = chapéu 3D (0 nenhum, 1 chapéu de mago)
@@ -4558,8 +4558,8 @@ function dress(B,L){
   set(x,y,{t:t||'s',m,p:'x',far:0});added.add(x+','+y)};
  const each=fn=>{for(let y=-PY;y<FH-PY;y++)for(let x=-PX;x<FW-PX;x++){const c=at(x,y);if(c)fn(c,x,y)}};
  // ---- roupas ----
- const TOP={camiseta:['neck','torso','armU'],longa:['neck','torso','armU','armL'],regata:['torso'],listrada:['neck','torso','armU'],jaqueta:['neck','torso','armU','armL'],xadrez:['neck','torso','armU','armL'],moletom:['neck','torso','armU','armL'],social:['neck','torso','armU','armL'],time:['neck','torso','armU'],nenhuma:[]}[L.t]||['neck','torso','armU'];
- const BOT={calca:['hip','thigh','shin'],bermuda:['hip','thigh'],saia:['hip','thigh'],jeans:['hip','thigh','shin'],moletom:['hip','thigh','shin'],camuflada:['hip','thigh','shin']}[L.b]||['hip','thigh','shin'];
+ const TOP={camiseta:['neck','torso','armU'],longa:['neck','torso','armU','armL'],regata:['torso'],listrada:['neck','torso','armU'],jaqueta:['neck','torso','armU','armL'],xadrez:['neck','torso','armU','armL'],moletom:['neck','torso','armU','armL'],social:['neck','torso','armU','armL'],time:['neck','torso','armU'],colete:['neck','torso','armU','armL'],nenhuma:[]}[L.t]||['neck','torso','armU'];
+ const BOT={calca:['hip','thigh','shin'],bermuda:['hip','thigh'],saia:['hip','thigh'],jeans:['hip','thigh','shin'],moletom:['hip','thigh','shin'],camuflada:['hip','thigh','shin'],tiras:['hip','thigh','shin']}[L.b]||['hip','thigh','shin'];
  const SHO={sapato:['foot'],bota:['foot','shin'],descalco:[],tenis:['foot'],cano:['foot','shin'],chinelo:[]}[L.f]||['foot'];
  each((c,x,y)=>{if(c.m!=='skin')return;
   if(SHO.includes(c.p))c.m='shoe';
@@ -4572,6 +4572,14 @@ function dress(B,L){
    if(L.t==='time'&&c.t!=='O'&&(c.p==='neck'||(c.p==='armU'&&(y-tY)%3===2)))c.m='top2';
    if(L.t==='moletom'&&c.t!=='O'&&((d==='f'&&c.p==='torso'&&x>=4&&x<=8&&y-tY>=6&&y-tY<=8)||(d==='b'&&c.p==='torso'&&y-tY<=1)))c.m='top2'}
   if(c.m==='pants'&&L.b==='camuflada'&&c.t!=='O'&&(x*7+y*3)%5<2)c.m='pants2'});
+ if(L.t==='colete'){let tb=-1,lb=-1;each((c,x,y)=>{if(c.m==='top'&&c.p==='torso')tb=Math.max(tb,y);if(c.p==='armL'&&(c.m==='top'))lb=Math.max(lb,y)});   // túnica com colete: colete aberto na frente, cinto com fivela e braçadeira de couro
+  each((c,x,y)=>{if(c.m!=='top'||c.t==='O')return;
+   if(c.p==='armL'&&y>=lb-1){c.m='belt';return}
+   if(c.p!=='torso')return;const ry=y-tY;
+   if(y===tb){c.m=(d==='f'&&x>=5&&x<=7)?'btn':'belt';return}
+   if(y===tb-1||ry<1)return;
+   if(d==='f'){if(x<5||x>7)c.m='vestB'}else c.m='vestB'})}
+ if(L.b==='tiras'){let tb=-1;each((c,x,y)=>{if(c.m==='pants'&&c.p==='thigh')tb=Math.max(tb,y)});each((c,x,y)=>{if(c.m==='pants'&&c.p==='thigh'&&y===tb-1&&c.t!=='O')c.m='belt'})}
  if(L.f==='tenis'||L.f==='cano')each(c=>{if(c.m==='shoe'&&(c.bot||c.t==='l'))c.m='sole'});
  if(L.f==='chinelo')each(c=>{if(c.m==='skin'&&c.p==='foot'&&(c.bot||c.t==='l'))c.m='shoe'});
  if(L.g==='tv'){each((c,x,y)=>{if(c.m==='shoe'&&(c.bot||c.t==='l')){c.m='sole';return}
@@ -4680,10 +4688,10 @@ function palette(L){
   tie:tone([214,40,40]),white:tone([250,250,250],.45),gold:tone([255,200,40],.55),red:tone([210,35,35]),blue:tone([50,140,230])};
  P.tv={O:[23,20,27],K:[70,66,77],k:[103,98,111],D:[46,43,52],V:[28,25,33],W:[244,244,244],Y:[242,213,68],C:[111,219,232],G:[79,209,107],M:[224,90,180],R:[224,36,44],B:[74,63,224],N:[16,15,20],s:[70,66,77]};
  if(L.g==='tv')P.top={s:[246,246,248],l:WH,d:[214,214,222],O:[128,126,138]};
- P.vest=tone([38,33,42],.55);P.navy=tone([30,46,112],.6);P.btn=tone([96,92,102],.5);P.sole={s:[246,246,246],l:WH,d:[206,206,212],O:[110,108,116]};
+ P.vest=tone([38,33,42],.55);P.vestB=tone([88,55,34],.55);P.belt=tone([62,38,22],.5);P.navy=tone([30,46,112],.6);P.btn=tone([96,92,102],.5);P.sole={s:[246,246,246],l:WH,d:[206,206,212],O:[110,108,116]};
  P.eye={I0:mix(eye,BK,.45),I1:eye,I2:mix(eye,WH,.25),W0:mix(eye,WH,.62),W1:mix(eye,WH,.84),W2:[255,255,255]};
  return P}
-const FLAT=['top','top2','inner','pants','pants2','shoe','hat','tie','white','gold','red','blue','vest','btn','navy'];
+const FLAT=['top','top2','inner','pants','pants2','shoe','hat','tie','white','gold','red','blue','vest','btn','navy','vestB','belt'];
 function paint(G,P,out,W,ox,oy,mirror){
  for(let y=0;y<FH;y++)for(let x=0;x<FW;x++){const c=G[y][x];if(!c)continue;const M=P[c.m]||P.skin;let t=c.t;
   if(FLAT.includes(c.m)&&t!=='O'){const nb=[[1,0],[-1,0],[0,1],[0,-1]].some(([a,b])=>{const n=G[y+b]&&G[y+b][x+a];return !n||n.t==='O'});t=t==='l'&&!nb?'s':nb&&t!=='l'?'d':t==='l'?'l':'s'}
@@ -4919,7 +4927,7 @@ function skinSec(tab){const q=SKT[tab];if(!q)return;const[sc,ck,tt,bits]=q,st=$(
  const cov=L.o&bits;
  st.insertAdjacentHTML('beforeend','<div class="lkSep">'+tt+(cov?' · a peça 3D está por cima: escolha uma skin para trocar':'')+'</div>'+E.STY[sc].map(a=>`<button class="lkIt lkSk${!cov&&L[sc]===a[0]?' on':''}" data-v="${a[0]}"><canvas width="96" height="84"></canvas>${a[1]}</button>`).join(''));
  st.querySelectorAll('.lkSk').forEach(b=>{const v=b.dataset.v;mini(b.querySelector('canvas'),Object.assign({},L,{[sc]:v}),CROP.body);
-  b.onclick=()=>{L[sc]=v;L.o&=~bits;t0=Date.now();render()}});
+  b.onclick=()=>{L[sc]=v;const pc={colete:14,tiras:15}[v];if(pc!=null&&L[sc]!==undefined)L[ck]=pc;L.o&=~bits;t0=Date.now();render()}});   // túnica já vem bege e a calça com tiras verde-oliva (dá para trocar a cor)
  const noCol=sc==='f'&&L.f==='descalco';$('lkL2').textContent='Cor da skin';$('lkL2').style.display=$('lkCol').style.display=noCol?'none':'';
  if(!noCol){$('lkCol').innerHTML=PALS[ck].map((c,i)=>`<button class="lkC${L[ck]===i?' on':''}" data-i="${i}" style="background:${c}" aria-label="Cor ${i+1}"></button>`).join('');
   $('lkCol').querySelectorAll('.lkC').forEach(b=>b.onclick=()=>{L[ck]=+b.dataset.i;L.o&=~bits;t0=Date.now();render()})}}
@@ -10475,7 +10483,7 @@ function buildArm(L){
  const mx=(a,b,t)=>[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t,a[2]+(b[2]-a[2])*t],tv=!!(L&&L.g==='tv');
  const skin=C(SK[L?L.s:0]||SK[0]),sL=mx(skin,W,.2),sD=mx(skin,[110,45,25],.3),sK=mx(skin,W,.32),crease=mx(skin,[90,35,20],.42);
  const top=tv?[244,244,246]:C(CL[L?L.tc:0]||CL[0]),lum=top[0]*.3+top[1]*.59+top[2]*.11,top2=lum>200?mx(top,K,.25):mx(top,W,.55),topD=mx(top,K,.28),topL=mx(top,W,.12);
- const st=tv?'longa':(L&&L.t)||'camiseta',long=['longa','jaqueta','xadrez','moletom','social'].includes(st),sleeve=st!=='regata',jk=st==='jaqueta';
+ const st=tv?'longa':(L&&L.t)||'camiseta',long=['longa','jaqueta','xadrez','moletom','social','colete'].includes(st),sleeve=st!=='regata',jk=st==='jaqueta';
  return mk(51,mb=>{mb.jit=.05;
   // braço (pele): do ombro (atrás da câmera) até o pulso; cotovelo um pouco mais largo
   const P=[[0,.2,3],[0,.1,-3],[0,0,-9],[0,-.15,-12.5],[0,-.22,-17],[0,-.28,-22],[0,-.3,-24.2]],R=[2.75,2.7,2.55,2.5,2.25,1.9,1.82];
@@ -16768,6 +16776,18 @@ vec3 wShirt(vec3 o){
  else if(s==9){if(arm&&ax>sl-0.02)c=B;if(!arm&&ax>0.143)c=B;if(!fr&&y>0.712&&ax<0.105)c=B;
   if(fr&&y>0.655&&ax<(y-0.655)*0.95+0.014){c=B;if(ax<(y-0.655)*0.95)return vec3(-1.0);}
   if(!fr&&z<-0.04){vec2 q=vec2(o.x,y);float d=wIn(q,vec2(0.04,0.47),vec2(0.068,0.62))+wIn(q,vec2(-0.09,0.47),vec2(0.006,0.62))-wIn(q,vec2(-0.064,0.496),vec2(-0.02,0.594));if(d>0.5)c=B;}}
+ else if(s==10){vec3 V=vec3(0.33,0.2,0.125),Bt=vec3(0.25,0.15,0.09),Mt=vec3(0.6,0.6,0.58);   // túnica com colete: túnica (cor escolhida), colete de couro aberto, cinto com fivela, braçadeiras
+  if(arm){if(ax>0.338){c=V*(0.94+0.1*wNs(vec2((y+z)*60.0,ax*60.0)));if(ax<0.346||ax>0.404)c=V*0.66;else if(abs(ax-0.374)<0.0028)c=V*0.78;}else if(ax>0.331)c=A*0.78;}
+  else{if(fr&&y>0.668&&ax<(y-0.668)*0.8)return vec3(-1.0);   // gola em V
+   if(fr&&y>0.66&&abs(ax-(y-0.668)*0.8)<0.006&&ax<0.1)c=A*0.74;
+   if(y<0.401)c=A*0.62;   // barra da túnica: divide bem da calça
+   else if(y<0.43){c=A*0.95;if(y<0.406)c=A*0.8;}
+   else if(y<0.466){c=Bt;if(y<0.435||y>0.461)c=Bt*0.68;
+    if(fr&&ax<0.033&&y>0.436&&y<0.46){c=Mt;if(ax<0.022&&y>0.442&&y<0.454)c=Bt*0.9;}}
+   else if(!(y>0.712&&ax<0.1)&&ax<0.169){float eo=0.036+max(0.0,y-0.6)*0.32;
+    if(!(fr&&ax<eo)){c=V*(0.93+0.12*wNs(vec2(o.x*55.0+z*55.0,y*55.0)));
+     if(fr&&ax<eo+0.007)c=V*1.32;if(y<0.473)c=V*0.7;if(ax>0.163)c=V*0.72;if(!fr&&ax<0.003)c=V*0.74;}}
+   else if(y>0.712&&ax<0.1)c=A*0.86;}}
  return c;}
 vec3 wPants(vec3 o){
  int s=int(uW0.y+0.5);vec3 A=uW3,W=vec3(0.93);float ax=abs(o.x),y=o.y,z=o.z;bool fr=z>0.0,top=y>0.384;
@@ -16787,6 +16807,12 @@ vec3 wPants(vec3 o){
   if(fr&&top&&abs(ax-0.03)<0.004)c=W;if(fr&&!top&&y>0.33&&(abs(o.x-0.026)<0.003||abs(o.x+0.034)<0.003))c=W;}
  else if(s==6){float n=wNs(vec2((o.x+z)*16.0,y*16.0))*0.62+wNs(vec2((o.x-z)*39.0+7.0,y*39.0))*0.38;
   c=n<0.42?A*0.48:n>0.6?mix(A,vec3(0.78,0.72,0.52),0.45):A;if(top&&y>0.39)c=A*0.38;}
+ else if(s==7){c=A*(0.9+0.14*wNs(vec2((o.x+z)*60.0,y*14.0)));   // calça com tiras de couro na coxa e fivela do lado de fora
+  if(top&&y>0.378)c=A*0.48;
+  if(!top&&abs(ax-0.158)<0.0025)c=A*0.74;
+  if(y>0.252&&y<0.284){vec3 S=vec3(0.3,0.185,0.115);c=S*(0.95+0.1*wNs(vec2((o.x+z)*80.0,y*80.0)));if(y<0.257||y>0.279)c=S*0.64;
+   if(ax>0.128&&abs(z)<0.02&&y>0.256&&y<0.28){c=vec3(0.6,0.6,0.58);if(abs(z)<0.012&&y>0.261&&y<0.275)c=S*0.8;}}
+  if(y<0.14)c*=0.86;}
  return c;}
 vec3 wShoe(vec3 o){
  int s=int(uW0.z+0.5);vec3 A=uW4,W=vec3(0.95);float ax=abs(o.x),y=o.y,z=o.z,lc=ax-0.085;
@@ -16884,7 +16910,7 @@ function hairHat(gl,o){const c=o.c;if(!c.hp)return null;if(!o.hvb){const v=b64(c
 function drawItem(gl,G,o){bindGeo(gl,G,o.c,o.vb,o.ib,o.tex);adjFor(gl,G,o.k,o.c);gl.drawElements(gl.TRIANGLES,o.c.ni,gl.UNSIGNED_SHORT,0)}
 // L = visual {o,k,a,w,hc}; o: bits 1 camisa, 2 calça, 4 botas (aventureiro), 8 camiseta padrão, 16 botas padrão. O corpo esconde o que fica embaixo da roupa.
 // skins de roupa coladas no corpo: estilos e cores do visual (t/tc camisa, b/bc calça, f/fc pés) viram uniforms do shader
-const WTS={camiseta:1,longa:2,regata:3,listrada:4,jaqueta:5,xadrez:6,moletom:7,social:8,time:9},WBS={calca:1,bermuda:2,saia:3,jeans:4,moletom:5,camuflada:6},WFS={sapato:1,bota:2,descalco:3,tenis:4,cano:5,chinelo:6},WC=new Map();
+const WTS={camiseta:1,longa:2,regata:3,listrada:4,jaqueta:5,xadrez:6,moletom:7,social:8,time:9,colete:10},WBS={calca:1,bermuda:2,saia:3,jeans:4,moletom:5,camuflada:6,tiras:7},WFS={sapato:1,bota:2,descalco:3,tenis:4,cano:5,chinelo:6},WC=new Map();
 function wearOf(L){const E=LKEg3();let N=null;try{N=E?E.norm(L):null;if(N&&E.eff)N=E.eff(N)}catch(e){N=null}
  if(!N)N={t:'camiseta',tc:0,b:'calca',bc:1,f:'sapato',fc:11};const key=N.t+N.tc+N.b+N.bc+N.f+N.fc;let w=WC.get(key);if(w)return w;
  const CL=(E&&E.CLOTH)||['#df220f'],h=i=>{const x=(CL[i]||CL[0]).replace('#','');return[parseInt(x.slice(0,2),16)/255,parseInt(x.slice(2,4),16)/255,parseInt(x.slice(4,6),16)/255]};
@@ -21656,7 +21682,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261028113200;
+const GAME_BUILD=20261028151353;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
