@@ -19429,7 +19429,7 @@ const chNow=()=>CHARS[REC.char]?REC.char:'soldier';
 
 // ============================================================ configurações e editor de HUD (salvos por jogador) ============================================================
 // Cada conta (MP.uid) tem as suas próprias configurações e o seu próprio HUD. Ficam no aparelho (localStorage) e, se o Firebase deixar, também na nuvem (starops_cfg/<uid>).
-const CFG_DEF=()=>({v:1,t:0,sens:1,assist:mob?.5:0,vib:true,q:mob?'auto':'high',vol:1,fps:false,hud:{}});
+const CFG_DEF=()=>({v:1,t:0,sens:1,assist:mob?.5:0,vib:true,joyFix:false,q:mob?'auto':'high',vol:1,fps:false,hud:{}});
 let CFG=CFG_DEF(),RS=1,QMAXA=150,FXCAP=1100,MG=null,EP=[];
 const DOMB=['soFire','soJump','soSl','soSw','soRl','soRun','soZoom','soA1','soA2','soA3','soA4','soPause'];
 const HE_L=[['vida','Vida e colete'],['nivel','Nível e XP'],['wave','Wave e abates'],['arma','Arma e munição'],['bonus','Bônus'],['mira','Mira'],['mapa','Minimapa'],['aviso','Aviso da wave'],['hab','Habilidades'],['joy','Joystick'],
@@ -19438,8 +19438,8 @@ const HE_N=Object.fromEntries(HE_L),HUDK=HE_L.map(a=>a[0]);
 const clpn=(v,a,b,d)=>{v=+v;return isFinite(v)?clp(v,a,b):d};
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function normCfg(o){const D0=CFG_DEF();if(!o||typeof o!=='object')return D0;
- const r={v:1,t:+o.t||0,sens:clpn(o.sens,.3,3,1),assist:clpn(o.assist,0,1,D0.assist),vib:o.vib!==false,q:['auto','low','mid','high'].includes(o.q)?o.q:D0.q,vol:clpn(o.vol,0,1,1),fps:!!o.fps,hud:{}};
- if(o.hud&&typeof o.hud==='object')for(const k of HUDK){const h=o.hud[k];if(h&&typeof h==='object')r.hud[k]={s:clpn(h.s,.4,2.5,1),a:clpn(h.a,.1,1,1),x:k==='joy'?0:clpn(h.x,-1,1,0),y:k==='joy'?0:clpn(h.y,-1,1,0)}}
+ const r={v:1,t:+o.t||0,sens:clpn(o.sens,.3,3,1),assist:clpn(o.assist,0,1,D0.assist),vib:o.vib!==false,joyFix:!!o.joyFix,q:['auto','low','mid','high'].includes(o.q)?o.q:D0.q,vol:clpn(o.vol,0,1,1),fps:!!o.fps,hud:{}};
+ if(o.hud&&typeof o.hud==='object')for(const k of HUDK){const h=o.hud[k];if(h&&typeof h==='object')r.hud[k]={s:clpn(h.s,.4,2.5,1),a:clpn(h.a,.1,1,1),x:clpn(h.x,-1,1,0),y:clpn(h.y,-1,1,0)}}
  return r}
 const cfgOut=()=>{const o=Object.assign({},CFG,{hud:{}});for(const k in CFG.hud){const h=CFG.hud[k];if(h.s!==1||h.a!==1||h.x||h.y)o.hud[k]=h}return JSON.stringify(o)};
 const myUid=()=>{try{return(window.MP&&MP.uid)||'guest'}catch(e){return'guest'}};
@@ -19470,6 +19470,7 @@ function buildCfg(){const nick=(window.MP&&MP.nick)||'';
  const pct=v=>Math.round(v*100)+'%',row=(id,lab,mn,mx,st,val,f)=>'<div class="cfgR"><label>'+lab+'</label><input type="range" id="'+id+'" min="'+mn+'" max="'+mx+'" step="'+st+'" value="'+val+'"><output id="'+id+'O">'+f(val)+'</output></div>';
  $('soCfgIn').innerHTML='<h2>CONFIGURAÇÕES</h2><p class="cfgWho">Perfil: <b>'+esc(nick||'este aparelho')+'</b> · tudo é salvo só para esta conta</p>'+
   '<div class="cfgG">CONTROLES</div>'+row('cfSens','Sensibilidade',.3,3,.05,CFG.sens,v=>(+v).toFixed(2)+'x')+row('cfAs','Mira assistida',0,1,.05,CFG.assist,pct)+
+  '<div class="cfgR"><label>Travar joystick</label><input type="checkbox" id="cfJoy"'+(CFG.joyFix?' checked':'')+'><span style="font-size:11px;opacity:.7">fixo no lugar que você escolher no editor de HUD</span></div>'+
   '<div class="cfgR"><label>Vibração</label><input type="checkbox" id="cfVib"'+(CFG.vib?' checked':'')+'></div>'+
   '<div class="cfgG">GRÁFICOS</div><div class="cfgR"><label>Qualidade</label><div class="cfgQ" id="cfQ">'+[['auto','Auto'],['low','Baixo'],['mid','Médio'],['high','Alto']].map(a=>'<button data-q="'+a[0]+'" class="'+(CFG.q===a[0]?'on':'')+'">'+a[1]+'</button>').join('')+'</div></div>'+
   '<div class="cfgR"><label>Mostrar FPS</label><input type="checkbox" id="cfFps"'+(CFG.fps?' checked':'')+'></div>'+
@@ -19478,6 +19479,7 @@ function buildCfg(){const nick=(window.MP&&MP.nick)||'';
   '<div class="soRow"><button class="soBtn g" id="cfBack">VOLTAR</button></div>';
  const rng=(id,fn,f)=>{const el=$(id);el.oninput=()=>{fn(+el.value);$(id+'O').textContent=f(+el.value);saveSoon()}};
  rng('cfSens',v=>{CFG.sens=v},v=>v.toFixed(2)+'x');rng('cfAs',v=>{CFG.assist=v},pct);rng('cfVol',v=>{CFG.vol=v;if(MG)MG.gain.value=v;snd('hit')},pct);
+ $('cfJoy').onchange=e=>{CFG.joyFix=e.target.checked;if(!CFG.joyFix){const j=hudOf('joy');j.x=0;j.y=0}saveSoon()};
  $('cfVib').onchange=e=>{CFG.vib=e.target.checked;saveSoon();if(CFG.vib)vib(40)};$('cfFps').onchange=e=>{CFG.fps=e.target.checked;saveSoon()};
  $('cfQ').onclick=e=>{const b=e.target.closest('button');if(!b)return;CFG.q=b.dataset.q;setQ(CFG.q);D.querySelectorAll('#cfQ button').forEach(x=>x.classList.toggle('on',x===b));saveSoon()};
  $('cfHud').onclick=openHE;$('cfBack').onclick=closeCfg}
@@ -19494,11 +19496,11 @@ function heRect(id,stale){const mr=M.getBoundingClientRect();if(DOMB.includes(id
 function heSync(){const id=S.heSel||'vida',h=hudOf(id);
  if(!S.heMan){const r=heRect(id,1);if(r)$('soHP').classList.toggle('bot',r.y+r.h/2<M.clientHeight*.5)}
 $('hpName').textContent=HE_N[id]||id;$('hpS').value=Math.round(h.s*100);$('hpA').value=Math.round(h.a*100);$('hpSO').textContent=Math.round(h.s*100)+'%';$('hpAO').textContent=Math.round(h.a*100)+'%';
- $('hpH').textContent=id==='joy'?'O joystick aparece onde você encosta o dedo: aqui só dá para mudar tamanho e opacidade.':id==='hab'||/^soA/.test(id)?'Habilidades só aparecem com Guts ou Naruto: escolha um deles no menu para ajustar.':'Toque num item e arraste para mover.';
+ $('hpH').textContent=id==='joy'?(CFG.joyFix?'Joystick travado: arraste para escolher onde ele fica.':'Joystick solto: aparece onde você encosta o dedo. Ative "Travar joystick" em CONFIG para escolher um lugar fixo.'):id==='hab'||/^soA/.test(id)?'Habilidades só aparecem com Guts ou Naruto: escolha um deles no menu para ajustar.':'Toque num item e arraste para mover.';
  D.querySelectorAll('.soHb').forEach(b=>b.classList.toggle('sel',b.dataset.id===id))}
 function heWire(b){let st=null;
  b.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();S.heSel=b.dataset.id;heSync();st={id:e.pointerId,x:e.clientX,y:e.clientY};try{b.setPointerCapture(e.pointerId)}catch(x){}});
- b.addEventListener('pointermove',e=>{if(!st||e.pointerId!==st.id)return;const id=b.dataset.id;const dx=e.clientX-st.x,dy=e.clientY-st.y;st.x=e.clientX;st.y=e.clientY;if(id==='joy')return;
+ b.addEventListener('pointermove',e=>{if(!st||e.pointerId!==st.id)return;const id=b.dataset.id;const dx=e.clientX-st.x,dy=e.clientY-st.y;st.x=e.clientX;st.y=e.clientY;if(id==='joy'&&!CFG.joyFix)return;
   const h=hudOf(id);h.x=clp(h.x+dx/M.clientWidth,-.95,.95);h.y=clp(h.y+dy/M.clientHeight,-.95,.95);if(DOMB.includes(id))applyDom();saveSoon()});
  const up=e=>{if(st&&e.pointerId===st.id)st=null};b.addEventListener('pointerup',up);b.addEventListener('pointercancel',up)}
 function heLayout(){const box=$('soHB');
@@ -19518,8 +19520,13 @@ $('hpOk').onclick=closeHE;$('hpPos').onclick=()=>{S.heMan=1;$('soHP').classList.
 
 // ---------- HUD: cada elemento tem tamanho, opacidade e posição próprios ----------
 const HB={};
+// joystick travado: centro fixo (em pixels da tela), com o deslocamento escolhido no editor
+function joyBase(){const h=hudOf('joy');return{x:M.clientWidth*.14+h.x*M.clientWidth,y:M.clientHeight*.68+h.y*M.clientHeight}}
+function joyHit(e){const b=joyBase();return hypot(e.clientX-b.x,e.clientY-b.y)<56*hudOf('joy').s*1.8}
+function joyNew(e){if(!(CFG.joyFix&&mob))return{id:e.pointerId,x0:e.clientX,y0:e.clientY,dx:0,dy:0,x:e.clientX,y:e.clientY};
+ const b=joyBase(),R=56*hudOf('joy').s;let dx=(e.clientX-b.x)/R,dy=(e.clientY-b.y)/R;const l=hypot(dx,dy);if(l>1){dx/=l;dy/=l}return{id:e.pointerId,x0:b.x,y0:b.y,dx,dy,x:e.clientX,y:e.clientY}}
 // começa uma seção do HUD: escala em volta do ponto de ancoragem (ax,ay), aplica opacidade e deslocamento; guarda a caixa (bx,by,bw,bh) para o editor
-function hsec(c,id,ax,ay,bx,by,bw,bh){const h=hudOf(id),k=h.s,dx=h.x*cvO.width,dy=h.y*cvO.height;
+function hsec(c,id,ax,ay,bx,by,bw,bh){const h=hudOf(id),k=h.s,nf=id==='joy'&&!CFG.joyFix,dx=nf?0:h.x*cvO.width,dy=nf?0:h.y*cvO.height;
  c.save();c.globalAlpha=h.a;c.translate(ax+dx,ay+dy);c.scale(k,k);c.translate(-ax,-ay);
  HB[id]={x:(ax+dx+(bx-ax)*k)/DPR,y:(ay+dy+(by-ay)*k)/DPR,w:bw*k/DPR,h:bh*k/DPR,f:S.fr}}
 function radar(c,s,P){const R=42*s,mx=(16+138)*s+R,my=12*s+R,RNG=480;
@@ -19638,10 +19645,10 @@ addEventListener('keyup',e=>{if(S.st==='off')return;e.stopPropagation();K[e.code
 cvO.style.pointerEvents='none';M.addEventListener('contextmenu',e=>e.preventDefault());
 M.addEventListener('pointerdown',e=>{if(S.st!=='play'||S.pause)return;const t=e.target;if(t.closest&&t.closest('.soB,#soPause,.soScr'))return;
  if(e.pointerType==='mouse'){if(!ptrLock){try{cvG.requestPointerLock()}catch(x){}}else if(e.button===0)inp.fire=true;else if(e.button===2)toggleZoom();e.preventDefault();return}
- const w=M.clientWidth;if(e.clientX<w*.42&&!joy){joy={id:e.pointerId,x0:e.clientX,y0:e.clientY,dx:0,dy:0,x:e.clientX,y:e.clientY}}
+ const w=M.clientWidth;if(((CFG.joyFix&&mob)?joyHit(e):e.clientX<w*.42)&&!joy){joy=joyNew(e)}
  else if(!look){look={id:e.pointerId,x:e.clientX,y:e.clientY}}
  try{M.setPointerCapture(e.pointerId)}catch(x){}e.preventDefault()});
-M.addEventListener('pointermove',e=>{if(joy&&e.pointerId===joy.id){const R=56*hudOf('joy').s;let dx=e.clientX-joy.x0,dy=e.clientY-joy.y0;const l=hypot(dx,dy);if(l>R){joy.x0+=dx*(1-R/l);joy.y0+=dy*(1-R/l);dx=e.clientX-joy.x0;dy=e.clientY-joy.y0}
+M.addEventListener('pointermove',e=>{if(joy&&e.pointerId===joy.id){const R=56*hudOf('joy').s;let dx=e.clientX-joy.x0,dy=e.clientY-joy.y0;const l=hypot(dx,dy);if(l>R){if(CFG.joyFix){dx*=R/l;dy*=R/l}else{joy.x0+=dx*(1-R/l);joy.y0+=dy*(1-R/l);dx=e.clientX-joy.x0;dy=e.clientY-joy.y0}}
   joy.dx=dx/R;joy.dy=dy/R;joy.x=e.clientX;joy.y=e.clientY;
   if(joy.dy<-.95&&!P_.run&&S.st==='play'){P_.run=true;$('soRun').classList.add('on')}}            // empurrar o joystick até o fim = correr
  else if(look&&e.pointerId===look.id){turn(e.clientX-look.x,e.clientY-look.y,mob?.0062:.004);look.x=e.clientX;look.y=e.clientY}
@@ -20212,8 +20219,9 @@ function hud(dt){const c=ox,w=cvO.width,h=cvO.height,s=DPR,P=P_;c.clearRect(0,0,
  // investida: riscos de velocidade
  if(P.dash>0){c.strokeStyle='rgba(255,255,255,.55)';c.lineWidth=2*s;c.beginPath();for(let i=0;i<22;i++){const a=rnd()*TAU,r0=min(w,h)*(.32+rnd()*.15),r1=r0+min(w,h)*(.12+rnd()*.2);c.moveTo(cx+cos(a)*r0,cy+sin(a)*r0);c.lineTo(cx+cos(a)*r1,cy+sin(a)*r1)}c.stroke()}
  // joystick (no editor aparece um de exemplo)
- if(joy||(ed&&mob)){const jx=joy?joy.x0*s:w*.14,jy=joy?joy.y0*s:h*.68,jdx=joy?joy.dx:0,jdy=joy?joy.dy:0;
-  hsec(c,'joy',jx,jy,jx-56*s,jy-56*s,112*s,112*s);c.globalAlpha*=joy?.5:.7;c.strokeStyle='#fff';c.lineWidth=3*s;c.beginPath();c.arc(jx,jy,56*s,0,TAU);c.stroke();c.fillStyle='#fff';c.beginPath();c.arc(jx+jdx*56*s,jy+jdy*56*s,22*s,0,TAU);c.fill();c.restore()}
+ const jfx=CFG.joyFix&&mob;
+ if(joy||(ed&&mob)||(jfx&&S.st==='play')){const jx=jfx||!joy?w*.14:joy.x0*s,jy=jfx||!joy?h*.68:joy.y0*s,jdx=joy?joy.dx:0,jdy=joy?joy.dy:0;
+  hsec(c,'joy',jx,jy,jx-56*s,jy-56*s,112*s,112*s);c.globalAlpha*=joy?.5:ed?.7:.3;c.strokeStyle='#fff';c.lineWidth=3*s;c.beginPath();c.arc(jx,jy,56*s,0,TAU);c.stroke();c.fillStyle='#fff';c.beginPath();c.arc(jx+jdx*56*s,jy+jdy*56*s,22*s,0,TAU);c.fill();c.restore()}
  // contador de FPS (opcional)
  if(CFG.fps){c.textAlign='center';c.font=`900 ${11*s}px "Courier New",monospace`;c.fillStyle='#9f9';c.fillText('FPS '+Math.round(S.fps||0)+' · resolução '+Math.round(RS*100)+'%',cx,h-10*s)}
  c.restore();
@@ -20364,7 +20372,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261027230809;
+const GAME_BUILD=20261027232214;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
