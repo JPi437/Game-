@@ -18450,7 +18450,7 @@ function place(A,s,dt,t,SC){
  let el=s.ga?t-s.ga:1e9;
  if(el<DUR&&!g.act&&el<(ABORT[nm]||DUR)&&!s.abort)s.abort=t;      // inimigo morreu no meio: volta ao normal
  if(s.abort){if(t-s.abort>250){s.abort=0;s.ga=0}el=1e9}
- if(el<DUR&&SKF[nm]){const I=tgtInfo(s,E),R=SKF[nm](s,el,dt,t,I);px=R.px;py=R.py;pz=R.pz;tg=R.tg;post=R.post;fxf=R.fx;rate=0;skill=true}
+ if(el<DUR&&SKF[nm]&&!(CH3.bad&&CH3.bad[nm])){try{const I=tgtInfo(s,E),R=SKF[nm](s,el,dt,t,I);px=R.px;py=R.py;pz=R.pz;tg=R.tg;post=R.post;fxf=R.fx;rate=0;skill=true}catch(e){(CH3.bad||(CH3.bad={}))[nm]=1;console.error('CH3 habilidade',nm,e);px=A.x;py=A.y;pz=A.z;tg=A.yaw;post=null;fxf=null;rate=1;skill=false}}
  else{
   if(!s.abort)s.ga=0;
   let ap=-1;
@@ -18464,9 +18464,9 @@ function place(A,s,dt,t,SC){
   if(ap>=0)rate=0}
  s.yaw+=clp(angd(s.yaw,tg),-dt*(skill?22:14),dt*(skill?22:14));
  animate(s,dt,rate);
- if(post)post(px,py,pz,s.yaw);
+ if(post)try{post(px,py,pz,s.yaw)}catch(e){(CH3.bad||(CH3.bad={}))[nm]=1;console.error('CH3 pose',nm,e)}
  window.EDN=nm;modelM(px,py,pz,s.yaw);bones();
- if(fxf)fxf();
+ if(fxf)try{fxf()}catch(e){(CH3.bad||(CH3.bad={}))[nm]=1;console.error('CH3 efeito',nm,e)}
  return{x:px,y:py,z:pz,h:py-A.y}}
 CH3.draw=function(list,lightAt,SC,t){
  const L=[];for(const A of list)if(A.ch3)L.push(A);if(!L.length)return;const gl=ensure();if(!gl)return;
