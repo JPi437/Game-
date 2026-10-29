@@ -406,7 +406,7 @@ body.mnOpen .mi b{transform:none}
 </head><body>
 <canvas id="c" width="368" height="221"></canvas>
 <div id="joy"><div id="knob"></div></div>
-<div id="hud">0</div><button class="btn" id="fightBtn">Lutar</button><button class="btn" id="recallBtn">Recolher</button><button class="btn" id="spinBtn">Roletar (10 moedas)</button>
+<div id="hud">0</div><button class="btn" id="fightBtn">Lutar</button><button class="btn" id="recallBtn">Recolher</button><button class="btn" id="spinBtn">Roletar (50 moedas)</button>
 <button class="btn ic" id="invBtn" data-l="Inventário">Inventário</button><button class="btn ic" id="upBtn" data-l="Upgrades">Upgrades</button>
 <button class="btn ic" id="mountBtn" data-l="Montarias">Montarias</button><button class="btn" id="talkBtn">Falar</button><div id="quest"></div><button class="btn" id="punchBtn">Soco</button><button class="btn" id="pasBtn">Passivas</button>
 
@@ -1223,7 +1223,7 @@ $('feedGo').onclick=()=>{if(!sel.size)return;const t=chars.find(c=>c.id===curId)
  while(t.lvl<capOf(t)&&t.xp>=need(t.lvl)){t.xp-=need(t.lvl);t.lvl++}if(t.lvl>=capOf(t))t.xp=0;
  save();$('feedM').style.display='none';renderInv();openDet(t.id)};
 $('feedBack').onclick=()=>{$('feedM').style.display='none';openDet(curId)};
-const UPS=[{k:'x2',n:'Girar 2 em 2',d:'Abre 2 personagens por giro (custa 20 moedas)',c:100},{k:'x3',n:'Girar 3 em 3',d:'Abre 3 personagens por giro (custa 30 moedas). Requer o 2 em 2',c:1000,req:'x2'},{k:'x4',n:'Girar 4 em 4',d:'Abre 4 personagens por giro (custa 40 moedas). Requer o 3 em 3',c:10000,req:'x3'},{k:'x5',n:'Girar 5 em 5',d:'Abre 5 personagens por giro (custa 50 moedas). Requer o 4 em 4',c:100000,req:'x4'},{k:'auto',n:'Auto Click',d:'Soca automaticamente 1 vez a cada 0,5s durante a luta',c:1000},{k:'autostar',n:'Auto Estrela',d:'Gira a estrela sozinho (botão Auto na roleta)',c:10000},{k:'autopas',n:'Auto Passiva',d:'Roleta passivas sozinho até sair a passiva alvo',c:10000}];   // o 'Slot extra' saiu da loja (quem já comprou continua com ele: ups.slot)
+const UPS=[{k:'x2',n:'Girar 2 em 2',d:'Abre 2 personagens por giro (custa 100 moedas)',c:100},{k:'x3',n:'Girar 3 em 3',d:'Abre 3 personagens por giro (custa 150 moedas). Requer o 2 em 2',c:1000,req:'x2'},{k:'x4',n:'Girar 4 em 4',d:'Abre 4 personagens por giro (custa 200 moedas). Requer o 3 em 3',c:10000,req:'x3'},{k:'x5',n:'Girar 5 em 5',d:'Abre 5 personagens por giro (custa 250 moedas). Requer o 4 em 4',c:100000,req:'x4'},{k:'auto',n:'Auto Click',d:'Soca automaticamente 1 vez a cada 0,5s durante a luta',c:1000},{k:'autostar',n:'Auto Estrela',d:'Gira a estrela sozinho (botão Auto na roleta)',c:10000},{k:'autopas',n:'Auto Passiva',d:'Roleta passivas sozinho até sair a passiva alvo',c:10000}];   // o 'Slot extra' saiu da loja (quem já comprou continua com ele: ups.slot)
 function maxEq(){let b=0;try{const a=window.XS&&XS().ach;if(a){b=(a.rd15?1:0)+(a.rd50?1:0)}}catch(e){}return 3+(ups.slot?1:0)+b}   // conquistas da dungeon: sala 15 e sala 50 dão +1 cada
 function renderUp(){$('upList').innerHTML=UPS.map(u=>{const own=ups[u.k],blk=u.req&&!ups[u.req];return `<div style="display:flex;align-items:center;gap:8px;background:#111;border-radius:8px;padding:8px;margin-bottom:6px;text-align:left"><div style="flex:1"><b>${u.n}</b><br><span style="font-size:11px;opacity:.7">${u.d}</span></div><button class="btn upb${own||blk||coins<u.c?' dis':''}" data-k="${u.k}" style="padding:6px 10px;font-size:13px">${own?'Comprado':blk?'Bloqueado':u.c.toLocaleString('pt-BR')+' moedas'}</button></div>`}).join('');
  $('upList').querySelectorAll('.upb').forEach(b=>b.onclick=()=>{const u=UPS.find(x=>x.k===b.dataset.k);if(ups[u.k]||coins<u.c||(u.req&&!ups[u.req]))return;coins-=u.c;ups[u.k]=1;save();updHud();renderUp()})}
@@ -1444,7 +1444,7 @@ function reels(host,finals,rnd,show,cb){host.innerHTML=finals.map(()=>'<div clas
    if(r>=2||c.sh){el.classList.add('win');el.style.setProperty('--wc',c.sh?'#80deea':(COL[r]||'#f0f'))}
    if(--left===0)setTimeout(cb,350);return}
   show(el,rnd());sTick();setTimeout(st,45+130*Math.pow(1-rem/stop,2))})()})}
-const spinCost=()=>world===1?40:world===4?500:10;   // estrela: 10 moedas · Halloween 40 abóboras · Dragon Ball 500 moedas
+const spinCost=()=>world===1?40:world===4?500:50;   // estrela (por personagem): Mundo 1 50 moedas · Halloween 40 abóboras · Dragon Ball 500 moedas
 const have=()=>world===1?pk:coins,cap=()=>100+10*(ups.inv||0),hasFilter=()=>aset.sell.some(Boolean)||aset.feed.some(Boolean);
 function pay(n){if(world===1)pk-=n;else coins-=n}
 function giveDrop(e,now){let c;if(world){c=ri(...e.coin);pk+=c}else{c=Math.round(ri(...e.coin)*goldMul());coins+=c}save();updHud();fx.push({x:e.x-4,y:e.y-12,t:now,s:'+'+c+(world?' abóboras':' moedas'),c:world?'#ff9800':'#ffd23f'})}
@@ -1470,7 +1470,7 @@ const PFW=57,PFH=71,PORT_B=new Image(),PORT_O=PORT_B;PORT_B.src='data:image/png;
 function drawNpc(f){drawNpc0(f);if(world){const x=Math.round(NPC.x-cam.x),y=Math.round(NPC.y-cam.y);R('#4a148c',x+2,y+8,12,6);R('#311b92',x,y+4,16,2);R('#311b92',x+3,y-3,10,7);R('#ffd23f',x+3,y+2,10,1)}}
 function broom(){if(window.BROOM&&BROOM.draw())return; // js/21-broom.js: vassoura detalhada com trilha laranja e abóboras (o desenho simples abaixo só aparece enquanto a imagem não carregou)
  const x=Math.round(P.x-cam.x),y=Math.round(P.y-cam.y),l=P.dir===1;R('#0005',x+1,y+18,14,2);R('#8d6e63',x-3,y+12,22,2);const bx=l?x-8:x+17;R('#f9a825',bx,y+10,6,6);R('#ffcc02',bx+(l?0:2),y+9,3,8)}
-function goWorld(n){if(n===world||(n===1&&!ups.gate))return;world=n;W=n?W1:W0;H=n?H1:H0;SX=n?SX1:SX0;SY=n?SY1:SY0;TOX=n?TOX1:TOX0;TOY=n?TOY1:TOY0;GX=n?GX1:GX0;GY=n?GY1:GY0;NPC.x=(n?13:NX0)*T;NPC.y=(n?103:NY0)*T;map=WD[n].map;EN=WD[n].EN;qs=QS[n];fight=null;for(const k in fpos)delete fpos[k];P.x=n?13*T:SPX;P.y=n?100*T:SPY;P.dir=2;spinBtn.textContent=n?'Roletar (40 abóboras)':'Roletar (10 moedas)';updHud();updQuest();save()}
+function goWorld(n){if(n===world||(n===1&&!ups.gate))return;world=n;W=n?W1:W0;H=n?H1:H0;SX=n?SX1:SX0;SY=n?SY1:SY0;TOX=n?TOX1:TOX0;TOY=n?TOY1:TOY0;GX=n?GX1:GX0;GY=n?GY1:GY0;NPC.x=(n?13:NX0)*T;NPC.y=(n?103:NY0)*T;map=WD[n].map;EN=WD[n].EN;qs=QS[n];fight=null;for(const k in fpos)delete fpos[k];P.x=n?13*T:SPX;P.y=n?100*T:SPY;P.dir=2;spinBtn.textContent=n?'Roletar (40 abóboras)':'Roletar (50 moedas)';updHud();updQuest();save()}
 function gateUi(){const nr=!lock&&Math.hypot(P.x+8-(GX*T+8),P.y+8-(GY*T+8))<30,b=$('gateBtn');b.style.display=nr?'block':'none';if(nr){const t=world?'Voltar ao Mundo 1':ups.gate?'Ir ao Halloween':'Abrir portão (3.000 moedas)';if(b.textContent!==t)b.textContent=t}}
 $('gateBtn').onclick=()=>{if(world){goWorld(0);return}if(!ups.gate){if(coins<3000){fx.push({x:P.x-8,y:P.y-12,t:Date.now(),s:'Faltam moedas',c:'#fff'});return}coins-=3000;ups.gate=1;save();updHud();try{if(window.MP&&MP.saveNow)MP.saveNow()}catch(e){}}goWorld(1)};
 function renderW(){$('wList').innerHTML=`<button class="btn wb" data-n="0" style="display:block;width:100%;margin-bottom:8px;background:#2e7d32">Mundo 1${world===0?' (aqui)':''}</button><button class="btn wb${ups.gate?'':' dis'}" data-n="1" style="display:block;width:100%;margin-bottom:8px;background:#e65100">${ups.gate?'Halloween'+(world===1?' (aqui)':''):'Halloween (abra o portão)'}</button>`;
@@ -2330,7 +2330,7 @@ const WCFG=[{w:W0,h:H0,s:[SX0,SY0],to:[TOX0,TOY0],gt:[GX0,GY0],np:[NX0,NY0],p:[S
 goWorld=function(n){if(n===world||!WCFG[n])return;if(n===1&&!ups.gate)return;if(n===2&&!wbCan()){toast('A Arena do Boss Mundial precisa de internet: entre na sua conta');return}
  const c=WCFG[n];world=n;W=c.w;H=c.h;SX=c.s[0];SY=c.s[1];TOX=c.to[0];TOY=c.to[1];GX=c.gt[0];GY=c.gt[1];NPC.x=c.np[0]*T;NPC.y=c.np[1]*T;
  map=WD[n].map;EN=WD[n].EN;qs=QS[n];fight=null;for(const k in fpos)delete fpos[k];P.x=c.p[0];P.y=c.p[1];P.dir=c.d;DY.length=0;PT.length=0;
- spinBtn.textContent=n===1?'Roletar (40 abóboras)':n===4?'Roletar (500 moedas)':'Roletar (10 moedas)';if(n===1)st.hw=1;if(n===2)toast('Caverna de Gelo! Chegue perto do boss e toque em Lutar');
+ spinBtn.textContent=n===1?'Roletar (40 abóboras)':n===4?'Roletar (500 moedas)':'Roletar (50 moedas)';if(n===1)st.hw=1;if(n===2)toast('Caverna de Gelo! Chegue perto do boss e toque em Lutar');
  updHud();updQuest();save();achCheck()};
 function wbStatus(){if(!wbCan())return 'Entre na sua conta (online)';wbUpd();if(!WB.ready)return 'Carregando...';const s=WB.srv;
  if(s&&s.k){const nx=(wbCyc(sNow())+1)*DAY+22*36e5;return 'Derrotado · renasce em '+ft(nx-sNow())}return 'Vivo · '+fk(WB.hp)+' de vida'}
@@ -22124,7 +22124,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261029150006;
+const GAME_BUILD=20261029150608;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
