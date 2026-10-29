@@ -22126,7 +22126,11 @@ function stepRemote(k,dt){
  const age=min(.4,(performance.now()-k.tt)/1000),px=k.tx+k.tvx*age,pz=k.tz+k.tvz*age,dx=px-k.x,dz=pz-k.z;
  if(hypot(dx,dz)>22){k.x=px;k.z=pz}else{const f=min(1,dt*11);k.x+=dx*f;k.z+=dz*f}
  k.y+=(k.ty-k.y)*min(1,dt*10);k.h+=angd(k.h,k.th)*min(1,dt*12);k.vx=k.tvx;k.vz=k.tvz;k.sp=k.vx*sin(k.h)+k.vz*cos(k.h);k.wheel+=k.sp*dt/.26;k.steer+=((k.dr?-k.dr*.8:0)-k.steer)*min(1,dt*8);
- k.dr=k.tdr;k.tier=k.tdT;k.cum=k.tp;k.maxCum=k.tp;k.lap=k.tl;k.fin=k.tf;k.boostT=k.tbt?.5:0;k.bcol=k.tbt||1;k.pitch=0;k.roll=0;k.air=false;k.inv=0;
+ k.dr=k.tdr;k.tier=k.tdT;k.cum=k.tp;k.maxCum=k.tp;k.lap=k.tl;k.fin=k.tf;k.boostT=k.tbt?.5:0;k.bcol=k.tbt||1;k.inv=0;
+ {const g=TR.road.at(k.x,k.z,k.y,1.2);k.gy=g===null?k.y:g;k.air=g===null||k.y-g>.45;   // sombra e inclinação do kart dos outros acompanham a pista
+  if(!k.air){const fx=sin(k.h),fz=cos(k.h),hF=TR.road.at(k.x+fx*1.1,k.z+fz*1.1,k.y,1.2),hB=TR.road.at(k.x-fx*1.1,k.z-fz*1.1,k.y,1.2),hL=TR.road.at(k.x+fz*.8,k.z-fx*.8,k.y,1.2),hR=TR.road.at(k.x-fz*.8,k.z+fx*.8,k.y,1.2);
+   const pi=(hF!==null&&hB!==null)?atan2(hF-hB,2.2):0,ro=(hL!==null&&hR!==null)?atan2(hL-hR,1.6):0;k.pitch+=(pi-(k.pitch||0))*min(1,dt*10);k.roll+=(ro-(k.roll||0))*min(1,dt*10)}else{k.pitch*=.9;k.roll*=.9}}
+ 
  if(k.spinT>0){k.spinT-=dt;const u=1-clp(k.spinT/k.spinMax,0,1);k.spinYaw=(u*u*(3-2*u))*TAU*2;if(k.spinT<=0)k.spinYaw=0}
  if(k.frzT>0){k.frzT-=dt;if(k.frzT<=0)shatter(k)}
  if(k.burn>0)k.burn-=dt}
@@ -22469,7 +22473,8 @@ function onRoom(s){const r=s.val(),me=myUid();NET.room=r;
  if(NET.lobby)lobbyRender(r);
  if(r.st==='p'&&r.s&&NET.rid!==r.s&&(NET.lobby||S.st==='results')){NET.rid=r.s;beginOnlineRace(r)}
  if(r.st==='w'&&NET.code&&S.mode==='online'&&(S.st==='race'||S.st==='count')&&NET.rid&&!S.fin&&r.s===undefined){/* sala voltou ao lobby no meio da corrida (anfitrião reiniciou) */}}
-function lobbyRender(r){const me=myUid(),host=r.h===me,arr=plArr(r);$('kLn').textContent=(r.lk?'🔒 ':'')+r.n;$('kLi').textContent=arr.length+'/'+r.mx+' jogadores · '+r.lp+' volta'+(r.lp>1?'s':'')+' · '+TK.short[r.tk===2?2:1];$('kLc').textContent=NET.code;
+function lobbyRender(r){const me=myUid(),host=r.h===me,arr=plArr(r);{const want=r.tk===2?2:1;if(TK.cur!==want&&!NET.pre){NET.pre=1;pickTrack(want,()=>{NET.pre=0})}}   // já monta a pista da sala no lobby (não trava na largada)
+ $('kLn').textContent=(r.lk?'🔒 ':'')+r.n;$('kLi').textContent=arr.length+'/'+r.mx+' jogadores · '+r.lp+' volta'+(r.lp>1?'s':'')+' · '+TK.short[r.tk===2?2:1];$('kLc').textContent=NET.code;
  const el=$('kLp');el.innerHTML='';arr.forEach(p=>{const d=D.createElement('div');d.className='kPl';d.innerHTML='<i style="background:'+COLS[p.c%COLS.length].c+'"></i><span>'+esc(p.n)+(p.id===me?' (você)':'')+'</span>'+(p.id===r.h?'<em>★ ANFITRIÃO</em>':'');el.appendChild(d)});
  const taken=arr.filter(p=>p.id!==me).map(p=>p.c),mine=(r.pl[me]||{}).c||0;swatches($('kLsw'),mine,taken,i=>{const db=NB();if(!db)return;db.ref(RC+NET.code+'/pl/'+me+'/c').set(i);CFG.col=i;saveCfg();snd('ui')});
  const b=$('kLgo');b.style.display='block';if(host){b.disabled=r.st!=='w';b.textContent=r.st==='w'?'INICIAR CORRIDA':'Corrida em andamento...'}else{b.disabled=true;b.textContent=r.st==='w'?'Aguardando o anfitrião...':'Corrida em andamento...'}}
@@ -22565,7 +22570,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261029195557;
+const GAME_BUILD=20261029203008;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
