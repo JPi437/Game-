@@ -21470,7 +21470,7 @@ function stepKart(k,dt,I){
  const wp=wallPush(k,nx,nz);
  if(wp.hit){nx=wp.nx;nz=wp.nz;const vn=k.vx*wp.bx+k.vz*wp.bz;
   if(vn<0){const imp=-vn;k.vx-=(1.28)*vn*wp.bx;k.vz-=(1.28)*vn*wp.bz;const tan=1-clp(imp*.012,0,.3);k.vx*=tan;k.vz*=tan;
-   if(imp>3.5)S.wallHits=(S.wallHits||0)+1;if(imp>3.5&&k.sndT<=0){k.sndT=.25;if(k.me){snd('wall',imp);S.shake=max(S.shake,min(.7,imp*.04));burst(nx-wp.bx*KR,k.y+.7,nz-wp.bz*KR,10,7,.3,.5,.1,[[255,230,150],[255,160,60]],{grav:12})}}
+   if(imp>3.5)S.wallHits=(S.wallHits||0)+1;if(imp>3.5&&k.sndT<=0){k.sndT=.25;if(k.me){snd('wall',imp);S.shake=max(S.shake,min(.7,imp*.04)*(abs(k.phi||0)>.3?.25:1));burst(nx-wp.bx*KR,k.y+.7,nz-wp.bz*KR,10,7,.3,.5,.1,[[255,230,150],[255,160,60]],{grav:12})}}
    if(imp>7&&k.dr)endDrift(k,false)
    k.h+=angd(k.h,atan2(k.vx,k.vz))*.18}}
  // chão
@@ -21490,6 +21490,9 @@ function stepKart(k,dt,I){
  // pontos de passagem e voltas
  const bi=clNear(k.x,k.z,k.hint,14),pr=clProj(k.x,k.z,bi);k.hint=bi;let ds=pr.s-k.sPrev;if(ds>TR.L/2)ds-=TR.L;if(ds<-TR.L/2)ds+=TR.L;k.sPrev=pr.s;k.cum+=ds;if(k.cum>k.maxCum)k.maxCum=k.cum;
  k.lat2=pr.lat;k.pdir=pr.hd;
+ if(TR.hn){const a=pr.i,b=(a+1)%TR.n,t=clp((pr.s-TR.cum[a])/((TR.cum[a+1]-TR.cum[a])||1),0,1),hs=TR.hn[a]+angd(TR.hn[a],TR.hn[b])*t,ph=lerp(TR.phi[a],TR.phi[b],t),f=clp(abs(ph)/.5,0,1);k.phi=ph;
+  if(k.trH!==undefined&&f>0&&!k.air){const d=angd(k.trH,hs)*f;if(abs(d)<.3){k.h+=d;const c=cos(d),sn=sin(d),vx=k.vx,vz=k.vz;k.vx=vx*c+vz*sn;k.vz=vz*c-vx*sn}}k.trH=hs;
+  if(f>0&&!k.air&&abs(st)<.15&&!dr){const rel=angd(hs,k.h);if(abs(rel)<.5){const d=-rel*min(1,dt*3)*f;k.h+=d;const c=cos(d),sn=sin(d),vx=k.vx,vz=k.vz;k.vx=vx*c+vz*sn;k.vz=vz*c-vx*sn}}}   // sem virar, o kart segue reto na parede   // na parede o kart gira junto com a pista: reto na tela = reto na pista
  const wr=abs(angd(k.h,pr.hd))>2.1&&k.sp>2.5;k.wrong=wr?k.wrong+dt:0;
  padCheck(k);millCheck(k);
  // respawn se caiu
@@ -21721,8 +21724,9 @@ function bendIdx(x,z){const g=TR.bg;if(!g)return -1;const ix=floor((x-g.x0)/g.c)
 function bendInto(o,x,y,z,nf){o[0]=x;o[1]=y;o[2]=z;BND.ph=0;const i0=bendIdx(x,z);if(i0<0)return 0;
  const T=TR,pr=clProj(x,z,clNear(x,z,i0,5)),a=pr.i,b=(a+1)%T.n,t=clp((pr.s-T.cum[a])/((T.cum[a+1]-T.cum[a])||1),0,1);let ph=lerp(T.phi[a],T.phi[b],t);if(abs(ph)<1e-4)return 0;
  const al=abs(pr.lat),hw=T.hw;if(!nf&&al>hw+1.5)ph*=max(0,1-(al-hw-1.5)/6);if(abs(ph)<1e-4)return 0;
- const pv=ph>0?hw:-hw,cyv=lerp(T.cy[a],T.cy[b],t),h=y-cyv,lx=cos(pr.hd),lz=-sin(pr.hd),c=cos(ph),s=sin(ph),d=pr.lat-pv,q=pv+d*c-h*s;
- o[0]=pr.px+lx*q;o[1]=cyv+d*s+h*c;o[2]=pr.pz+lz*q;BND.hd=pr.hd;BND.ph=ph;return ph}
+ const hs=T.hn[a]+angd(T.hn[a],T.hn[b])*t,lx=cos(hs),lz=-sin(hs),px=lerp(T.cx[a],T.cx[b],t),pz=lerp(T.cz[a],T.cz[b],t),lat=(x-px)*lx+(z-pz)*lz;
+ const pv=ph>0?hw:-hw,cyv=lerp(T.cy[a],T.cy[b],t),h=y-cyv,c=cos(ph),s=sin(ph),d=lat-pv,q=pv+d*c-h*s;
+ o[0]=px+lx*q;o[1]=cyv+d*s+h*c;o[2]=pz+lz*q;BND.hd=hs;BND.ph=ph;return ph}
 // matriz de um objeto em cima da pista: posição entortada e rotação em volta do sentido da pista
 function bendMM(M){if(!TR.bg)return 0;const ph=bendInto(BT,M[12],M[13],M[14]);if(!ph)return 0;
  const ax=sin(BND.hd),az=cos(BND.hd),c=cos(ph),s=sin(ph),k=1-c;   // eixo horizontal (ax,0,az)
@@ -21755,6 +21759,7 @@ function buildTrack2(){
  const n=pts.length;T.n=n;T.cx=new Float32Array(n);T.cz=new Float32Array(n);T.cy=new Float32Array(n);T.hd=new Float32Array(n);T.cum=new Float32Array(n+1);T.u=new Float32Array(us);T.phi=new Float32Array(n);
  for(let i=0;i<n;i++){T.cx[i]=pts[i][0];T.cz[i]=pts[i][1]}
  for(let i=0;i<n;i++){const j=(i+1)%n,dx=T.cx[j]-T.cx[i],dz=T.cz[j]-T.cz[i];T.hd[i]=atan2(dx,dz);T.cum[i+1]=T.cum[i]+hypot(dx,dz)}T.L=T.cum[n];
+ T.hn=new Float32Array(n);for(let i=0;i<n;i++){const a=T.hd[(i-1+n)%n];T.hn[i]=a+angd(a,T.hd[i])/2}   // direção no ponto (suave): evita tremer nos trechos na parede
  const sOfU=u=>{for(let i=0;i<n-1;i++)if(T.u[i+1]>u){const t=(u-T.u[i])/(T.u[i+1]-T.u[i]);return T.cum[i]+(T.cum[i+1]-T.cum[i])*t}return T.L*(u/N)};
  // altura (linear entre as chaves, suavizada longe dos abismos)
  const yU=u=>{const K=T2Y;for(let k=1;k<K.length;k++)if(u<=K[k][0]){const a=K[k-1],b=K[k];return a[1]+(b[1]-a[1])*(u-a[0])/(b[0]-a[0])}return 0};
@@ -21777,7 +21782,7 @@ function buildTrack2(){
    for(let b=b0;b<=b1;b++)for(let a=a0;a<=a1;a++){if(a<0||b<0||a>=g.nx||b>=g.nz)continue;const px=g.x0+(a+.5)*c,pz=g.z0+(b+.5)*c,d=hypot(px-cx,pz-cz);if(d>R)continue;const q=b*g.nx+a;if(d<dd[q]){dd[q]=d;g.a[q]=i}}}
   T.bg=g}
  // ---------- quadro de cada ponto (para desenhar já entortado) ----------
- const F=[];for(let i=0;i<n;i++){const ph=T.phi[i];F.push({x:T.cx[i],y:T.cy[i],z:T.cz[i],lx:cos(T.hd[i]),lz:-sin(T.hd[i]),c:cos(ph),s:sin(ph),pv:ph>0?hw:ph<0?-hw:0})}
+ const F=[];for(let i=0;i<n;i++){const ph=T.phi[i];F.push({x:T.cx[i],y:T.cy[i],z:T.cz[i],lx:cos(T.hn[i]),lz:-sin(T.hn[i]),c:cos(ph),s:sin(ph),pv:ph>0?hw:ph<0?-hw:0})}
  const W=(i,lat,h)=>{const f=F[(i+n)%n],d=lat-f.pv,q=f.pv+d*f.c-h*f.s;return[f.x+f.lx*q,f.y+d*f.s+h*f.c,f.z+f.lz*q]};
  const Wf=(i,lat,h)=>{const f=F[(i+n)%n];return[f.x+f.lx*lat,f.y+h,f.z+f.lz*lat]};
  T.W=W;
@@ -21936,6 +21941,7 @@ function wallFx(k,dt){if(!TR.bg||!k)return;const ph=abs(k.phi||0);if(ph<.12)retu
 function padCheck(k){if(!TR.pads||k.air)return;k.padT=max(0,(k.padT||0)-1/60);if(k.padT>0)return;
  for(const p of TR.pads){let ds=k.sPrev-p.s;if(ds>TR.L/2)ds-=TR.L;if(ds<-TR.L/2)ds+=TR.L;if(abs(ds)<2.2&&abs((k.lat2||0)-p.lat)<p.w/2+.4){k.padT=.2;boost(k,1.0,30,1);
    if(k.me){snd('boost',1);flash(120,255,140,.18);S.shake=max(S.shake,.25);burst(k.x,k.y+.4,k.z,14,6,.4,.7,.1,[[120,255,140],[230,255,200]],{grav:4})}break}}}
+function autoTurn(k,sp){const T=TR,n=T.n,i=k.hint|0,ph=lerp(T.phi[i],T.phi[(i+1)%n],.5);if(abs(ph)<.01)return 0;const j=(i+4)%n,ds=(T.cum[i+4<=n?i+4:n]-T.cum[i])||1,kap=angd(T.hd[(i-2+n)%n],T.hd[j])/(ds*1.5);return kap*sp*clp(abs(ph)/.9,0,1)}   // na parede (acima de ~50°) o kart segue a curva sozinho: reto na tela = reto na pista
 function gapAhead(k){if(!TR.gaps)return false;const s=k.sPrev;for(const g of TR.gaps){if(s>g[0]-4&&s<g[1])return true}return false}
 
 // mesas (morros de topo achatado em camadas) no horizonte do cânion
@@ -22511,7 +22517,7 @@ D.addEventListener('visibilitychange',()=>{if(D.hidden&&S.st!=='off'){IN.thr=IN.
 addEventListener('resize',()=>{if(S.st!=='off'&&booted)resize()});
 window.STARKART={open,close,S,IN,CFG,TR,KARTS:()=>KARTS,PL:()=>PL,PROJ:()=>PROJ,BANS:()=>BANS,BOXES:()=>BOXES,NET,
  _sim:sec=>{for(let t=0;t<sec;t+=1/60)simStep(1/60)},_step:simStep,_race:enterRace,_boost:boost,_hit:hitKart,_use:useItem,_give:it=>{if(PL){PL.item=it;PL.rollT=0}},_cam:()=>camS,_snd:snd,_menu:showMain,_res:showResults,_clAt:clAt,_pause:pauseOn,
- _tex:()=>TEXS,LIGHT,_mclk:f=>{MCLK=f},_bend:(o,x,y,z,nf)=>bendInto(o,x,y,z,nf),_bidx:bendIdx,_me:()=>ME,_tp:(s,sp)=>{const k=PL,p=clAt(s*TR.L);k.x=p.x;k.z=p.z;k.y=p.y;k.h=p.hd;k.hint=clNear(k.x,k.z,p.i,6);const pr=clProj(k.x,k.z,k.hint);k.sPrev=pr.s;k.cum=pr.s;k.maxCum=max(k.maxCum,k.cum);k.vx=sin(k.h)*(sp||0);k.vz=cos(k.h)*(sp||0);k.air=false;camS.init=false},_opts:()=>({qScale,fpsA}),_net:{onRoom,beginOnlineRace,doJoin}};
+ _tex:()=>TEXS,LIGHT,_mclk:f=>{MCLK=f},_bend:(o,x,y,z,nf)=>bendInto(o,x,y,z,nf),_bidx:bendIdx,_bendMM:M=>bendMM(M),_me:()=>ME,_tp:(s,sp)=>{const k=PL,p=clAt(s*TR.L);k.x=p.x;k.z=p.z;k.y=p.y;k.h=p.hd;k.hint=clNear(k.x,k.z,p.i,6);const pr=clProj(k.x,k.z,k.hint);k.sPrev=pr.s;k.cum=pr.s;k.maxCum=max(k.maxCum,k.cum);k.vx=sin(k.h)*(sp||0);k.vz=cos(k.h)*(sp||0);k.air=false;camS.init=false},_opts:()=>({qScale,fpsA}),_net:{onRoom,beginOnlineRace,doJoin}};
 
 // ---------- card no menu de Eventos ----------
 function evCard(){const box=D.querySelector('#evM .box'),n=box&&box.querySelector('.evN');if(!box||!n||$('evSk'))return;
@@ -22559,7 +22565,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261029193815;
+const GAME_BUILD=20261029195557;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
