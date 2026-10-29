@@ -5055,7 +5055,7 @@ const LSg=k=>{try{return localStorage.getItem(k)}catch(e){return null}},LSs=(k,v
 const isAdm=()=>!!A.admin&&!!MP.uid&&!MP.offline&&A.uid===MP.uid;
 const now=()=>Date.now()+(MP.off||0),TS=()=>firebase.database.ServerValue.TIMESTAMP,db=()=>MP.db;
 A.isAdm=isAdm;A.muted=()=>(+A.restr.chat||0)>now();A.noOnline=()=>(+A.restr.online||0)>now();
-const ALLN=[...new Set(['Luffy'].concat(NAMES.flat(),HNAMES.flat(),['Herobrine 3D']))];   // 'Herobrine 3D' (so funciona no Salao do Demonio) so existe aqui, nunca sai do gacha
+const ALLN=[...new Set(['Luffy'].concat(NAMES.flat(),HNAMES.flat(),DBNAMES.flat(),['Herobrine 3D']))];   // 'Herobrine 3D' (so funciona no Salao do Demonio) so existe aqui, nunca sai do gacha
 const CUR={coins:['','moedas'],ess:['','essência'],pk:['','abóboras']};
 const DUR=[['1h','1 hora',36e5],['1d','1 dia',864e5],['7d','7 dias',6048e5],['30d','30 dias',2592e6],['perm','Permanente',0]];
 const PERM=9e15,untilOf=k=>{const d=DUR.find(x=>x[0]===k);return !d||!d[2]?PERM:now()+d[2]};
@@ -5129,7 +5129,7 @@ const fail=e=>msg('Erro: '+(e&&(e.code||e.message)||e)+(String(e&&e.code||'').in
 // ---------- editor de personagem ----------
 function editor(c,id){c=c||{};const p=id||'ae';
  return `<div class="admF">
- <label>Personagem<select id="${p}_n">${ALLN.map(n=>`<option${n===c.name?' selected':''}>${esc(n)}</option>`).join('')}<option value="__c"${c.name&&!ALLN.includes(c.name)?' selected':''}>Outro nome...</option></select></label>
+ <label>Personagem<select id="${p}_n" onchange="try{const n=this.value;for(const L of[NAMES,HNAMES,DBNAMES]){const r=L.findIndex(t=>t.includes(n));if(r>=0){document.getElementById('${p}_r').value=r;break}}}catch(e){}">${ALLN.map(n=>`<option${n===c.name?' selected':''}>${esc(n)}</option>`).join('')}<option value="__c"${c.name&&!ALLN.includes(c.name)?' selected':''}>Outro nome...</option></select></label>
  <label>Nome personalizado<input id="${p}_cn" maxlength="20" value="${c.name&&!ALLN.includes(c.name)?esc(c.name):''}" placeholder="(opcional)"></label>
  <label>Raridade<select id="${p}_r">${RAR.map((r,i)=>`<option value="${i}"${i===(c.rar|0)?' selected':''}>${r}</option>`).join('')}</select></label>
  <label>Nível<input id="${p}_l" type="number" min="1" max="9999" value="${c.lvl||1}"></label>
@@ -21816,7 +21816,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261029124905;
+const GAME_BUILD=20261029125555;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
