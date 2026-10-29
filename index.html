@@ -21116,7 +21116,7 @@ function buildTrack(){
   let nx=uy*vz-uz*vy,ny=uz*vx-ux*vz,nz=ux*vy-uy*vx;const l=hypot(nx,ny,nz)||1;ny/=l;
   const k=(hsh(floor(P[0][0]*5),floor(P[0][2]*5))-.5)*14;
   if(abs(ny)>.5){if(ny<0){const t=P[1];P[1]=P[2];P[2]=t}T.terr.add(P[0],P[1],P[2]);const g=P[0][1]<-1?[78,138,70]:[92,170,76];mm.tri(P[0],P[1],P[2],pk(clp(g[0]+k,0,255),clp(g[1]+k,0,255),clp(g[2]+k,0,255)))}
-  else mm.tri(P[0],P[1],P[2],pk(124+k,98+k,76+k))}
+  else{const yb=(P[0][1]+P[1][1]+P[2][1])/3,lay=floor(yb*.9)&3,rc=[[132,104,80],[116,90,70],[146,118,90],[104,82,66]][lay];mm.tri(P[0],P[1],P[2],pk(clp(rc[0]+k,0,255),clp(rc[1]+k,0,255),clp(rc[2]+k,0,255)))}}   // paredão em camadas de pedra
  // paredes (bordas da pista) + visual de mureta
  const w=I16(KA.wl),HW=.9;T.walls=[];
  for(let i=0;i<KA.nw;i++){const o=i*8,ax=w[o]*TS,ay=w[o+1]*TS,az=w[o+2]*TS,bx=w[o+3]*TS,by=w[o+4]*TS,bz=w[o+5]*TS,nx=w[o+6]/100,nz=w[o+7]/100;
@@ -21244,22 +21244,41 @@ function engUpdate(v,thr,boost,drift,off){if(!ENG||!AC)return;const t=AC.current
  ENG.dg.gain.setTargetAtTime(drift&&!off?.1:0,t,.05);ENG.bg.gain.setTargetAtTime(boost&&!off?.1:0,t,.06);ENG.bf.frequency.setTargetAtTime(900+sp*900,t,.1)}
 function engStop(){if(!ENG)return;try{ENG.o1.stop();ENG.o2.stop();ENG.o3.stop();ENG.dn.stop();ENG.bn.stop()}catch(e){}ENG=null}
 // música: baixo, melodia, bateria (sequenciador simples)
-const MUS={on:false,tm:0,step:0,next:0};
-const CH=[[110,131,165],[87.3,110,131],[130.8,164.8,196],[98,123,147]],BASS=[1,1,2,1,1,2,1,2],SCALE=[0,2,4,7,9];
-function musNote(f,t,d,type,vol,lp){const A=AC,o=A.createOscillator(),g=A.createGain(),fl=A.createBiquadFilter();o.type=type;o.frequency.value=f;fl.type='lowpass';fl.frequency.value=lp||2400;
- g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(vol,t+.01);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(fl);fl.connect(g);g.connect(MUSG);o.start(t);o.stop(t+d+.03)}
-function musDrum(k,t){const A=AC;if(k==='k'){const o=A.createOscillator(),g=A.createGain();o.frequency.setValueAtTime(150,t);o.frequency.exponentialRampToValueAtTime(40,t+.14);g.gain.setValueAtTime(.9,t);g.gain.exponentialRampToValueAtTime(.001,t+.18);o.connect(g);g.connect(MUSG);o.start(t);o.stop(t+.2)}
- else{const s=A.createBufferSource(),f=A.createBiquadFilter(),g=A.createGain();s.buffer=NBUF;f.type=k==='s'?'bandpass':'highpass';f.frequency.value=k==='s'?1800:7000;g.gain.setValueAtTime(k==='s'?.5:.16,t);g.gain.exponentialRampToValueAtTime(.001,t+(k==='s'?.13:.04));s.connect(f);f.connect(g);g.connect(MUSG);s.start(t,rnd());s.stop(t+.15)}}
-function musSched(){if(!MUS.on||!AC)return;const spb=60/152/4;
- while(MUS.next<AC.currentTime+.3){const st=MUS.step,bar=(st>>4)&3,s16=st&15,ch=CH[bar],t=MUS.next;
-  if(s16%2===0){const bi=BASS[(s16>>1)%8];const f=ch[0]*(bi===2?1.5:1)*(s16===8||s16===14?2:1);musNote(f,t,spb*1.7,'sawtooth',.34,420)}
-  if(s16%4===0)musDrum(s16%8===0?'k':'h',t);if(s16===4||s16===12)musDrum('s',t);if(s16%2===1)musDrum('h',t);
-  // melodia: arpejo + frases (varia a cada 2 compassos)
-  const ph=(st>>5)&1,pat=ph?[0,2,1,3,4,2,3,1,0,3,2,4,3,2,1,0]:[0,1,2,3,2,1,2,4,3,2,1,0,1,2,3,2];
-  if(s16%2===0||(ph&&s16%4===3)){const sc=SCALE[pat[s16]%5],oct=(s16>7&&ph)?2:1,base=ch[0]*4*oct;musNote(base*Math.pow(2,sc/12),t,spb*1.6,'square',.12,2600)}
-  if(s16===0){for(let k=0;k<3;k++)musNote(ch[k]*2,t,spb*14,'triangle',.07,1800)}
+const MUS={on:false,tm:0,step:0,next:0,ec:null};
+// música da corrida (156 bpm, lá menor): introdução · refrão A · parte B · subida C, depois repete A-B-C
+// cada parte tem 4 compassos de 16 semicolcheias; acordes: [nota do baixo, 'm' menor / 'M' maior]
+const SECS={I:[[110,'m'],[87.31,'M'],[130.81,'M'],[98,'M']],A:[[110,'m'],[87.31,'M'],[130.81,'M'],[98,'M']],B:[[87.31,'M'],[98,'M'],[82.41,'m'],[110,'m']],C:[[73.42,'m'],[82.41,'m'],[87.31,'M'],[98,'M']]};
+const ORDER=['I','A','A','B','C','A','B','C'];
+const _=null,LEAD={   // semitons a partir do lá 440 (12 = lá 880)
+ A:[[12,_,_,12,15,_,12,_,10,_,12,_,7,_,_,_],[8,_,_,8,12,_,8,_,7,_,8,_,3,_,_,_],[7,_,_,7,10,_,7,_,3,_,7,_,12,_,10,_],[10,_,7,_,5,_,2,_,5,_,7,_,10,_,_,_]],
+ B:[[15,_,12,_,8,_,12,15,_,17,_,15,12,_,_,_],[14,_,10,_,7,_,10,14,_,17,_,14,10,_,_,_],[12,_,10,_,7,_,10,12,_,14,_,12,7,_,_,_],[12,_,_,_,15,_,_,_,19,_,17,_,15,_,12,_]],
+ C:[[5,_,8,_,12,_,8,_,5,_,8,_,12,_,17,_],[7,_,10,_,14,_,10,_,7,_,10,_,14,_,19,_],[8,_,12,_,15,_,12,_,8,_,12,_,15,_,20,_],[10,_,14,_,17,_,14,_,22,_,_,_,19,_,17,_]]};
+function musNote(f,t,d,type,vol,lp,echo){const A=AC,o=A.createOscillator(),g=A.createGain(),fl=A.createBiquadFilter();o.type=type;o.frequency.value=f;fl.type='lowpass';fl.frequency.value=lp||2400;
+ g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(vol,t+.01);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(fl);fl.connect(g);g.connect(MUSG);if(echo&&MUS.ec)g.connect(MUS.ec);o.start(t);o.stop(t+d+.03)}
+function musDrum(k,t,v){const A=AC;v=v||1;if(k==='k'){const o=A.createOscillator(),g=A.createGain();o.frequency.setValueAtTime(160,t);o.frequency.exponentialRampToValueAtTime(42,t+.13);g.gain.setValueAtTime(.95*v,t);g.gain.exponentialRampToValueAtTime(.001,t+.2);o.connect(g);g.connect(MUSG);o.start(t);o.stop(t+.22)}
+ else{const s=A.createBufferSource(),f=A.createBiquadFilter(),g=A.createGain(),cr=k==='c',sn=k==='s',oh=k==='o',d=cr?1.1:sn?.15:oh?.12:.04;s.buffer=NBUF;f.type=sn?'bandpass':'highpass';f.frequency.value=sn?1800:cr?4500:7000;
+  g.gain.setValueAtTime((sn?.5:cr?.22:oh?.14:.12)*v,t);g.gain.exponentialRampToValueAtTime(.001,t+d);s.connect(f);f.connect(g);g.connect(MUSG);s.start(t,rnd()*.5);s.stop(t+d+.02)}}
+function musSched(){if(!MUS.on||!AC)return;const spb=60/156/4;
+ while(MUS.next<AC.currentTime+.3){const st=MUS.step,bar=st>>4,s16=st&15,t=MUS.next;
+  let si=bar>>2;if(si>=ORDER.length)si=1+(si-1)%(ORDER.length-1);const sec=ORDER[si],bi=bar&3,chd=SECS[sec][bi],root=chd[0],tri=chd[1]==='m'?[0,3,7]:[0,4,7],last=bi===3,intro=sec==='I';
+  // bateria
+  if(s16===0&&bi===0&&!intro)musDrum('c',t);
+  if(intro){if(s16===0||s16===8)musDrum('k',t);if(s16===4||s16===12)musDrum('h',t,1.4)}
+  else{if(s16%4===0)musDrum('k',t);if(s16===4||s16===12)musDrum('s',t);if(s16%4===2)musDrum('o',t);if(sec==='C'&&s16%2===1)musDrum('h',t,.8)}
+  if(last&&s16>=12&&!intro&&(sec==='C'||si%2===0))musDrum('s',t,.55+(s16-12)*.15);   // virada no fim da parte
+  // baixo (oitavas pulando, quinta no fim do compasso)
+  if(s16%2===0){const hi=(s16>>1)%2===1,f=root*(s16===14?1.5:1)*(hi?2:1);musNote(f,t,spb*1.7,'sawtooth',intro?.26:.32,hi?600:420)}
+  // acorde de fundo
+  if(s16===0)for(const k of tri)musNote(root*2*Math.pow(2,k/12),t,spb*15,'triangle',.06,1600);
+  // arpejo (partes B e C)
+  if((sec==='B'||sec==='C')&&s16%2===1){const k=tri[((s16>>1)+bi)%3],oc=(s16>7)?4:2;musNote(root*oc*Math.pow(2,k/12),t,spb*1.2,'sine',.07,3000)}
+  // melodia principal com eco
+  if(!intro){const L=LEAD[sec][bi][s16];if(L!==null){let len=1;while(s16+len<16&&LEAD[sec][bi][s16+len]===null&&len<4)len++;musNote(440*Math.pow(2,L/12),t,spb*(len+.6),'square',.1,3200,true);musNote(440*Math.pow(2,(L-12)/12),t,spb*(len+.4),'triangle',.05,2000)}}
+  else if(s16%4===0&&bi>=2){musNote(root*4*Math.pow(2,tri[(s16>>2)%3]/12),t,spb*3,'square',.05,1800,true)}   // introdução: notas subindo
   MUS.next+=spb;MUS.step++}}
-function musStart(){if(MUS.on)return;if(!ac())return;MUS.on=true;MUS.next=AC.currentTime+.1;MUS.step=0;MUS.tm=setInterval(musSched,60)}
+function musStart(){if(MUS.on)return;if(!ac())return;
+ if(!MUS.ec){try{const d=AC.createDelay(1),fb=AC.createGain(),wet=AC.createGain();d.delayTime.value=60/156*.75;fb.gain.value=.3;wet.gain.value=.32;d.connect(fb);fb.connect(d);d.connect(wet);wet.connect(MUSG);MUS.ec=d}catch(e){}}
+ MUS.on=true;MUS.next=AC.currentTime+.1;MUS.step=0;MUS.tm=setInterval(musSched,60)}
 function musStop(){MUS.on=false;clearInterval(MUS.tm)}
 
 // ============================================================ malhas do jogo ============================================================
@@ -21521,11 +21540,12 @@ function buildWorldMesh(){
  // viga
  {const a=pp(-.6,8.2,8.2),b=pp(-.6,-8.2,8.2),c=pp(.6,-8.2,8.2),d=pp(.6,8.2,8.2),e=pp(-.6,8.2,6.8),g=pp(-.6,-8.2,6.8),h2=pp(.6,-8.2,6.8),i=pp(.6,8.2,6.8);
   m.quad(a,b,g,e,pk(34,40,86));m.quad(d,a,e,i,pk(34,40,86));m.quad(b,c,h2,g,pk(34,40,86));m.quad(a,d,c,b,pk(255,210,63));m.quad(e,g,h2,i,pk(24,28,60));m.quad(c,d,i,h2,pk(34,40,86))}
+ try{decoExtra(m)}catch(e){console.warn('kart deco',e)}
  // árvores e pedras
  const hsh=(a,b)=>{let h=(a*73856093^b*19349663)>>>0;h=(h^(h>>>13))*1274126177>>>0;return(h&65535)/65535};
  let placed=0,tries=0;const near=(x,z)=>{let d=1e9;for(let i=0;i<T.n;i++){const dx=x-T.cx[i],dz=z-T.cz[i],q=dx*dx+dz*dz;if(q<d)d=q}return sqrt(d)};
  let seed=7;const R=()=>{seed=(seed*16807)%2147483647;return(seed-1)/2147483646};
- while(placed<150&&tries<2400){tries++;const x=-86+R()*172,z=-48+R()*110,y=T.terr.top(x,z);if(y===null)continue;if(y<-1.2)continue;if(near(x,z)<12.5)continue;
+ while(placed<150&&tries<2400){tries++;const x=-86+R()*172,z=-48+R()*110,y=T.terr.top(x,z);if(y===null)continue;if(y<-1.2)continue;if(near(x,z)<12.5)continue;if(DECO.blk(x,z))continue;
   const sc=.8+R()*1.0,k=R();
   if(k<.78){const g=[[52,120,56],[44,106,52],[70,140,62],[38,96,60]][(R()*4)|0];m.cyl(x,y,z,.42*sc,.3*sc,1.7*sc,6,pk(110,76,44));m.cyl(x,y+1.3*sc,z,2.3*sc,.15*sc,3.4*sc,7,pk(g[0],g[1],g[2]),true);m.cyl(x,y+2.9*sc,z,1.7*sc,.1*sc,2.6*sc,7,pk(g[0]+14,g[1]+16,g[2]+8),true)}
   else if(k<.9){m.cyl(x,y,z,.45*sc,.35*sc,1.5*sc,6,pk(110,76,44));m.sph(x,y+2.3*sc,z,1.6*sc,4,7,pk(86,164,70));m.sph(x+.6*sc,y+2.9*sc,z+.3*sc,1.1*sc,3,6,pk(104,182,80))}
@@ -21535,6 +21555,145 @@ function buildWorldMesh(){
  // banner (com textura)
  {const b=new MB2(),w=7.6,y0=6.9,y1=8.1,c=pk(255,255,255),pt=(u,v,y)=>[P.x+f[0]*u+l[0]*v,P.y+y,P.z+f[1]*u+l[1]*v];
   b.quad(pt(-.7,w,y0),pt(-.7,-w,y0),pt(-.7,-w,y1),pt(-.7,w,y1),c,[0,1,1,1,1,0,0,0]);b.quad(pt(.7,-w,y0),pt(.7,w,y0),pt(.7,w,y1),pt(.7,-w,y1),c,[0,1,1,1,1,0,0,0]);ME.banner=upMesh(b.build())}}
+
+// ============================================================ cenário extra: arquibancada, boxes, pneus, placas, bandeiras, flores, montanhas, sol e semáforo ============================================================
+const DECO={gate:null,ex:[],blk:(x,z)=>DECO.ex.some(e=>hypot(x-e.x,z-e.z)<e.r)};
+function lpos(s,lat){const p=clAt(s);return{x:p.x+cos(p.hd)*lat,z:p.z-sin(p.hd)*lat,y:p.y,hd:p.hd}}
+function clDist(x,z){const T=TR;let d=1e18;for(let i=0;i<T.n;i++){const dx=x-T.cx[i],dz=z-T.cz[i],q=dx*dx+dz*dz;if(q<d)d=q}return sqrt(d)}
+// chão livre (fora da pista e longe da linha central): devolve a altura do terreno ou null
+function freeAt(x,z,mg){if(TR.road.top(x,z)!==null)return null;if(clDist(x,z)<TR.hw+(mg||2))return null;return TR.terr.top(x,z)}
+// caixa orientada pela direção da pista (u = para frente, v = para o lado, y = altura do centro)
+function obox(m,O,f,l,u,v,y,hu,hv,hy,col,top){const p=(du,dv,dy)=>[O.x+f[0]*(u+du)+l[0]*(v+dv),O.y+y+dy,O.z+f[1]*(u+du)+l[1]*(v+dv)];
+ const A=p(-hu,-hv,-hy),B=p(hu,-hv,-hy),C=p(hu,hv,-hy),Dd=p(-hu,hv,-hy),E=p(-hu,-hv,hy),F=p(hu,-hv,hy),G=p(hu,hv,hy),H=p(-hu,hv,hy);
+ m.quad(E,F,G,H,top===undefined?col:top);m.quad(A,Dd,C,B,col);m.quad(A,B,F,E,col);m.quad(C,Dd,H,G,col);m.quad(Dd,A,E,H,col);m.quad(B,C,G,F,col)}
+// disco virado para a pista (no plano lado/altura); grad = borda transparente
+function odisc(m,O,f,l,u,v,y,r,c0,c1,n){n=n||16;const p=(a,rr)=>[O.x+f[0]*u+l[0]*(v+cos(a)*rr),O.y+y+sin(a)*rr,O.z+f[1]*u+l[1]*(v+cos(a)*rr)];const C=[O.x+f[0]*u+l[0]*v,O.y+y,O.z+f[1]*u+l[1]*v];
+ for(let i=0;i<n;i++){const a0=i/n*TAU,a1=(i+1)/n*TAU,P0=p(a0,r),P1=p(a1,r);m.vtx(C[0],C[1],C[2],-f[0],0,-f[1],c0,0,0);m.vtx(P1[0],P1[1],P1[2],-f[0],0,-f[1],c1,0,0);m.vtx(P0[0],P0[1],P0[2],-f[0],0,-f[1],c1,0,0)}}
+function adsTexture(){const c=D.createElement('canvas');c.width=512;c.height=512;const x=c.getContext('2d');
+ const ad=(i,bg1,bg2,t1,col,t2,c2)=>{const y=i*128,g=x.createLinearGradient(0,y,512,y+128);g.addColorStop(0,bg1);g.addColorStop(1,bg2);x.fillStyle=g;x.fillRect(0,y,512,128);
+  x.fillStyle='rgba(255,255,255,.14)';for(let k=0;k<6;k++){x.beginPath();x.moveTo(60+k*90,y);x.lineTo(110+k*90,y);x.lineTo(70+k*90,y+128);x.lineTo(20+k*90,y+128);x.fill()}
+  x.strokeStyle='#fff';x.lineWidth=6;x.strokeRect(4,y+4,504,120);x.textAlign='center';x.textBaseline='middle';x.font='900 58px "Courier New",monospace';x.lineWidth=10;x.strokeStyle='rgba(0,0,0,.55)';x.strokeText(t1,256,y+(t2?52:66));x.fillStyle=col;x.fillText(t1,256,y+(t2?52:66));
+  if(t2){x.font='900 24px "Courier New",monospace';x.fillStyle=c2;x.fillText(t2,256,y+100)}};
+ ad(0,'#4a148c','#d81b60','ALLSTAR','#ffd23f','O JOGO DOS LUTADORES','#fff');
+ ad(1,'#0d1b4a','#1e3c8c','STAR KART','#ffd23f','★ ★ ★ ★ ★','#fff');
+ ad(2,'#0277bd','#26c6da','NITRO!','#fff','VELOCIDADE MÁXIMA','#e0f7fa');
+ ad(3,'#b71c1c','#ff6f00','PIZZARIA','#fff3e0','DO PIXEL · 12AM-6AM','#ffe082');
+ return mkTex(c,false,true)}
+function decoExtra(m){
+ const T=TR,P=clAt(0),f=[sin(P.hd),cos(P.hd)],l=[cos(P.hd),-sin(P.hd)];DECO.gate={x:P.x,y:P.y,z:P.z,f,l};
+ let seed=99;const R=()=>{seed=(seed*16807)%2147483647;return(seed-1)/2147483646};
+ // --- pilhas de pneus nas curvas (por fora da mureta) ---
+ for(let s=4;s<T.L;s+=6.5){const a=clAt(s-6),b=clAt(s+6),cv=abs(angd(a.hd,b.hd));if(cv<.28)continue;
+  for(const sd of[1,-1]){const q=lpos(s,sd*(T.hw+3.3)),y=freeAt(q.x,q.z,2.3);if(y===null)continue;
+   for(let j=-1;j<=1;j++){const tx=q.x+sin(q.hd)*j*1.12,tz=q.z+cos(q.hd)*j*1.12,band=[pk(230,40,44),pk(240,240,240),pk(255,200,40)][(floor(s)+j+3)%3];
+    for(let h=0;h<3;h++)m.cyl(tx,y+h*.35,tz,.53,.53,.33,10,h===1?band:pk(30,30,34),h===2)}}}
+ // --- arquibancada com torcida (no lado livre da reta de largada) e boxes do outro lado ---
+ const okSide=(v0,v1)=>[1,-1].filter(sd=>{for(const u of[-24,-12,0,12,24])for(const v of[v0,v1]){const x=P.x+f[0]*u+l[0]*v*sd,z=P.z+f[1]*u+l[1]*v*sd;if(T.road.top(x,z)!==null)return false}return true});
+ const sides=okSide(12.5,21.5),stand=sides[0];
+ if(stand){const sd=stand,gy=P.y;const O={x:P.x,y:gy,z:P.z};
+  for(let r=0;r<6;r++){const v=sd*(13.4+r*1.15),h=(r+1)*.62;obox(m,O,f,l,0,v,h/2-.3,25,.58,h/2+.3,r%2?pk(150,156,170):pk(170,176,190),pk(200,206,218));
+   obox(m,O,f,l,0,v-sd*.35,h+.08,25,.1,.06,r%2?pk(30,120,230):pk(230,40,44));   // faixa das cadeiras
+   for(let u=-24;u<=24;u+=.72){if(R()<.18)continue;const shirt=pk(60+R()*195|0,60+R()*195|0,60+R()*195|0),skin=[pk(255,214,170),pk(224,172,120),pk(160,110,70),pk(110,72,46)][(R()*4)|0],jump=R()<.25?.18:0;
+    obox(m,O,f,l,u,v,h+.36+jump,.2,.15,.3,shirt);obox(m,O,f,l,u,v,h+.82+jump,.15,.15,.15,skin);
+    if(R()<.12)obox(m,O,f,l,u,v-sd*.05,h+1.3+jump,.04,.04,.3,pk(255,210,63))}}   // alguns com os braços (bandeirinhas) para cima
+  const vb=sd*(13.4+6*1.15+.4);for(let u=-24;u<=24;u+=8)obox(m,O,f,l,u,vb,3.6,.22,.22,3.6,pk(60,64,80));
+  for(let u=-25;u<25;u+=2.5)obox(m,O,f,l,u+1.25,sd*17.4,7.3,1.25,4.6,.12,(floor(u/2.5)&1)?pk(240,240,240):pk(220,40,44),(floor(u/2.5)&1)?pk(250,250,250):pk(230,48,52));   // cobertura listrada
+  obox(m,O,f,l,0,vb,3.8,25,.15,3.8,pk(80,86,104));DECO.ex.push({x:P.x+l[0]*17*sd,z:P.z+l[1]*17*sd,r:30})}
+ const pit=sides.find(s=>s!==stand)||(stand?null:-1);
+ if(pit){const sd=pit,O={x:P.x,y:P.y,z:P.z},door=[pk(229,57,53),pk(30,136,229),pk(67,160,71),pk(253,216,53),pk(142,36,170)];
+  obox(m,O,f,l,0,sd*17,2.2,23,3.6,2.2,pk(232,234,240),pk(200,205,215));
+  for(let i=0;i<5;i++){const u=-18+i*9;obox(m,O,f,l,u,sd*13.35,1.5,3.4,.06,1.5,pk(40,44,56));obox(m,O,f,l,u,sd*13.3,3.35,3.6,.08,.32,door[i])}
+  obox(m,O,f,l,0,sd*13.3,4.7,23,.1,.25,pk(255,210,63));DECO.ex.push({x:P.x+l[0]*17*sd,z:P.z+l[1]*17*sd,r:26})}
+ // --- bandeiras na reta ---
+ const FC=[pk(229,57,53),pk(255,210,63),pk(30,136,229),pk(67,160,71),pk(255,255,255),pk(142,36,170)];
+ for(let u=-30;u<=30;u+=6){if(abs(u)<3)continue;for(const sd of[1,-1]){const v=sd*10.6,x=P.x+f[0]*u+l[0]*v,z=P.z+f[1]*u+l[1]*v;if(T.road.top(x,z)!==null)continue;const gy=T.terr.top(x,z);if(gy===null)continue;
+  m.cyl(x,gy,z,.07,.06,4.6,6,pk(230,230,236),true);const c=FC[((u/6|0)+(sd>0?0:3)+12)%FC.length],t0=[x,gy+4.5,z],t1=[x,gy+3.5,z],t2=[x-f[0]*1.5,gy+4.05,z-f[1]*1.5];m.tri(t0,t1,t2,c);m.tri(t0,t2,t1,c)}}
+ // --- placas de propaganda (com textura) ---
+ {const A=new MB2(),W1=pk(255,255,255);let n=0;
+  for(let s=14;s<T.L-6&&n<12;s+=T.L/14){for(const sd of[1,-1]){const q=lpos(s,sd*(T.hw+4.6)),y=freeAt(q.x,q.z,3.2);if(y===null)continue;
+    const tx=sin(q.hd),tz=cos(q.hd),hw=3.3,y0=y+1.5,y1=y+3.9,a=[q.x-tx*hw,q.z-tz*hw],b=[q.x+tx*hw,q.z+tz*hw],row=n%4,v0=row/4,v1=(row+1)/4;
+    const uv=sd>0?[0,v1,1,v1,1,v0,0,v0]:[1,v1,0,v1,0,v0,1,v0];A.quad([a[0],y0,a[1]],[b[0],y0,b[1]],[b[0],y1,b[1]],[a[0],y1,a[1]],W1,uv);
+    m.cyl(a[0],y,a[1],.12,.1,y1-y,6,pk(70,74,88),true);m.cyl(b[0],y,b[1],.12,.1,y1-y,6,pk(70,74,88),true);
+    const bk=[q.x+cos(q.hd)*sd*.08,q.z-sin(q.hd)*sd*.08];m.quad([a[0]+bk[0]-q.x,y0-.1,a[1]+bk[1]-q.z],[b[0]+bk[0]-q.x,y0-.1,b[1]+bk[1]-q.z],[b[0]+bk[0]-q.x,y1+.1,b[1]+bk[1]-q.z],[a[0]+bk[0]-q.x,y1+.1,a[1]+bk[1]-q.z],pk(50,54,66));
+    n++;break}}
+  if(n){ME.ads=upMesh(A.build());TEXS.ads=adsTexture()}}
+ // --- flores e arbustos ---
+ const FL=[[255,82,82],[255,214,64],[255,255,255],[186,104,200],[255,138,101],[100,181,246]];let fl=0,tr=0;
+ while(fl<340&&tr<5000){tr++;const x=-86+R()*172,z=-48+R()*110,y=T.terr.top(x,z);if(y===null||y<-1.2)continue;const d=clDist(x,z);if(d<T.hw+2.6||d>60||DECO.blk(x,z))continue;
+  if(R()<.8){const c=FL[(R()*FL.length)|0],cc=pk(c[0],c[1],c[2]),gr=pk(60,140,60);for(let k=0;k<4;k++){const ox=(R()-.5)*1.4,oz=(R()-.5)*1.4,s=.16+R()*.08;
+    m.quad([x+ox-s,y+.42,z+oz],[x+ox+s,y+.42,z+oz],[x+ox+s,y+.42+s*2,z+oz],[x+ox-s,y+.42+s*2,z+oz],cc);m.quad([x+ox,y+.42,z+oz-s],[x+ox,y+.42,z+oz+s],[x+ox,y+.42+s*2,z+oz+s],[x+ox,y+.42+s*2,z+oz-s],cc);
+    m.quad([x+ox-.03,y,z+oz],[x+ox+.03,y,z+oz],[x+ox+.03,y+.45,z+oz],[x+ox-.03,y+.45,z+oz],gr)}}
+  else{const g=[[58,128,58],[72,150,64],[50,112,62]][(R()*3)|0];m.sph(x,y+.35,z,.9+R()*.5,3,7,pk(g[0],g[1],g[2]),.75);m.sph(x+.6,y+.3,z+.3,.6,3,6,pk(g[0]+18,g[1]+18,g[2]+8),.75)}
+  fl++}
+ // --- semáforo pendurado no pórtico da largada (carcaça; as luzes acesas são desenhadas por cima) ---
+ const O={x:P.x,y:P.y,z:P.z},uS=-.85;
+ obox(m,O,f,l,uS+.2,0,6.15,.28,1.95,.62,pk(26,28,36));obox(m,O,f,l,uS+.2,0,6.85,.08,1.2,.12,pk(60,62,72));
+ for(const v of[1.2,-1.2])obox(m,O,f,l,uS+.2,v,6.95,.06,.06,.25,pk(60,62,72));
+ const LC=[[255,40,40],[255,206,40],[60,255,100]],LV=[1.25,0,-1.25];   // do ponto de vista do piloto: vermelho à esquerda, verde à direita
+ LV.forEach((v,i)=>{const c=LC[i];odisc(m,O,f,l,uS-.09,v,6.15,.46,pk(c[0]*.22|0,c[1]*.22|0,c[2]*.22|0),pk(c[0]*.16|0,c[1]*.16|0,c[2]*.16|0));
+  obox(m,O,f,l,uS-.2,v,6.68,.18,.5,.05,pk(20,22,28))});   // pala em cima de cada luz
+ ME.semL=[];ME.semH=[];LV.forEach((v,i)=>{const c=LC[i],a=new MB2(),h=new MB2();odisc(a,O,f,l,uS-.1,v,6.15,.44,pk(255,255,255),pk(c[0],c[1],c[2]));ME.semL.push(upMesh(a.build()));
+  odisc(h,O,f,l,uS-.14,v,6.15,1.6,pk(c[0],c[1],c[2],200),pk(c[0],c[1],c[2],0),20);ME.semH.push(upMesh(h.build()))});
+ // --- montanhas no horizonte e sol (desenhados junto com o céu) ---
+ {const M=new MB2();let sd2=7;const Rm=()=>{sd2=(sd2*16807)%2147483647;return(sd2-1)/2147483646};
+  for(let i=0;i<26;i++){const a=i/26*TAU+Rm()*.2,d=300+Rm()*40,cx=cos(a)*d,cz=sin(a)*d,h=40+Rm()*70,r=55+Rm()*45,b=Rm()*20|0;
+   const base=pk(96+b,120+b,150+b),mid=pk(120+b,144+b,172+b),snow=pk(240,246,255);const n=7;
+   for(let k=0;k<n;k++){const a0=k/n*TAU,a1=(k+1)/n*TAU,p0=[cx+cos(a0)*r,-14,cz+sin(a0)*r],p1=[cx+cos(a1)*r,-14,cz+sin(a1)*r],m0=[cx+cos(a0)*r*.34,-14+h*.66,cz+sin(a0)*r*.34],m1=[cx+cos(a1)*r*.34,-14+h*.66,cz+sin(a1)*r*.34],tp=[cx,-14+h,cz];
+    M.quad(p0,p1,m1,m0,k%2?base:mid);M.tri(m0,m1,tp,snow)}}
+  for(let i=0;i<40;i++){const a=i/40*TAU,d=250,cx=cos(a)*d,cz=sin(a)*d,h=10+Rm()*14,r=34+Rm()*20,g=pk(74+(Rm()*20|0),128+(Rm()*20|0),84);M.sph(cx,-12,cz,r,3,7,g,h/r)}   // morros verdes mais perto
+  ME.mount=upMesh(M.build())}
+ {const s=LIGHT.sun,d=320,M=new MB2(),H2=new MB2();M.sph(s[0]*d,s[1]*d,s[2]*d,14,5,10,pk(255,250,225));H2.sph(s[0]*d,s[1]*d,s[2]*d,40,5,10,pk(255,236,180,60));ME.sun=upMesh(M.build());ME.sunH=upMesh(H2.build())}
+}
+// fase do semáforo: -1 apagado · 0 vermelho · 1 amarelo · 2 verde
+function semPh(){if(S.st==='count'){const rem=(S.startAt-nowS())/1000;return rem>3?-1:rem>1.5?0:1}if(S.st==='race'&&S.go&&S.raceT<2.6)return 2;return -1}
+function drawSem(){if(!ME.semL)return;const ph=semPh();if(ph<0)return;const i=ph;drawMesh(ME.semL[i],null,{em:1});drawMesh(ME.semH[i],null,{blend:2,em:1,tint:[1,1,1,.7+.3*sin(S.t*14)]})}
+function drawSky2(){if(!ME.mount)return;M4.id(MM);MM[12]=camS.x;MM[13]=0;MM[14]=camS.z;drawMesh(ME.sunH,MM,{em:1,nodepth:true,blend:2});drawMesh(ME.sun,MM,{em:1,nodepth:true});drawMesh(ME.mount,MM,{em:.55,nodepth:true})}
+// fogos de artifício no pórtico (a cada volta)
+function gateFireworks(big){const G=DECO.gate;if(!G)return;const cols=[[[255,220,80],[255,255,255]],[[255,90,160],[255,200,230]],[[80,200,255],[220,245,255]],[[120,255,160],[230,255,240]]];
+ for(let i=0;i<(big?6:4);i++){const sd=i%2?1:-1,x=G.x+G.l[0]*(5+i*1.5)*sd+G.f[0]*(rnd()-.5)*6,z=G.z+G.l[1]*(5+i*1.5)*sd+G.f[1]*(rnd()-.5)*6,y=G.y+10+rnd()*5,c=cols[i%4];
+  setTimeout(()=>{burst(x,y,z,34,11,1.1,1.1,.12,c,{grav:4,drag:.9});ring(x,y,z,9,.5,c[0],.9);try{snd('bump')}catch(e){}},i*140)}}
+
+// ============================================================ HUD: semáforo, aviso de volta e nitro ============================================================
+function drawSemHUD(c,u,ph,pop){const Dm=46*u,w=Dm*3+30*u,h=Dm+22*u,x=W/2-w/2,y=H*.2;c.save();
+ const sc=1+max(0,pop||0)*.25;c.translate(W/2,y+h/2);c.scale(sc,sc);c.translate(-W/2,-(y+h/2));
+ c.fillStyle='rgba(10,12,20,.92)';rr(c,x,y,w,h,h/2);c.fill();c.lineWidth=3*u;c.strokeStyle='#ffd23f';c.stroke();
+ const LC=['#ff2a2a','#ffd23f','#3dff6a'],LD=['#4a1010','#4a3a10','#0e3a1a'];
+ for(let i=0;i<3;i++){const cx=x+15*u+Dm/2+i*Dm,cy=y+h/2,r=Dm*.4,on=i===ph;
+  if(on){c.save();c.shadowColor=LC[i];c.shadowBlur=36*u;const g=c.createRadialGradient(cx-r*.3,cy-r*.3,1,cx,cy,r);g.addColorStop(0,'#fff');g.addColorStop(.35,LC[i]);g.addColorStop(1,LC[i]);c.fillStyle=g;c.beginPath();c.arc(cx,cy,r,0,TAU);c.fill();c.restore()}
+  else{c.fillStyle=LD[i];c.beginPath();c.arc(cx,cy,r,0,TAU);c.fill();c.fillStyle='rgba(255,255,255,.06)';c.beginPath();c.arc(cx-r*.25,cy-r*.3,r*.35,0,TAU);c.fill()}
+  c.lineWidth=2*u;c.strokeStyle='rgba(0,0,0,.6)';c.beginPath();c.arc(cx,cy,r,0,TAU);c.stroke()}
+ c.restore()}
+function lapFxStart(n,final,lt,best){S.lapFx={t:0,n,final,lt,best,p:[]};const P=S.lapFx.p,cols=final?['#ff5a3a','#ffd23f','#fff','#ff9100']:['#ffd23f','#fff','#5cff8a','#4fc3f7','#ff4fa8'];
+ for(let i=0;i<70;i++)P.push({x:W/2+(rnd()-.5)*W*.9,y:H*.42+(rnd()-.5)*40,vx:(rnd()-.5)*420,vy:-160-rnd()*380,r:rnd()*TAU,vr:(rnd()-.5)*14,s:3+rnd()*5,c:cols[(rnd()*cols.length)|0]})}
+function drawLapFx(c,u,dt){const L=S.lapFx;if(!L)return;L.t+=dt;const t=L.t,D2=2.6;if(t>D2){S.lapFx=null;return}
+ const inP=min(1,t/.32),e=1-Math.pow(1-inP,3),out=t>D2-.45?(t-(D2-.45))/.45:0,cy=H*.42,bh=96*u,sk=40*u;
+ const off=(1-e)*-W*1.2+out*W*1.2;c.save();c.translate(off,0);c.globalAlpha=1-out*.6;
+ // faixa inclinada
+ const g=c.createLinearGradient(0,cy-bh/2,0,cy+bh/2);if(L.final){g.addColorStop(0,'#ff7a1a');g.addColorStop(1,'#c4130a')}else{g.addColorStop(0,'#2a2f7a');g.addColorStop(1,'#11143c')}
+ c.fillStyle=g;c.beginPath();c.moveTo(-20,cy-bh/2);c.lineTo(W+20,cy-bh/2-sk);c.lineTo(W+20,cy+bh/2-sk);c.lineTo(-20,cy+bh/2);c.closePath();c.fill();
+ c.fillStyle='#ffd23f';for(const yy of[cy-bh/2-7*u,cy+bh/2+3*u]){c.beginPath();c.moveTo(-20,yy);c.lineTo(W+20,yy-sk);c.lineTo(W+20,yy-sk+4*u);c.lineTo(-20,yy+4*u);c.closePath();c.fill()}   // bordas acompanham a inclinação
+ // brilho passando
+ const sx=((t*1.4)%1.4-.2)*W;c.save();c.globalCompositeOperation='lighter';const sg2=c.createLinearGradient(sx-60*u,0,sx+60*u,0);sg2.addColorStop(0,'rgba(255,255,255,0)');sg2.addColorStop(.5,'rgba(255,255,255,.35)');sg2.addColorStop(1,'rgba(255,255,255,0)');c.fillStyle=sg2;c.fillRect(sx-60*u,cy-bh/2-sk,120*u,bh+sk);c.restore();
+ // texto
+ const pul=1+.06*sin(t*12);c.save();c.translate(W/2,cy-sk/2);c.rotate(-Math.atan2(sk,W));c.scale(pul,pul);
+ if(L.final){tx(c,'ÚLTIMA VOLTA!',0,-6*u,48*u,(floor(t*8)&1)?'#fff':'#ffd23f','center','#5a0a00')}
+ else{tx(c,'VOLTA',-70*u,-16*u,20*u,'#9ec2ff','center','#000');tx(c,L.n+'/'+S.laps,30*u,-4*u,60*u,'#ffd23f','center','#7a4a00')}
+ if(L.lt>0)tx(c,fmtT(L.lt)+(L.best?'  ★ MELHOR VOLTA!':''),0,30*u,16*u,L.best?'#5cff8a':'#fff','center','#000');c.restore();c.restore();
+ // confete
+ for(const p of L.p){p.vy+=620*dt;p.vx*=.99;p.x+=p.vx*dt;p.y+=p.vy*dt;p.r+=p.vr*dt;if(p.y>H+20)continue;c.save();c.globalAlpha=clp(1-(t-1.6),0,1);c.translate(p.x,p.y);c.rotate(p.r);c.fillStyle=p.c;c.fillRect(-p.s*u/2,-p.s*u/4,p.s*u,p.s*u/2);c.restore()}}
+// chamas azuis nas bordas da tela e "NITRO!" enquanto o nitro está ligado
+function drawNitroFx(c,u,k){const on=k.boostT>0&&k.bcol===4;S.nitA=on?min(1,(S.nitA||0)+.12):max(0,(S.nitA||0)-.05);if(on&&!S.nitOn){S.nitOn=1;S.nitT=0}if(!on)S.nitOn=0;S.nitT=(S.nitT||0)+1/60;
+ const a=S.nitA;if(a<=0)return;c.save();c.globalCompositeOperation='lighter';
+ const g=c.createRadialGradient(W/2,H/2,min(W,H)*.3,W/2,H/2,max(W,H)*.72);g.addColorStop(0,'rgba(0,80,255,0)');g.addColorStop(1,`rgba(40,140,255,${.45*a})`);c.fillStyle=g;c.fillRect(0,0,W,H);
+ const flame=(x0,y0,ang,len,wid,i)=>{c.save();c.translate(x0,y0);c.rotate(ang);const L2=len*(.7+.3*sin(S.t*24+i*1.9)+rnd()*.15),wob=sin(S.t*18+i)*wid*.4;
+  const fg=c.createLinearGradient(0,0,0,-L2);fg.addColorStop(0,`rgba(220,245,255,${.9*a})`);fg.addColorStop(.35,`rgba(70,170,255,${.75*a})`);fg.addColorStop(1,'rgba(20,60,255,0)');c.fillStyle=fg;
+  c.beginPath();c.moveTo(-wid,0);c.quadraticCurveTo(-wid*.5+wob,-L2*.55,wob*1.4,-L2);c.quadraticCurveTo(wid*.5+wob,-L2*.55,wid,0);c.closePath();c.fill();c.restore()};
+ const N=14;for(let i=0;i<=N;i++){flame(i/N*W,H+6*u,0,(70+40*((i*7)%3))*u,26*u,i)}   // embaixo
+ for(let i=0;i<=7;i++){const y=H*(.25+.75*i/7);flame(-6*u,y,PI/2,(48+22*(i%3))*u,20*u,i+20);flame(W+6*u,y,-PI/2,(48+22*(i%3))*u,20*u,i+40)}   // laterais
+ // linhas de velocidade fortes
+ c.translate(W/2,H/2);c.lineCap='round';for(let i=0;i<40;i++){const an=(i*2.399+S.t*1.3)%TAU,r0=min(W,H)*(.3+((i*37)%10)/36),r1=r0+min(W,H)*(.35+((i*13+floor(S.t*30))%7)/14);c.strokeStyle=`rgba(190,230,255,${.45*a})`;c.lineWidth=(1.5+(i%3))*u;c.beginPath();c.moveTo(cos(an)*r0,sin(an)*r0*.7);c.lineTo(cos(an)*r1,sin(an)*r1*.7);c.stroke()}
+ c.restore();
+ if(on&&S.nitT<1){const tt=S.nitT,sc=1+max(0,.4-tt)*2;c.save();c.globalAlpha=clp(1.3-tt*1.3,0,1);c.translate(W/2,H*.3);c.scale(sc,sc);c.rotate(-.06);tx(c,'NITRO!',0,0,62*u,'#bfe8ff','center','#0a2a7a');c.restore()}}
 
 // ============================================================ câmera ============================================================
 const VP=new Float32Array(16),VM=new Float32Array(16),PM=new Float32Array(16),TMP=new Float32Array(16),KM=new Float32Array(16),WM2=new Float32Array(16),MM=new Float32Array(16);
@@ -21552,6 +21711,7 @@ function updateCam(dt,k,menu){
  const ex=k.x-sin(camS.yaw)*dist,ez=k.z-cos(camS.yaw)*dist;
  const sy=2.2;let ey=k.y+hgt;camS.y+=(ey-camS.y)*min(1,dt*6);
  // não sobe de mais embaixo do viaduto
+ if(k.boostT>0&&k.bcol===4)S.shake=max(S.shake,.32);
  if(S.shake>0){S.shake=max(0,S.shake-dt*2.2)}
  const sh=S.shake*S.shake*.6;camS.x=ex+(rnd()-.5)*sh;camS.z=ez+(rnd()-.5)*sh;
  camS.tx=k.x+sin(camS.yaw)*3.2;camS.ty=k.y+1.5;camS.tz=k.z+cos(camS.yaw)*3.2;
@@ -21591,9 +21751,12 @@ function render(dt){
  setFrameU(VP,camPos);
  // céu
  M4.id(MM);MM[12]=camS.x;MM[13]=camS.y-30;MM[14]=camS.z;drawMesh(ME.sky,MM,{em:1,nodepth:true});
+ drawSky2();
  M4.trs(MM,camS.x,camS.y-30,camS.z,S.t*.004,0,0,1,1,1);drawMesh(ME.cloud,MM,{em:1,nodepth:true,blend:1});
  drawMesh(ME.world,null,{});
  drawMesh(ME.banner,null,{tx:TEXS.banner,em:.55});
+ if(ME.ads&&TEXS.ads)drawMesh(ME.ads,null,{tx:TEXS.ads,em:.55});
+ drawSem();
  const KL=(S.st==='menu'&&S.show)?[S.show]:KARTS;
  for(const k of KL)drawShadow(k);
  KL0=KL[0];for(const k of KL)drawKart(k);
@@ -21635,6 +21798,7 @@ function drawHUD(){
  if(S.boostFx>0||k.boostT>0){const a=k.boostT>0?1:0;S.boostFx+=((a)-S.boostFx)*.12;const al=S.boostFx*.55;
   const g=c.createRadialGradient(W/2,H/2,min(W,H)*.25,W/2,H/2,max(W,H)*.75);const bc=FCOL[k.bcol||1];g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,`rgba(${bc[0]*255|0},${bc[1]*255|0},${bc[2]*255|0},${al*.5})`);c.fillStyle=g;c.fillRect(0,0,W,H);
   c.save();c.translate(W/2,H/2);c.lineCap='round';for(let i=0;i<26;i++){const a0=(i*2.399+S.t*.7)%TAU,r0=min(W,H)*(.38+((i*37)%10)/40),r1=r0+min(W,H)*(.22+((i*13+floor(S.t*20))%7)/20);c.strokeStyle=`rgba(255,255,255,${al*.35})`;c.lineWidth=1.5+(i%3);c.beginPath();c.moveTo(cos(a0)*r0,sin(a0)*r0*.75);c.lineTo(cos(a0)*r1,sin(a0)*r1*.75);c.stroke()}c.restore()}
+ drawNitroFx(c,u,k);
  if(k.burn>0){const g=c.createRadialGradient(W/2,H/2,min(W,H)*.2,W/2,H/2,max(W,H)*.7);g.addColorStop(0,'rgba(255,80,0,0)');g.addColorStop(1,`rgba(255,90,10,${clp(k.burn,0,1)*.55})`);c.fillStyle=g;c.fillRect(0,0,W,H)}
  if(k.frzT>0||S.frost>0){if(k.frzT<=0)S.frost=max(0,S.frost-.04);const a=k.frzT>0?1:S.frost;if(!frostLines){frostLines=[];for(let i=0;i<46;i++){const ang=rnd()*TAU,r0=.45+rnd()*.3,pts=[];let r=r0,an=ang;for(let j=0;j<4;j++){pts.push([cos(an)*r,sin(an)*r*.8]);r+=.08+rnd()*.1;an+=(rnd()-.5)*.4}frostLines.push(pts)}}
   const g=c.createRadialGradient(W/2,H/2,min(W,H)*.15,W/2,H/2,max(W,H)*.68);g.addColorStop(0,'rgba(180,230,255,.08)');g.addColorStop(.6,`rgba(170,225,255,${.38*a})`);g.addColorStop(1,`rgba(235,250,255,${.85*a})`);c.fillStyle=g;c.fillRect(0,0,W,H);
@@ -21672,12 +21836,15 @@ function drawHUD(){
   const act=k.dr||k.armed;if(act){const sw=58*u,sy=by-36*u;for(let i=0;i<3;i++){const x=W/2-sw*1.5-4*u+i*(sw+4*u),prev=i?T_DRIFT[i-1]:0,fill=clp((k.dT-prev)/(T_DRIFT[i]-prev),0,1),col=TIERC[i+1];
     c.fillStyle='rgba(8,12,28,.7)';rr(c,x,sy,sw,12*u,6*u);c.fill();c.fillStyle=`rgb(${col[0]},${col[1]},${col[2]})`;rr(c,x+1.5,sy+1.5,max(0,(sw-3)*fill),9*u,4.5*u);c.fill();
     if(fill>=1){c.strokeStyle='#fff';c.lineWidth=1.5;rr(c,x,sy,sw,12*u,6*u);c.stroke()}}}}
+ // --- aviso de volta ---
+ drawLapFx(c,u,1/60);
  // --- mensagens ---
  for(let i=S.msgs.length-1;i>=0;i--){const m=S.msgs[i];m.a+=1/60;if(m.a>m.d){S.msgs.splice(i,1);continue}}
  S.msgs.forEach((m,i)=>{const t=m.a/m.d,a=t<.1?t/.1:t>.7?1-(t-.7)/.3:1,sc=1+max(0,.35-t*2)*1.4;c.save();c.globalAlpha=clp(a,0,1);c.translate(W/2,H*.36+i*34*u);c.scale(sc,sc);tx(c,m.t,0,0,26*u,m.c,'center','rgba(0,0,0,.8)');c.restore()});
  // --- contagem e avisos ---
- if(S.st==='count'){const rem=(S.startAt-nowS())/1000;let t='';if(rem>3.2)t='PREPARE-SE';else if(rem>0)t=String(Math.ceil(rem));if(t){const fr=t.length>2?0:(rem%1),sc=t.length>2?1:1+(1-fr)*.5;c.save();c.translate(W/2,H*.42);c.scale(sc,sc);c.globalAlpha=t.length>2?1:clp(fr*2.5,.0,1);tx(c,t,0,0,(t.length>2?30:120)*u,'#ffd23f','center','#7a4a00');c.restore()}}
- else if(S.goT>0){S.goT-=1/60;c.save();c.translate(W/2,H*.42);const sc=1+(S.goT)*.4;c.scale(sc,sc);c.globalAlpha=clp(S.goT*2,0,1);tx(c,'VAI!',0,0,100*u,'#5cff8a','center','#0a5a20');c.restore()}
+ if(S.st==='count'){const rem=(S.startAt-nowS())/1000,ph=rem>3?-1:rem>1.5?0:1,pop=ph<0?0:ph===0?1-(3-rem)/.35:1-(1.5-rem)/.35;drawSemHUD(c,u,ph,pop);
+  tx(c,ph<0?'PREPARE-SE':ph===0?'ATENÇÃO...':'ACELERE AGORA!',W/2,H*.2+96*u,ph===1?24*u:22*u,ph===1?'#ffd23f':'#fff','center','#000')}   // semáforo: vermelho, amarelo e verde (o turbo da largada é acelerar no amarelo)
+ else if(S.goT>0){S.goT-=1/60;if(S.raceT<.9)drawSemHUD(c,u,2,(.3-S.raceT)/.3);c.save();c.translate(W/2,H*.44);const sc=1+(S.goT)*.4;c.scale(sc,sc);c.globalAlpha=clp(S.goT*2,0,1);tx(c,'VAI!',0,0,100*u,'#5cff8a','center','#0a5a20');c.restore()}
  if(k.wrong>.8&&S.st==='race'&&floor(S.t*3)%2===0){tx(c,'⚠ CONTRAMÃO ⚠',W/2,H*.3,22*u,'#ff4a3a','center')}
  if(k.fin&&S.st!=='results'){tx(c,'CHEGADA!',W/2,H*.3,40*u,'#ffd23f','center','#7a4a00')}
  // --- nomes dos outros karts ---
@@ -21724,7 +21891,7 @@ function simStep(dt){
  if(S.st==='off'||S.st==='results')return;
  // contagem
  if(S.st==='count'){const rem=(S.startAt-nowS())/1000,n=rem>0?ceil_(rem):0;
-  if(rem<=3.2&&n!==beepN&&n>0&&n<=3){beepN=n;snd('beep')}
+  {const ph=rem>3?-1:rem>1.5?0:1;if(ph>=0&&ph!==beepN){beepN=ph;snd('beep')}}
   if(IN.thr||KEYS.ArrowUp||KEYS.w)S.thrT+=dt;else S.thrT=0;
   if(rem<=0){S.st='race';S.go=true;S.goT=.9;beepN=-1;snd('go');
    if(PL){if(S.thrT>0&&S.thrT<=1.05){boost(PL,1.15,29,1);flash(255,200,100,.25);popup('LARGADA TURBO!','#ffd23f');snd('boost',1)}else if(S.thrT>2){PL.stall=.7;popup('PATINOU!','#ff8a65');burst(PL.x,PL.y+.3,PL.z,16,3,.7,1.2,2.6,[220,220,220],{add:0,a:.5,grav:-1})}}}}
@@ -21739,7 +21906,7 @@ function simStep(dt){
   // voltas
   const done=max(0,floor(PL.maxCum/TR.L));
   if(S.go&&done>PL.lap&&!PL.fin){PL.lap=done;const lt=S.raceT-PL.lapT0;PL.lapT0=S.raceT;PL.lastLap=lt;S.lapTimes.push(lt);if(!S.bestLap||lt<S.bestLap)S.bestLap=lt;
-   if(done>=S.laps)finishMe();else{popup('VOLTA '+(done+1)+'/'+S.laps+' · '+fmtT(lt),'#ffd23f');snd(done===S.laps-1?'final':'lap');if(done===S.laps-1)setTimeout(()=>popup('ÚLTIMA VOLTA!','#ff5a3a'),700)}}
+   if(done>=S.laps)finishMe();else{lapFxStart(done+1,done===S.laps-1,lt,S.bestLap===lt&&done>1);gateFireworks(done===S.laps-1);snd(done===S.laps-1?'final':'lap')}}
  }
  // outros karts
  for(const k of KARTS){if(k.me)continue;stepRemote(k,dt)}
@@ -21760,7 +21927,7 @@ const ceil_=Math.ceil;
 function finishMe(){PL.fin=S.raceT;S.fin=true;S.finT=0;snd('finish');flash(255,230,120,.5);S.shake=.4;burst(PL.x,PL.y+2,PL.z,50,16,1.2,1.2,.1,[[255,220,80],[255,90,160],[80,200,255],[120,255,160]],{up:1,grav:9});if(NETH.on&&NETH.fin)NETH.fin()}
 
 function enterRace(cfg){
- hideScreens();S.mode=cfg.mode;S.laps=cfg.laps;clearEntities();buildBoxes();KARTS=[];PL=null;S.msgs=[];S.lapTimes=[];S.bestLap=0;S.fin=false;S.finT=0;S.firstFin=0;S.thrT=0;S.go=false;S.goT=0;S.frost=0;S.fa=0;S.shake=0;S.boostFx=0;S.pause=false;
+ hideScreens();S.mode=cfg.mode;S.laps=cfg.laps;clearEntities();buildBoxes();KARTS=[];PL=null;S.msgs=[];S.lapTimes=[];S.bestLap=0;S.lapFx=null;S.nitA=0;S.fin=false;S.finT=0;S.firstFin=0;S.thrT=0;S.go=false;S.goT=0;S.frost=0;S.fa=0;S.shake=0;S.boostFx=0;S.pause=false;
  cfg.players.forEach((p,i)=>{const k=mkKart({id:p.id,me:p.id===cfg.myId,nick:p.nick,col:p.col,lk:p.lk||null});placeKart(k,i);k.tt=0;KARTS.push(k);if(k.me)PL=k;k.lapT0=0;k.gy=k.y});
  S.raceT=0;S.st='count';S.startAt=cfg.startAt||nowS()+4800;camS.init=false;beepN=-1;rkT=0;
  ctl(true);engStart();if(CFG.mus)musStart();if(window.MUSapi)try{if(MUSapi.on)MUSapi.toggle()}catch(e){}}
@@ -22124,7 +22291,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261029150608;
+const GAME_BUILD=20261029175231;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
