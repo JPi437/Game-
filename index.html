@@ -21816,7 +21816,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261029124408;
+const GAME_BUILD=20261029124905;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
@@ -22572,7 +22572,7 @@ SCN.db={id:'db',K:1,OX:0,OY:0,eye:25,camD:92,p3:-.18,pl:[[-.95,.85],[-1.0,.4]],a
  enter(){shKey='';if(typeof P!=='undefined'&&P&&DBW.ready)grassStep({x:P.x+8,z:P.y+14},60,120)},leave(){grassClear();shKey='';try{if(H3.gfx&&H3.gfx.apply)H3.gfx.apply()}catch(e){}},clear(){},
  boss:()=>null,isTgt:e=>!!e,tgt:e=>e?[e.x+8,floorW(e.x+8,e.y+14)+16,e.y+14,30,floorW(e.x+8,e.y+14)]:null,bossPlan:()=>null,
  flicker:()=>{},draw,sprites,frameFx,shadow,shake:()=>null,flash:()=>0,
- fbPos:()=>null};
+ fbPos:id=>id==='spinBtn'?[STW.x,(STM?STM.y:floorW(STW.x,STW.z))+42,STW.z]:null};   // botão Roletar flutuando em cima da estrela
 
 // ---------- o mundo no jogo (índice 4) ----------
 const map4=[];for(let y=0;y<TH;y++){map4[y]=new Array(TW).fill(0)}
