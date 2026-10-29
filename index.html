@@ -18276,8 +18276,8 @@ function gohan(s,el,dt,t,I){const R=base(I);setPose(s,'Idle_Loop',s.t+dt,.15);
   else{const k=1-end;if(k>0)pushHands(I,px,py,pz,yaw,k,[-.12,.45,.05])}};
  R.fx=()=>{const T=H3.tex,E=E_();runLater(s,t);const c=midHands();
   aura(R.px,R.py,R.pz,t,[1,.85,.2],el<1950?min(1,el/250):1-end,s.yaw);
-  if(el>=150&&el<900){const k=sg(el,150,800),r=2+5*k+sin(t/40)*.6;glow(c[0],c[1]+2,c[2],r*4,[1,.85,.25],.8);glow(c[0],c[1]+2,c[2],r*1.8,[1,1,.9],1);
-   if(rnd()<.6)sparks([c[0],c[1]+2,c[2]],5+6*k,1,[1,.95,.5,.9],.9);E&&E.light(c[0],c[1],c[2],60,[1,.85,.3],.6+k*.6)}
+  if(el>=150&&el<900){const k=sg(el,150,800),r=2.5+6*k+sin(t/40)*.6,y=c[1]+5+3*k;glow(c[0],y,c[2],r*4.4,[1,.85,.25],.85);glow(c[0],y,c[2],r*2,[1,1,.9],1);H3.spr(H3.tex.glow,c[0],y,c[2],r*7,r*2.2,null,[1,.9,.4,.35],true,0,true);   // bola de energia em cima das mãos (acima do cabelo)
+   if(rnd()<.7)sparks([c[0],y,c[2]],5+7*k,2,[1,.95,.5,.9],.9);E&&E.light(c[0],c[1],c[2],60,[1,.85,.3],.6+k*.6)}
   if(fire){const f=el>1800?1-sg(el,1800,1950):1,w=(3+3.6*eOut(sg(el,800,920))+sin(t/22)*.6)*f;bigBeam(c,[I.Ex,I.Ey+2,I.Ez],w,[1,.75,.1],[1,.92,.35],t)}
   if(once(s,1,el,800))burst(c[0],c[1],c[2],22,2,420,YEL),shake(240,25);
   if(once(s,2,el,1800))boom(I.Ex,I.Ey+2,I.Ez,YEL,40,true),shake(320,35)};
@@ -18298,7 +18298,7 @@ function kuririn(s,el,dt,t,I){const R=base(I);setPose(s,'Idle_Loop',s.t+dt,.15);
  if(dsk){R.dx=dsk[0];R.dy=dsk[1];R.dz=dsk[2]}
  R.fx=()=>{const X=dbTex(),T=H3.tex,E=E_();runLater(s,t);if(!X)return;
   let C=dsk,rr=r;
-  if(el>=200&&el<1050){const h=jointW(HA_R,.06);rr=lerp(2,10,sm(sg(el,200,850)));C=[h[0],h[1]+4+rr*.15,h[2]];if(el>=1000)s.k0=C}
+  if(el>=200&&el<1050){const h=jointW(HA_R,.06);rr=lerp(2,10,sm(sg(el,200,850)));C=[h[0],h[1]+2.5+rr*.12,h[2]];s.k0=C}   // guarda sempre a última posição (no celular lento um quadro pode pular a hora do arremesso)
   else if(el>=1050&&el<1100){const p=sg(el,1050,1100),a=s.k0||E0;C=[lerp(a[0],E0[0],p),lerp(a[1],E0[1],p),lerp(a[2],E0[2],p)];rr=10}
   if(!C)return;const al=el>1650?1-sg(el,1650,1800):1,spin=t/22;
   H3.flat(X.disc,C[0],C[1],C[2],rr*2.6,rr*2.6,null,[1,.85,.2,.55*al],true,spin);H3.flat(X.disc,C[0],C[1]+.05,C[2],rr*2,rr*2,null,[1,1,.75,al],true,-spin*1.3);
@@ -18410,8 +18410,8 @@ function gokuKai(s,el,dt,t,I){const R=base(I),H0=home(I),D=I.Er+4,SP=GK_SP.map(q
   // rastros vermelhos: ao avançar e a cada troca de lado (fica a "imagem" de onde ele estava)
   if(el<300&&E)E.emit({x:R.px,y:R.py+12,z:R.pz,vx:0,vy:0,vz:0,g:0,life:260,s0:9,s1:3,c:[1,.15,.1],a:.6,drag:1});
   if(slot>0&&off<60){const a=SP[slot-1],k=1-off/60;H3.strip(T.beam,a.x,a.y+a.h+13,a.z,R.px,R.py+13,R.pz,12*k,[1,.2,.1,.5*k],true);glow(a.x,a.y+a.h+13,a.z,22*k,[1,.2,.1],.6*k);
-   if(once(s,1<<(20+slot),el,GK_SP[slot][0],80))burst(R.px,R.py+13,R.pz,10,1.6,300,KAI)}
-  GK_HIT.forEach((h,j)=>{if(once(s,1<<j,el,h,100)){const c=[I.Ex+(rnd()-.5)*6,I.Ey+(rnd()-.5)*6+2,I.Ez+(rnd()-.5)*6];burst(c[0],c[1],c[2],12,2,380,[[1,.3,.2],[1,.9,.7],[1,.6,.3]]);glow(c[0],c[1],c[2],18,[1,.5,.3],.95);
+   if(once(s,1<<(20+slot),el,GK_SP[slot][0],200))burst(R.px,R.py+13,R.pz,10,1.6,300,KAI)}
+  GK_HIT.forEach((h,j)=>{if(once(s,1<<j,el,h,160)){const c=[I.Ex+(rnd()-.5)*6,I.Ey+(rnd()-.5)*6+2,I.Ez+(rnd()-.5)*6];burst(c[0],c[1],c[2],12,2,380,[[1,.3,.2],[1,.9,.7],[1,.6,.3]]);glow(c[0],c[1],c[2],18,[1,.5,.3],.95);
    later(s,t,220,a=>{H3.flat(T.ring,c[0],c[1],c[2],24*a+6,24*a+6,null,[1,.6,.4,.8*(1-a)],true)});if(j%2||j===8)shake(j===8?260:110,j===8?30:15)}});
   if(el>=1700&&el<2050&&E&&rnd()<.8)E.emit({x:R.px,y:R.py+12,z:R.pz,vx:0,vy:0,vz:0,g:0,life:220,s0:7,s1:2,c:[1,.2,.1],a:.5,drag:1});
   const c=midHands();
@@ -22124,7 +22124,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261029141631;
+const GAME_BUILD=20261029150006;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
