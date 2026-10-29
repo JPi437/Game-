@@ -1803,15 +1803,15 @@ const SK={
  Meliodas:{n:'CORTES RELÂMPAGO!',h:5,d:2100,m:2,ch:0,tk:7,at:[300,450,600,750,900,1050,1650],w:[.08,.08,.08,.08,.08,.08,.52],rec:550,fx:'hero',c:'#ffd23f',c2:'#ffffff',lc:'#ffd23f'},
  Herobrine:{n:'FOGO DO GHAST!',h:7,d:6030,m:5,ch:0,tk:5,at:[2580,3330,4080,4830,5580],w:[.44,.14,.14,.14,.14],rec:450,fx:'hero',c:'#ff6d00',c2:'#ffd23f',lc:'#ff8a3d'},
  Guts:{n:'DRAGONSLAYER!',h:7,d:4000,m:3,ch:600,tk:2,at:[900,2400],w:[.25,.75],rec:1600,fx:'guts',c:'#9e9e9e',c2:'#ff1744',lc:'#ff5252'},
- Yajirobe:{n:'CORTE DE KATANA!',h:6,d:1600,m:1.5,ch:0,tk:2,at:[700,1000],w:[.5,.5],rec:500,fx:'burst',c:'#eceff1',c2:'#ffb74d',lc:'#cfd8dc'},
- Yamcha:{n:'PUNHO DO LOBO!',h:6,d:2000,m:1.6,ch:0,tk:8,fx:'barrage',c:'#ffcc80',c2:'#ff6d00',lc:'#ffab40'},
- Tenshinhan:{n:'KIKOHO!',h:7,d:2200,m:1.75,ch:900,tk:4,at:[1000,1300,1600,1900],rec:500,fx:'beam',c:'#ffee58',c2:'#fffde7',lc:'#ffee58'},
+ Yajirobe:{n:'CORTE DE KATANA!',h:6,d:1600,m:1.5,ch:0,tk:2,at:[700,950],w:[.45,.55],rec:500,fx:'slash',c:'#eceff1',c2:'#ffb74d',lc:'#cfd8dc'},
+ Yamcha:{n:'PUNHO DO LOBO!',h:6,d:2200,m:1.6,ch:0,tk:10,at:[450,600,750,900,1050,1200,1350,1500,1650,1850],w:[.06,.06,.06,.06,.06,.06,.06,.06,.06,.46],rec:500,fx:'barrage',c:'#ffcc80',c2:'#ff6d00',lc:'#ffab40'},
+ Tenshinhan:{n:'KIKOHO!',h:7,d:2300,m:1.75,ch:900,tk:4,at:[1050,1350,1650,1950],rec:500,fx:'beam',c:'#ffee58',c2:'#fffde7',lc:'#ffee58'},
  Gohan:{n:'MASENKO!',h:7,d:2200,m:1.75,ch:800,tk:4,at:[900,1200,1500,1800],rec:500,fx:'beam',c:'#ffd740',c2:'#fff8e1',lc:'#ffd740'},
  Kuririn:{n:'KIENZAN!',h:7,d:2000,m:2,ch:700,tk:2,at:[1100,1500],w:[.5,.5],rec:500,fx:'beam',c:'#fff176',c2:'#ffffff',lc:'#fff176'},
  Nappa:{n:'BOMBER DDT!',h:7,d:2200,m:2,ch:600,tk:3,at:[900,1300,1700],rec:600,fx:'burst',c:'#ff80ab',c2:'#fff59d',lc:'#ff80ab'},
  Vegeta:{n:'GALICK HO!',h:7,d:2600,m:2.2,ch:1100,tk:5,at:[1250,1550,1850,2150,2400],rec:500,fx:'beam',c:'#b388ff',c2:'#ede7f6',lc:'#b388ff'},
  Piccolo:{n:'MAKANKOSAPPO!',h:7,d:2600,m:2.2,ch:1200,tk:3,at:[1400,1700,2000],w:[.5,.25,.25],rec:600,fx:'beam',c:'#ffee58',c2:'#ce93d8',lc:'#ffee58'},
- 'Goku Kaioken':{n:'KAIOKEN KAMEHAMEHA!',h:8,d:3400,m:3.2,ch:1700,tk:6,at:[1800,2000,2200,2400,2600,2800],rec:650,fx:'beam',c:'#ff1744',c2:'#e1f5fe',lc:'#ff5252'},
+ 'Goku Kaioken':{n:'KAIOKEN KAMEHAMEHA!',h:8,d:4200,m:3.2,ch:2000,tk:13,at:[400,550,700,850,1000,1150,1300,1450,1600,3000,3250,3500,3750],w:[.04,.04,.04,.04,.04,.04,.04,.04,.04,.16,.16,.16,.16],rec:650,fx:'beam',c:'#ff1744',c2:'#e1f5fe',lc:'#ff5252'},
  Springtrap:{n:'MACHADO!',h:7,d:4300,m:3,ch:0,tk:2,at:[1300,3250],w:[.45,.55],rec:900,fx:'burst',c:'#7cb342',c2:'#1b5e20',lc:'#9ccc65'}};   // pega o machado, arremessa, grita, pula e arranca (3D: SPR3)
 const SKD={n:'GOLPE ESPECIAL!',h:8,d:2000,m:2.5,ch:0,tk:6,fx:'burst',c:'#ffffff',c2:'#ffd23f',lc:'#ffd23f'};
 const skOf=k=>SK[k&&k.name]||SKD;
@@ -18008,8 +18008,8 @@ function state(q,A){let s=q._c3;if(!s||s.nm!==A.m.nm){s={nm:A.m.nm,yaw:A.yaw,cur
 function phase(el,T){let a=0;for(let k=0;k<T.length;k++){if(el<T[k])return{k,p:(el-a)/(T[k]-a)};a=T[k]}return null}
 const PUNMS=300;
 // ---------- habilidades: cada uma devolve {px,py,pz,tg} e mexe nos ossos depois da animação base (post) ----------
-const SKD={Goku:3400,Luffy:2000,Gon:1800,Itadori:1300,'Goku Kaioken':3400};
-const ABORT={Goku:2800,Luffy:1800,Gon:1500,Itadori:900,'Goku Kaioken':2800};   // inimigo morreu antes disso: cancela
+const SKD={Goku:3400,Luffy:2000,Gon:1800,Itadori:1300,'Goku Kaioken':4200,Yajirobe:1600,Yamcha:2200,Tenshinhan:2300,Gohan:2200,Kuririn:2000,Nappa:2200,Vegeta:2600,Piccolo:2600};
+const ABORT={Goku:2800,Luffy:1800,Gon:1500,Itadori:900,'Goku Kaioken':3750,Yajirobe:950,Yamcha:1850,Tenshinhan:1950,Gohan:1800,Kuririn:1500,Nappa:1700,Vegeta:2400,Piccolo:2000};   // inimigo morreu antes disso: cancela
 // ponto do inimigo e direção até ele
 function tgtInfo(s,E){const sx=s.sx,sz=s.sz,sy=s.sy;let Ex,Ez,Ey,Er;if(E){Ex=E.x;Ez=E.z;Ey=E.y;Er=E.r}else{Ex=sx+sin(s.yaw)*40;Ez=sz+cos(s.yaw)*40;Ey=sy+8;Er=12}
  const fx=Ex-sx,fz=Ez-sz,fl=hypot(fx,fz)||1;return{Ex,Ey,Ez,Er,ux:fx/fl,uz:fz/fl,dist:fl,sx,sy,sz}}
@@ -18116,7 +18116,312 @@ function itadori(s,el,dt,t,I){const R={px:I.sx,py:I.sy,pz:I.sz,tg:Math.atan2(I.u
   if(el>=600&&!(s.ev&1)){s.ev|=1;if(el<760){const c=[I.Ex-I.ux*I.Er*.3,I.Ey,I.Ez-I.uz*I.Er*.3];burst(c[0],c[1],c[2],26,2.8,560,REDS);burst(c[0],c[1],c[2],22,2.4,620,[[0,0,0],[.08,0,0]],true,false);shake(380,[50,30,60])}}
   if(el>=750&&!(s.ev&2)){s.ev|=2;if(el<900){const c=[I.Ex,I.Ey,I.Ez];burst(c[0],c[1],c[2],16,2,450,REDS)}}};
  return R}
-const SKF={Goku:goku,Luffy:luffy,Gon:gon,Itadori:itadori,'Goku Kaioken':goku};   // Goku Kaioken: o mesmo Kamehameha (com a aura vermelha por cima)
+// ===================== Mundo 2 · Dragon Ball: habilidades 3D =====================
+// Os tempos (ms) batem com SK[nome].at do 2D, que é quem dá o dano; aqui é só a animação e os efeitos.
+//  · Yajirobe  CORTE DE KATANA (1,6 s): saca a espada · avança · corte diagonal (700) · corte de volta (950) · volta
+//  · Yamcha    PUNHO DO LOBO (2,2 s): avança · 9 golpes de garra mudando de lado (450–1650) · golpe final com as duas palmas (1850) · volta
+//  · Tenshinhan KIKOHO (2,3 s): mãos em triângulo · carrega · 4 triângulos dourados (chegam 1050/1350/1650/1950) com a marca no chão
+//  · Gohan     MASENKO (2,2 s): mãos acima da cabeça carregando · empurra para frente e solta o raio amarelo (900–1800)
+//  · Kuririn   KIENZAN (2 s): braço para cima, disco cortante girando · arremessa (corta 1100) · o disco dá a volta e corta de novo (1500)
+//  · Nappa     EXPLOSÃO (2,2 s): levanta o braço e o chão explode de baixo para cima no inimigo (900/1300/1700)
+//  · Vegeta    GALICK HO (2,6 s): voa · carrega de lado com a aura roxa · raio roxo (1250–2400) · desce
+//  · Piccolo   MAKANKOSAPPO (2,6 s): dedos na testa carregando · aponta e solta o raio em espiral (1400/1700/2000)
+//  · Goku Kaioken (4,2 s): avança · socos rápidos de 5 lados (400–1600) · salto mortal para trás · KAMEHAMEHA (3000–3750) · volta
+const DBC={gl:null};
+function dbTex(){const gl=H3.gl&&H3.gl();if(!gl||!H3.texNew)return null;if(DBC.gl===gl&&DBC.tri)return DBC;DBC.gl=gl;
+ const mk=(w,h,fn)=>{const c=document.createElement('canvas');c.width=w;c.height=h;fn(c.getContext('2d'),w,h);return H3.texNew(c,true)};
+ const triP=(x,s,cx,cy)=>{x.beginPath();x.moveTo(cx,cy-50*s);x.lineTo(cx+57*s,cy+33*s);x.lineTo(cx-57*s,cy+33*s);x.closePath()};
+ // triângulo cheio (Kikoho): branco com borda suave (a cor vem do desenho)
+ DBC.tri=mk(128,128,(x)=>{x.shadowColor='#fff';x.shadowBlur=12;x.fillStyle='rgba(255,255,255,.45)';triP(x,1,64,70);x.fill();x.shadowBlur=4;x.fillStyle='rgba(255,255,255,.95)';triP(x,.78,64,70);x.fill()});
+ // contorno do triângulo (marca no chão)
+ DBC.triO=mk(128,128,(x)=>{x.lineJoin='round';x.shadowColor='#fff';x.shadowBlur=10;x.strokeStyle='rgba(255,255,255,.9)';x.lineWidth=9;triP(x,.92,64,70);x.stroke();x.lineWidth=3;x.strokeStyle='#fff';triP(x,.92,64,70);x.stroke()});
+ // disco do Kienzan: miolo translúcido, borda forte e dentes de serra
+ DBC.disc=mk(128,128,(x)=>{const g=x.createRadialGradient(64,64,10,64,64,54);g.addColorStop(0,'rgba(255,255,255,.18)');g.addColorStop(.75,'rgba(255,255,255,.45)');g.addColorStop(1,'rgba(255,255,255,1)');
+  x.fillStyle=g;x.beginPath();for(let i=0;i<=48;i++){const a=i/48*TAU,r=i%2?52:60;x.lineTo(64+cos(a)*r,64+sin(a)*r)}x.closePath();x.fill();
+  x.strokeStyle='rgba(255,255,255,.9)';x.lineWidth=2;x.beginPath();x.arc(64,64,30,0,TAU);x.stroke()});
+ return DBC}
+// ---------- ajudas ----------
+const kf=(el,K)=>{if(el<=K[0][0])return K[0][1].slice();for(let i=1;i<K.length;i++)if(el<K[i][0]){const a=K[i-1],b=K[i],p=sm((el-a[0])/(b[0]-a[0]));return a[1].map((v,j)=>v+(b[1][j]-v)*p)}return K[K.length-1][1].slice()};
+const kv=(el,K)=>kf(el,K.map(k=>[k[0],[k[1]]]))[0];
+const dirW=(d,yaw)=>{const c=cos(yaw),s=sin(yaw);return[c*d[0]+s*d[2],d[1],-s*d[0]+c*d[2]]};
+const flY=(x,z,d)=>H3.floorAt?H3.floorAt(x,z):d;
+const once=(s,b,el,t0,w)=>{if(el>=t0&&!(s.ev&b)){s.ev|=b;return el<t0+(w||220)}return false};
+const base=I=>({px:I.sx,py:I.sy,pz:I.sz,tg:Math.atan2(I.ux,I.uz),post:null,fx:null});
+// lugar em volta do inimigo: ang = quanto gira em volta dele (0 = do lado de quem ataca), d = distância do centro
+function spot(I,ang,d){const c=cos(ang),sn=sin(ang),dx=I.ux*c-I.uz*sn,dz=I.ux*sn+I.uz*c,x=I.Ex-dx*d,z=I.Ez-dz*d;return{x,z,y:flY(x,z,I.sy),tg:Math.atan2(dx,dz)}}
+function goTo(R,a,b,p,hop){R.px=lerp(a.x,b.x,p);R.pz=lerp(a.z,b.z,p);R.py=lerp(a.y,b.y,p)+(hop||0)*sin(PI*p)}
+const home=I=>({x:I.sx,z:I.sz,y:I.sy});
+// efeitos que ficam um tempo depois de acontecer (marcas no chão, cortes, explosões)
+function later(s,t,d,fn){(s.fxl||(s.fxl=[])).push({t0:t,d,fn})}
+function runLater(s,t){if(!s.fxl)return;s.fxl=s.fxl.filter(m=>{const a=(t-m.t0)/m.d;if(a>=1)return false;if(a>=0)m.fn(a);return true})}
+function boom(x,y,z,cols,n,big){burst(x,y,z,n,2.6,560,cols);if(big)burst(x,y,z,(n/3)|0,1.2,760,cols,true);glow(x,y,z,22+(big?14:0),cols[0],.9)}
+// aura (labaredas de energia em volta do corpo), com a cor de cada um
+function aura(x,y,z,t,col,k,yw){const T=H3.tex;if(!T||k<=0)return;const pul=.5+.5*sin(t/70);glow(x,y+14,z,(30+5*pul)*k,col,.3*k);
+ if(T.beam)for(let i=0;i<8;i++){const a=i/8*TAU+t/380+sin(t/200+i)*.3,rr=7.5+1.5*sin(t/90+i*1.7),ox=cos(a)*rr,oz=sin(a)*rr,ph=(t/230+i*.41)%1,h=(15+9*sin(PI*ph)+4*sin(t/80+i))*k;
+  H3.strip(T.beam,x+ox,y+1,z+oz,x+ox*.4,y+h+6,z+oz*.4,3.4,[col[0],col[1],col[2],(.3+.16*sin(PI*ph))*k],true)}
+ const E=E_();if(E&&rnd()<.7*k){const a=rnd()*TAU,rr=5+rnd()*5;E.emit({x:x+cos(a)*rr,y:y+rnd()*16,z:z+sin(a)*rr,vx:0,vy:.55+rnd()*.5,vz:0,g:-.01,life:420,s0:3.6,s1:.4,c:[min(1,col[0]+.3),min(1,col[1]+.3),min(1,col[2]+.3)],a:.9,drag:.97})}}
+// faíscas elétricas em volta de um ponto
+function sparks(c,r,n,col,w){for(let i=0;i<n;i++){const a=rnd()*TAU,u=rnd()*PI-PI/2,b=[c[0]+cos(a)*cos(u)*r,c[1]+sin(u)*r,c[2]+sin(a)*cos(u)*r];jag(c,b,3,r*.35,w||1.1,col)}}
+// raio de energia grosso (3 camadas + partículas correndo) de c até b
+function bigBeam(c,b,w,cOut,cMid,t){const T=H3.tex,E=E_();
+ H3.strip(T.beam,c[0],c[1],c[2],b[0],b[1],b[2],w*3,[cOut[0],cOut[1],cOut[2],.42],true);
+ H3.strip(T.beam,c[0],c[1],c[2],b[0],b[1],b[2],w*1.35,[cMid[0],cMid[1],cMid[2],.95],true);
+ H3.strip(T.beam,c[0],c[1],c[2],b[0],b[1],b[2],w*.55,[1,1,1,1],true);
+ glow(c[0],c[1],c[2],w*4.2,cMid,.9);glow(c[0],c[1],c[2],w*2,[1,1,1],1);glow(b[0],b[1],b[2],w*5.5+10,cOut,.85);glow(b[0],b[1],b[2],w*2.6,[1,1,1],1);
+ const L=hypot(b[0]-c[0],b[1]-c[1],b[2]-c[2])||1;
+ if(E)for(let i=0;i<3;i++){const k=rnd();E.emit({x:lerp(c[0],b[0],k)+(rnd()-.5)*w*1.6,y:lerp(c[1],b[1],k)+(rnd()-.5)*w*1.6,z:lerp(c[2],b[2],k)+(rnd()-.5)*w*1.6,vx:(b[0]-c[0])/L*1.1,vy:(rnd()-.3)*.4,vz:(b[2]-c[2])/L*1.1,g:0,life:260,s0:2,s1:.3,c:[min(1,cMid[0]+.25),min(1,cMid[1]+.25),min(1,cMid[2]+.25)],a:1,drag:.97})}
+ if(rnd()<.55)burst(b[0],b[1],b[2],3,1.8,380,[cMid,[1,1,1],cOut]);
+ if(E){E.light(b[0],b[1],b[2],120,cMid,1.4);E.light(c[0],c[1],c[2],70,cMid,.9)}}
+// mãos juntas empurrando para frente até o inimigo (raio) · p = quanto já empurrou
+function pushHands(I,px,py,pz,yaw,p,from){const dn=nrm(dirSk([I.Ex-px,I.Ey-(py+18),I.Ez-pz],yaw));fk();
+ const sc=[(PW[UA_L][0]+PW[UA_R][0])/2,(PW[UA_L][1]+PW[UA_R][1])/2,(PW[UA_L][2]+PW[UA_R][2])/2],T=[sc[0]+dn[0]*.25,sc[1]+dn[1]*.25-.01,sc[2]+dn[2]*.25];
+ const m=from&&p<1?[lerp(from[0],T[0],p),lerp(from[1],T[1],p),lerp(from[2],T[2],p)]:T;
+ ik(UA_R,LA_R,HA_R,[m[0]-.025,m[1],m[2]],[-.3,-1,0],1);ik(UA_L,LA_L,HA_L,[m[0]+.025,m[1],m[2]],[.3,-1,0],1)}
+const midHands=(a)=>{const hl=jointW(HA_L,a||.05),hr=jointW(HA_R,a||.05);return[(hl[0]+hr[0])/2,(hl[1]+hr[1])/2,(hl[2]+hr[2])/2]};
+const GOLD=[[1,.85,.25],[1,1,.8],[1,.65,.1]],YEL=[[1,.92,.3],[1,1,.85],[1,.75,.15]],PURP=[[.7,.35,1],[1,.85,1],[.5,.15,.95]],PINK=[[1,.45,.75],[1,.9,.6],[1,.6,.2]],WHITE=[[1,1,1],[1,.95,.8],[.85,.9,1]],ORNG=[[1,.6,.2],[1,.9,.6],[1,.4,.1]];
+
+// ---------- Yajirobe: CORTE DE KATANA ----------
+const YJ_H=[[0,[-.15,.43,.02]],[120,[.08,.42,.09]],[260,[-.17,.47,-.04]],[450,[-.17,.47,-.04]],[620,[-.07,.83,-.03]],[700,[.11,.5,.22]],[770,[.15,.47,.17]],[870,[.16,.59,.2]],[950,[-.22,.58,.16]],[1250,[-.25,.55,.05]],[1450,[-.15,.43,.02]]];
+const YJ_B=[[0,[0,-1,0]],[120,[0,-.6,-.8]],[260,[-.2,-.3,-1]],[450,[-.2,-.3,-1]],[620,[.1,.5,-1]],[700,[.5,-.6,.6]],[770,[.8,-.3,.4]],[870,[.9,.1,.4]],[950,[-.9,0,.5]],[1250,[-.9,.2,-.2]],[1450,[0,-1,0]]];
+const YJ_TW=[[0,0],[450,0],[620,-.55],[700,.45],[870,.5],[950,-.5],[1250,-.2],[1400,0]],YJ_LN=[[0,0],[260,.18],[450,.1],[620,-.05],[700,.2],[870,.05],[950,.15],[1250,0]];
+function yajirobe(s,el,dt,t,I){const R=base(I),S=spot(I,0,I.Er+5),H0=home(I);
+ if(el<260){setPose(s,'Idle_Loop',s.t+dt,.15)}
+ else if(el<450){goTo(R,H0,S,sm(sg(el,260,450)),2);setPose(s,JOG,s.t+dt*2,.08)}
+ else if(el<1250){R.px=S.x;R.pz=S.z;R.py=S.y;setPose(s,'Idle_Loop',s.t+dt,.15)}
+ else{goTo(R,S,H0,sm(sg(el,1250,1600)),9);setPose(s,AIR,s.t+dt,.1)}
+ const al=el<100?el/100:el>1450?max(0,1-(el-1450)/150):1;
+ R.post=(px,py,pz,yaw)=>{const tw=kv(el,YJ_TW);turn(SP3,[0,1,0],tw*.6);turn(SP2,[0,1,0],tw*.4);turn(SP1,[1,0,0],kv(el,YJ_LN));
+  const H=kf(el,YJ_H);ik(UA_R,LA_R,HA_R,H,[-1,-.5,-.3],al);
+  const two=el>=560&&el<1000?1:el>=450&&el<560?sg(el,450,560):el>=1000&&el<1150?1-sg(el,1000,1150):0;
+  if(two>0){const b=nrm(kf(el,YJ_B));ik(UA_L,LA_L,HA_L,[H[0]-b[0]*.05+.015,H[1]-b[1]*.05,H[2]-b[2]*.05],[1,-.5,-.3],two)}
+  else ik(UA_L,LA_L,HA_L,[.13,.47,.1],[1,-1,0],al*.6)};
+ R.fx=()=>{const T=H3.tex;runLater(s,t);if(el<100||el>1600)return;
+  const h=jointW(HA_R,.04),bd=dirW(nrm(kf(el,YJ_B)),s.yaw),L=22,a=al,P=(k)=>[h[0]+bd[0]*k,h[1]+bd[1]*k,h[2]+bd[2]*k],hb=P(-5),gd=P(1),tip=P(L);
+  H3.strip(T.dot,hb[0],hb[1],hb[2],gd[0],gd[1],gd[2],1.7,[.16,.1,.08,a],false);          // cabo
+  H3.spr(T.dot,gd[0],gd[1],gd[2],2.6,2.6,null,[.85,.65,.2,a],false,0,true);               // guarda
+  const b0=P(1.6);H3.strip(T.dot,b0[0],b0[1],b0[2],tip[0],tip[1],tip[2],1.25,[.78,.82,.88,a],false);   // lâmina
+  H3.strip(T.beam,b0[0],b0[1],b0[2],tip[0],tip[1],tip[2],.9,[1,1,1,.55*a],true);
+  // rastro do corte: várias lâminas "fantasma" que somem
+  const sl=(el>=600&&el<730)||(el>=850&&el<980);if(sl)s.trail.push([P(5),tip,t]);
+  s.trail=s.trail.filter(q=>t-q[2]<180);for(const q of s.trail){const k=1-(t-q[2])/180;H3.strip(T.beam,q[0][0],q[0][1],q[0][2],q[1][0],q[1][1],q[1][2],3.4,[1,.95,.75,.32*k],true);H3.strip(T.beam,q[0][0],q[0][1],q[0][2],q[1][0],q[1][1],q[1][2],1.2,[1,1,1,.5*k],true)}
+  const rx=I.uz,rz=-I.ux;   // lado direito de quem olha o inimigo
+  const cut=(k,diag)=>{const c=[I.Ex,I.Ey+4,I.Ez];later(s,t,420,a=>{const g=min(1,a*5),f=1-a,ln=18*g,dy=diag?13*g:0;
+   const A=[c[0]+rx*ln,c[1]+dy,c[2]+rz*ln],B=[c[0]-rx*ln,c[1]-dy,c[2]-rz*ln];H3.strip(T.beam,A[0],A[1],A[2],B[0],B[1],B[2],5*f+1,[1,.85,.45,.7*f],true);H3.strip(T.beam,A[0],A[1],A[2],B[0],B[1],B[2],1.6*f+.4,[1,1,1,f],true)});
+   boom(c[0],c[1],c[2],[[1,1,1],[1,.85,.5],[.85,.9,1]],k,true);shake(220,25)};
+  if(once(s,1,el,700))cut(22,true);if(once(s,2,el,950))cut(30,false)};
+ return R}
+
+// ---------- Yamcha: PUNHO DO LOBO ----------
+const YM_ANG=[0,-.75,.65,-.35,.85,-.95,.3,-.55,.75];
+function yamcha(s,el,dt,t,I){const R=base(I),D=I.Er+4,H0=home(I),SP=YM_ANG.map(a=>spot(I,a,D)),F=spot(I,0,I.Er+7);
+ let i=-1,off=0;
+ if(el<350){goTo(R,H0,SP[0],eOut(sg(el,0,350)));setPose(s,JOG,s.t+dt*2.2,.08)}
+ else if(el<1700){i=min(8,Math.floor((el-350)/150));off=el-350-i*150;const a=i?SP[i-1]:SP[0],b=SP[i];goTo(R,a,b,eOut(sg(off,0,45)),3);R.tg=b.tg;
+  setPose(s,i%2?PJ:PC,lerp(.08,.58,sg(off,25,125)),.04)}
+ else if(el<1880){const p=sg(el,1700,1850);goTo(R,SP[8],F,sm(p),7);R.tg=F.tg;setPose(s,AIR,s.t+dt,.08)}
+ else{goTo(R,F,H0,sm(sg(el,1880,2200)),9);setPose(s,AIR,s.t+dt,.1)}
+ R.post=(px,py,pz,yaw)=>{
+  if(el<350){turn(SP1,[1,0,0],.28*sg(el,0,150));ik(UA_R,LA_R,HA_R,[-.12,.52,.18],[-1,-.6,-.2],.8);ik(UA_L,LA_L,HA_L,[.12,.52,.18],[1,-.6,-.2],.8)}   // corre abaixado, mãos de garra
+  else if(i>=0){turn(SP1,[1,0,0],.15);const sd=i%2,ua=sd?UA_L:UA_R,la=sd?LA_L:LA_R,ha=sd?HA_L:HA_R,xs=sd?1:-1,pk=sin(PI*clp((off-30)/110,0,1));
+   const hit=toSk([I.Ex,I.Ey+(((i*5)%3)-1)*4,I.Ez],px,py,pz,yaw);   // varia a altura do golpe
+   ik(ua,la,ha,[lerp(xs*.12,hit[0],pk),lerp(.6,hit[1],pk),lerp(.14,hit[2],pk)],[xs,-.4,-.6],pk);
+   ik(sd?UA_R:UA_L,sd?LA_R:LA_L,sd?HA_R:HA_L,[-xs*.08,.58,.15],[-xs,-1,-.3],.8)}
+  else if(el<1880){const p=sg(el,1700,1840),tS=toSk([I.Ex,I.Ey+2,I.Ez],px,py,pz,yaw),k=eIn(p);turn(SP1,[1,0,0],-.2+.4*k);
+   const T=[lerp(0,tS[0],k),lerp(.62,tS[1],k),lerp(.05,tS[2],k)];ik(UA_R,LA_R,HA_R,[T[0]-.04,T[1],T[2]],[-1,-.3,-.5],1);ik(UA_L,LA_L,HA_L,[T[0]+.04,T[1],T[2]],[1,-.3,-.5],1)}};
+ R.fx=()=>{const T=H3.tex,E=E_();runLater(s,t);
+  aura(R.px,R.py,R.pz,t,[1,.55,.15],el<1880?.75:max(0,1-sg(el,1880,2050)),s.yaw);
+  // rastro ao trocar de lado
+  if(i>0&&off<60){const a=SP[i-1],b=SP[i],k=1-off/60;H3.strip(T.beam,a.x,a.y+12,a.z,R.px,R.py+12,R.pz,10*k,[1,.75,.4,.35*k],true);glow(a.x,a.y+12,a.z,16*k,[1,.7,.3],.4*k)}
+  if(i>=0&&off>=100&&s.ptag!==i){s.ptag=i;const c=[I.Ex+(rnd()-.5)*6,I.Ey+(rnd()-.5)*8+2,I.Ez+(rnd()-.5)*6],ang=rnd()*TAU,ca=cos(ang),sa=sin(ang),rx=I.uz,rz=-I.ux;
+   later(s,t,320,a=>{const f=1-a,g=min(1,a*6);for(let j=-1;j<=1;j++){const o=j*2.6,A=[c[0]+rx*(o-7*ca*g)-0,c[1]+o*.3+7*sa*g,c[2]+rz*(o-7*ca*g)],B=[c[0]+rx*(o+7*ca*g),c[1]+o*.3-7*sa*g,c[2]+rz*(o+7*ca*g)];
+     H3.strip(T.beam,A[0],A[1],A[2],B[0],B[1],B[2],2.2*f+.3,[1,.8,.45,.85*f],true)}});   // marca de garra (3 riscos)
+   burst(c[0],c[1],c[2],9,1.8,380,ORNG);glow(c[0],c[1],c[2],14,[1,.8,.5],.9);if(i%3===2)shake(90)}
+  if(once(s,1,el,1850)){const c=[I.Ex,I.Ey+3,I.Ez];boom(c[0],c[1],c[2],ORNG,34,true);later(s,t,500,a=>{glow(c[0],c[1],c[2],40*a+10,[1,.7,.3],.9*(1-a));H3.flat(T.ring,c[0],flY(c[0],c[2],I.sy)+.4,c[2],70*a+8,70*a+8,null,[1,.7,.35,.8*(1-a)],true)});shake(320,35)}
+  if(el>=1700&&el<1880){const h=midHands();glow(h[0],h[1],h[2],10+8*sg(el,1700,1850),[1,.7,.3],.8)}
+  E&&el<1880&&E.light(R.px,R.py+12,R.pz,50,[1,.6,.25],.6)};
+ return R}
+
+// ---------- Tenshinhan: KIKOHO ----------
+const TS_L=[900,1200,1500,1800];
+function tenshinhan(s,el,dt,t,I){const R=base(I);setPose(s,'Idle_Loop',s.t+dt,.15);
+ const up=el<300?sm(el/300):el>1950?1-sm(sg(el,1950,2250)):1;
+ let push=0;for(const L of TS_L)if(el>=L&&el<L+220)push=max(push,sin(PI*sg(el,L,L+220)));
+ R.post=(px,py,pz,yaw)=>{turn(SP1,[1,0,0],(.08+.1*push)*up);const z=.2+.07*push;
+  ik(UA_R,LA_R,HA_R,[-.035,.63,z],[-1,0,-.2],up);ik(UA_L,LA_L,HA_L,[.035,.63,z],[1,0,-.2],up)};
+ R.fx=()=>{const X=dbTex(),T=H3.tex,E=E_();runLater(s,t);if(!X)return;
+  const c=midHands(.03);c[1]+=1;
+  aura(R.px,R.py,R.pz,t,[1,.85,.3],el<300?el/300:el>1950?1-sg(el,1950,2200):1,s.yaw);
+  if(el>=250&&el<1950){const k=el<900?sg(el,250,880):1,sz=4+10*k+sin(t/50);H3.spr(X.tri,c[0],c[1],c[2],sz*1.5,sz*1.5,null,[1,.75,.15,.75],true,0,true);H3.spr(X.tri,c[0],c[1],c[2],sz,sz,null,[1,1,.85,1],true,0,true);
+   if(el<900&&E&&rnd()<.8){const a=rnd()*TAU,u=rnd()*PI-PI/2,r=11;E.emit({x:c[0]+cos(a)*cos(u)*r,y:c[1]+sin(u)*r,z:c[2]+sin(a)*cos(u)*r,vx:-cos(a)*cos(u)*.55,vy:-sin(u)*.55,vz:-sin(a)*cos(u)*.55,g:0,life:300,s0:1.6,s1:.3,c:[1,.9,.4],a:1,drag:1})}
+   E&&E.light(c[0],c[1],c[2],60,[1,.8,.3],.6+.6*k)}
+  const tgt=[I.Ex,I.Ey+3,I.Ez];
+  TS_L.forEach((L,j)=>{if(el<L||el>=L+150)return;const p=sg(el,L,L+150);
+   for(let q=0;q<3;q++){const pp=max(0,p-q*.12),x=lerp(c[0],tgt[0],pp),y=lerp(c[1],tgt[1],pp),z=lerp(c[2],tgt[2],pp),sz=(18+14*pp)*(1-q*.25),al=1-q*.3;
+    H3.spr(X.tri,x,y,z,sz*1.4,sz*1.4,null,[1,.7,.1,.55*al],true,0,true);H3.spr(X.tri,x,y,z,sz,sz,null,[1,.95,.6,al],true,0,true)}
+   E&&E.light(lerp(c[0],tgt[0],p),lerp(c[1],tgt[1],p),lerp(c[2],tgt[2],p),80,[1,.8,.3],1.2)});
+  TS_L.forEach((L,j)=>{if(once(s,1<<j,el,L+150)){const g=flY(tgt[0],tgt[2],I.sy)+.3,rot=s.yaw+(j%2?PI:0);boom(tgt[0],tgt[1],tgt[2],GOLD,26+j*4,j===3);shake(200+j*60,25+j*5);
+    later(s,t,950,a=>{const f=1-a,sz=46+16*eOut(min(1,a*2))+j*6;H3.flat(X.triO,tgt[0],g,tgt[2],sz,sz,null,[1,.75,.15,.9*f],true,rot);H3.flat(X.tri,tgt[0],g+.1,tgt[2],sz*.9,sz*.9,null,[1,.85,.3,.35*f],true,rot);
+     glow(tgt[0],g+8,tgt[2],(40+j*6)*(1-a*.5),[1,.8,.3],.55*f);H3.spr(X.tri,tgt[0],tgt[1]+2,tgt[2],(34+j*5)*(.6+a),(34+j*5)*(.6+a),null,[1,.9,.5,.6*f],true,0,true)})}})};
+ return R}
+
+// ---------- Gohan: MASENKO ----------
+function gohan(s,el,dt,t,I){const R=base(I);setPose(s,'Idle_Loop',s.t+dt,.15);
+ const up=el<220?sm(el/220):1,fire=el>=800&&el<1950,end=el>=1950?sm(sg(el,1950,2200)):0;
+ R.post=(px,py,pz,yaw)=>{
+  if(!fire&&el<1950){turn(SP1,[1,0,0],-.12*up);turn(SP3,[1,0,0],-.08*up);ik(UA_R,LA_R,HA_R,[-.035,.86,.1],[-1,.2,-.2],up);ik(UA_L,LA_L,HA_L,[.035,.86,.1],[1,.2,-.2],up)}   // mãos acima da testa
+  else if(fire){const p=sm(sg(el,800,900));turn(SP1,[1,0,0],.1*p);pushHands(I,px,py,pz,yaw,p,[0,.86,.1])}
+  else{const k=1-end;if(k>0)pushHands(I,px,py,pz,yaw,k,[-.12,.45,.05])}};
+ R.fx=()=>{const T=H3.tex,E=E_();runLater(s,t);const c=midHands();
+  aura(R.px,R.py,R.pz,t,[1,.85,.2],el<1950?min(1,el/250):1-end,s.yaw);
+  if(el>=150&&el<900){const k=sg(el,150,800),r=2+5*k+sin(t/40)*.6;glow(c[0],c[1]+2,c[2],r*4,[1,.85,.25],.8);glow(c[0],c[1]+2,c[2],r*1.8,[1,1,.9],1);
+   if(rnd()<.6)sparks([c[0],c[1]+2,c[2]],5+6*k,1,[1,.95,.5,.9],.9);E&&E.light(c[0],c[1],c[2],60,[1,.85,.3],.6+k*.6)}
+  if(fire){const f=el>1800?1-sg(el,1800,1950):1,w=(3+3.6*eOut(sg(el,800,920))+sin(t/22)*.6)*f;bigBeam(c,[I.Ex,I.Ey+2,I.Ez],w,[1,.75,.1],[1,.92,.35],t)}
+  if(once(s,1,el,800))burst(c[0],c[1],c[2],22,2,420,YEL),shake(240,25);
+  if(once(s,2,el,1800))boom(I.Ex,I.Ey+2,I.Ez,YEL,40,true),shake(320,35)};
+ return R}
+
+// ---------- Kuririn: KIENZAN ----------
+function kuririn(s,el,dt,t,I){const R=base(I);setPose(s,'Idle_Loop',s.t+dt,.15);
+ const up=el<200?sm(el/200):1,back=el>1550?sm(sg(el,1550,1950)):0;
+ R.post=(px,py,pz,yaw)=>{
+  if(el<950){turn(SP1,[1,0,0],-.08*up);ik(UA_R,LA_R,HA_R,[-.17,.905,.02],[-1,0,-.3],up);ik(UA_L,LA_L,HA_L,[.13,.5,.13],[1,-1,0],up*.8)}
+  else if(el<1100){const H=kf(el,[[950,[-.17,.905,.02]],[1010,[-.12,.8,.2]],[1100,[-.12,.56,.24]]]);turn(SP1,[1,0,0],lerp(-.08,.22,sg(el,950,1060)));turn(SP3,[0,1,0],lerp(-.3,.35,sg(el,950,1060)));ik(UA_R,LA_R,HA_R,H,[-1,-.3,-.4],1);ik(UA_L,LA_L,HA_L,[.13,.5,.13],[1,-1,0],.8)}
+  else{const k=1-back;turn(SP1,[1,0,0],.1*k);const tS=toSk([R.dx||I.Ex,(R.dy||I.Ey),R.dz||I.Ez],px,py,pz,yaw);fk();const S=PW[UA_R],d=nrm([tS[0]-S[0],tS[1]-S[1],tS[2]-S[2]]);   // aponta o dedo para o disco (guiando)
+   ik(UA_R,LA_R,HA_R,[S[0]+d[0]*.23,S[1]+d[1]*.23,S[2]+d[2]*.23],[-1,-.5,-.3],k);ik(UA_L,LA_L,HA_L,[.13,.5,.13],[1,-1,0],.8*k)}};
+ // posição do disco
+ const E0=[I.Ex,I.Ey+4,I.Ez],rx=I.uz,rz=-I.ux,RR=24;let dsk=null,r=0;
+ if(el>=1100&&el<1500){const ph=TAU*sg(el,1100,1500),cx=E0[0]+rx*RR,cz=E0[2]+rz*RR;dsk=[cx-rx*RR*cos(ph)+I.ux*RR*sin(ph),E0[1]+3*sin(ph*2),cz-rz*RR*cos(ph)+I.uz*RR*sin(ph)];r=10}
+ else if(el>=1500&&el<1800){const p=sg(el,1500,1800);dsk=[E0[0]+I.ux*70*p,E0[1]+35*p*p,E0[2]+I.uz*70*p];r=10*(1-p*.4)}
+ if(dsk){R.dx=dsk[0];R.dy=dsk[1];R.dz=dsk[2]}
+ R.fx=()=>{const X=dbTex(),T=H3.tex,E=E_();runLater(s,t);if(!X)return;
+  let C=dsk,rr=r;
+  if(el>=200&&el<1050){const h=jointW(HA_R,.06);rr=lerp(2,10,sm(sg(el,200,850)));C=[h[0],h[1]+4+rr*.15,h[2]];if(el>=1000)s.k0=C}
+  else if(el>=1050&&el<1100){const p=sg(el,1050,1100),a=s.k0||E0;C=[lerp(a[0],E0[0],p),lerp(a[1],E0[1],p),lerp(a[2],E0[2],p)];rr=10}
+  if(!C)return;const al=el>1650?1-sg(el,1650,1800):1,spin=t/22;
+  H3.flat(X.disc,C[0],C[1],C[2],rr*2.6,rr*2.6,null,[1,.85,.2,.55*al],true,spin);H3.flat(X.disc,C[0],C[1]+.05,C[2],rr*2,rr*2,null,[1,1,.75,al],true,-spin*1.3);
+  // borda (aparece mesmo de lado)
+  for(let j=0;j<16;j++){const a0=j/16*TAU+spin*.2,a1=(j+1)/16*TAU+spin*.2;H3.strip(T.beam,C[0]+cos(a0)*rr,C[1],C[2]+sin(a0)*rr,C[0]+cos(a1)*rr,C[1],C[2]+sin(a1)*rr,1.3,[1,.95,.5,.9*al],true)}
+  glow(C[0],C[1],C[2],rr*1.8,[1,.9,.4],.35*al);
+  if(E&&rnd()<.7){const a=rnd()*TAU;E.emit({x:C[0]+cos(a)*rr,y:C[1],z:C[2]+sin(a)*rr,vx:-sin(a)*.8,vy:.05,vz:cos(a)*.8,g:0,life:220,s0:1.2,s1:.2,c:[1,1,.7],a:1,drag:.95})}
+  E&&E.light(C[0],C[1],C[2],60,[1,.9,.4],.9*al);
+  const slice=(n)=>{const c=[I.Ex,I.Ey+4,I.Ez];later(s,t,380,a=>{const f=1-a,ln=20*min(1,a*5);H3.strip(T.beam,c[0]+rx*ln,c[1],c[2]+rz*ln,c[0]-rx*ln,c[1],c[2]-rz*ln,4*f+.5,[1,.95,.5,.8*f],true)});boom(c[0],c[1],c[2],YEL,n,true);shake(240,28)};
+  if(once(s,1,el,1100))slice(26);if(once(s,2,el,1500))slice(34)};
+ return R}
+
+// ---------- Nappa: explosão de baixo para cima ----------
+const NP_L=[900,1300,1700];
+function nappa(s,el,dt,t,I){const R=base(I);setPose(s,'Idle_Loop',s.t+dt,.15);
+ const end=el>1750?sm(sg(el,1750,2100)):0;
+ let dip=0;for(const L of NP_L)if(el>=L-160&&el<L)dip=max(dip,sin(PI*sg(el,L-160,L)));
+ R.post=(px,py,pz,yaw)=>{const st=el<300?sm(el/300):1-end;
+  turn(SP3,[1,0,0],-.14*st);turn(SP1,[1,0,0],-.06*st);
+  let H;if(el<300)H=[-.2,.45,.06];else if(el<600)H=kf(el,[[300,[-.2,.45,.06]],[520,[-.2,.78,.14]],[600,[-.17,.905,.05]]]);else H=[-.17,.905-.07*dip,.05+.05*dip];
+  ik(UA_R,LA_R,HA_R,H,[-1,0,-.3],1-end);ik(UA_L,LA_L,HA_L,[.17,.44,.04],[1,-.2,.4],st)};
+ R.fx=()=>{const T=H3.tex,E=E_();runLater(s,t);
+  aura(R.px,R.py,R.pz,t,[1,.4,.7],el<400?sg(el,0,200):1-end,s.yaw);
+  if(el>=600&&el<1750){const h=jointW(HA_R,.08);glow(h[0],h[1]+2,h[2],7+2*sin(t/40),[1,.6,.85],.8)}
+  NP_L.forEach((L,j)=>{const o=j===0?[0,0]:[(j===1?1:-1)*5*I.uz,(j===1?-1:1)*5*I.ux],x=I.Ex+o[0],z=I.Ez+o[1],g=flY(x,z,I.sy);
+   if(el>=L-300&&el<L){const k=sg(el,L-300,L);glow(x,g+1,z,(10+24*k),[1,.6,.3],.35+.4*k);H3.flat(T.ring,x,g+.3,z,30*k+6,30*k+6,null,[1,.7,.4,.7*k],true);
+    if(E&&rnd()<.6)E.emit({x:x+(rnd()-.5)*20,y:g+.5,z:z+(rnd()-.5)*20,vx:0,vy:.2+rnd()*.3,vz:0,g:.02,life:300,s0:1.6,s1:.6,c:[.45,.35,.25],a:1,drag:.98,add:false})}
+   if(once(s,1<<j,el,L)){const big=1+j*.25;shake(320+j*80,35+j*8);
+    burst(x,g+4,z,24,2.2,620,PINK);
+    if(E)for(let q=0;q<22;q++){const a=rnd()*TAU,v=.6+rnd()*1.2;E.emit({x:x+cos(a)*4,y:g+2,z:z+sin(a)*4,vx:cos(a)*v*.6,vy:2+rnd()*2.4,vz:sin(a)*v*.6,g:.09,life:700,s0:2.2+rnd()*1.6,s1:1.2,c:[.42,.32,.22],a:1,drag:.99,add:false})}   // pedras voando
+    later(s,t,620,a=>{const f=1-a,hh=(80*eOut(min(1,a*3)))*big,w=(16+10*a)*big;
+     H3.strip(T.beam,x,g,z,x,g+hh,z,w*1.6,[1,.45,.6,.45*f],true);H3.strip(T.beam,x,g,z,x,g+hh*.9,z,w*.75,[1,.85,.45,.9*f],true);H3.strip(T.beam,x,g,z,x,g+hh*.8,z,w*.3,[1,1,1,f],true);
+     glow(x,g+hh*.5,z,w*2.6,[1,.55,.6],.6*f);glow(x,g+hh,z,w*1.6,[1,.85,.5],.7*f);glow(x,g+4,z,w*2,[1,1,.8],.9*f);
+     H3.flat(T.ring,x,g+.4,z,(20+90*a)*big,(20+90*a)*big,null,[1,.6,.45,.85*f],true);
+     if(E&&a<.6&&rnd()<.8)E.emit({x:x+(rnd()-.5)*w*.5,y:g+rnd()*hh,z:z+(rnd()-.5)*w*.5,vx:(rnd()-.5)*.3,vy:1+rnd(),vz:(rnd()-.5)*.3,g:0,life:380,s0:4,s1:.5,c:PINK[(rnd()*3)|0],a:.9,drag:.97});
+     E&&E.light(x,g+20,z,140,[1,.55,.5],2*f)})}});
+ };
+ return R}
+
+// ---------- Vegeta: GALICK HO ----------
+function vegeta(s,el,dt,t,I){const R=base(I),HH=16;let h=0;
+ if(el<450){h=HH*eOut(sg(el,0,450));setPose(s,AIR,s.t+dt,.12)}else if(el<2420){h=HH+sin(el/170)*.6;setPose(s,'Idle_Loop',s.t+dt,.2)}else{h=HH*(1-sm(sg(el,2420,2600)));setPose(s,AIR,s.t+dt,.12)}
+ R.py=I.sy+h;
+ const ch=el>=400&&el<1250,fire=el>=1150&&el<2450;
+ R.post=(px,py,pz,yaw)=>{
+  if(el<400){const k=sg(el,150,400);ik(UA_R,LA_R,HA_R,[-.16,.5,.1],[-1,-.5,-.2],k*.6);ik(UA_L,LA_L,HA_L,[.16,.5,.1],[1,-.5,-.2],k*.6)}
+  else if(ch&&!fire){const k=sm(sg(el,400,620));turn(SP3,[0,1,0],.7*k);turn(SP2,[0,1,0],.3*k);   // vira o tronco e leva as mãos para o lado
+   ik(UA_R,LA_R,HA_R,[.1,.62,-.1],[0,-1,-.3],k);ik(UA_L,LA_L,HA_L,[.16,.6,-.06],[1,-1,0],k)}
+  else if(fire){const p=sm(sg(el,1150,1260)),bk=el>2300?sm(sg(el,2300,2450)):0;turn(SP3,[0,1,0],.7*(1-p));turn(SP1,[1,0,0],.08*p);
+   if(bk<1)pushHands(I,px,py,pz,yaw,p,[.13,.61,-.08])}};
+ R.fx=()=>{const T=H3.tex,E=E_();runLater(s,t);const c=midHands();
+  aura(R.px,R.py,R.pz,t,[.65,.3,1],el<2450?min(1,el/300):1-sg(el,2450,2600),s.yaw);
+  if(el>=450&&el<1260){const k=sg(el,450,1150),r=2+5*k+sin(t/35)*.7;glow(c[0],c[1],c[2],r*4.2,[.65,.3,1],.85);glow(c[0],c[1],c[2],r*1.8,[1,.9,1],1);
+   sparks(c,6+6*k,2,[.8,.6,1,.9],1);if(rnd()<.35)sparks([R.px,R.py+14,R.pz],14,1,[.9,.75,1,.8],.9);E&&E.light(c[0],c[1],c[2],70,[.65,.35,1],.7+.7*k)}
+  if(el>=1150&&el<2450){const f=el>2300?1-sg(el,2300,2450):1,w=(3.4+4*eOut(sg(el,1150,1280))+sin(t/22)*.7)*f,b=[I.Ex,I.Ey+2,I.Ez];bigBeam(c,b,w,[.55,.2,1],[.8,.5,1],t);
+   // espiral de energia em volta do raio
+   const L=hypot(b[0]-c[0],b[1]-c[1],b[2]-c[2])||1,u=[(b[0]-c[0])/L,(b[1]-c[1])/L,(b[2]-c[2])/L],v1=nrm([-u[2],0,u[0]]),v2=[u[1]*v1[2]-u[2]*v1[1],u[2]*v1[0]-u[0]*v1[2],u[0]*v1[1]-u[1]*v1[0]];
+   let p0=null;for(let k=0;k<=24;k++){const d=k/24*L,a=k*.9-t/40,rr=w*1.7,q=[c[0]+u[0]*d+(v1[0]*cos(a)+v2[0]*sin(a))*rr,c[1]+u[1]*d+(v1[1]*cos(a)+v2[1]*sin(a))*rr,c[2]+u[2]*d+(v1[2]*cos(a)+v2[2]*sin(a))*rr];
+    if(p0)H3.strip(T.beam,p0[0],p0[1],p0[2],q[0],q[1],q[2],1.4,[.9,.7,1,.6*f],true);p0=q}}
+  if(once(s,1,el,1150))burst(c[0],c[1],c[2],24,2,420,PURP),shake(260,28);
+  if(once(s,2,el,2400))boom(I.Ex,I.Ey+2,I.Ez,PURP,46,true),shake(380,40)};
+ return R}
+
+// ---------- Piccolo: MAKANKOSAPPO ----------
+function piccolo(s,el,dt,t,I){const R=base(I);setPose(s,'Idle_Loop',s.t+dt,.15);
+ const up=el<300?sm(el/300):1,shoot=el>=1300,end=el>2100?sm(sg(el,2100,2500)):0;
+ R.post=(px,py,pz,yaw)=>{
+  if(!shoot){turn(SP1,[1,0,0],.05*up);ik(UA_R,LA_R,HA_R,[-.04,.82,.13],[-1,0,-.2],up);ik(UA_L,LA_L,HA_L,[.04,.55,.15],[1,-1,0],up*.7)}   // dedos na testa, a outra mão segurando firme
+  else{const p=sm(sg(el,1300,1380)),k=1-end,tS=toSk([I.Ex,I.Ey+2,I.Ez],px,py,pz,yaw);fk();const S=PW[UA_R],d=nrm([tS[0]-S[0],tS[1]-S[1],tS[2]-S[2]]),T=[S[0]+d[0]*.235,S[1]+d[1]*.235,S[2]+d[2]*.235];
+   const H=[lerp(-.04,T[0],p),lerp(.82,T[1],p),lerp(.13,T[2],p)];turn(SP3,[0,1,0],.25*p*k);ik(UA_R,LA_R,HA_R,H,[-1,-.3,-.3],k);
+   fk();const W=PW[LA_R];ik(UA_L,LA_L,HA_L,[W[0]+.03,W[1]-.02,W[2]+.02],[1,-1,0],.7*k)}};   // segura o pulso do braço que atira
+ R.fx=()=>{const T=H3.tex,E=E_();runLater(s,t);const f=jointW(HA_R,.07);
+  aura(R.px,R.py,R.pz,t,[1,.9,.4],el<2100?min(1,el/300)*.8:.8*(1-end),s.yaw);
+  if(el>=250&&el<1400){const k=sg(el,250,1250),r=1.5+3.5*k+sin(t/30)*.5;glow(f[0],f[1],f[2],r*4,[1,.85,.3],.85);glow(f[0],f[1],f[2],r*1.6,[1,1,.95],1);
+   sparks(f,4+6*k,2,[1,.9,.4,.9],.9);if(rnd()<.6)sparks(f,3+5*k,1,[.85,.5,1,.9],.8);
+   if(E&&rnd()<.7){const a=rnd()*TAU,rr=8;E.emit({x:f[0]+cos(a)*rr,y:f[1]+sin(a)*rr*.6,z:f[2]+sin(a*1.3)*rr,vx:-cos(a)*.4,vy:-sin(a)*.25,vz:-sin(a*1.3)*.4,g:0,life:300,s0:1.4,s1:.3,c:[1,.95,.6],a:1,drag:1})}
+   E&&E.light(f[0],f[1],f[2],50,[1,.85,.4],.5+.8*k)}
+  if(el>=1380&&el<2150){const fo=el>2000?1-sg(el,2000,2150):1,b=[I.Ex,I.Ey+2,I.Ez],L0=hypot(b[0]-f[0],b[1]-f[1],b[2]-f[2])||1,ext=eOut(sg(el,1380,1440)),L=L0*ext,u=[(b[0]-f[0])/L0,(b[1]-f[1])/L0,(b[2]-f[2])/L0],e=[f[0]+u[0]*L,f[1]+u[1]*L,f[2]+u[2]*L];
+   H3.strip(T.beam,f[0],f[1],f[2],e[0],e[1],e[2],4.2*fo,[1,.9,.4,.55],true);H3.strip(T.beam,f[0],f[1],f[2],e[0],e[1],e[2],1.6*fo,[1,1,1,1],true);   // raio fino no meio
+   const v1=nrm([-u[2],0,u[0]]),v2=[u[1]*v1[2]-u[2]*v1[1],u[2]*v1[0]-u[0]*v1[2],u[0]*v1[1]-u[1]*v1[0]],N=max(8,Math.ceil(L/2.2));
+   for(const ph of[0,PI]){let p0=null;for(let k=0;k<=N;k++){const d=k/N*L,a=d*.55-t/28+ph,rr=4.6*fo,q=[f[0]+u[0]*d+(v1[0]*cos(a)+v2[0]*sin(a))*rr,f[1]+u[1]*d+(v1[1]*cos(a)+v2[1]*sin(a))*rr,f[2]+u[2]*d+(v1[2]*cos(a)+v2[2]*sin(a))*rr];
+    if(p0){H3.strip(T.beam,p0[0],p0[1],p0[2],q[0],q[1],q[2],2.4,[.8,.35,1,.85*fo],true);H3.strip(T.beam,p0[0],p0[1],p0[2],q[0],q[1],q[2],.8,[1,.85,1,fo],true)}p0=q}}   // espiral roxa
+   glow(f[0],f[1],f[2],12*fo,[1,.9,.5],.9);glow(e[0],e[1],e[2],(ext>=1?22:10)*fo,[1,.85,.5],.9);E&&E.light(e[0],e[1],e[2],100,[.9,.6,1],1.3*fo)}
+  if(once(s,1,el,1400))boom(I.Ex,I.Ey+2,I.Ez,[[1,.9,.4],[1,1,1],[.8,.4,1]],26,false),shake(260,30);
+  if(once(s,2,el,1700))burst(I.Ex,I.Ey+2,I.Ez,20,2.2,480,[[1,.9,.4],[.8,.4,1]]),shake(160);
+  if(once(s,4,el,2000))boom(I.Ex,I.Ey+2,I.Ez,[[1,.9,.4],[1,1,1],[.8,.4,1]],42,true),shake(380,40)};
+ return R}
+
+// ---------- Goku Kaioken: socos + salto mortal + KAMEHAMEHA ----------
+const GK_SP=[[300,0,0],[600,1.3,0],[900,-1.3,0],[1200,.35,13],[1500,PI,0]];   // [início, ângulo em volta do inimigo, altura]
+const GK_HIT=[400,550,700,850,1000,1150,1300,1450,1600];
+function gokuKai(s,el,dt,t,I){const R=base(I),H0=home(I),D=I.Er+4,SP=GK_SP.map(q=>{const p=spot(I,q[1],D);p.h=q[2];return p}),B=spot(I,0,I.Er+62);
+ let slot=-1,off=0;
+ if(el<300){goTo(R,H0,SP[0],eOut(sg(el,0,300)));setPose(s,JOG,s.t+dt*2.4,.08)}
+ else if(el<1700){slot=GK_SP.findIndex((q,j)=>el>=q[0]&&(j===4||el<GK_SP[j+1][0]));off=el-GK_SP[slot][0];const p=SP[slot];R.px=p.x;R.pz=p.z;R.py=p.y+p.h;R.tg=p.tg;
+  const hi=GK_HIT.findIndex(h=>el<h+110&&el>=h-110),loc=hi>=0?(el-(GK_HIT[hi]-110))/220:0;setPose(s,hi%2?PJ:PC,lerp(.05,.62,clp(loc,0,1)),.03)}
+ else if(el<2050){const p=sg(el,1700,2050),a=SP[4];goTo(R,{x:a.x,z:a.z,y:a.y},B,sm(p),20);R.tg=B.tg;setPose(s,AIR,s.t+dt,.08)}
+ else if(el<3900){R.px=B.x;R.pz=B.z;R.py=B.y;R.tg=B.tg;setPose(s,'Idle_Loop',s.t+dt,.2)}
+ else{goTo(R,B,H0,sm(sg(el,3900,4200)),6);setPose(s,JOG,s.t+dt*1.5,.12)}
+ const charge=el>=2050&&el<2950,fire=el>=2900&&el<3900;
+ R.post=(px,py,pz,yaw)=>{
+  if(el<300){turn(SP1,[1,0,0],.25)}
+  else if(slot>=0){turn(SP1,[1,0,0],.1);const hi=GK_HIT.findIndex(h=>el<h+110&&el>=h-110);if(hi>=0){const loc=(el-(GK_HIT[hi]-110))/220,pk=sin(PI*clp(loc,0,1)),sd=hi%2,tS=toSk([I.Ex,I.Ey+(slot===3?-4:2),I.Ez],px,py,pz,yaw);
+    ik(sd?UA_L:UA_R,sd?LA_L:LA_R,sd?HA_L:HA_R,[lerp(sd?.08:-.08,tS[0],pk),lerp(.6,tS[1],pk),lerp(.14,tS[2],pk)],[sd?1:-1,-.5,-.4],pk)}}
+  else if(el<2050){turn(PEL,[1,0,0],-TAU*sm(sg(el,1730,2020)))}   // salto mortal para trás
+  else if(charge&&!fire){const k=sm(sg(el,2050,2250));turn(SP3,[0,1,0],-.45*k);turn(SP2,[0,1,0],-.2*k);const T=[-.13,.4,-.03];ik(UA_R,LA_R,HA_R,T,[0,-.3,-1],k);ik(UA_L,LA_L,HA_L,[T[0]+.035,T[1]+.03,T[2]+.05],[0,-.3,-1],k)}
+  else if(fire){const p=sm(sg(el,2900,3020)),bk=el>3750?sm(sg(el,3750,3900)):0;turn(SP3,[0,1,0],-.45*(1-p)*(1-bk));if(bk<1)pushHands(I,px,py,pz,yaw,p*(1-bk),[-.13,.4,-.03])}};
+ R.fx=()=>{const T=H3.tex,E=E_();runLater(s,t);
+  // rastros vermelhos: ao avançar e a cada troca de lado (fica a "imagem" de onde ele estava)
+  if(el<300&&E)E.emit({x:R.px,y:R.py+12,z:R.pz,vx:0,vy:0,vz:0,g:0,life:260,s0:9,s1:3,c:[1,.15,.1],a:.6,drag:1});
+  if(slot>0&&off<60){const a=SP[slot-1],k=1-off/60;H3.strip(T.beam,a.x,a.y+a.h+13,a.z,R.px,R.py+13,R.pz,12*k,[1,.2,.1,.5*k],true);glow(a.x,a.y+a.h+13,a.z,22*k,[1,.2,.1],.6*k);
+   if(once(s,1<<(20+slot),el,GK_SP[slot][0],80))burst(R.px,R.py+13,R.pz,10,1.6,300,KAI)}
+  GK_HIT.forEach((h,j)=>{if(once(s,1<<j,el,h,100)){const c=[I.Ex+(rnd()-.5)*6,I.Ey+(rnd()-.5)*6+2,I.Ez+(rnd()-.5)*6];burst(c[0],c[1],c[2],12,2,380,[[1,.3,.2],[1,.9,.7],[1,.6,.3]]);glow(c[0],c[1],c[2],18,[1,.5,.3],.95);
+   later(s,t,220,a=>{H3.flat(T.ring,c[0],c[1],c[2],24*a+6,24*a+6,null,[1,.6,.4,.8*(1-a)],true)});if(j%2||j===8)shake(j===8?260:110,j===8?30:15)}});
+  if(el>=1700&&el<2050&&E&&rnd()<.8)E.emit({x:R.px,y:R.py+12,z:R.pz,vx:0,vy:0,vz:0,g:0,life:220,s0:7,s1:2,c:[1,.2,.1],a:.5,drag:1});
+  const c=midHands();
+  if(el>=2100&&el<3000){const p=sg(el,2100,2900),r=1+3.6*p;glow(c[0],c[1],c[2],r*3.4,[.35,.65,1],.8);glow(c[0],c[1],c[2],r*1.6,[1,1,1],.95);glow(c[0],c[1],c[2],r*4.4,[1,.2,.1],.25);
+   for(let i=0;i<3;i++){const a=rnd()*TAU,u=rnd()*PI-PI/2,rr=10;E&&E.emit({x:c[0]+cos(a)*cos(u)*rr,y:c[1]+sin(u)*rr,z:c[2]+sin(a)*cos(u)*rr,vx:-cos(a)*cos(u)*.55,vy:-sin(u)*.55,vz:-sin(a)*cos(u)*.55,g:0,life:300,s0:1.4,s1:.3,c:i?[.8,.95,1]:[1,.4,.3],a:1,drag:1})}
+   E&&E.light(c[0],c[1],c[2],70,[.5,.7,1],.6+p*.7)}
+  if(fire){const f=el>3750?1-sg(el,3750,3900):1,w=(2.6+3.8*eOut(sg(el,2900,3020))+sin(t/25)*.5)*f,b=[I.Ex,I.Ey+2,I.Ez];
+   H3.strip(T.beam,c[0],c[1],c[2],b[0],b[1],b[2],w*4,[1,.15,.1,.3],true);bigBeam(c,b,w,[.3,.65,1],[.25,.6,1],t)}   // KAMEHAMEHA azul com a borda vermelha do Kaioken
+  if(once(s,1<<10,el,2900))burst(c[0],c[1],c[2],22,2,420,BLUE),shake(260,28);
+  if(once(s,1<<11,el,3750))boom(I.Ex,I.Ey+2,I.Ez,BLUE,46,true),shake(400,42)};
+ return R}
+
+const SKF={Goku:goku,Luffy:luffy,Gon:gon,Itadori:itadori,'Goku Kaioken':gokuKai,Yajirobe:yajirobe,Yamcha:yamcha,Tenshinhan:tenshinhan,Gohan:gohan,Kuririn:kuririn,Nappa:nappa,Vegeta:vegeta,Piccolo:piccolo};
 CH3.sk=nm=>!!SKF[nm];
 // ---------- aura do Kaioken: chama vermelha em volta do corpo (brilho que pulsa + labaredas subindo + faíscas) ----------
 const KAI=[[1,.12,.1],[1,.35,.2],[.85,0,.05],[1,.65,.5]];
@@ -18141,7 +18446,7 @@ function place(A,s,dt,t,SC){
  let px=A.x,py=A.y,pz=A.z,tg=A.yaw,rate=1,post=null,fxf=null,skill=false;
  let E=null;if(g.en&&!g.en.dead){const e=g.en,ex=e.x+8-SC.OX,ez=(e.y+14-SC.OY)*SC.K;E={x:ex,z:ez,r:(e.r||12)+4,y:(H3.floorAt?H3.floorAt(ex,ez):A.y)+8}}
  const DUR=SKD[nm]||1500;
- if(g.act&&g.t0&&g.t0!==s.ga){s.ga=g.t0;s.ev=0;s.abort=0;s.sx=A.x;s.sz=A.z;s.sy=A.y;s.trail=[];s.ptag=-1}
+ if(g.act&&g.t0&&g.t0!==s.ga){s.ga=g.t0;s.ev=0;s.abort=0;s.sx=A.x;s.sz=A.z;s.sy=A.y;s.trail=[];s.ptag=-1;s.fxl=[];s.k0=null}
  let el=s.ga?t-s.ga:1e9;
  if(el<DUR&&!g.act&&el<(ABORT[nm]||DUR)&&!s.abort)s.abort=t;      // inimigo morreu no meio: volta ao normal
  if(s.abort){if(t-s.abort>250){s.abort=0;s.ga=0}el=1e9}
