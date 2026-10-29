@@ -480,7 +480,7 @@ function sanSave(o){
  let nid=Math.max(top+1,SAN.int(o.nid,1,1e9,1));
  chars.forEach(k=>{if(!k.id){k.id=nid++;seen.add(k.id)}});
  const ou=o.ups&&typeof o.ups==='object'?o.ups:{},ups={};
- for(const k of ['x2','x3','x4','x5','auto','autostar','autopas','slot','gate'])if(ou[k])ups[k]=1;
+ for(const k of ['x2','x3','x4','x5','auto','autostar','autopas','slot','gate','db'])if(ou[k])ups[k]=1;
  if(ou.inv)ups.inv=SAN.int(ou.inv,0,1000,0);
  const eq=[];(Array.isArray(o.equipped)?o.equipped:(o.equipped?[o.equipped]:[])).forEach(id=>{id=SAN.int(id,1,1e9,0);if(id&&seen.has(id)&&!eq.includes(id))eq.push(id)});
  const qf=q=>({st:SAN.int(q&&q.st,0,10,0),n:SAN.int(q&&q.n,0,1e6,0)}),oa=o.aset&&typeof o.aset==='object'?o.aset:{};
@@ -522,7 +522,9 @@ const asOf=k=>(PAS[k.pas]||{}).as||0;
 const goldMul=()=>1+(window.XS&&XS().ach.dex0?.1:0)+equipped.reduce((a,id)=>{const k=chars.find(c=>c.id===id);return a+((k&&PAS[k.pas]&&PAS[k.pas].gold)||0)},0);
 const pasTxt=k=>PAS[k.pas]?`<br>${pname(k.pas)}<br><span style="font-size:11px;opacity:.8">${pdesc(PAS[k.pas])}</span>`:'<br>Sem passiva';
 const HSET=new Set(HNAMES.flat().concat(['Shaco','Bendy']));   // personagens do Halloween: 50% mais fortes que os do mundo normal
-const dmgOf=k=>Math.round((D1[k.rar]+(D10[k.rar]-D1[k.rar])*(k.lvl-1)/9)*(1+((PAS[k.pas]||{}).dm||0))*(k.sh?1.5:1)*(HSET.has(k.name)?1.5:1)),need=l=>l<10?25*l:[250,350,450,600,850,1150,1550,2100,2800,3775][l-10]||3775,fxp=k=>Math.round(XPV[k.rar]*(1+.25*((k.lvl||1)-1)));
+const DBSET=new Set(DBNAMES.flat()),capOf=k=>k&&DBSET.has(k.name)?25:20;   // Dragon Ball: nível máximo 25 (os outros 20)
+const DBD1=[80,150,240,360,500],DBD10=[1200,2250,3000,3860,5000];   // Dragon Ball: dano no nível 1 e no 10 (comum ... mítico)
+const dmgOf=k=>Math.round((DBSET.has(k.name)?DBD1[k.rar]+(DBD10[k.rar]-DBD1[k.rar])*(k.lvl-1)/9:D1[k.rar]+(D10[k.rar]-D1[k.rar])*(k.lvl-1)/9)*(1+((PAS[k.pas]||{}).dm||0))*(k.sh?1.5:1)*(HSET.has(k.name)?1.5:1)),need=l=>l<10?25*l:[250,350,450,600,850,1150,1550,2100,2800,3775,4800,6000,7500,9400,11700][l-10]||11700,fxp=k=>Math.round(XPV[k.rar]*(1+.25*((k.lvl||1)-1)));
 // ===== Luffy comum: folha de sprites (4 quadros x 4 direções, célula 20x30) =====
 const LIMG=new Image();LIMG.src='data:image/png;base64,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';
 const LOK=()=>LIMG.complete&&LIMG.naturalWidth>0,isLuffy=k=>k.name==='Luffy'&&k.rar===0;
@@ -627,7 +629,7 @@ function render(){cam.x=Math.max(0,Math.min(W*T-VW,P.x+8-VW/2));cam.y=Math.max(0
   if(map[ty][tx]===4)statue(px,py,frame);else if(map[ty][tx]===5)totem(px,py,frame);}
  drawActors(frame);if(world===1&&!window.HAL){g.fillStyle='#1a003340';g.fillRect(0,0,VW,VH)}if(window.V6F)V6F(frame);
  near=Math.hypot(P.x+8-(SX*T+8),P.y+8-(SY*T+8))<30;
- spinBtn.style.display=near&&!lock?'block':'none';spinBtn.classList.toggle('dis',have()<(world===1?40:10));uiFight();
+ spinBtn.style.display=near&&!lock?'block':'none';spinBtn.classList.toggle('dis',have()<spinCost());uiFight();
  if((frame&3)===0)mythRedraw();
  if(window.FBT)FBT()}
 let rsN=0,rsS=0,rsC=0;   // média do tempo entre quadros (sem pausas): aparelho lento volta sozinho para RS=1 e lembra disso
@@ -1183,7 +1185,7 @@ function spinUi(){try{window.chUi&&window.chUi()}catch(e){}
  $('pity').innerHTML=`<div class="pyT"><b>Piedade Mítica</b><span>[${Math.min(pity,5000).toLocaleString('pt-BR')}/5K]</span><em class="pyS">Slots ${chars.length}/${cap()}</em></div><div class="pyB"><i style="width:${Math.min(100,pity/50).toFixed(2)}%"></i></div>`;
  $('modes').innerHTML=m.length>1?m.map(n=>`<button class="btn md" data-n="${n}" style="padding:6px 12px;margin:0 3px;${n===spinN?'background:#e0a800;color:#222':'background:#555'}">${n}x</button>`).join(''):'';
  $('modes').querySelectorAll('.md').forEach(b=>b.onclick=()=>{if(spinning)return;spinN=+b.dataset.n;spinUi()});
- const c=(world===1?40:10)*spinN;$('go').classList.toggle('dis',have()<c);$('go').textContent='Girar '+spinN+'x ('+c+(world===1?' abóboras':' moedas')+')';
+ const c=spinCost()*spinN;$('go').classList.toggle('dis',have()<c);$('go').textContent='Girar '+spinN+'x ('+c+(world===1?' abóboras':' moedas')+')';
  $('autoGo').style.display=ups.autostar?'inline-block':'none';$('autoGo').textContent=autoOn?'Parar':'Auto'}
 function card(k,s){return `<div class="it${s?' sel':''}" data-id="${k.id}" style="border-color:${COL[k.rar]||'#f0f'}"><canvas class="sp" data-r="${k.rar}" width="12" height="12"></canvas>${escH(k.name)}<br>${badge(k)} Nv${k.lvl}${PAS[k.pas]?` <span style="color:${pcol(PAS[k.pas].r)}">P</span>`:''}</div>`}
 function paint(q,fn){document.querySelectorAll(q+' .it').forEach(el=>{const k=chars.find(c=>c.id==el.dataset.id);drawSp(el.querySelector('canvas'),k.rar,2,k.sh,k.name);el.onclick=()=>fn(k)})}
@@ -1195,7 +1197,7 @@ function renderInv(){invInfo();const eq=equipped.map(id=>chars.find(k=>k.id===id
  paint('#grid',k=>openDet(k.id))}
 function openDet(id){const k=chars.find(c=>c.id===id);if(!k)return;curId=id;
  const c=$('detC');c.dataset.r=k.rar;drawSp(c,k.rar,2,k.sh,k.name);
- const on=equipped.includes(id),mx=k.lvl>=20;
+ const on=equipped.includes(id),mx=k.lvl>=capOf(k);
  $('detT').innerHTML=`<b>${escH(k.name)}</b><br>${badge(k)} · Nv ${k.lvl}${mx?' (MAX)':''}<br>Dano: ${dmgOf(k)}${pasTxt(k)}<br>Vida: ${k.hp||'-'}<br>XP: ${mx?'-':k.xp+'/'+need(k.lvl)}`;
  $('detMsg').textContent='';$('eqBtn').textContent=on?'Guardar':'Invocar';
  $('feedBtn').classList.toggle('dis',mx);
@@ -1209,7 +1211,7 @@ $('eqBtn').onclick=()=>{const id=curId;
 $('sellBtn').onclick=()=>{const k=chars.find(c=>c.id===curId);if(!k)return;
  if(equipped.includes(k.id)){$('detMsg').textContent='Guarde o personagem antes de vender';return}
  coins+=SELL[k.rar];chars=chars.filter(c=>c.id!==k.id);save();updHud();$('detM').style.display='none';renderInv()};
-$('feedBtn').onclick=()=>{const k=chars.find(c=>c.id===curId);if(!k||k.lvl>=20){$('detMsg').textContent='Nível máximo';return}
+$('feedBtn').onclick=()=>{const k=chars.find(c=>c.id===curId);if(!k||k.lvl>=capOf(k)){$('detMsg').textContent='Nível máximo';return}
  sel=new Set();$('detM').style.display='none';renderFeed();$('feedM').style.display='flex'};
 function renderFeed(){const t=chars.find(c=>c.id===curId);
  const list=chars.filter(k=>k.id!==t.id&&!equipped.includes(k.id)&&!k.lk).sort((a,b)=>a.rar-b.rar);
@@ -1218,7 +1220,7 @@ function renderFeed(){const t=chars.find(c=>c.id===curId);
  const xp=[...sel].reduce((a,id)=>a+fxp(chars.find(c=>c.id===id)),0);
  $('feedGo').textContent=`Alimentar ${t.name} (+${xp} XP)`;$('feedGo').classList.toggle('dis',!sel.size);$('feedGo').dataset.xp=xp}
 $('feedGo').onclick=()=>{if(!sel.size)return;const t=chars.find(c=>c.id===curId);t.xp+=+$('feedGo').dataset.xp;chars=chars.filter(c=>!sel.has(c.id));
- while(t.lvl<20&&t.xp>=need(t.lvl)){t.xp-=need(t.lvl);t.lvl++}if(t.lvl>=20)t.xp=0;
+ while(t.lvl<capOf(t)&&t.xp>=need(t.lvl)){t.xp-=need(t.lvl);t.lvl++}if(t.lvl>=capOf(t))t.xp=0;
  save();$('feedM').style.display='none';renderInv();openDet(t.id)};
 $('feedBack').onclick=()=>{$('feedM').style.display='none';openDet(curId)};
 const UPS=[{k:'x2',n:'Girar 2 em 2',d:'Abre 2 personagens por giro (custa 20 moedas)',c:100},{k:'x3',n:'Girar 3 em 3',d:'Abre 3 personagens por giro (custa 30 moedas). Requer o 2 em 2',c:1000,req:'x2'},{k:'x4',n:'Girar 4 em 4',d:'Abre 4 personagens por giro (custa 40 moedas). Requer o 3 em 3',c:10000,req:'x3'},{k:'x5',n:'Girar 5 em 5',d:'Abre 5 personagens por giro (custa 50 moedas). Requer o 4 em 4',c:100000,req:'x4'},{k:'auto',n:'Auto Click',d:'Soca automaticamente 1 vez a cada 0,5s durante a luta',c:1000},{k:'autostar',n:'Auto Estrela',d:'Gira a estrela sozinho (botão Auto na roleta)',c:10000},{k:'autopas',n:'Auto Passiva',d:'Roleta passivas sozinho até sair a passiva alvo',c:10000}];   // o 'Slot extra' saiu da loja (quem já comprou continua com ele: ups.slot)
@@ -1230,7 +1232,7 @@ $('upClose').onclick=()=>{$('upM').style.display='none';lock=false};
 updHud();
 // roleta
 let spinning=false;
-spinBtn.onclick=()=>{if(have()<(world===1?40:10))return;spinUi();$('reels').innerHTML='';$('slotName').textContent='Boa sorte!';$('spinM').style.display='flex';lock=true;jr()};
+spinBtn.onclick=()=>{if(have()<spinCost())return;spinUi();$('reels').innerHTML='';$('slotName').textContent='Boa sorte!';$('spinM').style.display='flex';lock=true;jr()};
 $('spinClose').onclick=()=>{autoOn=false;if(spinning)return;$('spinM').style.display='none';lock=false};
 [['invM','invClose'],['upM','upClose'],['mtM','mtClose'],['spinM','spinClose'],['feedM','feedBack'],['detM','detClose'],['pasM','pasClose'],['wM','wClose'],['massM','massClose']].forEach(([m,c])=>{const b=document.createElement('button');b.className='btn xb';b.textContent='✕';b.onclick=()=>$(c).click();const bx=$(m).querySelector('.box');bx.insertBefore(b,bx.firstChild)});
 function mythFx(names){const o=document.createElement('div');o.id='myth';let p='';for(let i=0;i<60;i++){const a=Math.random()*6.283,d=120+Math.random()*320;p+=`<i style="--dx:${Math.cos(a)*d}px;--dy:${Math.sin(a)*d}px;background:hsl(${Math.random()*360},95%,60%);animation-delay:${Math.random()*.4}s"></i>`}
@@ -1442,6 +1444,7 @@ function reels(host,finals,rnd,show,cb){host.innerHTML=finals.map(()=>'<div clas
    if(r>=2||c.sh){el.classList.add('win');el.style.setProperty('--wc',c.sh?'#80deea':(COL[r]||'#f0f'))}
    if(--left===0)setTimeout(cb,350);return}
   show(el,rnd());sTick();setTimeout(st,45+130*Math.pow(1-rem/stop,2))})()})}
+const spinCost=()=>world===1?40:world===4?500:10;   // estrela: 10 moedas · Halloween 40 abóboras · Dragon Ball 500 moedas
 const have=()=>world===1?pk:coins,cap=()=>100+10*(ups.inv||0),hasFilter=()=>aset.sell.some(Boolean)||aset.feed.some(Boolean);
 function pay(n){if(world===1)pk-=n;else coins-=n}
 function giveDrop(e,now){let c;if(world){c=ri(...e.coin);pk+=c}else{c=Math.round(ri(...e.coin)*goldMul());coins+=c}save();updHud();fx.push({x:e.x-4,y:e.y-12,t:now,s:'+'+c+(world?' abóboras':' moedas'),c:world?'#ff9800':'#ffd23f'})}
@@ -1477,14 +1480,14 @@ $('wClose').onclick=()=>{$('wM').style.display='none';lock=false};
 // --- inventário: slots + em massa + auto
 function invInfo(){$('invInfo').innerHTML=`Slots: <b style="color:${chars.length>=cap()?'#ff5252':'#fff'}">${chars.length}/${cap()}</b>`;$('buySlot').classList.toggle('dis',coins<1000)}
 $('buySlot').onclick=()=>{if(coins<1000)return;coins-=1000;ups.inv=(ups.inv||0)+1;save();updHud();invInfo()};
-function lvlUp(t){while(t.lvl<20&&t.xp>=need(t.lvl)){t.xp-=need(t.lvl);t.lvl++}if(t.lvl>=20)t.xp=0}
+function lvlUp(t){while(t.lvl<capOf(t)&&t.xp>=need(t.lvl)){t.xp-=need(t.lvl);t.lvl++}if(t.lvl>=capOf(t))t.xp=0}
 function rarPanel(el,st,onch){const us=chars.slice().sort((a,b)=>b.rar-a.rar||b.lvl-a.lvl);
  el.innerHTML=`<div style="font-size:11px;opacity:.8;margin-bottom:4px">Unidade que recebe o XP:</div><select style="width:100%;margin-bottom:8px;background:#111;color:#fff;padding:6px;border-radius:6px"><option value="">— nenhuma —</option>${us.map(k=>`<option value="${k.id}"${k.id===st.unit?' selected':''}>${k.sh?'✦ ':''}${escH(k.name)} · ${RAR[k.rar]} Nv${k.lvl}</option>`).join('')}</select><div style="display:grid;grid-template-columns:1fr auto auto;gap:5px;align-items:center;font-size:12px;text-align:left"><span></span><b>Vender</b><b>Alimentar</b>${RAR.map((r,i)=>`<span style="color:${COL[i]||'#f0f'};font-weight:bold">${r}</span><button class="btn tg${st.sell[i]?' on':''}" data-t="sell" data-i="${i}">${st.sell[i]?'✓':'—'}</button><button class="btn tg${st.feed[i]?' on':''}" data-t="feed" data-i="${i}">${st.feed[i]?'✓':'—'}</button>`).join('')}</div>`;
  el.querySelector('select').onchange=e=>{st.unit=+e.target.value||null;onch&&onch()};
  el.querySelectorAll('.tg').forEach(b=>b.onclick=()=>{const a=st[b.dataset.t],i=+b.dataset.i;a[i]=a[i]?0:1;rarPanel(el,st,onch);onch&&onch()})}
 const mst={sell:[0,0,0,0,0],feed:[0,0,0,0,0],unit:null};
 function massPlan(st){const u=chars.find(c=>c.id===st.unit),r={u,sell:[],feed:[],xp:0,gold:0};
- chars.forEach(k=>{if(equipped.includes(k.id)||k.sh||k.pas||k.lk||(u&&k.id===u.id))return;if(st.feed[k.rar]&&u&&u.lvl<20){r.feed.push(k.id);r.xp+=fxp(k)}else if(st.sell[k.rar]){r.sell.push(k.id);r.gold+=SELL[k.rar]}});return r}
+ chars.forEach(k=>{if(equipped.includes(k.id)||k.sh||k.pas||k.lk||(u&&k.id===u.id))return;if(st.feed[k.rar]&&u&&u.lvl<capOf(u)){r.feed.push(k.id);r.xp+=fxp(k)}else if(st.sell[k.rar]){r.sell.push(k.id);r.gold+=SELL[k.rar]}});return r}
 function massPrev(){const p=massPlan(mst);$('massGo').dataset.c='';$('massGo').textContent='Executar';$('massInfo').textContent=`Vender ${p.sell.length} (+${p.gold} moedas) · Alimentar ${p.feed.length} (+${p.xp} XP)`;$('massGo').classList.toggle('dis',!p.sell.length&&!p.feed.length)}
 $('massBtn').onclick=()=>{rarPanel($('massP'),mst,massPrev);massPrev();$('massM').style.display='flex'};
 $('massClose').onclick=()=>$('massM').style.display='none';
@@ -1492,11 +1495,11 @@ $('massGo').onclick=()=>{const p=massPlan(mst);if(!p.sell.length&&!p.feed.length
  coins+=p.gold;if(p.u){p.u.xp+=p.xp;lvlUp(p.u)}const rm=new Set([...p.sell,...p.feed]);chars=chars.filter(c=>!rm.has(c.id));save();updHud();renderInv();massPrev();$('massM').style.display='none'};
 $('cfgBtn').onclick=()=>{const p=$('cfgP');if(p.style.display==='none'){rarPanel(p,aset,save);p.style.display='block'}else p.style.display='none'};
 function autoProc(ws){const u=chars.find(c=>c.id===aset.unit);
- ws.forEach(w=>{if(w.sh)return;if(aset.feed[w.rar]&&u&&u.lvl<20&&u.id!==w.id){u.xp+=fxp(w);lvlUp(u);w._a='f'}else if(aset.sell[w.rar]){coins+=SELL[w.rar];w._a='v'}});chars=chars.filter(c=>!c._a)}
+ ws.forEach(w=>{if(w.sh)return;if(aset.feed[w.rar]&&u&&u.lvl<capOf(u)&&u.id!==w.id){u.xp+=fxp(w);lvlUp(u);w._a='f'}else if(aset.sell[w.rar]){coins+=SELL[w.rar];w._a='v'}});chars=chars.filter(c=>!c._a)}
 // --- estrela
 let autoOn=false;
 const showChar=(el,k)=>{el.innerHTML=`<canvas class="sp" data-r="${k.rar}" width="12" height="12"></canvas><div style="color:${COL[k.rar]||'#f0f'};font-weight:bold;margin-top:2px">${k.sh?'✦ ':''}${escH(k.name)}</div>`;drawSp(el.firstChild,k.rar,2,k.sh,k.name)};
-function doSpin(){if(spinning)return;ac();const n=spinN,cost=(world===1?40:10)*n,sm=t=>$('slotName').innerHTML=t;
+function doSpin(){if(spinning)return;ac();const n=spinN,cost=spinCost()*n,sm=t=>$('slotName').innerHTML=t;
  if(have()<cost){autoOn=false;spinUi();sm('Sem '+(world===1?'abóboras':'moedas')+'!');return}
  if(chars.length>cap()||(chars.length+n>cap()&&!hasFilter())){autoOn=false;spinUi();sm('Inventário cheio! Venda personagens ou compre slots.');return}
  pay(cost);updHud();spinning=true;spinUi();sm('Girando...');
@@ -1664,7 +1667,7 @@ const fmtN=n=>n>=1e6?(n/1e6).toFixed(1)+'M':n>=1000?(n/1000).toFixed(1)+'K':''+n
 function popClose(){$('popM').style.display='none'}
 $('popM').addEventListener('click',e=>{if(e.target===$('popM'))popClose()});
 function openDet(id){const k=chars.find(c=>c.id===id);if(!k)return;curId=id;
- const on=equipped.includes(id),mx=k.lvl>=20,p=PAS[k.pas],col=COL[k.rar]||'#ff4fd8';
+ const on=equipped.includes(id),mx=k.lvl>=capOf(k),p=PAS[k.pas],col=COL[k.rar]||'#ff4fd8';
  const pct=mx?100:Math.min(100,Math.round(k.xp/need(k.lvl)*100));
  $('popMain').innerHTML=`<div class="hd"><canvas class="sp${k.sh?' shn':''}" id="popC" data-r="${k.rar}" width="12" height="12"></canvas><div><div class="nmx">${k.sh?'✦ ':''}${escH(k.name)}</div><div class="rr" style="color:${col}">${RAR[k.rar]}${k.sh?' · <span class="rbw">✦Shiny</span>':''}</div></div></div>
  <div class="pstat"><span>NV</span><b class="lv">${k.lvl}${mx?' MAX':''}</b><span>DANO</span><b class="dm">${fmtN(dmgOf(k))}</b></div>
@@ -1684,7 +1687,7 @@ function openDet(id){const k=chars.find(c=>c.id===id);if(!k)return;curId=id;
  $('pEq').onclick=()=>{if(equipped.includes(id)){equipped=equipped.filter(x=>x!==id);delete fpos[id]}
   else if(equipped.length>=maxEq()){msg('Máximo de '+maxEq()+' equipados');return}
   else equipped.push(id);save();popClose();renderInv()};
- $('pFeed').onclick=()=>{if(k.lvl>=20){msg('Nível máximo');return}sel=new Set();popClose();renderFeed();$('feedM').style.display='flex'};
+ $('pFeed').onclick=()=>{if(k.lvl>=capOf(k)){msg('Nível máximo');return}sel=new Set();popClose();renderFeed();$('feedM').style.display='flex'};
  $('pSell').onclick=()=>{if(equipped.includes(id)){msg('Guarde o personagem antes de vender');return}if(k.lk){msg('Lutador bloqueado');return}coins+=SELL[k.rar];chars=chars.filter(c=>c.id!==id);save();updHud();popClose();renderInv()};
  $('popM').style.display='flex'}
 const pct_=x=>Math.round(x*100);
@@ -2254,7 +2257,7 @@ updHud=function(){$('hud').textContent=''+nf(coins)+(world===1?'  '+nf(pk):'')+'
 const _qk=questKill;
 questKill=function(e){_qk(e);onKill(e)};
 function onKill(e){const t=Date.now();st.kills++;if(e.t===2){st.boss++;prog('boss',1)}
- if(buffs.xp>0){const xp=[25,75,250,150][e.t]||25;let any=0;equipped.forEach(id=>{const k=chars.find(c=>c.id===id);if(k&&k.lvl<20){k.xp+=xp;lvlUp(k);any=1}});if(any)fx.push({x:P.x-6,y:P.y-16,t,s:'+'+xp+' XP',c:'#b388ff',big:1})}
+ if(buffs.xp>0){const xp=[25,75,250,150][e.t]||25;let any=0;equipped.forEach(id=>{const k=chars.find(c=>c.id===id);if(k&&k.lvl<capOf(k)){k.xp+=xp;lvlUp(k);any=1}});if(any)fx.push({x:P.x-6,y:P.y-16,t,s:'+'+xp+' XP',c:'#b388ff',big:1})}
  const dm=bm('d');
  if(Math.random()<[.006,.02,.08,.05][e.t]*dm){const id=['f1','s1','d1','m1'][ri(0,3)];addItem(id,1);fx.push({x:e.x-10,y:e.y-22,t,s:'+1 '+IT[id].n,c:IT[id].c});qToast('Drop: '+IT[id].n+' (está no inventário)')}
  if(e.t===2&&Math.random()<.015*dm){const id=['f2','s2','d2','m2'][ri(0,3)];addItem(id,1);qToast('Drop raro: '+IT[id].n+'!')}
@@ -2327,7 +2330,7 @@ const WCFG=[{w:W0,h:H0,s:[SX0,SY0],to:[TOX0,TOY0],gt:[GX0,GY0],np:[NX0,NY0],p:[S
 goWorld=function(n){if(n===world||!WCFG[n])return;if(n===1&&!ups.gate)return;if(n===2&&!wbCan()){toast('A Arena do Boss Mundial precisa de internet: entre na sua conta');return}
  const c=WCFG[n];world=n;W=c.w;H=c.h;SX=c.s[0];SY=c.s[1];TOX=c.to[0];TOY=c.to[1];GX=c.gt[0];GY=c.gt[1];NPC.x=c.np[0]*T;NPC.y=c.np[1]*T;
  map=WD[n].map;EN=WD[n].EN;qs=QS[n];fight=null;for(const k in fpos)delete fpos[k];P.x=c.p[0];P.y=c.p[1];P.dir=c.d;DY.length=0;PT.length=0;
- spinBtn.textContent=n===1?'Roletar (40 abóboras)':'Roletar (10 moedas)';if(n===1)st.hw=1;if(n===2)toast('Caverna de Gelo! Chegue perto do boss e toque em Lutar');
+ spinBtn.textContent=n===1?'Roletar (40 abóboras)':n===4?'Roletar (500 moedas)':'Roletar (10 moedas)';if(n===1)st.hw=1;if(n===2)toast('Caverna de Gelo! Chegue perto do boss e toque em Lutar');
  updHud();updQuest();save();achCheck()};
 function wbStatus(){if(!wbCan())return 'Entre na sua conta (online)';wbUpd();if(!WB.ready)return 'Carregando...';const s=WB.srv;
  if(s&&s.k){const nx=(wbCyc(sNow())+1)*DAY+22*36e5;return 'Derrotado · renasce em '+ft(nx-sNow())}return 'Vivo · '+fk(WB.hp)+' de vida'}
@@ -22121,7 +22124,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261029140455;
+const GAME_BUILD=20261029141631;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
@@ -22885,14 +22888,17 @@ try{WD[WID]={map:map4,EN:[]};QS[WID]=QS[0]}catch(e){console.error('DBW mundo',e)
 DBW.map=map4;
 let cool=0;
 function toast_(m){try{if(typeof toast==='function')toast(m)}catch(e){}}
-DBW.go=function(){if(world!==0||Date.now()<cool)return;cool=Date.now()+4000;
+DBW.go=function(){if(world!==0||Date.now()<cool)return;
+ if(!ups.db){if(coins<25000){if(Date.now()>(DBW.warnT||0)){DBW.warnT=Date.now()+3000;toast_('O portal do Mundo 2 custa 25.000 de ouro (você tem '+Math.floor(coins).toLocaleString('pt-BR')+')')}return}   // paga uma vez e fica liberado
+  coins-=25000;ups.db=1;try{updHud()}catch(e){}toast_('Portal do Mundo 2 liberado! (-25.000 de ouro)')}
+ cool=Date.now()+4000;
  goWorld(WID);P.x=SPAWN.x-8;P.y=SPAWN.z-14;P.dir=3;try{save()}catch(e){}toast_('Mundo 2 · Dragon Ball! Cidade do Oeste')};
 DBW.back=function(){if(world!==WID||Date.now()<cool)return;cool=Date.now()+4000;
  goWorld(0);P.x=M1P.x-8;P.y=M1P.z+46-14;P.dir=2;try{save()}catch(e){}toast_('De volta ao Mundo 1')};
 setInterval(()=>{try{if(typeof world==='undefined'||lock)return;const x=P.x+8,z=P.y+14;
  if(world===0&&hypot(x-M1P.x,z-M1P.z)<16)DBW.go();
  else if(world===WID&&hypot(x-BACK.x,z-BACK.z)<16)DBW.back()}catch(e){}},120);
-setTimeout(()=>{try{const sv=typeof SV!=='undefined'?SV:null;if(sv&&sv.w===WID){goWorld(WID);if(typeof sv.px==='number'&&!DBW.solid(sv.px+8,sv.py+14)&&sv.px<WW&&sv.py<WH){P.x=sv.px;P.y=sv.py}else{P.x=SPAWN.x-8;P.y=SPAWN.z-14}guard3D()}}catch(e){}},0);
+setTimeout(()=>{try{const sv=typeof SV!=='undefined'?SV:null;if(sv&&sv.w===WID){if(!ups.db)ups.db=1;goWorld(WID);if(typeof sv.px==='number'&&!DBW.solid(sv.px+8,sv.py+14)&&sv.px<WW&&sv.py<WH){P.x=sv.px;P.y=sv.py}else{P.x=SPAWN.x-8;P.y=SPAWN.z-14}guard3D()}}catch(e){}},0);
 // o Mundo 2 só existe no 3D: ao reabrir nele, liga o 3D; se o 3D não ligar (aparelho sem 3D, erro ou demora), volta para o Mundo 1 ao lado do portal
 function guard3D(){const t0=Date.now();let tried=0;const iv=setInterval(()=>{try{
  if(world!==WID){clearInterval(iv);return}
