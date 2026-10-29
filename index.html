@@ -21491,7 +21491,7 @@ function stepKart(k,dt,I){
  const bi=clNear(k.x,k.z,k.hint,14),pr=clProj(k.x,k.z,bi);k.hint=bi;let ds=pr.s-k.sPrev;if(ds>TR.L/2)ds-=TR.L;if(ds<-TR.L/2)ds+=TR.L;k.sPrev=pr.s;k.cum+=ds;if(k.cum>k.maxCum)k.maxCum=k.cum;
  k.lat2=pr.lat;k.pdir=pr.hd;
  const wr=abs(angd(k.h,pr.hd))>2.1&&k.sp>2.5;k.wrong=wr?k.wrong+dt:0;
- padCheck(k);
+ padCheck(k);millCheck(k);
  // respawn se caiu
  if(k.noGnd>1.4||k.y<TR.cy[bi]-9)respawn(k)}
 function respawn(k){const p=clAt(TR.respS?TR.respS(TR.cum[k.hint]):TR.cum[k.hint]);k.hint=p.i;k.x=p.x;k.z=p.z;k.y=p.y;k.h=p.hd;k.vx=k.vz=k.vy=0;k.sp=0;k.air=false;k.noGnd=0;k.inv=2.2;k.dr=0;k.armed=false;k.boostT=0;k.spinT=0;k.frzT=0;k.steer=0;if(k.me){camS.init=false;flash(255,255,255,.5)}}
@@ -21700,25 +21700,28 @@ function drawNitroFx(c,u,k){const on=k.boostT>0&&k.bcol===4;S.nitA=on?min(1,(S.n
 
 // ============================================================ PISTA 2: DESFILADEIRO DO TEMPO (inspirada na "Out of Time" do Crash Nitro Kart) ============================================================
 // A física roda numa versão "plana" da pista (o mesmo código de sempre). Nos trechos de parede a pista é só ENTORTADA na hora de desenhar:
-// cada seção transversal gira em volta da borda de dentro da curva (até ~80°) e tudo que está em cima dela (karts, itens, partículas, câmera) gira junto.
+// cada seção transversal gira em volta da borda de FORA da curva (até ~80°; o lado de dentro desce para o vazio) e tudo que está em cima dela (karts, itens, partículas, câmera) gira junto.
 const TK={cur:1,store:{},names:{1:'CIRCUITO ESTRELA',2:'DESFILADEIRO DO TEMPO'},short:{1:'🏁 Circuito',2:'🌵 Desfiladeiro'}};
-const T2P=[[0,0],[0,40],[2,80],[14,108],[40,122],[72,120],[100,104],[118,80],[124,48],[128,10],
- [134,-28],[150,-52],[180,-62],[208,-64],[230,-82],[236,-110],[224,-138],[196,-152],[160,-150],[128,-138],
- [100,-124],[76,-104],[58,-80],[40,-62],[14,-58],[-8,-74],[-30,-98],[-58,-108],[-80,-94],[-88,-66],
- [-78,-40],[-56,-30],[-28,-34],[-8,-24]];
+const T2SC=.92,T2P=[[0,-20],[0,20],[0,50],[10,76],[34,92],[60,86],[76,66],[76,44],[90,28],[112,28],
+ [124,48],[118,72],[102,90],[98,114],[110,134],[134,142],[154,130],[162,106],[158,80],[164,52],
+ [180,32],[200,16],[222,6],[254,-4],[276,-22],[290,-50],[288,-82],[270,-108],[242,-120],[214,-118],
+ [196,-122],[184,-138],[174,-154],[158,-170],[132,-182],[106,-172],[94,-150],[72,-136],[48,-144],[30,-162],
+ [6,-168],[-20,-156],[-34,-130],[-32,-106],[-46,-86],[-68,-78],[-88,-90],[-104,-112],[-128,-116],[-146,-96],
+ [-144,-66],[-124,-46],[-98,-38],[-72,-46],[-48,-50],[-26,-48],[-10,-40]];
 // tudo abaixo é dado pelo parâmetro u do traçado (u = número do ponto de controle + fração)
-const T2Y=[[0,0],[2.6,0],[4,1.2],[6,3],[8.4,4.6],[9.0,5.5],[9.24,6.2],[9.42,7.9],[9.88,3.6],[10.4,2.2],[11.5,0],[20.6,0],[21.6,1.6],[22.2,3.3],[22.42,4.9],[22.72,1.4],[23.4,0],[34,0]];
-const T2GAP=[[9.42,9.88],[22.42,22.72]];                    // abismos (sem pista): pule com nitro
-const T2ROLL=[[12.1,13.5,16.1,17.4,80],[25.4,26.6,29.0,30.1,70]];   // trechos na parede: começa, fica cheio, termina cheio, acaba, graus
-const T2PAD=[[4.4,0,7],[8.72,0,13],[8.92,0,13],[14.7,0,7],[17.9,0,7],[21.9,0,9],[27.8,0,7],[31.3,0,7]];   // almofadas de nitro: u, lado, largura
-const T2BOX=[1.6,19.2,31.0];
+const T2Y=[[0,0],[2.6,0],[5,.8],[8.5,.5],[10,2],[12,5.5],[14,9.5],[16,10],[17.5,7],[19,3.2],[20.6,2.6],[21.6,4.6],[22.1,6.3],[22.3,7.6],[22.9,3.4],[23.6,2],[24.4,1],[29,1],[30.5,.4],[31.4,1.2],[32.2,3.2],[32.45,4.3],[32.8,1.6],[33.6,.6],[36,2.5],[38,1],[40.5,3],[43,.5],[57,0]];
+const T2GAP=[[22.3,22.9],[32.45,32.8]];                       // abismos (sem pista): o 1º precisa de nitro e tem o moinho
+const T2ROLL=[[24.2,25.0,27.6,28.6,78],[45.0,45.9,49.6,50.5,72]];   // trechos na parede: começa, fica cheio, termina cheio, acaba, graus
+const T2PAD=[[2.0,0,7],[13.0,0,7],[21.55,0,15.6],[21.8,0,15.6],[26.0,0,7],[31.0,0,9],[36.6,0,7],[47.5,0,7],[53.6,0,7]];   // almofadas de nitro: u, lado, largura
+const T2BOX=[1.0,17.2,34.0,52.5];
+const T2ARCH=[3.4,11.0,16.6,30.2,38.2,54.2],T2CLK=[1.4,5.5,8.5,15.2,20.9,31.6,35.5,39.6,43.4,52.0,55.5],T2TUN=[18.5,20.3],T2MILL=22.6;
 const BND={hd:0,ph:0},BT=[0,0,0],BR=new Float32Array(16);
 // ---------- entortar: ponto da pista plana -> mundo ----------
 function bendIdx(x,z){const g=TR.bg;if(!g)return -1;const ix=floor((x-g.x0)/g.c),iz=floor((z-g.z0)/g.c);if(ix<0||iz<0||ix>=g.nx||iz>=g.nz)return -1;return g.a[iz*g.nx+ix]}
-function bendInto(o,x,y,z){o[0]=x;o[1]=y;o[2]=z;BND.ph=0;const i0=bendIdx(x,z);if(i0<0)return 0;
+function bendInto(o,x,y,z,nf){o[0]=x;o[1]=y;o[2]=z;BND.ph=0;const i0=bendIdx(x,z);if(i0<0)return 0;
  const T=TR,pr=clProj(x,z,clNear(x,z,i0,5)),a=pr.i,b=(a+1)%T.n,t=clp((pr.s-T.cum[a])/((T.cum[a+1]-T.cum[a])||1),0,1);let ph=lerp(T.phi[a],T.phi[b],t);if(abs(ph)<1e-4)return 0;
- const al=abs(pr.lat),hw=T.hw;if(al>hw+1.5)ph*=max(0,1-(al-hw-1.5)/6);if(abs(ph)<1e-4)return 0;
- const pv=ph>0?-hw:hw,cyv=lerp(T.cy[a],T.cy[b],t),h=y-cyv,lx=cos(pr.hd),lz=-sin(pr.hd),c=cos(ph),s=sin(ph),d=pr.lat-pv,q=pv+d*c-h*s;
+ const al=abs(pr.lat),hw=T.hw;if(!nf&&al>hw+1.5)ph*=max(0,1-(al-hw-1.5)/6);if(abs(ph)<1e-4)return 0;
+ const pv=ph>0?hw:-hw,cyv=lerp(T.cy[a],T.cy[b],t),h=y-cyv,lx=cos(pr.hd),lz=-sin(pr.hd),c=cos(ph),s=sin(ph),d=pr.lat-pv,q=pv+d*c-h*s;
  o[0]=pr.px+lx*q;o[1]=cyv+d*s+h*c;o[2]=pr.pz+lz*q;BND.hd=pr.hd;BND.ph=ph;return ph}
 // matriz de um objeto em cima da pista: posição entortada e rotação em volta do sentido da pista
 function bendMM(M){if(!TR.bg)return 0;const ph=bendInto(BT,M[12],M[13],M[14]);if(!ph)return 0;
@@ -21745,8 +21748,10 @@ function buildTrack2(){
  const T=TR,P=T2P,N=P.length,pts=[],us=[],hw=8;
  for(const k of Object.keys(T))delete T[k];T.ready=false;T.hw=hw;T.start=0;
  Object.assign(LIGHT,{sun:[-.5,.38,.78],sky:[.78,.56,.8],gnd:[.56,.38,.3],sunC:[1.02,.7,.46],fog:[.9,.62,.66],fn:120,ff:340});{const l=hypot(...LIGHT.sun);LIGHT.sun=LIGHT.sun.map(v=>v/l)}
- for(let i=0;i<N;i++){const p0=P[(i-1+N)%N],p1=P[i],p2=P[(i+1)%N],p3=P[(i+2)%N],m=max(4,Math.ceil(hypot(p2[0]-p1[0],p2[1]-p1[1])));
-  for(let k=0;k<m;k++){const t=k/m,t2=t*t,t3=t2*t,f=j=>.5*(2*p1[j]+(-p0[j]+p2[j])*t+(2*p0[j]-5*p1[j]+4*p2[j]-p3[j])*t2+(-p0[j]+3*p1[j]-3*p2[j]+p3[j])*t3);pts.push([f(0),f(1)]);us.push(i+t)}}
+ const Q=i=>{const p=P[(i+N)%N];return[p[0]*T2SC,p[1]*T2SC]};
+ for(let i=0;i<N;i++){const p0=Q(i-1),p1=Q(i),p2=Q(i+1),p3=Q(i+2),m=max(4,Math.ceil(hypot(p2[0]-p1[0],p2[1]-p1[1]))),dd=(a,b)=>Math.sqrt(hypot(b[0]-a[0],b[1]-a[1]))||1e-3;   // Catmull-Rom centrípeta: curvas sem bicos
+  const t0=0,t1=t0+dd(p0,p1),t2=t1+dd(p1,p2),t3=t2+dd(p2,p3);
+  for(let k=0;k<m;k++){const t=t1+(t2-t1)*k/m,f=j=>{const A1=((t1-t)*p0[j]+(t-t0)*p1[j])/(t1-t0),A2=((t2-t)*p1[j]+(t-t1)*p2[j])/(t2-t1),A3=((t3-t)*p2[j]+(t-t2)*p3[j])/(t3-t2),B1=((t2-t)*A1+(t-t0)*A2)/(t2-t0),B2=((t3-t)*A2+(t-t1)*A3)/(t3-t1);return((t2-t)*B1+(t-t1)*B2)/(t2-t1)};pts.push([f(0),f(1)]);us.push(i+k/m)}}
  const n=pts.length;T.n=n;T.cx=new Float32Array(n);T.cz=new Float32Array(n);T.cy=new Float32Array(n);T.hd=new Float32Array(n);T.cum=new Float32Array(n+1);T.u=new Float32Array(us);T.phi=new Float32Array(n);
  for(let i=0;i<n;i++){T.cx[i]=pts[i][0];T.cz[i]=pts[i][1]}
  for(let i=0;i<n;i++){const j=(i+1)%n,dx=T.cx[j]-T.cx[i],dz=T.cz[j]-T.cz[i];T.hd[i]=atan2(dx,dz);T.cum[i+1]=T.cum[i]+hypot(dx,dz)}T.L=T.cum[n];
@@ -21772,7 +21777,7 @@ function buildTrack2(){
    for(let b=b0;b<=b1;b++)for(let a=a0;a<=a1;a++){if(a<0||b<0||a>=g.nx||b>=g.nz)continue;const px=g.x0+(a+.5)*c,pz=g.z0+(b+.5)*c,d=hypot(px-cx,pz-cz);if(d>R)continue;const q=b*g.nx+a;if(d<dd[q]){dd[q]=d;g.a[q]=i}}}
   T.bg=g}
  // ---------- quadro de cada ponto (para desenhar já entortado) ----------
- const F=[];for(let i=0;i<n;i++){const ph=T.phi[i];F.push({x:T.cx[i],y:T.cy[i],z:T.cz[i],lx:cos(T.hd[i]),lz:-sin(T.hd[i]),c:cos(ph),s:sin(ph),pv:ph>0?-hw:ph<0?hw:0})}
+ const F=[];for(let i=0;i<n;i++){const ph=T.phi[i];F.push({x:T.cx[i],y:T.cy[i],z:T.cz[i],lx:cos(T.hd[i]),lz:-sin(T.hd[i]),c:cos(ph),s:sin(ph),pv:ph>0?hw:ph<0?-hw:0})}
  const W=(i,lat,h)=>{const f=F[(i+n)%n],d=lat-f.pv,q=f.pv+d*f.c-h*f.s;return[f.x+f.lx*q,f.y+d*f.s+h*f.c,f.z+f.lz*q]};
  const Wf=(i,lat,h)=>{const f=F[(i+n)%n];return[f.x+f.lx*lat,f.y+h,f.z+f.lz*lat]};
  T.W=W;
@@ -21834,11 +21839,38 @@ function buildTrack2(){
   const bm=new MB2(),w=8.6,y0=7.1,y1=8.3,cc=pk(255,255,255);bm.quad(pp(-.7,w,y0),pp(-.7,-w,y0),pp(-.7,-w,y1),pp(-.7,w,y1),cc,[0,1,1,1,1,0,0,0]);bm.quad(pp(.7,-w,y0),pp(.7,w,y0),pp(.7,w,y1),pp(.7,-w,y1),cc,[0,1,1,1,1,0,0,0]);T.meBanner=bm}
  try{decoExtra(m,'canyon')}catch(e){console.warn('kart deco2',e)}
  // arcos de pedra por cima da pista
- for(const u of[3.2,7.2,19.8,24.6,32.4]){const s=sOfU(u),i=clAt(s).i,f=F[i],tx=sin(T.hd[i]),tz=cos(T.hd[i]),r=hw+3.2,cy0=f.y+8;
+ for(const u of T2ARCH){const s=sOfU(u),i=clAt(s).i,f=F[i],tx=sin(T.hd[i]),tz=cos(T.hd[i]),r=hw+3.2,cy0=f.y+8;
   for(const sd of[1,-1]){const x=f.x+f.lx*r*sd,z=f.z+f.lz*r*sd;for(let k=0;k<4;k++)m.box(x,f.y+k*2+1,z,1.5,1,1.5,0,[0,1,2,3,4,5].map(q=>k%2?pk(214,120,52):pk(178,92,44)))}
   const NS=14;for(let k=0;k<NS;k++){const a0=k/NS*PI,a1=(k+1)/NS*PI,p0=[f.x+f.lx*r*cos(a0),cy0+r*.75*sin(a0),f.z+f.lz*r*cos(a0)],p1=[f.x+f.lx*r*cos(a1),cy0+r*.75*sin(a1),f.z+f.lz*r*cos(a1)],o=1.5,up=1.3,col=k%2?pk(222,132,58):pk(190,100,46);
    const q=(p,dy,dt)=>[p[0]+tx*dt,p[1]+dy,p[2]+tz*dt];
-   m.quad(q(p0,up,-o),q(p1,up,-o),q(p1,up,o),q(p0,up,o),col);m.quad(q(p0,-up,o),q(p1,-up,o),q(p1,-up,-o),q(p0,-up,-o),pk(150,76,40));m.quad(q(p0,-up,-o),q(p1,-up,-o),q(p1,up,-o),q(p0,up,-o),col);m.quad(q(p1,-up,o),q(p0,-up,o),q(p0,up,o),q(p1,up,o),col)}}
+   m.quad(q(p0,up,-o),q(p1,up,-o),q(p1,up,o),q(p0,up,o),col);m.quad(q(p0,-up,o),q(p1,-up,o),q(p1,-up,-o),q(p0,-up,-o),pk(150,76,40));m.quad(q(p0,-up,-o),q(p1,-up,-o),q(p1,up,-o),q(p0,up,-o),col);m.quad(q(p1,-up,o),q(p0,-up,o),q(p0,up,o),q(p1,up,o),col)}
+  if(u===T2ARCH[2])T.bigClk={x:f.x-tx*2.2,y:cy0+r*.75+3.4,z:f.z-tz*2.2,nx:-tx,nz:-tz}}
+
+ // túnel de madeira (celeiro) por cima da pista
+ {const s0=sOfU(T2TUN[0]),s1=sOfU(T2TUN[1]),H=6.6,Wd=hw+1.4,RF=pk(150,56,36),RF2=pk(176,72,44),PL=pk(112,72,40),BM=pk(70,44,26),RO=pk(54,36,28);let prev=null,k=0;
+  for(let s=s0;s<=s1+.01;s+=2,k++){const p=clAt(s),lx=cos(p.hd),lz=-sin(p.hd),y=p.y,Pq=(lat,h)=>[p.x+lx*lat,y+h,p.z+lz*lat];
+   const cur={L0:Pq(Wd,0),L1:Pq(Wd,H),R0:Pq(-Wd,0),R1:Pq(-Wd,H),T:Pq(0,H+2.8),Lo:Pq(Wd+.9,H-.3),Ro:Pq(-Wd-.9,H-.3)};
+   if(k%3===0){for(const sd of[1,-1]){const q=Pq(sd*Wd,0);m.box(q[0],y+H/2,q[2],.38,H/2,.38,0,[BM,BM,PL,PL,PL,PL])}m.quad(Pq(Wd,H-.45),Pq(-Wd,H-.45),Pq(-Wd,H),Pq(Wd,H),BM)}
+   if(prev){m.quad(prev.Lo,cur.Lo,cur.T,prev.T,RF);m.quad(prev.T,cur.T,cur.Ro,prev.Ro,RF2);m.quad(prev.T,prev.Lo,cur.Lo,cur.T,RO);m.quad(prev.Ro,prev.T,cur.T,cur.Ro,RO);
+    const win=k%3===2,mid=(q0,q1,t)=>[lerp(q0[0],q1[0],t),lerp(q0[1],q1[1],t),lerp(q0[2],q1[2],t)];
+    for(const sd of[1,-1]){const a0=sd>0?prev.L0:prev.R0,a1=sd>0?cur.L0:cur.R0,b0=sd>0?prev.L1:prev.R1,b1=sd>0?cur.L1:cur.R1,pc=(k&1)?PL:pk(124,82,46);
+     if(win){m.quad(a0,a1,mid(a1,b1,.35),mid(a0,b0,.35),pc);m.quad(mid(a0,b0,.78),mid(a1,b1,.78),b1,b0,pc)}else m.quad(a0,a1,b1,b0,pc)}}
+   prev=cur}}
+ // moinho: as pás giram atravessando o caminho do pulo no meio do 1º abismo
+ {const sm=sOfU(T2MILL),p=clAt(sm),hd=p.hd,lx=cos(hd),lz=-sin(hd),tx=sin(hd),tz=cos(hd),hubLat=hw+4.5,i0=clAt(sm).i,i1=(i0+1)%n,
+   cyv=T.cy[i0],hy=cyv+3.4,hx=p.x+lx*hubLat,hz=p.z+lz*hubLat,Lb=20;
+  T.mill={s:sm,lat:hubLat,y:hy,x:hx,z:hz,hd,Lb,w:.9};
+  const bx=hx+tx*2.6,bz=hz+tz*2.6,ST=[pk(170,96,56),pk(140,76,46),pk(196,118,66)];   // torre atrás das pás (no sentido do eixo)
+  for(let k=0;k<10;k++){const y0=-48+k*((hy-1.5+48)/10),hh=(hy-1.5+48)/10;m.cyl(bx,y0,bz,3.2-k*.08,3.1-k*.08,hh,9,ST[k%3],k===9)}
+  m.box(bx,hy+1,bz,2.6,2.5,2.6,0,[pk(90,56,30),pk(90,56,30),pk(200,170,120),pk(186,154,108),pk(200,170,120),pk(186,154,108)]);
+  for(let k=0;k<4;k++){const a0=k/4*TAU+PI/4,a1=(k+1)/4*TAU+PI/4,r=3.9,P1=[bx+cos(a0)*r,hy+3.4,bz+sin(a0)*r],P2=[bx+cos(a1)*r,hy+3.4,bz+sin(a1)*r];m.tri(P1,P2,[bx,hy+7.5,bz],k%2?pk(170,40,30):pk(140,30,24))}
+  for(let k=0;k<5;k++){const q=k/4;m.box(lerp(bx,hx,q),hy,lerp(bz,hz,q),.35,.35,.35,pk(80,50,30))}   // eixo
+  const BL=new MB2(),WD=pk(110,70,40),S1=pk(250,244,232),S2=pk(214,48,40);
+  const prism=(ax,ay,bx2,by2,w,z0,z1,col)=>{const dx=bx2-ax,dy=by2-ay,l=hypot(dx,dy)||1,qx=-dy/l*w,qy=dx/l*w,A=[ax+qx,ay+qy],B=[bx2+qx,by2+qy],C=[bx2-qx,by2-qy],Dq=[ax-qx,ay-qy];
+   for(const z of[z0,z1])BL.quad([A[0],A[1],z],[B[0],B[1],z],[C[0],C[1],z],[Dq[0],Dq[1],z],col);BL.quad([A[0],A[1],z0],[B[0],B[1],z0],[B[0],B[1],z1],[A[0],A[1],z1],col);BL.quad([Dq[0],Dq[1],z0],[C[0],C[1],z0],[C[0],C[1],z1],[Dq[0],Dq[1],z1],col)};
+  for(let b=0;b<4;b++){const a=b*PI/2,c=cos(a),sn=sin(a);prism(c*.6,sn*.6,c*Lb,sn*Lb,.22,-.2,.2,WD);
+   for(let q=0;q<6;q++){const r0=3.4+q*(Lb-3.8)/6,r1=r0+(Lb-3.8)/6-.15;prism(c*r0,sn*r0,c*r1,sn*r1,1.15,-.08,.08,q%2?S2:S1)}}
+  BL.box(0,0,-.3,.9,.9,.6,pk(80,50,30));T.meMill=BL}
  // cactos
  {let k=0,tr=0;while(k<90&&tr<4000){tr++;const x=-140+R()*420,z=-200+R()*360,y=freeV(x,z,4);if(y===null)continue;if(clDist(x,z)>70||DECO.blk(x,z))continue;const h=2.2+R()*2.6,G=pk(60+R()*30|0,140+R()*30|0,60),G2=pk(84,170,80);
   m.cyl(x,y,z,.42,.36,h,7,G,true);m.sph(x,y+h,z,.37,3,6,G2);for(const sd of[1,-1]){if(R()<.25)continue;const ah=h*(.35+R()*.3),ax=x+sd*.9,ao=.55+R()*.8;m.box(x+sd*.5,y+ah,z,.45,.22,.22,G);m.cyl(ax,y+ah-.1,z,.24,.22,ao+.5,6,G,true);m.sph(ax,y+ah+ao+.4,z,.22,3,5,G2)}k++}}
@@ -21852,12 +21884,14 @@ function buildTrack2(){
  T.meSign=SG;
  // relógios gigantes (o mostrador tem textura; os ponteiros giram)
  const CK=new MB2();T.clocks=[];
- for(const u of[1.2,5.6,11.0,20.2,23.8,31.6,33.2]){const s=sOfU(u),i=clAt(s).i,f=F[i];for(const sd of[u*7%2>1?1:-1]){const d=hw+9+R()*8,x=f.x+f.lx*d*sd,z=f.z+f.lz*d*sd,yg=T.terr.top(x,z);if(yg===null)continue;
+ for(const u of T2CLK){const s=sOfU(u),i=clAt(s).i,f=F[i];for(const sd of[u*7%2>1?1:-1]){const d=hw+9+R()*8,x=f.x+f.lx*d*sd,z=f.z+f.lz*d*sd,yg=T.terr.top(x,z);if(yg===null)continue;
    const nx=-f.lx*sd,nz=-f.lz*sd,ry=atan2(nx,nz),X=[cos(ry),0,-sin(ry)],r=4.2,cy0=yg+9;m.cyl(x-nx*.4,yg,z-nz*.4,.5,.4,cy0-yg,6,pk(120,70,30),true);
    for(let k=0;k<20;k++){const a0=k/20*TAU,a1=(k+1)/20*TAU,ro=r+.7,P1=(a,rr)=>[x+X[0]*cos(a)*rr-nx*.2,cy0+sin(a)*rr,z+X[2]*cos(a)*rr-nz*.2];m.quad(P1(a0,r),P1(a1,r),P1(a1,ro),P1(a0,ro),k%2?pk(230,150,30):pk(196,110,20))}
    const P2=(u2,v2)=>[x+X[0]*u2*r,cy0+v2*r,z+X[2]*u2*r];CK.quad(P2(-1,-1),P2(1,-1),P2(1,1),P2(-1,1),pk(255,255,255),[0,1,1,1,1,0,0,0]);
    const bk=(u2,v2)=>[x+X[0]*u2*(r+.7)-nx*.35,cy0+v2*(r+.7),z+X[2]*u2*(r+.7)-nz*.35];m.quad(bk(1,-1),bk(-1,-1),bk(-1,1),bk(1,1),pk(120,60,20));
    T.clocks.push({x:x+nx*.08,y:cy0,z:z+nz*.08,ry,ph:R()*TAU})}}
+ if(T.bigClk){const b=T.bigClk,ry=atan2(b.nx,b.nz),X=[cos(ry),0,-sin(ry)],r=5.6;for(let k=0;k<24;k++){const a0=k/24*TAU,a1=(k+1)/24*TAU,ro=r+.9,P1=(a,rr)=>[b.x+X[0]*cos(a)*rr-b.nx*.2,b.y+sin(a)*rr,b.z+X[2]*cos(a)*rr-b.nz*.2];m.quad(P1(a0,r),P1(a1,r),P1(a1,ro),P1(a0,ro),k%2?pk(240,170,40):pk(200,120,24))}
+  const P2=(u2,v2)=>[b.x+X[0]*u2*r,b.y+v2*r,b.z+X[2]*u2*r];CK.quad(P2(-1,-1),P2(1,-1),P2(1,1),P2(-1,1),pk(255,255,255),[0,1,1,1,1,0,0,0]);T.clocks.push({x:b.x+b.nx*.1,y:b.y,z:b.z+b.nz*.1,ry,ph:1.3,sc:1.35})}
  T.meClock=CK;
  // blocos flutuantes nos trechos de vazio (e no fundo dos abismos)
  {let k=0,tr=0;while(k<110&&tr<6000){tr++;const s=R()*T.L;if(!(T.rolls.some(r=>s>r[0]-10&&s<r[1]+10)||T.gaps.some(g=>s>g[0]-8&&s<g[1]+8)))continue;const p=clAt(s),sd=R()<.5?1:-1,d=hw+9+R()*34,x=p.x+cos(p.hd)*d*sd,z=p.z-sin(p.hd)*d*sd;
@@ -21870,13 +21904,13 @@ function buildTrack2(){
   const cl=new MB2();for(let c=0;c<18;c++){const a=c/18*TAU+R()*.3,d=220+R()*100,cx=cos(a)*d,cz=sin(a)*d,cy=50+R()*70,sc=.8+R()*1.2;for(let b=0;b<4;b++){const ox=(b-1.5)*20*sc,r=(10+R()*7)*sc;cl.sph(cx+ox,cy+(R()-.5)*4,cz+(R()-.5)*10,r,4,7,b%2?pk(255,196,206,220):pk(255,170,190,220),.28)}}T.meCloud=cl}}
 // liga o que foi construído (malhas e luz) — chamado depois de buildTrack2
 function finishTrack2(m){const T=TR;
- ME.world=upMesh(m.build());ME.glow=upMesh(T._gl.build());ME.pads=upMesh(T._pad.build());ME.banner=upMesh(T.meBanner.build());ME.sign=upMesh(T.meSign.build());ME.clk=upMesh(T.meClock.build());ME.sky=upMesh(T.meSky.build());ME.cloud=upMesh(T.meCloud.build());
+ ME.world=upMesh(m.build());ME.glow=upMesh(T._gl.build());ME.pads=upMesh(T._pad.build());ME.banner=upMesh(T.meBanner.build());ME.sign=upMesh(T.meSign.build());ME.clk=upMesh(T.meClock.build());ME.sky=upMesh(T.meSky.build());ME.cloud=upMesh(T.meCloud.build());ME.mill=T.meMill?upMesh(T.meMill.build()):null;delete T.meMill;
  {const h=new MB2();h.box(0,1.6,.06,.16,1.6,.04,pk(60,30,10));ME.clkM=upMesh(h.build());const h2=new MB2();h2.box(0,1.1,.1,.22,1.1,.05,pk(40,20,8));ME.clkH=upMesh(h2.build())}
  if(!TEXS.clk)TEXS.clk=clockTex();if(!TEXS.arrow)TEXS.arrow=arrowTex();
  delete T.meBanner;delete T.meSign;delete T.meClock;delete T.meSky;delete T.meCloud;delete T._gl;delete T._pad;
  T.ready=true}
 // ---------- trocar de pista ----------
-const TKME=['world','banner','ads','semL','semH','mount','sun','sunH','sky','cloud','pads','glow','sign','clk','clkM','clkH'];
+const TKME=['world','banner','ads','semL','semH','mount','sun','sunH','sky','cloud','pads','glow','sign','clk','clkM','clkH','mill'];
 function snapTrack(id){const o={tr:{},me:{},light:JSON.parse(JSON.stringify(LIGHT)),map:[mapCv,mapB],deco:[DECO.gate,DECO.ex]};for(const k of Object.keys(TR))o.tr[k]=TR[k];for(const k of TKME)o.me[k]=ME[k];TK.store[id]=o}
 function useTrack(id){id=id===2?2:1;if(TK.cur===id&&TR.ready)return true;snapTrack(TK.cur);
  if(!TK.store[id]){if(id!==2)return false;try{for(const k of TKME)delete ME[k];DECO.ex=[];DECO.gate=null;buildTrack2();const T=TR;
@@ -21887,7 +21921,14 @@ function restoreTrack(o){for(const k of Object.keys(TR))delete TR[k];Object.assi
 // ---------- efeitos da pista 2 ----------
 function drawTrack2(){if(!ME.pads)return;const pul=.75+.25*sin(S.t*9);drawMesh(ME.pads,null,{em:.85,tint:[pul,1,pul,1]});drawMesh(ME.glow,null,{em:1,blend:2,tint:[1,1,1,.75+.25*sin(S.t*13)]});
  drawMesh(ME.sign,null,{tx:TEXS.arrow,em:.55});drawMesh(ME.clk,null,{tx:TEXS.clk,em:.45});
- const tm=Date.now()/1000;for(const c of TR.clocks||[]){M4.trs(MM,c.x,c.y,c.z,c.ry,0,-(tm*.9+c.ph),1,1,1);drawMesh(ME.clkM,MM,{});M4.trs(MM,c.x,c.y,c.z,c.ry,0,-(tm*.075+c.ph*3),1,1,1);drawMesh(ME.clkH,MM,{})}}
+ const tm=Date.now()/1000;for(const c of TR.clocks||[]){const k=c.sc||1;M4.trs(MM,c.x,c.y,c.z,c.ry,0,-(tm*.9+c.ph),k,k,k);drawMesh(ME.clkM,MM,{});M4.trs(MM,c.x,c.y,c.z,c.ry,0,-(tm*.075+c.ph*3),k,k,k);drawMesh(ME.clkH,MM,{})}
+ const ML=TR.mill;if(ML&&ME.mill){M4.trs(MM,ML.x,ML.y,ML.z,ML.hd,0,millAng(),1,1,1);drawMesh(ME.mill,MM,{})}}
+let MCLK=null;const millAng=()=>(MCLK?MCLK():nowS())/1000*1.1;   // mesma posição das pás para todos os jogadores (relógio do servidor)
+function millCheck(k){const M=TR.mill;if(!M)return;if(k.millT>0){k.millT-=1/60;return}let ds=k.sPrev-M.s;if(ds>TR.L/2)ds-=TR.L;if(ds<-TR.L/2)ds+=TR.L;if(abs(ds)>1.5)return;
+ const dl=(k.lat2||0)-M.lat,dy=k.y+.7-M.y,r=hypot(dl,dy);if(r>M.Lb+.9)return;const A=millAng(),an=atan2(dy,dl);let hit=r<1.6;
+ for(let i=0;i<4&&!hit;i++){const df=abs(angd(an,A+i*PI/2));if(df<PI/4&&df*r<M.w+.6)hit=true}
+ if(!hit)return;k.millT=1.5;k.boostT=0;k.vx*=.1;k.vz*=.1;k.air=true;k.vy=2.2;endDrift(k,false);   // bateu na pá: perde a velocidade e cai no abismo
+ if(k.me){snd('wall',12);S.shake=max(S.shake,.85);flash(255,220,180,.35);popup('PÁ DO MOINHO!','#ffb74d');burst(k.x,k.y+1,k.z,30,10,.7,1,.2,[[255,240,220],[200,150,90],[230,60,40]],{grav:12})}}
 // faíscas elétricas nas bordas e rodas brilhando nos trechos na parede
 function wallFx(k,dt){if(!TR.bg||!k)return;const ph=abs(k.phi||0);if(ph<.12)return;const n=floor(40*dt)+(rnd()<(40*dt)%1?1:0);
  for(let q=0;q<n;q++){const s=k.sPrev+4+rnd()*30,p=clAt(s),sd=rnd()<.5?1:-1,x=p.x+cos(p.hd)*TR.hw*sd,z=p.z-sin(p.hd)*TR.hw*sd;emit(x,p.y+.7,z,(rnd()-.5)*3,1+rnd()*2,(rnd()-.5)*3,.25+rnd()*.25,.9,.1,170+rnd()*85,200+rnd()*55,255,1,2,0,3,1)}}
@@ -21957,9 +21998,12 @@ let KL0=null;
 function drawShadow(k){const gy=(k.gy!==undefined?k.gy:k.y);M4.trs(MM,k.x,gy+.06,k.z,k.h,0,0,1,1,1);bendMM(MM);drawMesh(ME.shadow,MM,{blend:1,em:1,tint:[1,1,1,k.air?.7:1]})}
 function render(dt){
  gl.viewport(0,0,cvG.width,cvG.height);gl.clearColor(LIGHT.fog[0],LIGHT.fog[1],LIGHT.fog[2],1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
- M4.persp(PM,camS.fov*PI/180,cvG.width/cvG.height,.35,520);if(TR.bg&&S.st!=='menu'){const E0=[0,0,0];bendInto(E0,camS.x,camS.y,camS.z);bendInto(BT,camS.tx,camS.ty,camS.tz);let ux=0,uy=1,uz=0;const kk=PL||KARTS[0];
-  if(kk&&abs(kk.phi||0)>1e-4){const p=clAt(kk.sPrev||0),c=cos(kk.phi),sn=sin(kk.phi);ux=-cos(p.hd)*sn;uy=c;uz=sin(p.hd)*sn}
-  const cu=camS.up||(camS.up=[0,1,0]),q=min(1,dt*7);cu[0]+=(ux-cu[0])*q;cu[1]+=(uy-cu[1])*q;cu[2]+=(uz-cu[2])*q;lookUp(VM,E0[0],E0[1],E0[2],BT[0],BT[1],BT[2],cu[0],cu[1],cu[2]);camPos=E0}
+ M4.persp(PM,camS.fov*PI/180,cvG.width/cvG.height,.35,520);if(TR.bg&&S.st!=='menu'&&(PL||KARTS[0])){const kk=PL||KARTS[0],CM=new Float32Array(16);M4.trs(CM,kk.x,kk.y,kk.z,camS.yaw,0,0,1,1,1);bendMM(CM);
+  // câmera de perseguição no espaço já entortado: atrás do kart (na direção dele) e acima da pista (na normal dela)
+  const fx=CM[8],fy=CM[9],fz=CM[10],ux=CM[4],uy=CM[5],uz=CM[6],P0=[CM[12],CM[13],CM[14]],ag=clp(abs(kk.phi||0)/.6,0,1),dist=hypot(camS.x-kk.x,camS.z-kk.z)*(1-.18*ag),hgt=(camS.y-kk.y)*(1+.2*ag),ta=hypot(camS.tx-kk.x,camS.tz-kk.z),th=camS.ty-kk.y;
+  const cu=camS.up||(camS.up=[ux,uy,uz]),q=min(1,dt*12);cu[0]+=(ux-cu[0])*q;cu[1]+=(uy-cu[1])*q;cu[2]+=(uz-cu[2])*q;
+  const E0=[P0[0]+ux*hgt-fx*dist,P0[1]+uy*hgt-fy*dist,P0[2]+uz*hgt-fz*dist];
+  lookUp(VM,E0[0],E0[1],E0[2],P0[0]+ux*th+fx*ta,P0[1]+uy*th+fy*ta,P0[2]+uz*th+fz*ta,cu[0],cu[1],cu[2]);camPos=E0}
  else{camS.up=null;M4.look(VM,camS.x,camS.y,camS.z,camS.tx,camS.ty,camS.tz);camPos=[camS.x,camS.y,camS.z]}M4.mul(VP,PM,VM);
  setFrameU(VP,camPos);
  // céu
@@ -22467,7 +22511,7 @@ D.addEventListener('visibilitychange',()=>{if(D.hidden&&S.st!=='off'){IN.thr=IN.
 addEventListener('resize',()=>{if(S.st!=='off'&&booted)resize()});
 window.STARKART={open,close,S,IN,CFG,TR,KARTS:()=>KARTS,PL:()=>PL,PROJ:()=>PROJ,BANS:()=>BANS,BOXES:()=>BOXES,NET,
  _sim:sec=>{for(let t=0;t<sec;t+=1/60)simStep(1/60)},_step:simStep,_race:enterRace,_boost:boost,_hit:hitKart,_use:useItem,_give:it=>{if(PL){PL.item=it;PL.rollT=0}},_cam:()=>camS,_snd:snd,_menu:showMain,_res:showResults,_clAt:clAt,_pause:pauseOn,
- _tex:()=>TEXS,LIGHT,_me:()=>ME,_tp:(s,sp)=>{const k=PL,p=clAt(s*TR.L);k.x=p.x;k.z=p.z;k.y=p.y;k.h=p.hd;k.hint=clNear(k.x,k.z,p.i,6);const pr=clProj(k.x,k.z,k.hint);k.sPrev=pr.s;k.cum=pr.s;k.maxCum=max(k.maxCum,k.cum);k.vx=sin(k.h)*(sp||0);k.vz=cos(k.h)*(sp||0);k.air=false;camS.init=false},_opts:()=>({qScale,fpsA}),_net:{onRoom,beginOnlineRace,doJoin}};
+ _tex:()=>TEXS,LIGHT,_mclk:f=>{MCLK=f},_bend:(o,x,y,z,nf)=>bendInto(o,x,y,z,nf),_bidx:bendIdx,_me:()=>ME,_tp:(s,sp)=>{const k=PL,p=clAt(s*TR.L);k.x=p.x;k.z=p.z;k.y=p.y;k.h=p.hd;k.hint=clNear(k.x,k.z,p.i,6);const pr=clProj(k.x,k.z,k.hint);k.sPrev=pr.s;k.cum=pr.s;k.maxCum=max(k.maxCum,k.cum);k.vx=sin(k.h)*(sp||0);k.vz=cos(k.h)*(sp||0);k.air=false;camS.init=false},_opts:()=>({qScale,fpsA}),_net:{onRoom,beginOnlineRace,doJoin}};
 
 // ---------- card no menu de Eventos ----------
 function evCard(){const box=D.querySelector('#evM .box'),n=box&&box.querySelector('.evN');if(!box||!n||$('evSk'))return;
@@ -22515,7 +22559,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261029185727;
+const GAME_BUILD=20261029193815;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
