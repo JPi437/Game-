@@ -21816,7 +21816,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261029122938;
+const GAME_BUILD=20261029124408;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
@@ -22587,7 +22587,15 @@ DBW.back=function(){if(world!==WID||Date.now()<cool)return;cool=Date.now()+4000;
 setInterval(()=>{try{if(typeof world==='undefined'||lock)return;const x=P.x+8,z=P.y+14;
  if(world===0&&hypot(x-M1P.x,z-M1P.z)<16)DBW.go();
  else if(world===WID&&hypot(x-BACK.x,z-BACK.z)<16)DBW.back()}catch(e){}},120);
-setTimeout(()=>{try{const sv=typeof SV!=='undefined'?SV:null;if(sv&&sv.w===WID){goWorld(WID);if(typeof sv.px==='number'&&!DBW.solid(sv.px+8,sv.py+14)&&sv.px<WW&&sv.py<WH){P.x=sv.px;P.y=sv.py}else{P.x=SPAWN.x-8;P.y=SPAWN.z-14}}}catch(e){}},0);
+setTimeout(()=>{try{const sv=typeof SV!=='undefined'?SV:null;if(sv&&sv.w===WID){goWorld(WID);if(typeof sv.px==='number'&&!DBW.solid(sv.px+8,sv.py+14)&&sv.px<WW&&sv.py<WH){P.x=sv.px;P.y=sv.py}else{P.x=SPAWN.x-8;P.y=SPAWN.z-14}guard3D()}}catch(e){}},0);
+// o Mundo 2 só existe no 3D: ao reabrir nele, liga o 3D; se o 3D não ligar (aparelho sem 3D, erro ou demora), volta para o Mundo 1 ao lado do portal
+function guard3D(){const t0=Date.now();let tried=0;const iv=setInterval(()=>{try{
+ if(world!==WID){clearInterval(iv);return}
+ const S=H3.S||{};if(H3.mode>0&&!S.ld){clearInterval(iv);return}
+ if(S.ld||(document.getElementById('startM')&&getComputedStyle(document.getElementById('startM')).display!=='none'))return;   // carregando ou ainda na tela de entrar
+ if(!H3.mode&&H3.setMode&&tried<3&&!lock){tried++;try{H3.setMode(2)}catch(e){console.error('DBW 3D',e)}}
+ if(!H3.mode&&(tried>=3||Date.now()-t0>60000)){clearInterval(iv);goWorld(0);P.x=M1P.x-8;P.y=M1P.z+46-14;P.dir=2;try{save()}catch(e){}toast_('O Mundo 2 precisa do 3D: voltamos para o Mundo 1, ao lado do portal')}
+}catch(e){}},1500)}
 
 // ---------- nuvens no céu do Mundo 1 (parte do campo 3D): grupos de "bolas" brancas achatadas, iluminadas pelo sol, andando devagar com o vento ----------
 {const FLD1=H3.fld;
