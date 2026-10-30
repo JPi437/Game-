@@ -1434,6 +1434,17 @@ function sJotaro(){sT(0,600,1200,.3,.04,'sine',.1);sWhoosh(.3,400,1400,.3,.2);fo
 function sItadori(){sWhoosh(0,400,1500,.35,.3);for(let i=0;i<5;i++)sZap(.35+i*.05,.5);sBoom(.6,1.3);sT(.6,62,28,.6,.35,'square',.005);sN(.6,.5,.35,'bandpass',200,90,1.5);sZap(.6,1.5);sZap(.75,1);sT(.9,140,60,.12,.2,'sine');sT(1.28,140,60,.12,.25,'sine')}
 function sGon(){sT(0,1200,900,.04,.05,'square');sWhoosh(.3,300,900,.35,.2);sWhoosh(.7,1500,500,.25,.35);for(let i=0;i<6;i++)sN(.72+i*.04,.025,.08,'highpass',3500,5000,.7);
  sT(1.0,900,600,.06,.12,'square');sPunch(1.0,.7);sWhoosh(1.0,400,1100,.25,.2);sN(1.38,.04,.5,'highpass',4500,9000,.7);sBoom(1.4,.9);for(let i=0;i<6;i++)sN(1.5+i*.04,.025,.06,'highpass',3500,5000,.7)}
+// Jeff the Killer: puxa a faca (raspar de metal) e as facadas; a última mais pesada
+function sJeff(){sN(.3,.18,.1,'highpass',2500,7000,.8,.02);sT(.32,2600,3400,.12,.03,'sine');
+ [.65,.85,1.05,1.25,1.45].forEach((w,i)=>{sSlash(w-.06,.75,1.1+i*.03);sPunch(w,.55);sN(w,.1,.16,'lowpass',800,250,.9)});
+ sSlash(1.68,1,.8);sPunch(1.75,1.1);sThud(1.75,.9);sN(1.75,.25,.25,'lowpass',700,150,.8)}
+// Sonic.exe: estática do glitch, o giro da bola e um zunido a cada rasante; na volta, tons graves distorcidos
+function sSonicExe(){sN(0,.28,.16,'bandpass',1800,600,2,.01);sT(.05,90,60,.25,.12,'square');sT(.26,300,1600,.2,.08,'sawtooth');
+ [.6,.9,1.2,1.5,1.8,2.1].forEach((w,i)=>{sWhoosh(w-.15,500+i*60,1600+i*120,.3,.2);sPunch(w,.7+i*.06);if(i===5)sBoom(w,.9)});
+ sN(2.56,.3,.18,'bandpass',1500,500,2,.01);[0,.14,.28].forEach(d=>sT(2.6+d,150-d*120,110-d*80,.12,.12,'sawtooth'))}
+// Jason: tira o facão, vira fumaça (sopro grave), reaparece, empala e arranca
+function sJason(){sN(.12,.3,.1,'highpass',1800,5000,.8,.03);sPoof(.45,.7);sWhoosh(.76,180,500,.5,.2);sPoof(1.3,.6);
+ sSlash(1.55,1,.7);sPunch(1.6,1.2);sThud(1.6,1);sN(1.6,.3,.3,'lowpass',600,120,.9);sN(2.1,.18,.22,'lowpass',900,200,.9);sSlash(2.08,.8,.9);sPoof(2.4,.6);sWhoosh(2.4,500,180,.35,.16)}
 // Chara: 10 cortes (som do corte do Undertale) e o som de dano no 99999999
 function sChara(S){const A=S.at||[];for(let i=0;i<A.length-1;i++){const w=Math.max(0,A[i]/1000-.06);if(!sfxPlay('chSlash',w,.5,1+((i*7)%5-2)*.02)){sSlash(w,.7,1.2);sN(w,.08,.12,'bandpass',1800,600,1.2)}}
  const f=A[A.length-1]/1000;if(!sfxPlay('chDmg',f-.02,.95)){sT(f,880,220,.25,.18,'square');sN(f,.2,.3,'lowpass',2500,300,.8);sThud(f,.8)}}
@@ -1446,7 +1457,7 @@ function sGhostface(){sT(.15,1900,1700,.03,.05,'square');sN(.3,.9,.12,'lowpass',
  [1.15,1.4,1.7].forEach((w,i)=>{sSlash(w-.05,.9,.9);sPunch(w,.8);sN(w,.12,.18,'lowpass',900,300,.9)});
  const f=1.7;sN(f,.025,.35,'highpass',3000,7000,.7);sT(f,2400,2200,.02,.08,'square');sN(f+.07,.03,.25,'highpass',2500,6000,.7);sT(f+.02,1200,3600,.4,.04,'sine');
  sPoof(1.95,.6);sWhoosh(1.95,700,200,.45,.16)}
-const SKSND={Chara:sChara,Sally:sSally,Ghostface:sGhostface,Guts:()=>sGuts(),Goku:sGoku,Naruto:sNaruto,Baki:sBaki,Asta:sAsta,Meliodas:sMeliodas,Ichigo:sIchigo,Killua:sKillua,Kaneki:sKaneki,Jotaro:sJotaro,Itadori:sItadori,Gon:sGon};
+const SKSND={Chara:sChara,Sally:sSally,Ghostface:sGhostface,'Jeff the Killer':sJeff,'Sonic.exe':sSonicExe,Jason:sJason,Guts:()=>sGuts(),Goku:sGoku,Naruto:sNaruto,Baki:sBaki,Asta:sAsta,Meliodas:sMeliodas,Ichigo:sIchigo,Killua:sKillua,Kaneki:sKaneki,Jotaro:sJotaro,Itadori:sItadori,Gon:sGon};
 // sons reais das habilidades (mp3 cortados no tamanho de cada animação e nivelados no mesmo volume): [arquivo, atraso em s para o momento forte cair no golpe]
 const SKSAMP={Luffy:['skLuffy',.02],Itadori:['skItadori',0],Ichigo:['skIchigo',0],Killua:['skKillua',.24],Goku:['skGoku',.1],Jotaro:['skJotaro',.62],Naruto:['skNaruto',.5]};
 function skSnd(name,S){try{const m=SKSAMP[name];if(m&&SFX[m[0]]){sfxPlay(m[0],m[1],1);return}   // som real; se ainda não carregou, cai no sintetizado
@@ -1833,6 +1844,9 @@ const SK={
  'Goku Kaioken':{n:'KAIOKEN KAMEHAMEHA!',h:8,d:4200,m:3.2,ch:2000,tk:13,at:[400,550,700,850,1000,1150,1300,1450,1600,3000,3250,3500,3750],w:[.04,.04,.04,.04,.04,.04,.04,.04,.04,.16,.16,.16,.16],rec:650,fx:'beam',c:'#ff1744',c2:'#e1f5fe',lc:'#ff5252'},
  Chara:{n:'FACA DE VERDADE!',h:6,d:2600,m:1.75,ch:0,tk:11,at:[400,540,680,820,960,1100,1240,1380,1520,1660,1950],w:[.05,.05,.05,.05,.05,.05,.05,.05,.05,.05,.5],rec:450,fx:'slash',c:'#ff1744',c2:'#ffffff',lc:'#ff5252',fin:'99999999'},   // 10 cortes do Undertale + 99999999 (3D: CH3)
  Sally:{n:'ACORDE ELÉTRICO!',h:6,d:2600,m:1.6,ch:1250,tk:4,at:[1300,1500,1700,1950],w:[.2,.2,.2,.4],rec:500,fx:'beam',c:'#76ff03',c2:'#ccff90',lc:'#b2ff59'},   // toca a guitarra e solta o raio verde (3D: CH3)
+ 'Jeff the Killer':{n:'VÁ DORMIR!',h:6,d:2400,m:1.75,ch:0,tk:6,at:[650,850,1050,1250,1450,1750],w:[.08,.08,.08,.08,.08,.6],rec:450,fx:'slash',c:'#ff1744',c2:'#ffffff',lc:'#ff5252'},   // puxa a faca e esfaqueia: 5 facadas + a última com força (3D: CH3)
+ 'Sonic.exe':{n:'RASANTES DO EXE!',h:7,d:2800,m:1.9,ch:0,tk:6,at:[600,900,1200,1500,1800,2100],w:[.12,.12,.12,.12,.12,.4],rec:450,fx:'burst',c:'#2962ff',c2:'#ff1744',lc:'#ff5252'},   // some e passa como bola 6 vezes, do azul ao vermelho (3D: CH3)
+ Jason:{n:'FACÃO DAS SOMBRAS!',h:7,d:3000,m:2,ch:0,tk:2,at:[1600,2100],w:[.65,.35],rec:500,fx:'slash',c:'#b0bec5',c2:'#b71c1c',lc:'#ff5252'},   // vira fumaça, aparece atrás do inimigo e empala com o facão (3D: CH3)
  Ghostface:{n:'SORRIA PARA A FOTO!',h:7,d:3000,m:1.9,ch:0,tk:3,at:[1150,1400,1700],w:[.25,.25,.5],rec:500,fx:'burst',c:'#eceff1',c2:'#212121',lc:'#ffffff'},   // câmera + outro Ghostface sai da névoa e esfaqueia; foto na última facada (3D: CH3)
  Springtrap:{n:'MACHADO!',h:7,d:4300,m:3,ch:0,tk:2,at:[1300,3250],w:[.45,.55],rec:900,fx:'burst',c:'#7cb342',c2:'#1b5e20',lc:'#9ccc65'}};   // pega o machado, arremessa, grita, pula e arranca (3D: SPR3)
 const SKD={n:'GOLPE ESPECIAL!',h:8,d:2000,m:2.5,ch:0,tk:6,fx:'burst',c:'#ffffff',c2:'#ffd23f',lc:'#ffd23f'};
@@ -17891,7 +17905,7 @@ NAR3.info={tris:D.ni/3,verts:D.n,bones:NB,height:HEIGHT};NAR3.dbg=()=>({BM:Array
 
 </script>
 <script>
-</script><script src="dados3d/personagens-b29db682.js"></script><script>window.CH3_DATA||document.write('<script src="https://jpi437.github.io/Game-/dados3d/personagens-b29db682.js?r='+Date.now()+'"><\/script>')</script><script src="dados3d/mundo1-7fae95f6.js"></script><script>(window.CH3_DATA&&window.CH3_DATA.Kaneki)||document.write('<script src="https://jpi437.github.io/Game-/dados3d/mundo1-7fae95f6.js?r='+Date.now()+'"><\/script>')</script><script src="dados3d/halloween3d-dd3ccb67.js"></script><script>(window.CH3_DATA&&window.CH3_DATA.Ghostface)||document.write('<script src="https://jpi437.github.io/Game-/dados3d/halloween3d-dd3ccb67.js?r='+Date.now()+'"><\/script>')</script><script src="dados3d/halloween3d2-ae737854.js"></script><script>(window.CH3_DATA&&window.CH3_DATA.Jason)||document.write('<script src="https://jpi437.github.io/Game-/dados3d/halloween3d2-ae737854.js?r='+Date.now()+'"><\/script>')</script><script src="dados3d/objetos3d-68904221.js"></script><script>window.CH3_PROPS||document.write('<script src="https://jpi437.github.io/Game-/dados3d/objetos3d-68904221.js?r='+Date.now()+'"><\/script>')</script><script>
+</script><script src="dados3d/personagens-b29db682.js"></script><script>window.CH3_DATA||document.write('<script src="https://jpi437.github.io/Game-/dados3d/personagens-b29db682.js?r='+Date.now()+'"><\/script>')</script><script src="dados3d/mundo1-7fae95f6.js"></script><script>(window.CH3_DATA&&window.CH3_DATA.Kaneki)||document.write('<script src="https://jpi437.github.io/Game-/dados3d/mundo1-7fae95f6.js?r='+Date.now()+'"><\/script>')</script><script src="dados3d/halloween3d-dd3ccb67.js"></script><script>(window.CH3_DATA&&window.CH3_DATA.Ghostface)||document.write('<script src="https://jpi437.github.io/Game-/dados3d/halloween3d-dd3ccb67.js?r='+Date.now()+'"><\/script>')</script><script src="dados3d/halloween3d2-ae737854.js"></script><script>(window.CH3_DATA&&window.CH3_DATA.Jason)||document.write('<script src="https://jpi437.github.io/Game-/dados3d/halloween3d2-ae737854.js?r='+Date.now()+'"><\/script>')</script><script src="dados3d/objetos3d-2c18ebfb.js"></script><script>window.CH3_PROPS||document.write('<script src="https://jpi437.github.io/Game-/dados3d/objetos3d-2c18ebfb.js?r='+Date.now()+'"><\/script>')</script><script>
 // ===================== Goku, Luffy, Gon e Itadori em 3D (modelos de 18 mil triângulos, esqueleto do personagem do jogador) =====================
 // Mundo 1 também: Kaneki, Meliodas, Baki, Jotaro e Ichigo (dados3d/mundo1-*.js), e do Halloween: Ghostface, Chara e Sally (dados3d/halloween3d-*.js), Jeff the Killer, Sonic.exe e Jason (dados3d/halloween3d2-*.js). Esses trazem o esqueleto encaixado no próprio corpo
 // (D.rt = posição das juntas, D.ibm = pose de encaixe, D.ps = escala da altura do quadril) com as mesmas animações (parado, andar, correr e socos).
@@ -18046,8 +18060,8 @@ function state(q,A){let s=q._c3;if(!s||s.nm!==A.m.nm){s={nm:A.m.nm,yaw:A.yaw,cur
 function phase(el,T){let a=0;for(let k=0;k<T.length;k++){if(el<T[k])return{k,p:(el-a)/(T[k]-a)};a=T[k]}return null}
 const PUNMS=300;
 // ---------- habilidades: cada uma devolve {px,py,pz,tg} e mexe nos ossos depois da animação base (post) ----------
-const SKD={Goku:3400,Luffy:2000,Gon:1800,Itadori:1300,'Goku Kaioken':4200,Yajirobe:1600,Yamcha:2200,Tenshinhan:2300,Gohan:2200,Kuririn:2000,Nappa:2200,Vegeta:2600,Piccolo:2600,Chara:2600,Sally:2600,Ghostface:3000};
-const ABORT={Goku:2800,Luffy:1800,Gon:1500,Itadori:900,'Goku Kaioken':3750,Yajirobe:950,Yamcha:1850,Tenshinhan:1950,Gohan:1800,Kuririn:1500,Nappa:1700,Vegeta:2400,Piccolo:2000,Chara:1900,Sally:2000,Ghostface:1700};   // inimigo morreu antes disso: cancela
+const SKD={Goku:3400,Luffy:2000,Gon:1800,Itadori:1300,'Goku Kaioken':4200,Yajirobe:1600,Yamcha:2200,Tenshinhan:2300,Gohan:2200,Kuririn:2000,Nappa:2200,Vegeta:2600,Piccolo:2600,Chara:2600,Sally:2600,Ghostface:3000,'Jeff the Killer':2400,'Sonic.exe':2800,Jason:3000};
+const ABORT={Goku:2800,Luffy:1800,Gon:1500,Itadori:900,'Goku Kaioken':3750,Yajirobe:950,Yamcha:1850,Tenshinhan:1950,Gohan:1800,Kuririn:1500,Nappa:1700,Vegeta:2400,Piccolo:2000,Chara:1900,Sally:2000,Ghostface:1700,'Jeff the Killer':1500,'Sonic.exe':2000,Jason:1500};   // inimigo morreu antes disso: cancela
 // ponto do inimigo e direção até ele
 function tgtInfo(s,E){const sx=s.sx,sz=s.sz,sy=s.sy;let Ex,Ez,Ey,Er;if(E){Ex=E.x;Ez=E.z;Ey=E.y;Er=E.r}else{Ex=sx+sin(s.yaw)*40;Ez=sz+cos(s.yaw)*40;Ey=sy+8;Er=12}
  const fx=Ex-sx,fz=Ez-sz,fl=hypot(fx,fz)||1;return{Ex,Ey,Ez,Er,ux:fx/fl,uz:fz/fl,dist:fl,sx,sy,sz}}
@@ -18508,7 +18522,7 @@ function propMesh(gl,nm){const PP=G.pp;let M=PP.m[nm];if(M!==undefined)return M;
  M=PP.m[nm]={n:D.n};const mk=d=>{const b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,b64(d),gl.STATIC_DRAW);return b};M.p=mk(D.p);M.nr=mk(D.nr);M.c=mk(D.c);return M}
 function flushProps(gl,VP,cam,fog,FO,cut){if(!PL.length)return;try{const PP=propProg(gl),u=PP.u;gl.useProgram(PP.p);gl.disableVertexAttribArray(3);gl.disableVertexAttribArray(4);
  gl.uniformMatrix4fv(u.uVP,false,VP);gl.uniform3f(u.uCam,cam[0],cam[1],cam[2]);gl.uniform4fv(u.uFog,fog);gl.uniform1f(u.uFO,FO);gl.uniform3fv(u.uMD,MD);gl.uniform3f(u.uLt,LT[0]*.95,LT[1]*.95,LT[2]*.95);gl.uniform1f(u.uCut,cut==null?-1e9:cut);
- for(const it of PL){const M=propMesh(gl,it.nm);if(!M)continue;gl.uniformMatrix4fv(u.uM,false,it.M);
+ for(const it of PL){const M=propMesh(gl,it.nm);if(!M)continue;gl.uniformMatrix4fv(u.uM,false,it.M);const tn=it.tn;gl.uniform3f(u.uLt,LT[0]*.95*(tn?tn[0]:1),LT[1]*.95*(tn?tn[1]:1),LT[2]*.95*(tn?tn[2]:1));
   gl.bindBuffer(gl.ARRAY_BUFFER,M.p);gl.vertexAttribPointer(0,3,gl.FLOAT,false,0,0);gl.bindBuffer(gl.ARRAY_BUFFER,M.nr);gl.vertexAttribPointer(1,4,gl.BYTE,true,0,0);gl.bindBuffer(gl.ARRAY_BUFFER,M.c);gl.vertexAttribPointer(2,3,gl.UNSIGNED_BYTE,true,0,0);
   gl.drawArrays(gl.TRIANGLES,0,M.n)}}catch(e){if(!CH3.perr){CH3.perr=1;console.error('CH3 objetos',e)}}
  PL.length=0;gl.enableVertexAttribArray(3);gl.enableVertexAttribArray(4)}
@@ -18600,7 +18614,135 @@ function ghostface(s,el,dt,t,I){const R=base(I);R.px=I.sx-I.ux*4;R.pz=I.sz-I.uz*
   if(once(s,1<<8,el,GF_SHOT))shake(180,20)};
  return R}
 
-const SKF={Goku:goku,Luffy:luffy,Gon:gon,Itadori:itadori,'Goku Kaioken':gokuKai,Yajirobe:yajirobe,Yamcha:yamcha,Tenshinhan:tenshinhan,Gohan:gohan,Kuririn:kuririn,Nappa:nappa,Vegeta:vegeta,Piccolo:piccolo,Chara:chara,Sally:sally,Ghostface:ghostface};
+// ===================== Halloween: habilidades 3D de Jeff the Killer, Sonic.exe e Jason =====================
+//  · Jeff the Killer  FACADAS (2,4 s): corre até o inimigo e puxa a faca das costas · 5 facadas de cima para baixo (650–1450) e a última
+//                     com as duas mãos e mais força (1750), cada uma com sangue · volta pulando
+//  · Sonic.exe        RASANTES DO EXE (2,8 s): treme com o glitch vermelho e some (260) · vira uma bola espinhosa e passa 6 vezes pelo inimigo
+//                     em rasantes, cada vez de um lado (600–2100); a cada passada a bola sai mais do azul para o vermelho · cai de volta e reaparece
+//  · Jason            FACÃO DAS SOMBRAS (3 s): puxa o facão · escurece e vira fumaça (450–760) · a fumaça vai por fora até as costas do inimigo
+//                     · reaparece atrás dele (1300) · ergue e empala com o facão (1600), o facão fica ensanguentado · arranca (2100) · vira fumaça e volta
+const IDM4=new Float32Array([1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1]);
+const lerp3=(a,b,p)=>[lerp(a[0],b[0],p),lerp(a[1],b[1],p),lerp(a[2],b[2],p)];
+const tint=(o,c)=>{if(o&&PL.length)PL[PL.length-1].tn=c;return o};
+// lâmina na mão direita apontando para dir (no mundo): o cabo fica no punho, o lado chato de pé
+function bladeAt(nm,dir,sc){if(sc<=.001)return null;const o=HA_R*16,s=hypot(W[o],W[o+1],W[o+2]),p=ptW(Wk(HA_R),[0,.045,0]),Y=nrm3(dir);let Z=crs(Y,[0,1,0]);if(hypot(Z[0],Z[1],Z[2])<.2)Z=crs(Y,[1,0,0]);Z=nrm3(Z);
+ return propM(nm,IDM4,p,crs(Y,Z),Y,Z,s*sc)}
+const fore=()=>{const e=jointW(LA_R),h=jointW(HA_R);return[h[0]-e[0],h[1]-e[1],h[2]-e[2]]};
+const toward=(x,y,z)=>{const h=jointW(HA_R);return nrm3([x-h[0],y-h[1],z-h[2]])};
+// ---------- Jeff the Killer ----------
+const JF_AT=[650,850,1050,1250,1450],JF_FIN=1750,JF_ALL=JF_AT.concat([JF_FIN]);
+const DARKR=[[.55,0,.02],[.85,.05,.08],[.3,0,0]];
+function jeff(s,el,dt,t,I){const R=base(I);const lx=I.Ex-I.ux*(I.Er+4),lz=I.Ez-I.uz*(I.Er+4),ly=H3.floorAt?H3.floorAt(lx,lz):I.sy;
+ if(el<300){const p=sm(sg(el,0,300));R.px=lerp(I.sx,lx,p);R.pz=lerp(I.sz,lz,p);R.py=lerp(I.sy,ly,p);setPose(s,JOG,s.t+dt*1.8,.08)}
+ else if(el<1950){R.px=lx;R.pz=lz;R.py=ly;setPose(s,'Idle_Loop',.4,.12)}
+ else{const p=sm(sg(el,1950,2350));R.px=lerp(lx,I.sx,p);R.pz=lerp(lz,I.sz,p);R.py=lerp(ly,I.sy,p)+6*sin(PI*p);setPose(s,AIR,s.t+dt,.12)}
+ // facada atual: ergue (170 ms; a última 300 ms) e desce até o golpe; depois de cravar, 90 ms puxando de volta
+ let ci=-1,u=0,dn=false;for(let i=0;i<JF_ALL.length;i++){const w=i===JF_ALL.length-1?300:170,a=JF_ALL[i]-w,b=JF_ALL[i]+90;if(el>=a&&el<b){ci=i;dn=el<JF_ALL[i];u=dn?(el-a)/w:(el-JF_ALL[i])/90;break}}
+ const kn=el<300?0:el<480?eOut(sg(el,300,480)):el<2100?1:1-sg(el,2100,2300);
+ R.post=()=>{const al=el<300?sg(el,120,300):el>1950?1-sg(el,1950,2150):1;if(al<=0)return;const S=fromJ(UA_R,[0,0,0]);
+  const UP=[S[0]+.06,S[1]+.42,S[2]+.12],HIT=[S[0]+.16,S[1]-.22,S[2]+.52],BK=fromJ(SP1,[-.24,-.04,-.2]);
+  let T=UP,lean=0;
+  if(el<480)T=lerp3(BK,UP,sm(sg(el,300,480)));                    // puxa a faca das costas
+  else if(ci>=0){if(dn){const e=eIn(u);T=lerp3(UP,HIT,u<.45?0:sm((u-.45)/.55));lean=sm(u)}else{T=lerp3(HIT,UP,sm(u));lean=1-sm(u)}}
+  if(ci===JF_ALL.length-1){lean*=1.6;const L=lerp3(fromJ(UA_L,[0,.4,.12]),[HIT[0]-.12,HIT[1]+.05,HIT[2]-.02],dn?sm(u):1-sm(u));ik(UA_L,LA_L,HA_L,L,[1,-1,-.3],al)}
+  else ik(UA_L,LA_L,HA_L,fromJ(UA_L,[.05,-.3,.2]),[1,-1,0],al*.5);
+  turn(SP1,[1,0,0],.22*lean*al);turn(SP3,[0,1,0],-.18*lean*al);
+  ik(UA_R,LA_R,HA_R,T,[-1,-.6,-.4],al)};
+ R.fx=()=>{let KM=null;if(kn>0){const f=nrm3(fore()),d=toward(I.Ex,I.Ey,I.Ez),w=el<480?0:ci>=0?(dn?sm(min(1,u*1.6)):1-sm(u)*.5):.35;KM=bladeAt('knifeG',lerp3(f,d,w),kn*1.3)}
+  if(KM&&el>=300&&el<500){const p=ptW(KM,[0,.12,0]),k=sin(PI*sg(el,320,500));glow(p[0],p[1],p[2],7*k,[1,1,1],.9*k);glow(p[0],p[1],p[2],14*k,[1,.85,.8],.35*k)}
+  // rastro da lâmina na descida
+  const tr=s.trail||(s.trail=[]);if(KM&&ci>=0&&dn&&u>.4)tr.push({p:ptW(KM,[0,.17,0]),q:ptW(KM,[0,.05,0]),t:el});while(tr.length&&el-tr[0].t>110)tr.shift();
+  for(let i=1;i<tr.length;i++){const a=tr[i-1],b=tr[i],k=1-(el-b.t)/110;H3.strip(H3.tex.beam,a.p[0],a.p[1],a.p[2],b.p[0],b.p[1],b.p[2],2*k,[1,1,1,.7*k],true);H3.strip(H3.tex.beam,a.p[0],a.p[1],a.p[2],b.p[0],b.p[1],b.p[2],3.4*k,[.9,.05,.08,.45*k],true)}
+  const E=E_();
+  JF_ALL.forEach((a,i)=>{if(once(s,1<<i,el,a)){const f=i===JF_ALL.length-1,P=toCam(I.Ex,I.Ey+3,I.Ez,I.Er*.5);burst(P[0],P[1],P[2],f?34:14,f?2.4:1.5,f?560:420,DARKR);shake(f?320:110,f?[40,30,50]:14);
+   if(E)for(let j=0;j<(f?18:7);j++)E.emit({x:P[0],y:P[1],z:P[2],vx:(rnd()-.5)*1.2,vy:.4+rnd()*.9,vz:(rnd()-.5)*1.2,g:.045,life:600+rnd()*400,s0:1.8+rnd()*1.4,s1:.8,c:DARKR[(rnd()*3)|0],a:1,drag:.985,add:false})}});
+  // gotas de sangue escorrendo da faca depois das facadas
+  if(KM&&el>JF_AT[0]&&el<2000&&E&&rnd()<.25){const p=ptW(KM,[0,.16,0]);E.emit({x:p[0],y:p[1],z:p[2],vx:0,vy:-.1,vz:0,g:.03,life:500,s0:1.1,s1:.6,c:[.6,0,.03],a:1,drag:1,add:false})}};
+ return R}
+// ---------- Sonic.exe ----------
+const SX_AT=[600,900,1200,1500,1800,2100],SX_BLUE=[.2,.36,1.3],SX_RED=[1.35,.08,.06],SX_HIDE=260,SX_BACK=2560;
+const sxCol=k=>lerp3(SX_BLUE,SX_RED,clp(k,0,1));
+// onde a bola está em el: {p:[x,y,z],k: 0 azul .. 1 vermelho, sp: está girando no lugar}
+function sxBall(I,el){const ey=I.Ey+1,base=Math.atan2(I.ux,I.uz),st=[I.sx,I.sy+6,I.sz];
+ if(el<380)return{p:st,k:0,sp:1};
+ if(el<450){const p=eIn(sg(el,380,450));return{p:[st[0]-I.ux*40*p,st[1]+150*p,st[2]-I.uz*40*p],k:0}}
+ for(let i=0;i<SX_AT.length;i++){const a=SX_AT[i]-150,b=SX_AT[i]+150;if(el>=a&&el<b){const u=(el-a)/300,an=base+PI*.5+i*2.399,d=[sin(an),0,cos(an)],w=2*u-1,L=115;
+   return{p:[I.Ex+d[0]*L*w,ey+26*w*w,I.Ez+d[2]*L*w],k:i/(SX_AT.length-1),i}}}
+ if(el<SX_BACK){const p=sm(sg(el,2250,SX_BACK)),d=[-I.ux,0,-I.uz];return{p:[st[0]+d[0]*130*(1-p),st[1]+70*(1-p)*(1-p)+4*sin(PI*p),st[2]+d[2]*130*(1-p)],k:1}}
+ return null}
+function sonicExe(s,el,dt,t,I){const R=base(I);R.px=I.sx;R.pz=I.sz;R.py=I.sy;
+ R.hide=el>=SX_HIDE&&el<SX_BACK;
+ if(el<SX_HIDE){setPose(s,'Idle_Loop',.3,.1);const k=sg(el,40,SX_HIDE);R.flc=[.85,0,.04,.45*k*(.6+.4*sin(el/14))];R.px+=(rnd()-.5)*1.4*k;R.pz+=(rnd()-.5)*1.4*k}
+ else if(el>=SX_BACK){setPose(s,'Idle_Loop',.3,.1);const k=1-sg(el,SX_BACK,2800);R.flc=[1,.05,.04,.55*k]}
+ R.post=()=>{if(el<SX_HIDE){const k=sm(sg(el,0,200));turn(SP1,[1,0,0],.45*k);turn(HEAD,[1,0,0],-.25*k)}else if(el>=SX_BACK){const k=1-sm(sg(el,SX_BACK,2720));turn(SP1,[1,0,0],.45*k)}};
+ R.fx=()=>{const E=E_(),B=sxBall(I,el),T=H3.tex;
+  // sumiço e volta: estática vermelha e preta
+  if(once(s,1<<10,el,SX_HIDE)){burst(I.sx,I.sy+12,I.sz,26,1.6,380,[[1,0,.05],[0,0,0],[.6,0,0],[1,1,1]]);shake(120,14)}
+  if(once(s,1<<11,el,SX_BACK)){burst(I.sx,I.sy+10,I.sz,30,1.9,460,[[1,0,.05],[.5,0,0],[0,0,0]]);shake(200,22)}
+  if((el<SX_HIDE&&el>80)||(el>=SX_BACK&&el<2700))for(let i=0;i<3;i++){const y=I.sy+4+rnd()*26;H3.strip(T.beam,I.sx-10+rnd()*4,y,I.sz,I.sx+6+rnd()*6,y,I.sz,1+rnd()*1.5,rnd()<.5?[1,0,.05,.8]:[.1,0,0,.8],rnd()<.5)}
+  if(!B){s.btr=null;return}
+  const col=sxCol(B.k),cc=[min(1,col[0]),min(1,col[1]),min(1,col[2])];
+  // giro: em volta do eixo de lado ao movimento
+  const pv=s.bpv||B.p;let vx=B.p[0]-pv[0],vy=B.p[1]-pv[1],vz=B.p[2]-pv[2];s.bpv=B.p;let vl=hypot(vx,vy,vz);
+  let ax=vl>.01?nrm3(crs([vx/vl,vy/vl,vz/vl],[0,1,0])):[1,0,0];if(!isFinite(ax[0])||hypot(...ax)<.5)ax=[1,0,0];
+  const an=el*(B.sp?.05:.075),c=cos(an),sn=sin(an),C1=1-c,[x,y,z]=ax;
+  const X=[c+x*x*C1,y*x*C1+z*sn,z*x*C1-y*sn],Y=[x*y*C1-z*sn,c+y*y*C1,z*y*C1+x*sn],Z=[x*z*C1+y*sn,y*z*C1-x*sn,c+z*z*C1];
+  const rad=el<SX_HIDE+80?6*sg(el,SX_HIDE-20,SX_HIDE+80):6;
+  tint(propM('sball',IDM4,B.p,X,Y,Z,rad),col);
+  glow(B.p[0],B.p[1],B.p[2],18,cc,.35);glow(B.p[0],B.p[1],B.p[2],9,[1,1,1],.18);
+  E&&E.light&&E.light(B.p[0],B.p[1],B.p[2],70,cc,1.1);
+  // rastro: faixa da cor da bola + bolas-fantasma que somem
+  const tr=s.btr||(s.btr=[]);tr.push({p:B.p,t:el,c:cc});while(tr.length&&el-tr[0].t>140)tr.shift();
+  for(let i=1;i<tr.length;i++){const a=tr[i-1],b=tr[i],k=1-(el-b.t)/140;if(hypot(a.p[0]-b.p[0],a.p[1]-b.p[1],a.p[2]-b.p[2])>40)continue;
+   H3.strip(T.beam,a.p[0],a.p[1],a.p[2],b.p[0],b.p[1],b.p[2],11*k,[b.c[0],b.c[1],b.c[2],.55*k],true);H3.strip(T.beam,a.p[0],a.p[1],a.p[2],b.p[0],b.p[1],b.p[2],4*k,[1,1,1,.4*k],true)}
+  if(B.sp&&el>=SX_HIDE){for(let i=0;i<2;i++){const a=rnd()*TAU;E&&E.emit({x:B.p[0]+cos(a)*5,y:I.sy+1,z:B.p[2]+sin(a)*5,vx:-cos(a)*.1,vy:.2,vz:-sin(a)*.1,g:.01,life:300,s0:2.5,s1:.5,c:[.75,.7,.65],a:.7,drag:.95,add:false})}}
+  if(B.i!==undefined&&E&&rnd()<.7)E.emit({x:B.p[0]+(rnd()-.5)*6,y:B.p[1]+(rnd()-.5)*6,z:B.p[2]+(rnd()-.5)*6,vx:0,vy:0,vz:0,g:0,life:260,s0:3.2,s1:.4,c:cc,a:.9,drag:1,add:true});
+  SX_AT.forEach((a,i)=>{if(once(s,1<<i,el,a)){const k=i/(SX_AT.length-1),c2=sxCol(k).map(v=>min(1,v)),P=toCam(I.Ex,I.Ey+2,I.Ez,I.Er*.4),f=i===SX_AT.length-1;
+   burst(P[0],P[1],P[2],f?30:16,f?2.4:1.7,f?520:400,[c2,[1,1,1],[c2[0]*.5,c2[1]*.5,c2[2]*.5]]);burst(P[0],P[1],P[2],f?12:5,1.2,500,DARKR);shake(f?300:120,f?[40,30,50]:16);glow(P[0],P[1],P[2],f?40:24,c2,.7)}})};
+ return R}
+// ---------- Jason ----------
+const JS_AT=[1600,2100];
+const SMOKE=[[.07,.06,.08],[.13,.12,.14],[.2,.19,.21]];
+function jsSmoke(E,x,y,z,n,r,up){if(!E)return;for(let i=0;i<n;i++){const a=rnd()*TAU,d=rnd()*r;E.emit({x:x+cos(a)*d,y:y+rnd()*r*.8,z:z+sin(a)*d,vx:cos(a)*.08,vy:(up||.12)+rnd()*.12,vz:sin(a)*.08,g:-.002,life:650+rnd()*500,s0:5+rnd()*4,s1:11+rnd()*5,c:SMOKE[(rnd()*3)|0],a:.75,drag:.985,add:false})}}
+function jason(s,el,dt,t,I){const R=base(I);
+ const bx=I.Ex+I.ux*(I.Er+7),bz=I.Ez+I.uz*(I.Er+7),by=H3.floorAt?H3.floorAt(bx,bz):I.sy,behind=el>=1000&&el<2400;
+ if(behind){R.px=bx;R.pz=bz;R.py=by;R.tg=Math.atan2(-I.ux,-I.uz)}
+ setPose(s,'Idle_Loop',.3+el/6000,.15);
+ R.hide=(el>=760&&el<1300)||(el>=2400&&el<2700);
+ const dk=el<450?0:el<760?sg(el,450,760):el<1300?1:el<1520?1-sg(el,1300,1520):el<2150?0:el<2400?sg(el,2150,2400):el<2700?1:1-sg(el,2700,2950);
+ if(dk>0)R.flc=[.03,.025,.035,.92*dk];
+ const ms=el<120?0:el<420?eOut(sg(el,120,420)):el<2850?1:1-sg(el,2850,3000);
+ R.post=()=>{const al=min(1,ms*1.5);if(al<=0)return;const S=fromJ(UA_R,[0,0,0]);
+  const HOLD=[S[0]+.03,S[1]-.42,S[2]+.22],RAISE=[S[0]-.04,S[1]+.3,S[2]-.12],THR=[S[0]+.2,S[1]-.14,S[2]+.6],BELT=fromJ(SP1,[-.26,-.12,-.08]);
+  let T=HOLD,lean=0;
+  if(el<420)T=lerp3(BELT,HOLD,sm(sg(el,120,420)));
+  else if(el>=1380&&el<1600){T=lerp3(HOLD,RAISE,sm(sg(el,1380,1540)));lean=-.2*sm(sg(el,1380,1540))}
+  else if(el>=1600&&el<2050){const p=eOut(sg(el,1600,1680));T=lerp3(RAISE,THR,p);T[1]+=.08*sm(sg(el,1700,2000));lean=lerp(-.2,1,p)}
+  else if(el>=2050&&el<2250){const p=sm(sg(el,2050,2200));T=lerp3(THR,HOLD,p);T[2]-=.15*sin(PI*p);lean=1-p}
+  turn(SP1,[1,0,0],.2*lean*al);turn(SP3,[0,1,0],-.15*max(0,lean)*al);
+  ik(UA_R,LA_R,HA_R,T,[-1,-.5,-.6],al);
+  if(el>=1600&&el<2100)ik(UA_L,LA_L,HA_L,lerp3(fromJ(UA_L,[.04,-.1,.12]),[T[0]-.12,T[1]+.03,T[2]-.16],sm(sg(el,1600,1720))*(1-sm(sg(el,2000,2100)))),[1,-1,-.3],al)};
+ R.fx=()=>{const E=E_();const nm=el>=1600?'macheteB':'machete';let MM=null;if(ms>0&&!R.hide){const f=nrm3(fore()),d=toward(I.Ex,I.Ey+2,I.Ez),w=el>=1560&&el<2080?sm(sg(el,1560,1620)):0;MM=bladeAt(nm,lerp3(f,d,w),ms*1.45)}
+  // vira fumaça (ida e volta)
+  if(el>=450&&el<790){jsSmoke(E,R.px,R.py,R.pz,2+(dk*4|0),9,.15)}
+  if(el>=2150&&el<2430)jsSmoke(E,bx,by,bz,2+(dk*4|0),9,.15);
+  if(once(s,1<<8,el,760)){jsSmoke(E,I.sx,I.sy,I.sz,26,12,.35);shake(90,8)}
+  if(once(s,1<<9,el,2400)){jsSmoke(E,bx,by,bz,26,12,.35);shake(90,8)}
+  // a fumaça viaja por fora (contornando o inimigo) até as costas dele, e depois de volta
+  const trip=(a,b,A,B,side)=>{if(el<a||el>=b)return;const u=sm(sg(el,a,b)),px=-I.uz,pz=I.ux,sd=sin(PI*u)*(I.Er+26)*side,x=lerp(A[0],B[0],u)+px*sd,z=lerp(A[2],B[2],u)+pz*sd,y=lerp(A[1],B[1],u);
+   for(let i=0;i<4;i++)H3.spr(H3.tex.glow,x+(rnd()-.5)*8,y+6+rnd()*14,z+(rnd()-.5)*8,22+rnd()*8,22+rnd()*8,null,[.05,.045,.06,.55],false,0,true);
+   jsSmoke(E,x,y,z,4,7,.08)};
+  trip(760,1250,[I.sx,I.sy,I.sz],[bx,by,bz],1);trip(2400,2700,[bx,by,bz],[I.sx,I.sy,I.sz],-1);
+  // junta a fumaça atrás do inimigo e ele sai dela
+  if(el>=1150&&el<1520){const k=el<1300?sg(el,1150,1300):1-sg(el,1300,1520);for(let i=0;i<3;i++)H3.spr(H3.tex.glow,bx+(rnd()-.5)*12,by+4+rnd()*22,bz+(rnd()-.5)*12,26,26,null,[.05,.045,.06,.5*k],false,0,true);jsSmoke(E,bx,by,bz,3,10,.1)}
+  if(el>=2600&&el<2950){const k=el<2700?sg(el,2600,2700):1-sg(el,2700,2950);for(let i=0;i<3;i++)H3.spr(H3.tex.glow,I.sx+(rnd()-.5)*12,I.sy+4+rnd()*22,I.sz+(rnd()-.5)*12,26,26,null,[.05,.045,.06,.5*k],false,0,true);jsSmoke(E,I.sx,I.sy,I.sz,3,10,.1)}
+  // o golpe: brilho na lâmina ao erguer, empala e arranca
+  if(MM&&el>=1380&&el<1600){const p=ptW(MM,[0,.3,0]),k=sin(PI*sg(el,1400,1600));glow(p[0],p[1],p[2],9*k,[1,1,1],.8*k)}
+  if(once(s,1<<0,el,JS_AT[0])){const P=toCam(I.Ex,I.Ey+3,I.Ez,I.Er*.3);burst(P[0],P[1],P[2],30,2.2,560,DARKR);shake(320,[40,30,50]);glow(P[0],P[1],P[2],30,[1,.1,.1],.5)}
+  if(once(s,1<<1,el,JS_AT[1])){const P=toCam(I.Ex,I.Ey+3,I.Ez,I.Er*.3);burst(P[0],P[1],P[2],22,2,500,DARKR);shake(200,24)}
+  if(el>=1600&&el<2150&&E&&rnd()<.6){const P=MM?ptW(MM,[0,.2,0]):[I.Ex,I.Ey,I.Ez];E.emit({x:P[0]+(rnd()-.5)*3,y:P[1],z:P[2]+(rnd()-.5)*3,vx:(rnd()-.5)*.2,vy:-.05,vz:(rnd()-.5)*.2,g:.035,life:600,s0:1.5,s1:.9,c:DARKR[(rnd()*3)|0],a:1,drag:1,add:false})}};
+ return R}
+const SKF={Goku:goku,Luffy:luffy,Gon:gon,Itadori:itadori,'Goku Kaioken':gokuKai,Yajirobe:yajirobe,Yamcha:yamcha,Tenshinhan:tenshinhan,Gohan:gohan,Kuririn:kuririn,Nappa:nappa,Vegeta:vegeta,Piccolo:piccolo,Chara:chara,Sally:sally,Ghostface:ghostface,'Jeff the Killer':jeff,'Sonic.exe':sonicExe,Jason:jason};
 CH3.sk=nm=>!!SKF[nm];
 // ---------- aura do Kaioken: chama vermelha em volta do corpo (brilho que pulsa + labaredas subindo + faíscas) ----------
 const KAI=[[1,.12,.1],[1,.35,.2],[.85,0,.05],[1,.65,.5]];
@@ -18623,14 +18765,14 @@ function place(A,s,dt,t,SC){
  const mv=A.mv>.5||s.spd>10;
  useSk(DD[nm]);
  for(let k=0;k<NN;k++){RT[k][0]=SR[k][0];RT[k][1]=SR[k][1];RT[k][2]=SR[k][2];STR[k]=1}
- let px=A.x,py=A.y,pz=A.z,tg=A.yaw,rate=1,post=null,fxf=null,skill=false;
+ let px=A.x,py=A.y,pz=A.z,tg=A.yaw,rate=1,post=null,fxf=null,skill=false,hide=false,flc=null;
  let E=null;if(g.en&&!g.en.dead){const e=g.en,ex=e.x+8-SC.OX,ez=(e.y+14-SC.OY)*SC.K;E={x:ex,z:ez,r:(e.r||12)+4,y:(H3.floorAt?H3.floorAt(ex,ez):A.y)+8}}
  const DUR=SKD[nm]||1500;
  if(g.act&&g.t0&&g.t0!==s.ga){s.ga=g.t0;s.ev=0;s.abort=0;s.sx=A.x;s.sz=A.z;s.sy=A.y;s.trail=[];s.ptag=-1;s.fxl=[];s.k0=null}
  let el=s.ga?t-s.ga:1e9;
  if(el<DUR&&!g.act&&el<(ABORT[nm]||DUR)&&!s.abort)s.abort=t;      // inimigo morreu no meio: volta ao normal
  if(s.abort){if(t-s.abort>250){s.abort=0;s.ga=0}el=1e9}
- if(el<DUR&&SKF[nm]&&!(CH3.bad&&CH3.bad[nm])){try{const I=tgtInfo(s,E),R=SKF[nm](s,el,dt,t,I);px=R.px;py=R.py;pz=R.pz;tg=R.tg;post=R.post;fxf=R.fx;rate=0;skill=true}catch(e){(CH3.bad||(CH3.bad={}))[nm]=1;console.error('CH3 habilidade',nm,e);px=A.x;py=A.y;pz=A.z;tg=A.yaw;post=null;fxf=null;rate=1;skill=false}}
+ if(el<DUR&&SKF[nm]&&!(CH3.bad&&CH3.bad[nm])){try{const I=tgtInfo(s,E),R=SKF[nm](s,el,dt,t,I);px=R.px;py=R.py;pz=R.pz;tg=R.tg;post=R.post;fxf=R.fx;rate=0;skill=true;hide=!!R.hide;flc=R.flc||null}catch(e){(CH3.bad||(CH3.bad={}))[nm]=1;console.error('CH3 habilidade',nm,e);px=A.x;py=A.y;pz=A.z;tg=A.yaw;post=null;fxf=null;rate=1;skill=false}}
  else{
   s.cl=null;if(!s.abort)s.ga=0;
   let ap=-1;
@@ -18647,7 +18789,7 @@ function place(A,s,dt,t,SC){
  if(post)try{post(px,py,pz,s.yaw)}catch(e){(CH3.bad||(CH3.bad={}))[nm]=1;console.error('CH3 pose',nm,e)}
  window.EDN=nm;modelM(px,py,pz,s.yaw);bones();
  if(fxf)try{fxf()}catch(e){(CH3.bad||(CH3.bad={}))[nm]=1;console.error('CH3 efeito',nm,e)}
- return{x:px,y:py,z:pz,h:py-A.y}}
+ return{x:px,y:py,z:pz,h:py-A.y,hide,flc}}
 // o outro Ghostface (habilidade): mesmo modelo, pose própria, cortado no chão enquanto sobe da névoa
 function drawClone(gl,A,s,M,D,u,VP,cam,fog,FO){const c=s.cl,cs=c.st||(c.st={cur:'Idle_Loop',t:0,prev:null,tp:0,bl:1,bd:.1});
  useSk(D);for(let k=0;k<NN;k++){RT[k][0]=SR[k][0];RT[k][1]=SR[k][1];RT[k][2]=SR[k][2];STR[k]=1}
@@ -18669,15 +18811,15 @@ CH3.draw=function(list,lightAt,SC,t){
  for(const A of L){const M=model(gl,A.m.nm);if(!M.tex)continue;const D=M.D,q=A.q,s=state(q,A);let dt=(now-s.last)/1000;s.last=now;if(!(dt>0))dt=.016;dt=min(dt,.1);
   lightAt(A.x,A.y+12,A.z,LT);if(SC&&SC.shadeAt)SC.shadeAt(A.x,A.y,A.z,LT);
   const r=place(A,s,dt,t,SC),h=max(0,r.h),sk=max(.45,1-h/60);
-  if(H3.flat&&H3.tex&&H3.tex.blob)H3.flat(H3.tex.blob,r.x,A.y+.25,r.z,30*sk,30*sk,null,[1,1,1,.85*sk],false);
+  if(!r.hide&&H3.flat&&H3.tex&&H3.tex.blob)H3.flat(H3.tex.blob,r.x,A.y+.25,r.z,30*sk,30*sk,null,[1,1,1,.85*sk],false);
   gl.useProgram(G.p);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,M.tex);
   gl.uniform3fv(u.uMin,D.min);gl.uniform3fv(u.uSz,D.size);gl.uniform2fv(u.uUm,D.uvmin);gl.uniform2fv(u.uUs,D.uvsize);
   gl.bindBuffer(gl.ARRAY_BUFFER,M.vb);
   gl.vertexAttribPointer(0,3,gl.UNSIGNED_SHORT,true,22,0);gl.vertexAttribPointer(2,2,gl.UNSIGNED_SHORT,true,22,6);gl.vertexAttribPointer(1,4,gl.BYTE,true,22,10);gl.vertexAttribPointer(3,4,gl.UNSIGNED_BYTE,false,22,14);gl.vertexAttribPointer(4,4,gl.UNSIGNED_BYTE,true,22,18);
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,M.ib);
-  gl.uniformMatrix4fv(u.uB,false,BM);gl.uniform3f(u.uLt,LT[0]*.95,LT[1]*.95,LT[2]*.95);gl.uniform4f(u.uFlc,1,1,1,0);
+  gl.uniformMatrix4fv(u.uB,false,BM);gl.uniform3f(u.uLt,LT[0]*.95,LT[1]*.95,LT[2]*.95);if(r.flc)gl.uniform4fv(u.uFlc,r.flc);else gl.uniform4f(u.uFlc,1,1,1,0);
   if(D.cape){const run=min(1.5,s.spd/REF_RUN),tm=now/1000;gl.uniform4f(u.uCp,.012+.016*run+.004*sin(tm*.7),tm,.02+.17*run+(r.h>1?.06:0),1)}else gl.uniform4f(u.uCp,0,0,0,0);
-  gl.drawElements(gl.TRIANGLES,D.ni,gl.UNSIGNED_SHORT,0);
+  if(!r.hide)gl.drawElements(gl.TRIANGLES,D.ni,gl.UNSIGNED_SHORT,0);if(r.flc)gl.uniform4f(u.uFlc,1,1,1,0);
   flushProps(gl,VP,cam,fog,FO);                                     // faca, guitarra, câmera (habilidades do Halloween)
   if(s.cl&&s.cl.vis)try{drawClone(gl,A,s,M,D,u,VP,cam,fog,FO)}catch(e){console.error('CH3 clone',e);s.cl=null}
   if(A.m.nm==='Goku Kaioken')kaioken(r,s,t)}
@@ -23181,7 +23323,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261030103034;
+const GAME_BUILD=20261030110313;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
