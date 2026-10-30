@@ -11049,7 +11049,7 @@ function prep(m){const q=m.q;if(!q||q.x===undefined)return null;
  A.guts=!!((kind==='F'||kind==='R')&&m.nm==='Guts'&&window.GUTS3&&GUTS3.on());
  A.spr=!!((kind==='F'||kind==='R')&&m.nm==='Springtrap'&&window.SPR3&&SPR3.on());
  A.nar=!!((kind==='F'||kind==='R')&&m.nm==='Naruto'&&window.NAR3&&NAR3.on());
- A.ch3=!!((kind==='F'||kind==='R')&&window.CH3&&CH3.has(m.nm)&&CH3.on(m.nm));   // Goku, Luffy, Gon e Itadori em 3D (js/37-ch3.js)
+ A.ch3=!!((kind==='F'||kind==='R')&&window.CH3&&CH3.has(m.nm)&&CH3.on(m.nm));   // Goku, Luffy, Gon, Itadori, Kaneki, Meliodas, Baki, Jotaro, Ichigo e os do Dragon Ball em 3D (js/37-ch3.js)
  if(A.ch3)A.gq=kind==='F'?{act:!!(q.sk&&fight),t0:q.sk?q.sk.t0:0,en:fight}:{act:!!q.skOn,t0:q.skT||0,en:q.rfe||null};
  if(A.nar)A.gq=kind==='F'?{act:!!(q.sk&&fight),t0:q.sk?q.sk.t0:0,en:fight}:{act:!!q.skOn,t0:q.skT||0,en:q.rfe||null};
  if(A.spr)A.gq=kind==='F'?{act:!!(q.sk&&fight),t0:q.sk?q.sk.t0:0,en:fight}:{act:!!q.skOn,t0:q.skT||0,en:q.rfe||null};
@@ -17860,8 +17860,10 @@ NAR3.info={tris:D.ni/3,verts:D.n,bones:NB,height:HEIGHT};NAR3.dbg=()=>({BM:Array
 
 </script>
 <script>
-</script><script src="dados3d/personagens-b29db682.js"></script><script>window.CH3_DATA||document.write('<script src="https://jpi437.github.io/Game-/dados3d/personagens-b29db682.js?r='+Date.now()+'"><\/script>')</script><script>
+</script><script src="dados3d/personagens-b29db682.js"></script><script>window.CH3_DATA||document.write('<script src="https://jpi437.github.io/Game-/dados3d/personagens-b29db682.js?r='+Date.now()+'"><\/script>')</script><script src="dados3d/mundo1-7fae95f6.js"></script><script>(window.CH3_DATA&&window.CH3_DATA.Kaneki)||document.write('<script src="https://jpi437.github.io/Game-/dados3d/mundo1-7fae95f6.js?r='+Date.now()+'"><\/script>')</script><script>
 // ===================== Goku, Luffy, Gon e Itadori em 3D (modelos de 18 mil triângulos, esqueleto do personagem do jogador) =====================
+// Mundo 1 também: Kaneki, Meliodas, Baki, Jotaro e Ichigo (dados3d/mundo1-*.js). Esses trazem o esqueleto encaixado no próprio corpo
+// (D.rt = posição das juntas, D.ibm = pose de encaixe, D.ps = escala da altura do quadril) com as mesmas animações (parado, andar, correr e socos).
 // Os quatro modelos (glb enviados) foram encaixados no corpo do modelo padrão (mesmo tamanho do personagem do jogador) e ganharam os pesos dos ossos dele,
 // então usam o mesmo esqueleto (UAL) e as mesmas animações: parado (Idle_Loop), andando (Walk_Loop; correndo rápido vira Jog_Fwd_Loop) e os socos do ataque normal.
 // Dados em CH3_DATA (malha + textura de cada um); o esqueleto e as animações vêm de HERO_DATA (parado/andar/correr/pulo) e NAR_DATA (socos).
@@ -17884,6 +17886,8 @@ function b64(s){const b=atob(s),u=new Uint8Array(b.length);for(let i=0;i<b.lengt
 // ---------- esqueleto e animações (compartilhados) ----------
 const NN=HD.nodes.length,PAR=HD.par,SKIN=HD.skin,NB=SKIN.length,RT0=HD.rt;
 const IBM=new Float32Array(HD.ibm);
+let SR=RT0,SI=IBM,PSC=1;   // esqueleto do personagem que está sendo montado agora (padrão = o do jogador)
+function useSk(D){if(D&&D.rt&&D.ibm){if(!D._ibm)D._ibm=new Float32Array(D.ibm);SR=D.rt;SI=D._ibm;PSC=D.ps?D.ps[0]:1}else{SR=RT0;SI=IBM;PSC=1}}
 const ND_=n=>HD.nodes.indexOf(n);
 const PEL=ND_('pelvis'),SP1=ND_('spine_01'),SP3=ND_('spine_03'),SP2=ND_('spine_02'),HEAD=ND_('Head');
 const UA_L=ND_('upperarm_l'),LA_L=ND_('lowerarm_l'),HA_L=ND_('hand_l'),UA_R=ND_('upperarm_r'),LA_R=ND_('lowerarm_r'),HA_R=ND_('hand_r');
@@ -17931,7 +17935,7 @@ function animate(s,dt,rate){
 // cinemática direta no espaço do esqueleto (sem posição/giro/escala do mundo): rotação e posição de cada junta
 const QW=new Array(NN),PW=new Array(NN);
 const lq=k=>[QQ[k*4],QQ[k*4+1],QQ[k*4+2],QQ[k*4+3]];
-function fk(){for(let k=0;k<NN;k++){const p=PAR[k],t=k===PEL?[TT[0],TT[1],TT[2]]:RT[k];
+function fk(){for(let k=0;k<NN;k++){const p=PAR[k],t=k===PEL?[TT[0]*PSC,TT[1]*PSC,TT[2]*PSC]:RT[k];
  if(p<0){QW[k]=lq(k);PW[k]=t.slice()}else{QW[k]=qmul(QW[p],lq(k));const o=qrot(QW[p],t);PW[k]=[PW[p][0]+o[0],PW[p][1]+o[1],PW[p][2]+o[2]]}}}
 function setL(k,q){QQ[k*4]=q[0];QQ[k*4+1]=q[1];QQ[k*4+2]=q[2];QQ[k*4+3]=q[3]}
 // gira o osso k (no espaço do esqueleto) para o eixo dele (+Y local) apontar para dir; s = quanto (0..1)
@@ -17989,12 +17993,12 @@ const W=new Float32Array(NN*16),LM=new Float32Array(16),BM=new Float32Array(NB*1
 const MD=(()=>{const v=[.28,.7,-.6],l=hypot(v[0],v[1],v[2]);return new Float32Array([v[0]/l,v[1]/l,v[2]/l])})(),LT=[1,1,1];
 function modelM(px,py,pz,yaw){const Z=window.EDSZ?EDSZ(window.EDN):[1,1,1];const S=SC0,c=cos(yaw),sn=sin(yaw);MX.set([c,0,-sn,0, 0,1,0,0, sn,0,c,0, px,py,pz,1]);MS.set([S*Z[0],0,0,0, 0,S*Z[1],0,0, 0,0,S*Z[2],0, 0,0,0,1]);mul(MODEL,MX,MS)}
 function bones(){const TV=[0,0,0];
- for(let k=0;k<NN;k++){if(k===PEL){TV[0]=TT[0];TV[1]=TT[1];TV[2]=TT[2]}else{TV[0]=RT[k][0];TV[1]=RT[k][1];TV[2]=RT[k][2]}
+ for(let k=0;k<NN;k++){if(k===PEL){TV[0]=TT[0]*PSC;TV[1]=TT[1]*PSC;TV[2]=TT[2]*PSC}else{TV[0]=RT[k][0];TV[1]=RT[k][1];TV[2]=RT[k][2]}
   fromQT(LM,QQ.subarray(k*4,k*4+4),TV);const p=PAR[k];
   if(p<0)mul(W.subarray(k*16,k*16+16),MODEL,LM);else mul(W.subarray(k*16,k*16+16),W.subarray(p*16,p*16+16),LM)}
  for(let b=0;b<NB;b++){const k=SKIN[b];
-  if(STR[k]!==1){SY.set([1,0,0,0, 0,STR[k],0,0, 0,0,1,0, 0,0,0,1]);mul(TMP,W.subarray(k*16,k*16+16),SY);mul(BM.subarray(b*16,b*16+16),TMP,IBM.subarray(b*16,b*16+16))}   // osso esticado (braço de borracha)
-  else mul(BM.subarray(b*16,b*16+16),W.subarray(k*16,k*16+16),IBM.subarray(b*16,b*16+16))}}
+  if(STR[k]!==1){SY.set([1,0,0,0, 0,STR[k],0,0, 0,0,1,0, 0,0,0,1]);mul(TMP,W.subarray(k*16,k*16+16),SY);mul(BM.subarray(b*16,b*16+16),TMP,SI.subarray(b*16,b*16+16))}   // osso esticado (braço de borracha)
+  else mul(BM.subarray(b*16,b*16+16),W.subarray(k*16,k*16+16),SI.subarray(b*16,b*16+16))}}
 // posição no mundo da junta k (+ deslocamento ao longo do osso, em unidades do esqueleto)
 function jointW(k,along){const o=k*16,a=along||0;return[W[o+12]+W[o+4]*a,W[o+13]+W[o+5]*a,W[o+14]+W[o+6]*a]}
 // ---------- efeitos ----------
@@ -18060,7 +18064,7 @@ function luffy(s,el,dt,t,I){const R={px:I.sx,py:I.sy,pz:I.sz,tg:Math.atan2(I.ux,
   for(const sd of[0,1]){const ua=sd?UA_L:UA_R,la=sd?LA_L:LA_R,ha=sd?HA_L:HA_R,xs=sd?1:-1;
    const guard=[xs*.06,.6,.13];
    if(on&&sd===side&&pk>0){fk();const S=PW[ua],D=hypot(tS[0]-S[0],tS[1]-S[1],tS[2]-S[2]),L1=hypot(...RT[la]),L2=hypot(...RT[ha]);
-    const k=max(1,(D*pk-L1*.98)/L2);STR[la]=k;RT[ha][1]=RT0[ha][1]*k;
+    const k=max(1,(D*pk-L1*.98)/L2);STR[la]=k;RT[ha][1]=SR[ha][1]*k;
     const T=[lerp(guard[0],tS[0],pk),lerp(guard[1],tS[1],pk),lerp(guard[2],tS[2],pk)];ik(ua,la,ha,T,[xs,-1,-.5],1)}
    else ik(ua,la,ha,guard,[xs,-1,-.3],wu)}};
  R.fx=()=>{const E=E_();
@@ -18445,7 +18449,8 @@ function place(A,s,dt,t,SC){
  const g=A.gq||{},q=A.q,nm=A.m.nm;
  const dx=A.x-s.x,dz=A.z-s.z,d=hypot(dx,dz);s.x=A.x;s.z=A.z;const v=dt>0?d/dt:0;s.spd+=(min(v,200)-s.spd)*min(1,dt*10);
  const mv=A.mv>.5||s.spd>10;
- for(let k=0;k<NN;k++){RT[k][0]=RT0[k][0];RT[k][1]=RT0[k][1];RT[k][2]=RT0[k][2];STR[k]=1}
+ useSk(DD[nm]);
+ for(let k=0;k<NN;k++){RT[k][0]=SR[k][0];RT[k][1]=SR[k][1];RT[k][2]=SR[k][2];STR[k]=1}
  let px=A.x,py=A.y,pz=A.z,tg=A.yaw,rate=1,post=null,fxf=null,skill=false;
  let E=null;if(g.en&&!g.en.dead){const e=g.en,ex=e.x+8-SC.OX,ez=(e.y+14-SC.OY)*SC.K;E={x:ex,z:ez,r:(e.r||12)+4,y:(H3.floorAt?H3.floorAt(ex,ez):A.y)+8}}
  const DUR=SKD[nm]||1500;
@@ -22570,7 +22575,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261029203008;
+const GAME_BUILD=20261029211552;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
