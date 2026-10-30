@@ -3912,13 +3912,13 @@ RD.pushDeps=function(L,f,t){for(let li=2;li<=6;li++){const r=RD.rooms[li-2];if(!
 const pill=(x,y,w,h,c)=>{g.fillStyle=c||'rgba(8,6,16,.72)';g.fillRect(x,y,w,h);g.fillStyle='rgba(255,255,255,.18)';g.fillRect(x,y,w,1)};
 const txt=(s,x,y,c,sz,al)=>{g.font='bold '+(sz||9)+'px monospace';g.textAlign=al||'center';g.textBaseline='top';g.fillStyle='#000';g.fillText(s,x+1,y+1);g.fillStyle=c||'#fff';g.fillText(s,x,y);g.textAlign='left'};
 const mmss=ms=>{ms=Math.max(0,ms);const s=Math.ceil(ms/1000);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
-RD.overlay=function(t){
- // salas do Halloween: os personagens também ficam na luz da noite
- for(let li=2;li<=6;li++){const r=RD.rooms[li-2];if(!r||r.th!=='h')continue;const X=Math.round(XO[li]-cam.x);if(X>VW||X+AW<0)continue;g.globalCompositeOperation='multiply';g.fillStyle='rgb(206,190,236)';g.fillRect(X,0,AW,VH);g.globalCompositeOperation='source-over'}
+RD.overlay=function(t,o3){
+ // salas do Halloween: os personagens também ficam na luz da noite (no 3D quem faz isso é a luz da cena)
+ if(!o3)for(let li=2;li<=6;li++){const r=RD.rooms[li-2];if(!r||r.th!=='h')continue;const X=Math.round(XO[li]-cam.x);if(X>VW||X+AW<0)continue;g.globalCompositeOperation='multiply';g.fillStyle='rgb(206,190,236)';g.fillRect(X,0,AW,VH);g.globalCompositeOperation='source-over'}
  const li=liOf(P.x+8);
  // saguão: nomes dos portões
- if(li===0){GTX.forEach((gx,i)=>{const X=gx-cam.x,Y=80-cam.y;if(i===0){pill(X-30,Y+2,60,12);txt('RAID',X,Y+3,'#ffd23f',8)}else{pill(X-28,Y+2,56,12);txt('Em breve',X,Y+3,'#aaa',8)}});
-  const X=EXIT.x-cam.x,Y=EXIT.y+14-cam.y;pill(X-18,Y,36,12);txt('Sair',X,Y+1,'#ffb060',8);{const X=SHP.x-cam.x,Y=SHP.y-58-cam.y;pill(X-20,Y,40,12);txt('Loja',X,Y+1,'#c9a0ff',8)}
+ if(li===0){if(!o3){GTX.forEach((gx,i)=>{const X=gx-cam.x,Y=80-cam.y;if(i===0){pill(X-30,Y+2,60,12);txt('RAID',X,Y+3,'#ffd23f',8)}else{pill(X-28,Y+2,56,12);txt('Em breve',X,Y+3,'#aaa',8)}});
+  const X=EXIT.x-cam.x,Y=EXIT.y+14-cam.y;pill(X-18,Y,36,12);txt('Sair',X,Y+1,'#ffb060',8);{const X=SHP.x-cam.x,Y=SHP.y-58-cam.y;pill(X-20,Y,40,12);txt('Loja',X,Y+1,'#c9a0ff',8)}}
   pill(VW/2-80,4,160,24);txt('Fragmentos da Dungeon: '+nf(st.rt),VW/2,7,'#c9a0ff',8);txt('Recorde: sala '+(st.rb||0),VW/2,17,'#ffd23f',8)}
  // contagem da sala de espera
  if(RD.st==='wait0'){const s=RD.cd-t;pill(VW/2-80,24,160,32);txt('A raid começa em',VW/2,27,'#fff',8);txt(mmss(s),VW/2,37,'#ffd23f',14)}
@@ -3949,6 +3949,8 @@ function roomCleared(i){const r=RD.rooms[i];r.cleared=true;const b=Math.floor((r
 function blockDone(){RD.bk++;const bonus=2*RD.bk;st.rt=(st.rt||0)+bonus;RD.run.tok+=bonus;try{sWin(3)}catch(e){}
  RD.EN.length=0;fight=null;RD.rooms=genBlock(RD.bk);RD.st='rest';shiftAll(XO[1]-XO[7]);updHud();save();toast('Bloco concluído! +'+bonus+' fragmentos. Mais 5 salas na frente')}
 const LAST=50;   // a primeira dungeon termina na sala 50
+// para a dungeon em 3D (js/38-raid3d): medidas, portas e chão de cada tema
+RD._k={XO,SW,AW,WW,RW,RH,WL,DY0,DY1,NL,XE,GTX,EXIT,RKP,SHP,CGW,doorOpen,liOf,halOk,LCm,fWalk,hWalk,gndPx,waitSolid,hubSolid,AR,W3:()=>W3};
 function win(){RD.st='over';const R=RD.run||{rooms:0,tok:0,coins0:coins,far:0};fight=null;RD.EN.length=0;
  RD.sum={title:'Dungeon concluída!',ok:true,rooms:R.rooms,far:R.far,tok:R.tok,coins:Math.max(0,coins-R.coins0),rec:!!R.rec,t:Date.now()};try{sWin(4)}catch(e){}save()}
 function fail(){RD.st='over';const R=RD.run||{rooms:0,tok:0,coins0:coins,far:0};fight=null;
@@ -10768,7 +10770,7 @@ const clp=(v,a,b)=>v<a?a:v>b?b:v;
 const NM3='Herobrine 3D',ALT_Y=14.6,BZ=-16;                    // nome do personagem · topo do altar · Z do Demônio
 const angd=(a,b)=>{let d=(b-a)%TAU;if(d>PI)d-=TAU;if(d<-PI)d+=TAU;return d};
 const SCN=H3.scenes=H3.scenes||{};let SC=null;                  // cenas registradas · cena do modo 3D em uso
-const sceneNow=()=>world===0?(X.inRoom()?SCN.hall:(SCN.field||null)):world===2?SCN.ice:world===4?(SCN.db||null):world===1?((window.LICH&&LICH.in)?(SCN.lich||null):(window.HAL&&HAL.inside)?(SCN.halIn||null):(SCN.hal||null)):null;
+const sceneNow=()=>world===0?(X.inRoom()?SCN.hall:(SCN.field||null)):world===2?SCN.ice:world===4?(SCN.db||null):world===3?(SCN.raid||null):world===1?((window.LICH&&LICH.in)?(SCN.lich||null):(window.HAL&&HAL.inside)?(SCN.halIn||null):(SCN.hal||null)):null;
 const S=H3.S={mode:0,yaw:0,pitch:0,moving:false,step:0,dead:false,built:false,qs0:1,punchT:0,bossYaw:0,fr:0,cam:{x:0,y:21,z:131,yaw:0,pitch:0,fov:1},foc:{x:0,y:0,z:131},cssW:896,cssH:412,px:0,pz:131,err:0,ft:16,lastT:0,hint:0,sc:null,
  jh:0,jv:0,isoY:null};
 const $$=id=>document.getElementById(id);
@@ -13894,6 +13896,7 @@ function thornBush(seed,lod){const mb=new MB(seed,{pk:true}),r=rng(seed*3+5),n=l
  return mb}
 // protótipos das árvores: [variante][lod]
 const TREE={};
+HV.TREE=TREE;HV.mkTrees=()=>{if(!TREE.dead)buildTrees()};HV.mkProtos=()=>{if(!PROTO.tomb)buildProtos()};
 function buildTrees(){const mk=(k,n,fn)=>{TREE[k]=[];for(let v=0;v<n;v++){const L=[];for(let lod=0;lod<3;lod++)L.push(fn(v,lod));TREE[k].push(L)}};
  mk('dead',7,(v,l)=>deadTree(1001+v*97,l));
  mk('oak',6,(v,l)=>oakTree(2003+v*89,l,[LEAF.or,LEAF.rd,LEAF.au,LEAF.or,LEAF.rd,LEAF.gr][v]));
@@ -18683,6 +18686,426 @@ CH3._t={place,state,BM,W,NB};CH3.info=()=>Object.keys(DD).map(k=>({nome:k,tris:D
 })();
 </script>
 <script>
+// ===================== Dungeon (Raid) em 3D =====================
+// A dungeon inteira vira 3D (mundo 3): o saguão (piso de lajes, tapete, a muralha com os 4 portões em arco — o 1º aceso com o portal —, tochas,
+// estandartes, o portal de Sair, a pedra do Ranking e a Loja da Dungeon: barraca com toldo listrado, balcão, prateleiras de cristais e o mercador),
+// as salas de espera (bancos e tochas), as 5 salas do bloco (muralhas de pedra do tema, grades de ferro nas portas que sobem quando a sala é limpa)
+// e o miolo de cada sala, recortado do mapa de origem: chão do mapa (cor por vértice) com as árvores, pedras, arbustos (Floresta) ou árvores mortas,
+// pinheiros, lápides, abóboras, lampiões, barris... (Halloween) nos mesmos lugares da colisão do 2D; o que bloqueia e não é objeto conhecido vira pedra.
+// Coordenadas: 1 unidade = 1 pixel do 2D da raid (X = x, Z = y), chão em Y = 0. A lógica (portas, inimigos, tempo, loja) continua toda no 2D (RAID).
+(function(){
+'use strict';
+const H3=window.H3,RD=window.RAID;
+if(!H3||!H3.MB||!H3.scenes||!H3.M4||!RD||!RD._k){console.warn('Dungeon 3D: faltam módulos');return}
+const K_=RD._k,{XO,SW,AW,RH,WL,DY0,DY1,NL,XE,GTX,EXIT,RKP,SHP,CGW}=K_;
+const MB=H3.MB,M4=H3.M4,C=H3.C,shade=H3.shade,mixC=H3.mixC,SCN=H3.scenes;
+const PI=Math.PI,TAU=PI*2,sin=Math.sin,cos=Math.cos,abs=Math.abs,min=Math.min,max=Math.max,floor=Math.floor,round=Math.round,sqrt=Math.sqrt,hypot=Math.hypot;
+const clp=(v,a,b)=>v<a?a:v>b?b:v,lerp=(a,b,t)=>a+(b-a)*t;
+function rng(s){s=s>>>0;return()=>{s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function hs(x,y,s){let h=(Math.imul(x|0,374761393)+Math.imul(y|0,668265263)+Math.imul(s|0,1442695041))|0;h=Math.imul(h^(h>>>13),1274126177);h^=h>>>16;return(h>>>0)/4294967296}
+const D3=window.RAID3={ready:false,pct:0,err:null};
+
+// ============================================================ medidas ============================================================
+const topOf=li=>li===0?76:(li===1||li===7)?44:WL;      // onde começa o chão de cada espaço (a muralha de cima é mais funda no saguão e nas esperas)
+const WH_=li=>li===0?74:li===1||li===7?50:46;            // altura das muralhas
+const DOORH=44,BOT=RH-WL,BWH=4;
+const PAL={s:['#4c4a5c','#58566a','#646278','#43414f','#514f63'],f:['#5d6650','#6c7560','#7b846c','#58614d','#66705a'],h:['#3d3250','#4a3d5f','#554870','#33293f','#43375a']},
+ MORT={s:'#17161d',f:'#1d211a',h:'#140f1c'},MOSS='#3f5a2e',IRON='#2e2d36',IRONH='#5a5868',GOLD='#c8a050',WOOD=['#4a2c1a','#5a3622','#6a4228'];
+const pick=(R,L)=>L[floor(R()*L.length)];
+
+// ============================================================ peças ============================================================
+// bloco de pedra com chanfro sobre uma face: c = centro na face, u = direita, v = cima, n = para fora (para quem olha), meia-largura hu, meia-altura hv, saliência dp
+function blk(mb,c,u,v,n,hu,hv,dp,bv,col){
+ const P=(a,b,d)=>[c[0]+u[0]*a+v[0]*b+n[0]*d,c[1]+u[1]*a+v[1]*b+n[1]*d,c[2]+u[2]*a+v[2]*b+n[2]*d];
+ const iu=max(.2,hu-bv),iv=max(.2,hv-bv),d0=max(0,dp-bv);
+ const hi=shade(col,1.28),lo=shade(col,.6),sd=shade(col,.8),top=shade(col,1.06),bot=shade(col,.86);
+ const f0=P(-iu,-iv,dp),f1=P(iu,-iv,dp),f2=P(iu,iv,dp),f3=P(-iu,iv,dp),b0=P(-hu,-hv,d0),b1=P(hu,-hv,d0),b2=P(hu,hv,d0),b3=P(-hu,hv,d0);
+ mb.quad(f0,f1,f2,f3,null,0,[bot,bot,top,top]);
+ mb.quad(f3,f2,b2,b3,hi);mb.quad(b0,b1,f1,f0,lo);mb.quad(f1,b1,b2,f2,sd);mb.quad(b0,f0,f3,b3,sd);
+ if(d0>.2){const k0=P(-hu,-hv,0),k1=P(hu,-hv,0),k2=P(hu,hv,0),k3=P(-hu,hv,0);mb.quad(b3,b2,k2,k3,shade(col,.95));mb.quad(b1,k1,k2,b2,shade(col,.7));mb.quad(k0,b0,b3,k3,shade(col,.7))}}
+// quadrilátero com as normais voltadas para quem olha (garante o lado certo)
+function q4(mb,a,b,c,d,col,e,cs){mb.quad(a,b,c,d,col,e,cs)}
+// muralha reta: face de A até B (no chão), "n" aponta para dentro do espaço; buracos = [{s0,s1,h,arch}] ao longo da face; th = espessura atrás da face
+function wallRun(mb,A,B,n,y1,pal,mort,R,holes,th,o){o=o||{};holes=holes||[];
+ const L=hypot(B[0]-A[0],B[1]-A[1]),u=[(B[0]-A[0])/L,0,(B[1]-A[1])/L],v=[0,1,0],N=[n[0],0,n[1]];
+ const P=(s,y,d)=>[A[0]+u[0]*s+N[0]*d,y,A[1]+u[2]*s+N[2]*d];
+ const ch=y1/max(3,round(y1/8.6));
+ const inHole=(s,y)=>holes.some(h=>s>h.s0&&s<h.s1&&y<h.h);
+ // rejunte escuro atrás dos blocos
+ const cut=[0];for(const h of holes){cut.push(h.s0,h.s1)}cut.push(L);cut.sort((a,b)=>a-b);
+ for(let i=0;i<cut.length-1;i++){const s0=cut[i],s1=cut[i+1];if(s1-s0<.01)continue;const mid=(s0+s1)/2,hh=holes.find(h=>mid>h.s0&&mid<h.s1);const yb=hh?hh.h:0;if(yb<y1)q4(mb,P(s0,yb,.05),P(s1,yb,.05),P(s1,y1,.05),P(s0,y1,.05),mort)}
+ // fiadas
+ for(let k=0;k*ch<y1-.5;k++){const y0=k*ch,yc=y0+ch/2;let s=-(k%2)*7-R()*4;
+  while(s<L){const w=11+R()*9;let a=max(0,s),b=min(L,s+w);s+=w;if(b-a<2.5)continue;
+   // corta nos buracos
+   const segs=[[a,b]];for(const h of holes){if(yc>=h.h)continue;for(let i=segs.length-1;i>=0;i--){const g=segs[i];if(g[1]<=h.s0||g[0]>=h.s1)continue;segs.splice(i,1);if(g[0]<h.s0)segs.push([g[0],h.s0]);if(g[1]>h.s1)segs.push([h.s1,g[1]])}}
+   for(const g of segs){const ww=g[1]-g[0];if(ww<2.2)continue;let col=C(pick(R,pal));col=shade(col,.88+R()*.24);if(yc<14&&o.moss&&R()<.5)col=mixC(col,MOSS,.25+R()*.2);
+    blk(mb,P((g[0]+g[1])/2,yc,0),u,v,N,ww/2-.55,ch/2-.55,1.2+R()*1.3,.9,col)}}}
+ // tampa em cima
+ if(th>0)q4(mb,P(0,y1,0),P(L,y1,0),P(L,y1,-th),P(0,y1,-th),o.cap?C(o.cap):shade(C(pal[0]),.62));
+ // vãos: laterais e o teto do vão (a espessura da parede)
+ for(const h of holes){const hd=h.depth||th;const jc=shade(C(pal[3]),.7);
+  q4(mb,P(h.s0,0,0),P(h.s0,0,-hd),P(h.s0,h.h,-hd),P(h.s0,h.h,0),jc);q4(mb,P(h.s1,0,-hd),P(h.s1,0,0),P(h.s1,h.h,0),P(h.s1,h.h,-hd),jc);
+  q4(mb,P(h.s0,h.h,0),P(h.s0,h.h,-hd),P(h.s1,h.h,-hd),P(h.s1,h.h,0),shade(jc,.7));
+  // verga: blocos maiores em cima do vão
+  const lc=C(pick(R,pal));blk(mb,P((h.s0+h.s1)/2,h.h+3.4,0),u,v,N,(h.s1-h.s0)/2+5,3.6,2.6,1.1,shade(lc,1.05))}}
+// laje do chão (com chanfro), cantos em XZ, cor col
+function slab(mb,x0,z0,x1,z1,h,bv,col){const hi=shade(col,1.15),lo=shade(col,.7);
+ q4(mb,[x0+bv,h,z1-bv],[x1-bv,h,z1-bv],[x1-bv,h,z0+bv],[x0+bv,h,z0+bv],col);
+ q4(mb,[x0,0,z1],[x1,0,z1],[x1-bv,h,z1-bv],[x0+bv,h,z1-bv],hi);q4(mb,[x1,0,z0],[x0,0,z0],[x0+bv,h,z0+bv],[x1-bv,h,z0+bv],lo);
+ q4(mb,[x1,0,z1],[x1,0,z0],[x1-bv,h,z0+bv],[x1-bv,h,z1-bv],shade(col,.9));q4(mb,[x0,0,z0],[x0,0,z1],[x0+bv,h,z1-bv],[x0+bv,h,z0+bv],shade(col,.8))}
+// caixa simples (centro x,z, base y)
+function box(mb,x,y,z,w,h,d,col,ry){mb.push().T(x,y,z);if(ry)mb.RY(ry);mb.box(w,h,d,col,0,true);mb.pop()}
+// divide uma malha grande em pedaços (cada pedaço escolhe as luzes perto dele: as tochas de um canto não somem por causa das do outro)
+function splitBuild(mb,gl,bw){const A=mb.a,bins=new Map();for(let i=0;i<A.length;i+=30){const cx=(A[i]+A[i+10]+A[i+20])/3,cz=(A[i+2]+A[i+12]+A[i+22])/3,k=floor(cx/bw)*64+floor(cz/(RH/2));let b=bins.get(k);if(!b)bins.set(k,b=[]);for(let j=0;j<30;j++)b.push(A[i+j])}
+ const out=[];for(const b of bins.values()){const t=new MB(1);t.a=b;out.push(t.build(gl))}return out}
+// chão de fora, depois da mureta de baixo (a câmera da 3ª pessoa fica ali quando o jogador está perto da beira)
+function apron(mb,x0,x1){q4(mb,[x0,-.1,RH+170],[x1,-.1,RH+170],[x1,-.1,RH],[x0,-.1,RH],null,0,['#121118','#121118','#3a3848','#3a3848']);for(let x=x0;x<x1;x+=32)q4(mb,[x,0,RH+3],[x+31,0,RH+3],[x+31,0,RH],[x,0,RH],'#4a4858');for(let z=RH+16;z<RH+120;z+=16)q4(mb,[x0,0,z+.6],[x1,0,z+.6],[x1,0,z],[x0,0,z],shade(C('#24222c'),1-(z-RH)/200));for(let x=x0;x<x1;x+=16)q4(mb,[x,0,RH+120],[x+.6,0,RH+120],[x+.6,0,RH],[x,0,RH],null,0,['#121118','#121118','#24222c','#24222c'])}
+// cantos das muralhas (o bloco onde duas muralhas se encontram)
+function corners(mb,x0,x1,T,H,pal,R){const top=shade(C(pal[0]),.62);for(const[a,b]of[[x0,x0+WL],[x1-WL,x1]]){q4(mb,[a,H,T],[b,H,T],[b,H,0],[a,H,0],top);const R2=rng(a*7+3);for(let y=0;y<H-.5;y+=H/max(3,round(H/8.6))){const hh=H/max(3,round(H/8.6));blk(mb,[(a+b)/2,y+hh/2,RH],[1,0,0],[0,1,0],[0,0,1],WL/2-.5,hh/2-.5,1.4,.8,shade(C(pal[floor(R2()*pal.length)]),.8+R2()*.2))}q4(mb,[a,0,RH-.05],[b,0,RH-.05],[b,H,RH-.05],[a,H,RH-.05],shade(C(pal[0]),.3));}}
+// suporte de tocha na parede (a chama e a luz são do motor)
+function torch(mb,x,y,z,nx,nz){const a=Math.atan2(nx,nz);mb.push().T(x,y,z).RY(a);
+ mb.push().T(0,-6,.8).box(2.4,4,1.6,IRON,0,false).pop();
+ mb.push().T(0,-3.5,2.4).RX(-.45).cyl(1.1,.8,9,6,'#3a2414',0).pop();
+ mb.push().T(0,3.2,4.4).cyl(2.3,1.5,2.6,7,IRONH,0).pop();mb.pop();return[x+nx*5.2,y+6.6,z+nz*5.2]}
+
+// ============================================================ estado ============================================================
+const G={gl:null,st:[],dyn:{},rooms:new Map(),ok:false,job:null,tx:{},qBuild:[]};
+const LS=[];        // luzes fixas (tochas, portal, cristais) {x,y,z,r,cr,cg,cb,b,k,fl,ph}
+const FL=[];        // chamas: [x,y,z,escala]
+const addL=(x,y,z,r,c,b,fl,ph)=>{const l={x,y,z,r,cr:c[0],cg:c[1],cb:c[2],b,k:b,fl:fl||0,ph:ph||0};LS.push(l);return l};
+const TORCHC=[1,.62,.3];
+
+// ============================================================ saguão ============================================================
+function buildHub(){const mb=new MB(301),R=rng(11),pal=PAL.s,mo=MORT.s,T=topOf(0),x0=XO[0],x1=x0+SW[0];
+ // piso de lajes
+ const TL=['#3a3848','#403e50','#36344a','#3d3b4d'];
+ q4(mb,[x0,0,RH],[x1,0,RH],[x1,0,T],[x0,0,T],'#201f29');
+ for(let z=T;z<RH;z+=16)for(let x=x0+WL;x<x1-WL;x+=16){const c=shade(C(TL[floor(R()*4)]),.92+R()*.16);slab(mb,x+.4,z+.4,min(x1-WL,x+16)-.4,min(RH,z+16)-.4,.7+R()*.3,.5,c)}
+ // tapete (do meio do salão até os portões) com borda dourada e franjas
+ {const a=96,b=416,c=90,d=212;q4(mb,[a,.9,d],[b,.9,d],[b,.9,c],[a,.9,c],'#4a1420');q4(mb,[a+4,1.05,d-4],[b-4,1.05,d-4],[b-4,1.05,c+4],[a+4,1.05,c+4],'#6a1e2e');
+  for(let x=a+8;x<b-8;x+=12){q4(mb,[x,1.1,c+9],[x+6,1.1,c+9],[x+6,1.1,c+7],[x,1.1,c+7],GOLD);q4(mb,[x,1.1,d-7],[x+6,1.1,d-7],[x+6,1.1,d-9],[x,1.1,d-9],GOLD)}
+  for(let z=c+14;z<d-14;z+=22){const m=(a+b)/2;q4(mb,[m-5,1.1,z+5],[m,1.1,z+10],[m+5,1.1,z+5],[m,1.1,z],'#c8a050')}}
+ // muralha de cima com os 4 portões em arco (fundo escuro); o 1º tem o portal
+ const H=WH_(0),gw=21,gh=46;
+ const holes=GTX.map(g=>({s0:g-gw-x0-WL,s1:g+gw-x0-WL,h:gh+gw*.55,depth:22}));
+ wallRun(mb,[x0+WL,T],[x1-WL,T],[0,1],H,pal,mo,R,holes,T);
+ for(let i=0;i<4;i++){const gx=GTX[i];
+  // arco: aduelas em meia-lua por cima do vão
+  for(let k=0;k<=8;k++){const a=PI*k/8,cx=gx-cos(a)*(gw+2.5),cy=gh+sin(a)*(gw*.55+2.5),r=-a+PI/2;mb.push().T(cx,cy,T+1.2).RZ(r).box(5.6,4.2,3.2,shade(C(pick(R,pal)),1.12),0).pop()}
+  mb.push().T(gx,gh+gw*.55+5.5,T+1.6).box(6,7,3.6,i===0?'#7a6440':'#5a586a',0).pop();      // pedra-chave
+  // fundo do túnel
+  const bz=T-22;q4(mb,[gx-gw,0,bz],[gx+gw,0,bz],[gx+gw,gh+gw*.6,bz],[gx-gw,gh+gw*.6,bz],i===0?'#0c0812':'#0b0a10');
+  q4(mb,[gx-gw,.05,T],[gx+gw,.05,T],[gx+gw,.05,bz],[gx-gw,.05,bz],'#14121a');
+  // degrau na frente
+  slab(mb,gx-gw-6,T,gx+gw+6,T+6,1.6,.5,C('#4a4858'));
+  // colunas dos lados
+  for(const s of[-1,1]){const px=gx+s*(gw+6);for(let y=0;y<gh;y+=9.2)blk(mb,[px,y+4.6,T],[1,0,0],[0,1,0],[0,0,1],3.6,4.4,3.4,.9,shade(C(pick(R,pal)),1.08))}
+  // grade (portões fechados) e cadeado
+  if(i>0){for(let k=0;k<5;k++){const bx=gx-gw+5+k*((2*gw-10)/4);mb.push().T(bx,0,T-4).cyl(1,1,gh+gw*.5,5,IRON,0).pop()}
+   for(const y of[14,30]){mb.push().T(gx,y,T-4).box(2*gw,2.2,1.6,IRON,0).pop()}
+   mb.push().T(gx,22,T-2.2).box(7,8,2.4,'#8a7a50',0).pop();mb.push().T(gx,27,T-2.2).RX(PI/2).cyl(2.4,2.4,1.2,8,'#6a6070',0).pop()}
+  else{for(const s of[-1,1])mb.push().T(gx+s*gw*.8,gh+gw*.55-2,T+.6).box(2,2,1,'#ffb030',.9).pop()}}
+ // tochas entre os portões e estandartes roxos
+ for(const tx of[80,176,272,368,464]){const f=torch(mb,tx,40,T,0,1);FL.push([f[0],f[1],f[2],1]);addL(f[0],f[1]+2,f[2]+4,120,TORCHC,1.05,.18,tx)}
+ for(const bx of[176-24,272-24,368-24]){mb.push().T(bx+24,58,T+.6);mb.box(18,1.6,1.6,IRON,0);for(let k=0;k<4;k++){const y=-2-k*7;mb.quad([8,y,.9],[-8,y,.9],[-8,y-7,.9],[8,y-7,.9],k%2?'#5a2a9a':'#7a3cc8')}
+  mb.tri([8,-30,.9],[-8,-30,.9],[0,-36,.9],'#5a2a9a');mb.push().T(0,-14,1).box(6,6,.4,GOLD,.2).pop();mb.pop()}
+ // muralhas dos lados e de baixo
+ wallRun(mb,[x0+WL,RH],[x0+WL,T],[1,0],H,pal,mo,R,[],WL);
+ wallRun(mb,[x1-WL,T],[x1-WL,RH],[-1,0],H,pal,mo,R,[],WL);
+ corners(mb,x0,x1,T,H,pal,R);apron(mb,x0,x1);
+ // portal de Sair: arco de pedra em pé (o fogo do portal é a figura animada do 2D, em cartaz)
+ {const ex=EXIT.x+x0,ez=EXIT.y+6,RX=23,RY=20,CY=28;
+  for(const sg of[-1,1])for(let y=0;y<CY;y+=7)blk(mb,[ex+sg*RX,y+3.5,ez],[1,0,0],[0,1,0],[0,0,1],3.4,3.3,3,.8,shade(C(pick(R,pal)),1.08));
+  for(let k=0;k<=10;k++){const a=PI*k/10,cx=ex-cos(a)*RX,cy=CY+sin(a)*RY;mb.push().T(cx,cy,ez).RZ(-Math.atan2(cos(a)*RY,sin(a)*RX)).box(7,5.4,6.4,shade(C(pick(R,pal)),1.1),0).pop()}
+  mb.push().T(ex,CY+RY+2,ez+.5).box(7,8,7,'#7a6440',0).pop();
+  slab(mb,ex-30,ez-9,ex+30,ez+9,1.2,.5,C('#3e3c4c'));addL(ex,24,ez+4,110,[.75,.45,1],.9,.12,3)}
+ // pedra do Ranking: estela de pedra com as linhas douradas e uma coroa
+ {const rx=RKP.x+x0,rz=RKP.y-6;mb.push().T(rx,0,rz);mb.box(24,3,10,shade(C('#55526a'),.8),0,true);mb.push().T(0,3,0).box(18,22,6,'#5c5974',0,true).pop();mb.push().T(0,25,0).box(20,2.4,8,'#6a6782',0,true).pop();
+  for(const[y,w]of[[19,10],[15,6],[11,12]])mb.push().T(0,y,3.2).box(w,1.4,.5,'#ffd23f',.6).pop();
+  mb.push().T(0,29,0);for(let k=0;k<5;k++){const a=k/5*PI*2;mb.push().T(cos(a)*3.4,0,sin(a)*3.4).box(1.6,3+(k%2)*2,1.6,'#ffd23f',.5,true).pop()}mb.box(8,1.6,8,'#e0b030',.4,true);mb.pop();mb.pop();
+  addL(rx,30,rz+10,50,[1,.85,.4],.35,.05,9)}
+ // luz baixa e quente perto da beira de baixo (o salão não fica um breu perto da câmera)
+ for(const fx of[96,256,416])addL(x0+fx,70,RH-10,170,[1,.78,.55],.42,0,0);
+ // a Loja da Dungeon
+ buildShop(mb,R,SHP.x+x0,SHP.y);
+ return mb}
+// barraca: balcão de madeira, postes, toldo listrado roxo e branco, prateleiras com cristais, lampião e o mercador encapuzado atrás
+function buildShop(mb,R,sx,sz){const fz=sz,bz=sz-16;
+ // balcão (frente em fz)
+ mb.push().T(sx,0,(fz+bz)/2);mb.box(42,13,15,WOOD[1],0,true);
+ for(let k=0;k<5;k++)mb.push().T(-18+k*9,6.5,7.6).box(1,12,.4,WOOD[0],0).pop();
+ mb.push().T(0,13,0).box(46,2,18,WOOD[2],0,true).pop();
+ // pano roxo na frente do balcão com o símbolo
+ mb.quad([17,12,8.2],[-17,12,8.2],[-17,4,8.2],[17,4,8.2],'#4a2a7a');mb.quad([17,4,8.2],[-17,4,8.2],[-14,2,8.2],[14,2,8.2],'#3a1e60');
+ mb.push().T(0,8,8.4).RZ(PI/4).box(4,4,.3,GOLD,.4).pop();mb.pop();
+ // cristais em cima do balcão (as cores do 2D)
+ const CR=[['#c9a0ff',-14],['#9cf0ff',-5],['#c9a0ff',4],['#ffd27a',13]];
+ for(const[c,dx]of CR){mb.push().T(sx+dx,15,fz-6);mb.push().T(0,0,0).box(5,1.4,4,'#2a1c3a',0,true).pop();
+  for(let k=0;k<3;k++){mb.push().T((k-1)*1.6,1.4,(k%2)*1.2-.6).RZ((k-1)*.25).cyl(.9,.1,4+k%2*2,5,c,.65).pop()}mb.pop();
+  const cc=C(c);addL(sx+dx,20,fz-4,34,[cc[0]/255,cc[1]/255,cc[2]/255],.45,.25,dx)}
+ // postes e toldo listrado (cai para a frente)
+ for(const s of[-1,1]){mb.push().T(sx+s*21,0,bz-1).cyl(1.4,1.2,46,6,WOOD[0],0).pop();mb.push().T(sx+s*21,0,fz+2).cyl(1.2,1,34,6,WOOD[0],0).pop()}
+ const y0=46,y1=36,z0=bz-3,z1=fz+6,n=8;
+ for(let i=0;i<n;i++){const xa=sx-24+48*i/n,xb=sx-24+48*(i+1)/n,c=i%2?'#e8dcff':'#7a3cc8';mb.quad([xb,y0,z0],[xa,y0,z0],[xa,y1,z1],[xb,y1,z1],c);mb.quad([xa,y0-.5,z0],[xb,y0-.5,z0],[xb,y1-.5,z1],[xa,y1-.5,z1],shade(C(c),.62))}
+ // franja recortada na beira do toldo
+ for(let i=0;i<n;i++){const xa=sx-24+48*i/n,xb=sx-24+48*(i+1)/n,c=i%2?'#e8dcff':'#7a3cc8';mb.quad([xb,y1,z1],[xa,y1,z1],[xa,y1-4,z1+.6],[xb,y1-4,z1+.6],c);mb.tri([xb,y1-4,z1+.6],[xa,y1-4,z1+.6],[(xa+xb)/2,y1-7,z1+.8],c)}
+ mb.push().T(sx,y0+.8,z0).box(50,1.6,2,'#5a2a9a',0).pop();
+ // placa LOJA pendurada
+ mb.push().T(sx,y0+8,z0+1).box(22,8,1.2,WOOD[2],0).pop();for(let k=0;k<4;k++)mb.push().T(sx-7.5+k*5,y0+8,z0+1.8).box(3.4,4.2,.4,'#ffd27a',.55).pop();
+ // prateleira atrás do mercador com potes e caixas
+ mb.push().T(sx,0,bz-12);for(const y of[10,20,30]){mb.push().T(0,y,0).box(40,1.4,6,WOOD[1],0).pop()}for(const s of[-1,1])mb.push().T(s*20,0,0).box(2,32,6,WOOD[0],0,true).pop();
+ for(let k=0;k<6;k++){const x=-15+k*6,y=[10,20,30][k%3]+.7;mb.push().T(x,y,0).cyl(1.8,1.6,4.2,6,['#7a3cc8','#3a8ac8','#c84a3c','#c8a03c'][k%4],k%2?.3:0).pop()}
+ mb.pop();
+ // mercador: manto escuro, capuz, olhos acesos e mãos em cima do balcão
+ mb.push().T(sx,0,bz-5);mb.cyl(9,6,22,8,'#2a1c3a',0);mb.push().T(0,22,0).cyl(6,4,4,8,'#3a2650',0).pop();
+ mb.push().T(0,28,0).sph(6.2,5,8,'#3a2650',0).pop();mb.push().T(0,27,3.2).sph(4.2,4,7,'#0c0812',0).pop();
+ for(const s of[-1,1])mb.push().T(s*1.6,28,6.4).box(1.2,.9,.4,'#c9a0ff',1).pop();
+ for(const s of[-1,1])mb.push().T(s*7,14,6).RX(-.9).cyl(2,1.6,9,6,'#2a1c3a',0).pop();mb.pop();
+ // lampião pendurado no toldo
+ mb.push().T(sx+16,y1-4,fz+2).cyl(.25,.25,6,4,IRON,0).pop();mb.push().T(sx+16,y1-11,fz+2).box(3.4,5,3.4,'#ffd27a',.85).pop();
+ FL.push([sx+16,y1-9,fz+2,.6]);addL(sx+16,y1-9,fz+4,70,[1,.75,.4],.75,.15,5)}
+
+// ============================================================ salas de espera ============================================================
+function buildWait(li,seed){const mb=new MB(seed),R=rng(seed),pal=PAL.s,mo=MORT.s,T=topOf(li),x0=XO[li],x1=x0+SW[li],H=WH_(li);
+ const TL=['#2f3a2e','#34402f','#2c362b','#323d30'];q4(mb,[x0,0,RH],[x1,0,RH],[x1,0,T],[x0,0,T],'#151b14');
+ for(let z=T;z<RH;z+=16)for(let x=x0+WL;x<x1-WL;x+=16){const c=shade(C(TL[floor(R()*4)]),.9+R()*.18);slab(mb,x+.4,z+.4,min(x1-WL,x+16)-.4,min(RH,z+16)-.4,.6+R()*.3,.5,c)}
+ wallRun(mb,[x0+WL,T],[x1-WL,T],[0,1],H,pal,mo,R,[],T);
+  corners(mb,x0,x1,T,H,pal,R);apron(mb,x0,x1);
+ for(const b of[[24,RH-56],[168,RH-56]]){const bx=x0+b[0],bz=b[1];mb.push().T(bx+32,0,bz+5);mb.push().T(0,6,0).box(64,2.2,10,WOOD[1],0,true).pop();mb.push().T(0,8.2,-4).box(64,6,1.6,WOOD[0],0,true).pop();
+  for(const s of[-1,1])for(const t of[-1,1])mb.push().T(s*28,0,t*3.5).box(2.4,6,2.4,'#3a2414',0,true).pop();mb.pop()}
+ addL(x0+SW[li]/2,70,RH-10,170,[1,.78,.55],.4,0,0);
+ for(const tx of[64,192]){const f=torch(mb,x0+tx,30,T,0,1);FL.push([f[0],f[1],f[2],1]);addL(f[0],f[1]+2,f[2]+4,110,TORCHC,1,.18,tx+li)}
+ return mb}
+
+// ============================================================ muralhas laterais e portas (todas as divisas) ============================================================
+function buildSides(){const mb=new MB(777),R=rng(77);
+ for(let li=0;li<NL;li++){const x0=XO[li],x1=x0+SW[li],T=topOf(li),H=WH_(li),th=li>=2&&li<=6?null:'s';
+  const pal=PAL.s,mo=MORT.s;if(li===0)continue;   // o saguão já tem as dele
+  // esquerda: porta k=li-1 (k=0 é a parede entre o saguão e a espera: sem vão)
+  const kl=li-1,kr=li,hl=kl>=1&&kl<=6?[{s0:RH-DY1,s1:RH-DY0,h:DOORH,depth:WL}]:[],hr=kr>=1&&kr<=6&&li<NL-1?[{s0:DY0-T,s1:DY1-T,h:DOORH,depth:WL}]:[];
+  if(li===1||li===7){wallRun(mb,[x0+WL,RH],[x0+WL,T],[1,0],H,pal,mo,R,hl,WL);wallRun(mb,[x1-WL,T],[x1-WL,RH],[-1,0],H,pal,mo,R,hr,WL)}}
+ return mb}
+// grade de ferro das portas (malha única, desenhada em cada divisa com a altura de cada uma)
+function buildBars(){const mb=new MB(5);const w=DY1-DY0;for(let k=0;k<5;k++){const z=4+k*(w-8)/4;mb.push().T(0,0,z).cyl(1.15,1.15,DOORH+10,5,IRON,0).pop();mb.push().T(0,DOORH+10,z).cyl(1.6,.2,3,5,IRONH,0).pop()}
+ for(const y of[12,28,DOORH+4])mb.push().T(0,y,w/2).box(2,2.2,w-2,IRON,0).pop();return mb}
+
+// ============================================================ salas (recorte do mapa de origem) ============================================================
+const GS=6;      // grade do chão (px)
+// chão de uma sala do Halloween: só o fundo do mapa (sem objetos), num canvas do tamanho da sala
+function halGround(sx,sy){const cv=document.createElement('canvas');cv.width=AW;cv.height=RH;const ox=cv.getContext('2d'),tmp=document.createElement('canvas');tmp.width=VW;tmp.height=VH;const tx=tmp.getContext('2d');tx.imageSmoothingEnabled=false;
+ const sg=g,cx=cam.x,cy=cam.y,fr=HAL.frame,bf=HAL.bgFx2,ins=HAL.inside;HAL.frame=()=>{};HAL.bgFx2=null;HAL.inside=false;
+ try{g=tx;for(let oy=0;oy<RH;oy+=VH)for(let ox_=0;ox_<AW;ox_+=VW){cam.x=sx+ox_;cam.y=sy+oy;tx.setTransform(1,0,0,1,0,0);tx.globalAlpha=1;tx.globalCompositeOperation='source-over';tx.clearRect(0,0,VW,VH);HAL.bg();ox.drawImage(tmp,ox_,oy)}}
+ finally{g=sg;cam.x=cx;cam.y=cy;HAL.frame=fr;HAL.bgFx2=bf;HAL.inside=ins}
+ return ox.getImageData(0,0,AW,RH).data}
+function groundOf(r){const W=AW,Hh=RH;
+ if(r.th==='h'&&K_.halOk()){try{const d=halGround(r.sx,r.sy);return(lx,ly,o)=>{const i=(clp(ly|0,0,Hh-1)*W+clp(lx|0,0,W-1))*4;o[0]=d[i];o[1]=d[i+1];o[2]=d[i+2];return o}}catch(e){console.error('raid3d chão',e)}}
+ const W3_=K_.W3&&K_.W3();if(r.th!=='h'&&W3_&&W3_.gnd){const t=[0,0,0,0];return(lx,ly,o)=>{K_.gndPx(r.sx+lx,r.sy+ly,t);o[0]=t[0];o[1]=t[1];o[2]=t[2];return o}}
+ const MC=window.__MC;if(r.th!=='h'&&MC&&MC.width>=r.sx+W){try{const d=MC.getContext('2d').getImageData(r.sx,r.sy,W,Hh).data;return(lx,ly,o)=>{const i=(clp(ly|0,0,Hh-1)*W+clp(lx|0,0,W-1))*4;o[0]=d[i];o[1]=d[i+1];o[2]=d[i+2];return o}}catch(e){}}
+ const base=r.th==='h'?[46,40,52]:[70,120,52];return(lx,ly,o)=>{const n=hs(lx>>3,ly>>3,5);o[0]=base[0]*(.85+n*.3);o[1]=base[1]*(.85+n*.3);o[2]=base[2]*(.85+n*.3);return o}}
+// o que bloqueia no 2D dentro da sala (sem as paredes)
+function solidIn(r,lx,ly){if(lx<WL||ly<WL||lx>=AW-WL||ly>=RH-WL)return false;if(ly>=DY0-4&&ly<DY1+4&&(lx<WL+28||lx>=AW-WL-28))return false;
+ if(r.clr&&r.clr[(ly>>2)*CGW+(lx>>2)])return false;return r.th==='h'?!K_.hWalk(r.sx+lx,r.sy+ly):!K_.fWalk(r.sx+lx,r.sy+ly)}
+const cleared=(r,lx,ly)=>!!(r.clr&&lx>=0&&ly>=0&&lx<AW&&ly<RH&&r.clr[(ly>>2)*CGW+(lx>>2)]);
+// variantes das árvores/pedras (malhas próprias da dungeon, feitas com os geradores do 3D de cada mapa)
+const VAR=new Map();
+function natVar(gl,key){let v=VAR.get(key);if(v!==undefined)return v;v=null;const NAT=H3.fld&&H3.fld.nat,Gn=NAT&&NAT.gen;
+ try{if(Gn){const mk=(fn,nl)=>{const L=[];for(let l=0;l<nl;l++)L.push(fn(l).build(gl));while(L.length<3)L.push(L[L.length-1]);return L};const sdOf=(a,b)=>((a*73856093)^(b*19349663))>>>0;
+  if(key[0]==='B')v=mk(l=>Gn.bush(key[1],401+key.charCodeAt(1),l),3);
+  else if(key.startsWith('RK'))v=mk(l=>Gn.rock(false,610+(+key[2])*7,l),2);
+  else if(key.startsWith('RD'))v=mk(l=>Gn.rock(true,640+(+key[2])*7,l),2);
+  else if(key.startsWith('DC'))v=mk(()=>Gn.decor(+key[2],700+(+key[2])),1);
+  else if(key[0]==='x'){const sz=+key.slice(1);v=mk(l=>Gn.dead(sz,900+sz*7,l),3)}
+  else if(key[0]==='p'){const R=+key.slice(1);v=mk(l=>Gn.spruce(R,310+R*3,l),3)}
+  else{const pal=key[0],R=+key.slice(1).split('.')[0],q=+key.split('.')[1];v=mk(l=>Gn.broadleaf(pal,R,sdOf(pal.charCodeAt(0)*17+R,q+3),l),3)}}}
+ catch(e){console.error('raid3d variante',key,e);v=null}
+ VAR.set(key,v);return v}
+function halVar(gl,kind,k,vi){const key='H'+kind+':'+k+':'+vi;let v=VAR.get(key);if(v!==undefined)return v;v=null;const HV=H3.hal;
+ try{if(HV){if(kind==='t'){HV.mkTrees&&HV.mkTrees();const L=HV.TREE&&HV.TREE[k];if(L){const q=L[((vi|0)%L.length+L.length)%L.length];v=q.map(mb=>mb.build(gl))}}
+  else{HV.mkProtos&&HV.mkProtos();const L=HV.PROTO&&HV.PROTO[k];if(L){const m=L[(vi|0)%L.length].build(gl);v=[m,m,m]}}}}catch(e){console.error('raid3d Halloween',k,e);v=null}
+ VAR.set(key,v);return v}
+const LC=c=>{const a=K_.LCm[c]||K_.LCm.wm;return[a[0]/255,a[1]/255,a[2]/255]};
+// monta uma sala (gerador: devolve aos poucos)
+function* buildRoom(gl,r,li){const X0=XO[li],R=rng(1000+r.n*31+r.a*7),th=r.th==='h'?'h':'f',pal=PAL[th],mo=MORT[th],H=WH_(li);
+ const out={r,li,ms:[],inst:[],L:[],FL:[],glow:[]};const mb=new MB(4000+r.n);
+ // chão (cor por vértice, do mapa de origem)
+ const gnd=groundOf(r);yield;const nx=Math.ceil((AW-2*WL)/GS),nz=Math.ceil((RH-WL)/GS),cols=[],o=[0,0,0];
+ for(let j=0;j<=nz;j++)for(let i=0;i<=nx;i++){const lx=min(AW-WL,WL+i*GS),ly=min(RH,WL+j*GS);let r_=0,g_=0,b_=0;
+  for(const[a,b]of[[0,0],[-2,-2],[2,2],[-2,2],[2,-2]]){gnd(lx+a,ly+b,o);r_+=o[0];g_+=o[1];b_+=o[2]}
+  const ed=min(lx-WL,AW-WL-lx,ly-WL),ao=.62+.38*clp(ed/22,0,1);cols.push([r_/5*ao,g_/5*ao,b_/5*ao])}
+ const V=(i,j)=>[X0+min(AW-WL,WL+i*GS),0,min(RH,WL+j*GS)];
+ for(let j=0;j<nz;j++)for(let i=0;i<nx;i++){const a=V(i,j),b=V(i+1,j),c=V(i+1,j+1),d=V(i,j+1),ca=cols[j*(nx+1)+i],cb=cols[j*(nx+1)+i+1],cc=cols[(j+1)*(nx+1)+i+1],cd=cols[(j+1)*(nx+1)+i];
+  mb.wt(a,d,c,ca,cd,cc,0);mb.wt(a,c,b,ca,cc,cb,0)}
+ // a passagem de pedra nas duas portas (entrada e saída da sala)
+ q4(mb,[X0,-.05,RH],[X0+AW,-.05,RH],[X0+AW,-.05,0],[X0,-.05,0],'#16141c');
+ for(const sxx of[0,AW-WL-30]){const x=X0+sxx;for(let z=DY0;z<DY1;z+=14)for(let xx=0;xx<WL+30;xx+=WL+30>>1)slab(mb,x+xx+.3,z+.3,x+xx+((WL+30)>>1)-.3,min(DY1,z+14)-.3,.6,.4,shade(C(pal[1]),.75+R()*.15))}
+ yield;
+ // muralhas da sala (com as portas)
+ wallRun(mb,[X0+WL,WL],[X0+AW-WL,WL],[0,1],H,pal,mo,R,[],WL,{moss:th==='f'});
+ wallRun(mb,[X0+WL,RH],[X0+WL,WL],[1,0],H,pal,mo,R,[{s0:RH-DY1,s1:RH-DY0,h:DOORH,depth:WL}],WL,{moss:th==='f'});
+ wallRun(mb,[X0+AW-WL,WL],[X0+AW-WL,RH],[-1,0],H,pal,mo,R,[{s0:DY0-WL,s1:DY1-WL,h:DOORH,depth:WL}],WL,{moss:th==='f'});corners(mb,X0,X0+AW,WL,H,pal,R);apron(mb,X0,X0+AW);
+ // tochas na muralha de cima
+ for(const f of[.22,.5,.78]){const tx=X0+AW*f;if(abs(tx-X0-AW/2)<4&&false)continue;const p=torch(mb,tx,32,WL,0,1);out.FL.push([p[0],p[1],p[2],1]);out.L.push(mkL(p[0],p[1]+2,p[2]+4,120,TORCHC,th==='h'?1.05:.85,.18,tx))}
+ yield;
+ // objetos do mapa de origem nos mesmos lugares (fora do que foi tirado da sala)
+ const cov=new Uint8Array(CGW*(RH>>2));const mark=(lx,ly,rx,ry)=>{for(let y=max(0,(ly-ry)>>2);y<=min((RH>>2)-1,(ly+ry)>>2);y++)for(let x=max(0,(lx-rx)>>2);x<=min(CGW-1,(lx+rx)>>2);x++)cov[y*CGW+x]=1};
+ const inside=(lx,ly,m)=>lx>=WL+(m||0)&&ly>=WL+(m||0)&&lx<AW-WL-(m||0)&&ly<RH-WL-(m||0);
+ const put=(v,lx,ly,ry,s,sy,tint,o2)=>{if(!v)return;const m=M4.trs(new Float32Array(16),X0+lx,o2&&o2.y||0,ly,o2&&o2.rx||0,ry,o2&&o2.rz||0,s,sy||s,s);const m0=v[0];
+  const wx=m[0]*m0.cx+m[4]*m0.cy+m[8]*m0.cz+m[12],wy=m[1]*m0.cx+m[5]*m0.cy+m[9]*m0.cz+m[13],wz=m[2]*m0.cx+m[6]*m0.cy+m[10]*m0.cz+m[14];out.inst.push({v,m,wx,wy,wz,rad:m0.rad*max(s,sy||s)*1.05,tint:tint||null,tr:o2&&o2.tr||0})};
+ const W3_=K_.W3&&K_.W3();if(th==='f'&&W3_&&W3_.L&&H3.fld&&H3.fld.nat){const L=W3_.L,NAT=H3.fld.nat,tk=NAT.treeKey,h2=(a,b,s)=>hs(a*7.13|0,b*3.71|0,s);
+  const isRm=(x,y)=>{if(!r.rmD)return false;for(const d of r.rmD)if(abs(d.x+d.w/2-x)<10&&abs(d.by-y)<10)return true;return false};
+  for(const t of L.trees||[]){const lx=t[0]-r.sx,ly=t[1]-r.sy;if(!inside(lx,ly,2)||cleared(r,lx,ly-2)||isRm(t[0],t[1]))continue;let key;try{key=tk(t)}catch(e){continue}
+   const h=hs(t[0],t[1],21),rot=hs(t[0],t[1],22)*TAU,s=.9+h*.22,ys=s*(.94+hs(t[0],t[1],23)*.14),tn=.93+hs(t[0],t[1],24)*.14;put(natVar(gl,key),lx,ly-2,rot,s,ys,[tn,tn,tn],{tr:.55});mark(lx,ly,(t[3]||8)*.55,7);yield}
+  for(const b of L.bushes||[]){const lx=b[0]-r.sx,ly=b[1]-r.sy;if(!inside(lx,ly,2)||cleared(r,lx,ly-2))continue;put(natVar(gl,'B'+b[2]),lx,ly-2,hs(b[0],b[1],31)*TAU,.9+hs(b[0],b[1],32)*.3,0,null,{tr:.45});mark(lx,ly,9,7)}
+  for(const q of L.rocks||[]){const lx=q[0]-r.sx,ly=q[1]-r.sy;if(!inside(lx,ly,2)||cleared(r,lx,ly-1))continue;const s=q[2]||1;put(natVar(gl,(q[3]?'RD':'RK')+((q[4]||0)&3)),lx,ly-1,hs(q[0],q[1],41)*TAU,s,s*(.85+hs(q[0],q[1],42)*.3),null,{y:-.6*s});mark(lx,ly,8*s+2,7*s+2)}
+  for(const d of L.decor||[]){const lx=d[0]-r.sx,ly=d[1]-r.sy;if(!inside(lx,ly,2))continue;put(natVar(gl,'DC'+((d[2]||0)&3)),lx,ly,hs(d[0],d[1],51)*TAU,.8+hs(d[0],d[1],52)*.5)}}
+ else if(th==='h'&&K_.halOk()){const M=HAL.M,HV=H3.hal,rm=r.rmO||new Set();
+  for(const ob of M.objs){const lx=ob.x-r.sx,ly=ob.y-r.sy;if(!inside(lx,ly,0)||rm.has(ob))continue;const k=ob.k,a=ob.a||[],x=ob.x,z=ob.y,h=hs(x,z,9);let ok=true;
+   if(k==='deadTree'){const s=[46,64,86][a[0]||0]*(1.08+hs(x,z,4)*.2)/60;put(halVar(gl,'t','dead',a[1]||0),lx,ly,h*TAU,s,s*(.92+hs(x|0,z|0,22)*.16),null,{y:-.6,rx:(hs(x|0,z|0,21)-.5)*.1,tr:.15})}
+   else if(k==='pine'){const s=[54,74][a[1]||0]*(1.1+hs(x,z,4)*.2)/66;put(halVar(gl,'t','pine',a[0]||0),lx,ly,h*TAU,s,s,null,{y:-.6,tr:.3})}
+   else if(k==='oak'){const aut=!!a[2],s=[56,74][a[1]||0]*(1.06+hs(x,z,4)*.18)/52,kk=aut||hs(x,z,31)<.45?'oak':'oakG';put(halVar(gl,'t',kk,(a[0]||0)+(aut?0:2)),lx,ly,h*TAU,s,s,null,{y:-.6,tr:.5})}
+   else if(k==='thorn')put(halVar(gl,'t','thorn',a[0]||0),lx,ly,h*TAU,1.05+h*.3);
+   else if(k==='tomb'){const v=((a[0]||0)+(a[1]||0))%8;{const pal=a[2],tn=pal==='vi'?[1,.93,1.1]:pal==='tb'?[.9,1,1.05]:[.96,.97,1.04];put(halVar(gl,'p','tomb',v),lx,ly,(h-.5)*.3,1+hs(x,z,6)*.2,0,tn,{y:-.3})}}
+   else if(k==='pumpkin'){put(halVar(gl,'p','pumpkin',a[1]||0),lx,ly,(h-.5)*.8,1);out.L.push(mkL(X0+lx,6,ly+3,38,LC('or'),.85,.2,x));out.glow.push([X0+lx,5,ly+5,14,LC('or'),.35])}
+   else if(k==='bones')put(halVar(gl,'p','bones',a[0]||0),lx,ly,h*TAU,1);
+   else if(k==='lamp'){const c=a[0]||'gl';const pv=H3.hal&&H3.hal.PROTO&&H3.hal.PROTO['lamp_'+c]?'lamp_'+c:'lamp_gl';put(halVar(gl,'p',pv,0),lx,ly,0,1);out.L.push(mkL(X0+lx,33,ly,84,LC(c),1,.05,x));out.glow.push([X0+lx,33,ly,12,LC(c),.55])}
+   else if(k==='fireBarrel'){put(halVar(gl,'p','fireBarrel',0),lx,ly,h*TAU,1);out.FL.push([X0+lx,10,ly,1.4]);out.L.push(mkL(X0+lx,16,ly,78,LC('or'),1,.3,x))}
+   else if(k==='crate'||k==='barrel'||k==='rock'||k==='log'||k==='barricade'||k==='sign'||k==='coffin')put(halVar(gl,'p',k,a[0]||0),lx,ly,k==='log'||k==='barricade'?0:(h-.5)*1.4,1);
+   else if(k==='pillar')put(halVar(gl,'p','pillar',(a[0]||0)+(a[1]||0)),lx,ly,0,1);
+   else if(k==='statue')put(halVar(gl,'p','statue',(a[0]||0)+(a[1]||0)),lx,ly,0,1.1);
+   else if(k==='bench'||k==='well'||k==='stall'||k==='cart'||k==='gibbet'||k==='fountain'||k==='scarecrow')put(halVar(gl,'p',k,a[0]||0),lx,ly,0,1);
+   else if(k==='mushroom'){const cc=a[1]==='cy'?'cy':a[1]==='pk'?'pk':'v',col=LC(cc);put(halVar(gl,'p','mushroom',a[0]||0),lx,ly,h*TAU,1,0,col.map(v=>.55+v*.5));out.L.push(mkL(X0+lx,5,ly,28,col,.7,.15,x));out.glow.push([X0+lx,4,ly,16,col,.3])}
+   else if(k==='cauldron'){put(halVar(gl,'p','cauldron',0),lx,ly,0,1);out.FL.push([X0+lx,1,ly,1.2]);out.glow.push([X0+lx,14,ly,22,[.4,1,.5],.5])}
+   else if(k==='candle'){put(halVar(gl,'p','candle',0),lx,ly,0,1);for(let i=0;i<6;i++){const a2=i/6*TAU,d=2+(i%2)*2,hh=2+(i*1.7%4);out.FL.push([X0+lx+cos(a2)*d,hh,ly+sin(a2)*d,.35])}out.L.push(mkL(X0+lx,6,ly,30,LC('wm'),.9,.28,x))}
+   else if(k==='web')put(halVar(gl,'p','web',0),lx,ly,0,1);
+   else if(k==='fenceH'){const tl=(hs(x,z,3)-.5)*.12,X=X0+lx;for(const y of[4,13])mb.push().T(X+8,y,ly).box(16,.8,.8,'#18171d',0).pop();for(let i=0;i<4;i++){const bx=X+2+i*4;mb.push().T(bx,0,ly).RZ(tl).box(.7,16,.7,'#18171d',0,true).pop();mb.push().T(bx+tl*16,16,ly).cyl(.9,0,2.6,4,'#18171d',0,{rot:PI/4}).pop()}}
+   else if(k==='fenceV'){const tl=(hs(x,z,3)-.5)*.12,X=X0+lx+1;for(const y of[4,13])mb.push().T(X,y,ly-8).box(.8,.8,16,'#18171d',0).pop();for(let i=0;i<4;i++){const bz=ly-14+i*4;mb.push().T(X,0,bz).RX(tl).box(.7,16,.7,'#18171d',0,true).pop();mb.push().T(X,16,bz-tl*16).cyl(.9,0,2.6,4,'#18171d',0,{rot:PI/4}).pop()}}
+   else ok=false;
+   if(ok){const f=ob.fp||[-6,-6,6,0];mark(lx+(f[0]+f[2])/2,ly+(f[1]+f[3])/2,(f[2]-f[0])/2+4,(f[3]-f[1])/2+4)}
+   if(out.inst.length%6===0)yield}
+  // luzes do 2D dentro do recorte (lampiões, janelas, fogueiras)
+  const BK=HAL.BK||128,BW=HAL.BW;if(HAL.LB)for(let by=floor((r.sy-40)/BK);by<=floor((r.sy+RH+40)/BK);by++)for(let bx=floor((r.sx-40)/BK);bx<=floor((r.sx+AW+40)/BK);bx++){const lst=bx>=0&&by>=0&&bx<BW?HAL.LB[by*BW+bx]:null;if(!lst)continue;
+   for(const l of lst){const lx=l.x-r.sx,ly=l.y-r.sy;if(!inside(lx,ly,0))continue;out.L.push(mkL(X0+lx,14,ly,max(40,l.r*1.2),LC(l.c),min(1,(l.a||.8))*.8,.12,l.x))}}}
+ yield;
+ // o que bloqueia e não é nenhum objeto conhecido: blocos de pedra caídos (assim nada invisível segura o jogador)
+ {const sol=new Uint8Array(CGW*(RH>>2));for(let y=0;y<RH>>2;y++)for(let x=0;x<CGW;x++){const lx=x*4+2,ly=y*4+2;if(!cov[y*CGW+x]&&solidIn(r,lx,ly))sol[y*CGW+x]=1}
+  for(let y=0;y<RH>>2;y+=2)for(let x=0;x<CGW;x+=2){let n=0;for(let b=0;b<2;b++)for(let a=0;a<2;a++)n+=sol[(y+b)*CGW+x+a]||0;if(n<2)continue;
+   const lx=x*4+4,ly=y*4+4,hh=7+R()*9,col=shade(C(pick(R,pal)),.75+R()*.25);
+   mb.push().T(X0+lx+(R()-.5)*1.5,0,ly+(R()-.5)*1.5).RY(R()*.6-.3).box(8.8,hh,8.8,[shade(col,.82),shade(col,.78),shade(col,1.12),shade(col,.5),shade(col,1),shade(col,.68)],0,true);mb.push().T(0,hh,0).box(6.2,1.2,6.2,shade(col,1.2),0,true).pop();mb.pop()}}
+ yield;
+ // luzes gerais do tema (a Floresta é clara, o Halloween fica na noite roxa)
+ if(th==='f'){for(const f of[.3,.7])out.L.push(mkL(X0+AW*f,120,RH/2,300,[1,.97,.88],.62,0,0))}
+ else out.L.push(mkL(X0+AW/2,110,RH/2,320,[.55,.45,.85],.42,0,0));
+ out.ms=splitBuild(mb,gl,96);return out}
+function mkL(x,y,z,r,c,b,fl,ph){return{x,y,z,r,cr:c[0],cg:c[1],cb:c[2],b,k:b,fl:fl||0,ph:ph||0}}
+function freeRoom(o){const gl=G.gl;if(!gl||!o)return;try{for(const m of o.ms)gl.deleteBuffer(m.vbo)}catch(e){}}
+
+// ============================================================ montagem ============================================================
+function* gen(gl){G.gl=gl;LS.length=0;FL.length=0;G.st=[];
+ const parts=[buildHub,()=>buildWait(1,501),()=>buildWait(7,507),buildSides];let i=0;
+ for(const f of parts){const mb=f();for(const m of splitBuild(mb,gl,96))G.st.push(m);i++;D3.pct=.1+.6*i/parts.length;yield D3.pct}
+ G.dyn.bars=buildBars().build(gl);
+ // figura animada do portal (a mesma do 2D)
+ try{if(typeof PORT_B!=='undefined'&&PORT_B.complete&&PORT_B.naturalWidth)G.tx.port=H3.texNew(PORT_B,false)}catch(e){}
+ D3.pct=.8;yield .8;
+ // salas que já existem (raid em andamento)
+ for(let k=0;k<RD.rooms.length;k++){const r=RD.rooms[k];if(!r||G.rooms.has(r))continue;const it=buildRoom(gl,r,k+2);let x;while(!(x=it.next()).done){}G.rooms.set(r,x.value);D3.pct=.8+.2*(k+1)/5;yield D3.pct}
+ G.ok=true;D3.ready=true;D3.pct=1;yield 1}
+function stepBuild(ms){if(G.ok)return true;const gl=H3.gl();if(!gl)return true;if(!G.job)G.job=gen(gl);const t0=performance.now();
+ try{while(performance.now()-t0<ms){const r=G.job.next();if(r.done){G.job=null;return true}}}catch(e){console.error('Dungeon 3D',e);D3.err=e;G.job=null;G.ok=true;D3.ready=true;return true}return false}
+// salas novas (bloco seguinte) montam aos poucos durante o jogo; as que saíram são apagadas
+let RJ=null,RJr=null;
+function roomsTick(){const gl=G.gl;if(!gl||!G.ok)return;
+ for(const[r,o]of G.rooms)if(!RD.rooms.includes(r)){freeRoom(o);G.rooms.delete(r)}
+ if(!RJ){for(let k=0;k<RD.rooms.length;k++){const r=RD.rooms[k];if(r&&!G.rooms.has(r)){RJr=r;RJ=buildRoom(gl,r,k+2);break}}}
+ if(RJ){const t0=performance.now();try{while(performance.now()-t0<7){const x=RJ.next();if(x.done){if(RD.rooms.includes(RJr))G.rooms.set(RJr,x.value);else freeRoom(x.value);RJ=null;break}}}catch(e){console.error('raid3d sala',e);G.rooms.set(RJr,{r:RJr,ms:[],inst:[],L:[],FL:[],glow:[]});RJ=null}}}
+D3._G=G;D3._VAR=VAR;D3.rebuild=()=>{for(const o of G.rooms.values())freeRoom(o);G.rooms.clear();RJ=null};
+function freeAll(){const gl=G.gl;if(gl&&!gl.isContextLost())try{for(const m of G.st)gl.deleteBuffer(m.vbo);if(G.dyn.bars)gl.deleteBuffer(G.dyn.bars.vbo);for(const v of VAR.values())if(v)for(const m of new Set(v))gl.deleteBuffer(m.vbo);for(const o of G.rooms.values())freeRoom(o);if(G.tx.port)gl.deleteTexture(G.tx.port.t)}catch(e){}
+ G.st=[];G.dyn={};G.rooms.clear();VAR.clear();G.tx={};G.ok=false;G.job=null;RJ=null;D3.ready=false;D3.pct=0}
+
+// ============================================================ luzes, chão, colisão e câmera ============================================================
+const LALL=[];
+function lights(){LALL.length=0;for(const l of LS)LALL.push(l);for(const o of G.rooms.values())for(const l of o.L)LALL.push(l);return LALL}
+function flicker(t){const s=t/1000;for(const l of lights()){if(!l.fl){l.k=l.b;continue}l.k=max(0,l.b*(1+l.fl*(sin(s*7.3+l.ph)*.5+sin(s*13.1+l.ph*1.7)*.35+sin(s*2.1+l.ph*.3)*.3)))}}
+const segAt=x=>K_.liOf(clp(x,0,XE-1));
+function themeAt(x){const li=segAt(x);if(li>=2&&li<=6){const r=RD.rooms[li-2];return r?(r.th==='h'?'h':'f'):'s'}return's'}
+const AMB={s:[.5,.46,.6],f:[.95,.93,.86],h:[.44,.37,.6]};
+const ENV={s:{fog:[.03,.022,.05,.0019],ambT:[.36,.33,.44],ambB:[.14,.12,.17],sun:[-.3,.8,.5],sunC:[.32,.28,.42]},
+ f:{fog:[.32,.38,.3,.0011],ambT:[.82,.84,.76],ambB:[.36,.38,.3],sun:[-.45,.78,.42],sunC:[.9,.85,.72]},
+ h:{fog:[.05,.035,.08,.0018],ambT:[.32,.27,.44],ambB:[.12,.1,.17],sun:[-.3,.8,.5],sunC:[.34,.3,.52]}};
+let envK='';
+function envSet(k){envK=k;const e=ENV[k];H3.env({fog:e.fog,ambT:e.ambT,ambB:e.ambB,sun:e.sun,sunC:e.sunC,skyA:[e.fog[0]*1.4,e.fog[1]*1.4,e.fog[2]*1.4],skyB:[e.fog[0],e.fog[1],e.fog[2]],gndA:[.2,.18,.22],detkL:0,moonL:[0,0,0],fogOff:0})}
+const blocked=(x,z)=>{try{return typeof hit==='function'?hit(x-8,z-14):RD.solid(x|0,z|0)}catch(e){return true}};
+// só as muralhas (para a câmera: ela passa por cima de pedras e árvores)
+function wallAt(x,z){if(x<0||z<0||x>=XE)return true;const li=K_.liOf(x),lx=x-XO[li];if(z>RH+140)return true;if(z>=RH-WL-2)return x<XO[li]+2||x>XO[li]+SW[li]-2;if(z<topOf(li)-1)return true;
+ if(lx<WL-1){if(li===0)return true;const k=li-1;return!(K_.doorOpen(k)&&z>=DY0&&z<DY1)}
+ if(lx>SW[li]-WL+1){if(li===NL-1)return true;return!(K_.doorOpen(li)&&z>=DY0&&z<DY1)}return false}
+// grades das portas: sobem quando a porta abre (0 fechada .. 1 aberta)
+const DOOR=[0,0,0,0,0,0,0,0];
+function doorsTick(dt){for(let k=1;k<=6;k++){const w=K_.doorOpen(k)?1:0;DOOR[k]+=(w-DOOR[k])*min(1,dt*3.2);if(abs(DOOR[k]-w)<.002)DOOR[k]=w}}
+
+// ============================================================ desenho ============================================================
+const MT=new Float32Array(16);let lastT=0;
+function draw(t,dyn){if(!G.ok)return;const now=performance.now(),dt=lastT?min(.1,(now-lastT)/1000):.016;lastT=now;doorsTick(dt);
+ const L=lights(),cam=H3.S.foc||H3.S.cam;
+ for(const m of G.st){if(H3.vis(m.cx,m.cy,m.cz,m.rad))H3.mesh(m,null,L,dyn,{eg:1})}
+ for(const o of G.rooms.values()){for(const m of o.ms)if(H3.vis(m.cx,m.cy,m.cz,m.rad))H3.mesh(m,null,L,dyn,{eg:1});
+  for(const T of o.inst){if(!H3.vis(T.wx,T.wy,T.wz,T.rad))continue;const d=hypot(T.wx-cam.x,T.wz-cam.z),lod=d<110?0:d<230?1:2;
+   // árvore entre a câmera e o jogador (ou com a câmera dentro): fica transparente
+   let want=1;if(T.tr&&T.rad>9){const C_=H3.S.cam,bx=P.x+8,by=18,bz=P.y+14,sx=bx-C_.x,sy=by-C_.y,sz=bz-C_.z,l2=sx*sx+sy*sy+sz*sz||1,cy=T.wy+T.rad*.15,
+    q=clp(((T.wx-C_.x)*sx+(cy-C_.y)*sy+(T.wz-C_.z)*sz)/l2,0,1),dq=hypot(C_.x+sx*q-T.wx,C_.y+sy*q-cy,C_.z+sz*q-T.wz),r=T.rad*.78;if(q<.97&&dq<r)want=clp(.18+(dq/r)*.5,.18,1);if(hypot(C_.x-T.wx,C_.y-cy,C_.z-T.wz)<r+4)want=min(want,.18)}
+   T.di=T.di===undefined?want:T.di+(want-T.di)*min(1,dt*8);if(abs(T.di-want)<.01)T.di=want;
+   H3.mesh(T.v[min(lod,T.v.length-1)],T.m,L,dyn,{di:T.di,tint:T.tint||undefined,tr:T.tr,rad:T.rad,cx:T.wx,cy:T.wy,cz:T.wz})}}
+ // grades de ferro
+ if(G.dyn.bars)for(let k=1;k<=6;k++){const x=XO[k+1],y=DOOR[k]*(DOORH+6);if(y>DOORH+5)continue;M4.trs(MT,x,y,DY0,0,0,0,1,1,1);if(H3.vis(x,20,(DY0+DY1)/2,40))H3.mesh(G.dyn.bars,MT,L,dyn,{})}}
+function sprites(t){const T=H3.tex;if(!T||!G.ok)return;const s=t/1000;
+ const flame=(x,y,z,k,ph)=>{const fr=(floor(t/90+ph*3)%6+6)%6;
+  if(T.flame)H3.spr(T.flame,x,y-1.5*k,z,9*k,14*k,[fr*16/96,0,(fr*16+16)/96,.5],[1,1,1,1],false,1,false);else{H3.spr(T.glow,x,y+2*k,z,5*k,8*k,null,[1,.55,.15,.9],true,0,true)}
+  H3.spr(T.glow,x,y+4*k,z,22*k,22*k,null,[1,.55,.2,.3],true,0,true)};
+ FL.forEach((f,i)=>flame(f[0],f[1],f[2],f[3],i*1.7));
+ for(const o of G.rooms.values()){o.FL.forEach((f,i)=>flame(f[0],f[1],f[2],f[3],i*2.3));for(const g of o.glow)H3.spr(T.glow,g[0],g[1],g[2],g[3],g[3],null,[g[4][0],g[4][1],g[4][2],g[5]*(.85+.15*sin(s*2+g[0]))],true,0,true)}
+ // portais: o fogo roxo do 2D em pé (portão da RAID e o portal de Sair)
+ const PT=G.tx.port;const pfr=floor(t/90)%12;
+ if(PT){const uw=57/PT.w,uh=71/PT.h;H3.spr(PT,GTX[0],1,topOf(0)-10,44,55,[pfr*uw,0,(pfr+1)*uw,uh],[1,1,1,1],false,1,false);H3.spr(PT,EXIT.x,1,EXIT.y+6,40,50,[pfr*uw,0,(pfr+1)*uw,uh],[1,1,1,1],false,1,false)}
+ H3.spr(T.glow,GTX[0],26,topOf(0)-6,62,62,null,[.7,.35,1,.3+.06*sin(s*3)],true,0,true);H3.spr(T.glow,EXIT.x,24,EXIT.y+8,56,56,null,[.7,.4,1,.28+.06*sin(s*2.6)],true,0,true);
+ if(T.ring)H3.flat(T.ring,EXIT.x,.8,EXIT.y+8,40,26,null,[.7,.45,1,.35],true,s*.4);
+ for(let i=0;i<6;i++){const u=(s*.45+i/6)%1;H3.spr(T.glow,EXIT.x+sin(s*2+i*2.1)*10,4+u*40,EXIT.y+8,3,3,null,[.85,.6,1,sin(u*PI)*.8],true,0,true);H3.spr(T.glow,GTX[0]+sin(s*2.2+i*1.9)*12,4+u*44,topOf(0)-8,3,3,null,[1,.7,.4,sin(u*PI)*.7],true,0,true)}
+ // cristais da loja brilhando
+ for(const[dx,c]of[[-14,[.79,.63,1]],[-5,[.61,.94,1]],[4,[.79,.63,1]],[13,[1,.82,.48]]]){const x=SHP.x+dx,y=20+.6*sin(s*2+dx),z=SHP.y-6;H3.spr(T.glow,x,y,z,9,9,null,[c[0],c[1],c[2],.45+.2*sin(s*3+dx)],true,0,true);
+  const u=(s*.6+dx*.07)%1;H3.spr(T.glow,x+sin(s+dx)*2,y+u*10,z,1.6,1.6,null,[c[0],c[1],c[2],sin(u*PI)],true,0,true)}
+ H3.spr(T.glow,RKP.x,32,RKP.y-6,14,14,null,[1,.85,.3,.35+.1*sin(s*2)],true,0,true);
+ // portas abrindo: brilho dourado na passagem
+ for(let k=1;k<=6;k++){const a=DOOR[k];if(a<.05)continue;const x=XO[k+1];H3.spr(T.glow,x,20,(DY0+DY1)/2,46,46,null,[1,.82,.35,.16*a*(.8+.2*sin(s*3+k))],true,0,true)}}
+// rótulos (RAID, Em breve, Sair, Loja) e o painel da raid (tempo, sala, avisos) por cima do 3D
+const HC=document.createElement('canvas');let HX=null;
+function overlay(x,t,Cm,sc){
+ const P_=H3.proj;const lab=(wx,wy,wz,s,c)=>{if(!P_)return;const p=P_(wx,wy,wz);if(!p||p[2]>260)return;const fs=8*sc*clp(110/p[2],.7,1.4);x.font='bold '+fs.toFixed(1)+'px monospace';const w=x.measureText(s).width+fs*1.2,h=fs*1.45;
+  x.fillStyle='rgba(8,6,16,.72)';x.fillRect(p[0]-w/2,p[1]-h,w,h);x.fillStyle='rgba(255,255,255,.18)';x.fillRect(p[0]-w/2,p[1]-h,w,1);x.textAlign='center';x.textBaseline='middle';x.fillStyle='#000';x.fillText(s,p[0]+1,p[1]-h/2+1);x.fillStyle=c;x.fillText(s,p[0],p[1]-h/2);x.textAlign='left';x.textBaseline='alphabetic'};
+ if(RD.st==='hub'||segAt(P.x+8)===0){GTX.forEach((gx,i)=>lab(gx,72+(i?0:4),topOf(0)+2,i?'Em breve':'RAID',i?'#aaa':'#ffd23f'));lab(EXIT.x,36,EXIT.y+8,'Sair','#ffb060');lab(SHP.x,64,SHP.y-8,'Loja','#c9a0ff');lab(RKP.x,40,RKP.y-6,'Ranking','#ffd23f')}
+ // painel 2D da raid (sem os rótulos do mapa), ampliado para a tela
+ if(HC.width!==VW||HC.height!==VH){HC.width=VW;HC.height=VH;HX=HC.getContext('2d')}if(!HX)HX=HC.getContext('2d');
+ HX.setTransform(1,0,0,1,0,0);HX.clearRect(0,0,VW,VH);const sg=g;g=HX;try{RD.overlay(Date.now(),1)}catch(e){}finally{g=sg}
+ const W=H3.S.cssW,H=H3.S.cssH,k=min(W/VW,H/VH);x.imageSmoothingEnabled=false;x.drawImage(HC,(W-VW*k)/2,0,VW*k,VH*k)}
+
+// ============================================================ a cena ============================================================
+SCN.raid={id:'raid',K:1,OX:0,OY:0,eye:25,camD:84,p3:-.14,pl:[[-.95,.9],[-1.0,.45]],camLight:[.5,.45,.6],iso:false,
+ get amb(){return AMB[themeAt(P.x+8)]},
+ get fx(){return typeof fight!=='undefined'&&fight?fight.x+8:0},get fz(){return typeof fight!=='undefined'&&fight?fight.y+14:0},
+ get lights(){return lights()},
+ active:()=>typeof world!=='undefined'&&world===3&&H3.outOK!==false,
+ built:()=>G.ok,build:gl=>{while(!stepBuild(50)){}},stepBuild:ms=>stepBuild(max(ms,14)),progress:()=>D3.pct,free:()=>freeAll(),
+ env:()=>envSet(themeAt(P.x+8)),
+ floorY:()=>0,
+ step:o=>{const ok=(x,z)=>!blocked(x,z);if(ok(o.x,o.z))return;if(ok(o.x,o.oz)){o.z=o.oz;return}if(ok(o.ox,o.z)){o.x=o.ox;return}o.x=o.ox;o.z=o.oz},
+ camOk:()=>(x,z)=>!wallAt(x,z),camSolid:(x,z)=>wallAt(x,z),
+ camY:cy=>clp(cy,4,70),
+ enter(){envSet(themeAt(P.x+8));lastT=0},leave(){},clear(){},
+ boss:()=>null,isTgt:e=>!!e,tgt:e=>e?[e.x+8,16,e.y+14,30,0]:null,bossPlan:()=>null,
+ flicker,draw,sprites,frameFx:()=>{try{roomsTick();const k=themeAt(P.x+8);if(k!==envK)envSet(k)}catch(e){console.error('raid3d',e)}},
+ shake:()=>null,flash:()=>0,fbPos:()=>null,overlayExtra:overlay};
+})();
+</script>
+<script>
 // ===================== Minigame: Pizzaria do Pixel — Turno da Noite =====================
 // Sobreviva das 12 AM às 6 AM na sala de segurança de uma pizzaria com animatrônicos que andam à noite (5 noites, cada uma mais difícil).
 //  · portas e luzes dos dois lados (luz mostra quem está na porta), tablet com 11 câmeras e o mapa, bateria que acaba (portas, luzes e câmeras gastam mais);
@@ -22758,7 +23181,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261030030121;
+const GAME_BUILD=20261030034621;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
