@@ -23386,7 +23386,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261030223342;
+const GAME_BUILD=20261030223838;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
@@ -24433,18 +24433,26 @@ const CAST={field:1,db:1,hal:.42,ice:.22};
   T.blobC=mk(64,64,x=>{const g=x.createRadialGradient(32,32,0,32,32,32);g.addColorStop(0,'rgba(0,0,0,.92)');g.addColorStop(.38,'rgba(0,0,0,.78)');g.addColorStop(.7,'rgba(0,0,0,.28)');g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.fillRect(0,0,64,64)});
   T.blobS=mk(64,128,x=>{for(let y=0;y<128;y++){const v=y/127,a=Math.pow(1-v,1.35)*(v<.06?v/.06:1);const g=x.createLinearGradient(0,0,64,0),w=.5-.06*v;g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(.5-w*.62,'rgba(0,0,0,'+(a*.5).toFixed(3)+')');g.addColorStop(.5,'rgba(0,0,0,'+(a*.82).toFixed(3)+')');g.addColorStop(.5+w*.62,'rgba(0,0,0,'+(a*.5).toFixed(3)+')');g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.fillRect(0,y,64,1)}})}catch(e){console.error('GFX2 sombra',e)}return r}}
 {const _fl=H3.flat;
+ // altura da sombra: o chão de verdade (malha em triângulos) sobe e desce entre os pontos; se a sombra ficar reta na altura dos pés, o chão que sobe
+ // atrás "come" um pedaço dela (a fatia de pizza). Por isso a sombra sobe até o ponto mais alto do chão embaixo dela (+ uma folga).
+ const fl=(sc,px,pz)=>{try{return sc.floorY(px,pz)}catch(e){return -1e9}};
+ function lift(sc,x,y,z,R,ex,ez){if(!sc||!sc.floorY)return y+.3;let m=fl(sc,x,z);
+  for(let k=0;k<8;k++){const a=k/8*Math.PI*2,c=Math.cos(a),s2=Math.sin(a);m=Math.max(m,fl(sc,x+c*R,z+s2*R),fl(sc,x+c*R*.5,z+s2*R*.5))}
+  if(ex!==undefined)for(let k=1;k<=4;k++)m=Math.max(m,fl(sc,x+(ex-x)*k/4,z+(ez-z)*k/4));
+  return Math.min(y+5,Math.max(y+.3,m+.45))}
  H3.flat=function(t,x,y,z,w,d,uv,rgba,add,rot){const T=H3.tex;
   if(!G.on||add||!T||t!==T.blob||!T.blobC||!T.blobS)return _fl.apply(this,arguments);
   const a=rgba?rgba[3]:1;if(!(a>.01))return;
-  _fl(T.blob,x,y-.02,z,w*1.08,d*1.08,null,[1,1,1,a*.36],false,rot||0);          // penumbra larga
-  _fl(T.blobC,x,y+.04,z,w*.58,d*.58,null,[1,1,1,Math.min(1,a*1.05)],false,rot||0);   // contato
-  let id='';try{const sc=H3.curSC&&H3.curSC();id=sc&&sc.id||''}catch(e){}
-  const k=CAST[id]||0;if(!k)return;
-  const S=H3.sunDir&&H3.sunDir();if(!S||S[1]<.08)return;const hor=Math.hypot(S[0],S[2])||1e-3,dx=-S[0]/hor,dz=-S[2]/hor;
-  let sv=1;try{const v=H3.sunVis&&H3.sunVis(x,y+w*.5,z);if(v!==null&&v!==undefined)sv=v}catch(e){}if(sv<.05)return;
-  const hgt=Math.max(w,d)*.95,L=hgt*Math.min(1.45,Math.max(.35,hor/S[1]))+w*.35,cx=x+dx*L*.42,cz=z+dz*L*.42;
-  let yy=y;try{const sc=H3.curSC&&H3.curSC();if(sc&&sc.floorY){const y2=sc.floorY(x+dx*L*.8,z+dz*L*.8);if(y2+.3>yy&&y2-yy<6)yy=y2+.3}}catch(e){}
-  _fl(T.blobS,cx,yy+.06,cz,w*.62,L,null,[1,1,1,a*.8*k*sv],false,Math.atan2(-dx,dz))};}
+  let sc=null,id='';try{sc=H3.curSC&&H3.curSC();id=sc&&sc.id||''}catch(e){}
+  // a altura recebida já tem a folga de quem chamou (+.25/.3): volta para os pés
+  const y0=y-.28,R=Math.max(w,d)*.55;
+  const k=CAST[id]||0,S=k&&H3.sunDir&&H3.sunDir();let cast=null;
+  if(S&&S[1]>.08){const hor=Math.hypot(S[0],S[2])||1e-3,dx=-S[0]/hor,dz=-S[2]/hor;let sv=1;try{const v=H3.sunVis&&H3.sunVis(x,y0+w*.5,z);if(v!==null&&v!==undefined)sv=v}catch(e){}
+   if(sv>.05){const hgt=Math.max(w,d)*.95,L=hgt*Math.min(1.45,Math.max(.35,hor/S[1]))+w*.35;cast={dx,dz,L,sv,cx:x+dx*L*.42,cz:z+dz*L*.42}}}
+  const yy=lift(sc,x,y0,z,R,cast?x+cast.dx*cast.L*.9:undefined,cast?z+cast.dz*cast.L*.9:undefined);
+  _fl(T.blob,x,yy,z,w*1.08,d*1.08,null,[1,1,1,a*.36],false,rot||0);                  // penumbra larga
+  _fl(T.blobC,x,yy+.03,z,w*.58,d*.58,null,[1,1,1,Math.min(1,a*1.05)],false,rot||0);  // contato
+  if(cast)_fl(T.blobS,cast.cx,yy+.05,cast.cz,w*.62,cast.L,null,[1,1,1,a*.8*k*cast.sv],false,Math.atan2(-cast.dx,cast.dz))};}
 // sombra nos cantos: liga o H3.aoOn enquanto cada cena se monta
 for(const k in (H3.scenes||{})){const S=H3.scenes[k];for(const f of['build','stepBuild']){const o=S[f];if(typeof o!=='function')continue;S[f]=function(){H3.aoOn=G.on;try{return o.apply(this,arguments)}finally{H3.aoOn=false}}}}
 })();
