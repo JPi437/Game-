@@ -23323,7 +23323,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261030110313;
+const GAME_BUILD=20261030214859;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
@@ -24141,6 +24141,201 @@ if(FLD&&FLD.reg){let pm=null,py=0;
 }
 })();
 
+</script>
+<script src="dados3d/dino.js"></script><script>window.DINO_DATA||document.write('<script src="https://jpi437.github.io/Game-/dados3d/dino.js?r='+Date.now()+'"><\/script>')</script><script>
+// ===================== Mundo 2 · Dragon Ball: os Dinossauros do Deserto de Yajirobe (modelo 3D com esqueleto de 25 ossos, window.DINO_DATA) =====================
+// Inimigos só do 3D, espalhados pelo deserto (depois do penhasco). Cada um passeia devagar em volta do seu ponto (andando entre o ponto e lugares livres
+// perto dele, sempre igual para todos os jogadores porque segue o relógio), olha para o jogador quando ele chega perto, ataca (mordida, garrada e rugido)
+// enquanto está na luta, encolhe quando apanha e, ao morrer, cai de lado, fecha os olhos e se desfaz; quando renasce aparece de novo no lugar.
+// Animações (geradas fora, em dados3d/dino.js): idle · walk · run · attack_bite · attack_claw · roar · hit · death.
+// A luta, a vida, o prêmio (moedas) e o renascimento são os de sempre do jogo (WD[4].EN); aqui é só o desenho 3D e o passeio.
+(function(){
+'use strict';
+const H3=window.H3,DATA=window.DINO_DATA;
+if(!H3||!DATA||!H3.M4||!H3.scenes||!H3.scenes.db||typeof WD==='undefined'||!WD[4]){console.warn('DINO3: faltam módulos do 3D ou os dados do dinossauro');return}
+const SC=H3.scenes.db,M4=H3.M4,DBW=window.DBW;
+const PI=Math.PI,TAU=PI*2,sin=Math.sin,cos=Math.cos,abs=Math.abs,min=Math.min,max=Math.max,hypot=Math.hypot,atan2=Math.atan2,sqrt=Math.sqrt;
+const clp=(v,a,b)=>v<a?a:v>b?b:v,ease=u=>u<=0?0:u>=1?1:u*u*(3-2*u);
+const angd=(a,b)=>{let d=(b-a)%TAU;if(d>PI)d-=TAU;if(d<-PI)d+=TAU;return d};
+const HGT=72;                       // altura no mundo (o jogador tem ~28): o dinossauro fica bem maior que ele
+const LIFE=4200;                    // morte: 2,6 s de animação, um tempo caído e depois se desfaz
+const SPD=30;                       // velocidade do passeio (unidades por segundo)
+const NB=DATA.bones.length;
+const DINO3=window.DINO3={on:false,list:[]};
+
+// ---------- os inimigos (posições fixas: o índice de cada um é o mesmo para todos os jogadores) ----------
+// (mundo) o deserto vai de x ≈ 3340 até 6016; a estrada de terra corta o meio (z ≈ 2240) e as mesas de pedra ficam espalhadas
+const POS=[[3800,1200],[4200,3000],[4600,1800],[4800,3800],[5100,800],[5300,2600],[5500,4000],[5700,1600],[4400,600],[4000,3800],[5000,3200],[5600,3000]];
+const DEF={t:1,s:4.2,vh:66,max:600000,coin:[150,220],r:20,orb:46,eng:62,rsp:20000,fy:.6,fcy:6,ty:30,tr:22};
+function mkEn(x,z,i){return{x:x-8,y:z-14,hx:x,hz:z,t:DEF.t,s:DEF.s,vh:DEF.vh,mon:'dino',dino:1,di:i,max:DEF.max,coin:DEF.coin,r:DEF.r,orb:DEF.orb,eng:DEF.eng,rsp:DEF.rsp,fy:DEF.fy,fcy:DEF.fcy,ty:DEF.ty,tr:DEF.tr,hp:DEF.max,dead:false,back:0}}
+{const L=WD[4].EN;if(!L.some(e=>e.dino))POS.forEach((p,i)=>L.push(mkEn(p[0],p[1],i)))}
+// no 2D o dinossauro não tem desenho (o Mundo 2 só existe no 3D)
+if(window.MON){const _d=MON.draw,_m=MON.mark,_y=MON.dying,_h=MON.has;
+ MON.draw=function(e){if(e&&e.dino)return true;return _d?_d.apply(this,arguments):undefined};
+ MON.mark=function(e,d){if(e&&e.dino){d.mon='dino';d.dino=1;d.life=10;return}return _m?_m.apply(this,arguments):undefined};
+ MON.dying=function(d){if(d&&d.dino)return;return _y?_y.apply(this,arguments):undefined};
+ MON.has=function(e){return!!(e&&e.dino)||(_h?_h.apply(this,arguments):false)}}
+
+// ---------- WebGL ----------
+const HP='#ifdef GL_FRAGMENT_PRECISION_HIGH\nprecision highp float;\n#else\nprecision mediump float;\n#endif\n';
+const VS=`attribute vec3 aP;attribute vec3 aN;attribute vec2 aT;attribute vec4 aJ;attribute vec4 aW;
+uniform mat4 uVP;uniform mat4 uM;uniform mat4 uB[${NB}];uniform vec3 uMin;uniform vec3 uSz;
+varying vec3 vP;varying vec3 vN;varying vec2 vT;
+void main(){vec3 p=uMin+aP*uSz;mat4 S=uB[int(aJ.x+0.5)]*aW.x+uB[int(aJ.y+0.5)]*aW.y+uB[int(aJ.z+0.5)]*aW.z+uB[int(aJ.w+0.5)]*aW.w;
+ vec4 w=uM*(S*vec4(p,1.0));vP=w.xyz;vN=(uM*(S*vec4(aN,0.0))).xyz;vT=aT;gl_Position=uVP*w;}`;
+const FS=HP+`varying vec3 vP;varying vec3 vN;varying vec2 vT;
+uniform sampler2D uTex;uniform vec3 uCam;uniform vec4 uFog;uniform float uFO;uniform vec3 uAmb;uniform vec3 uSD;uniform vec3 uSC;uniform vec4 uLp[4];uniform vec3 uLc[4];
+uniform vec4 uFlc;uniform float uDis;uniform vec3 uDisC;
+void main(){vec3 alb=texture2D(uTex,vT).rgb;vec3 n=normalize(vN);vec3 V=uCam-vP;float dV=length(V);V/=dV;if(dot(n,V)<0.0)n=-n;
+ vec3 lg=uAmb*(0.55+0.25*max(n.y,0.0))+uSC*max(dot(n,uSD),0.0)*1.0;
+ for(int i=0;i<4;i++){vec3 d=uLp[i].xyz-vP;float r=uLp[i].w;float a=1.0-dot(d,d)/(r*r);if(a>0.0)lg+=uLc[i]*a*a*(0.35+0.65*max(dot(n,normalize(d)),0.0));}
+ vec3 c=alb*lg;float fr=pow(1.0-max(dot(n,V),0.0),3.0);c+=uSC*fr*0.18;
+ vec3 H=normalize(uSD+V);c+=uSC*pow(max(dot(n,H),0.0),24.0)*0.12;
+ if(uDis>0.0){float nz=fract(sin(dot(floor(vT*64.0),vec2(12.9898,78.233)))*43758.5453);float b=fract(52.9829189*fract(dot(gl_FragCoord.xy,vec2(0.06711056,0.00583715))));float th=nz*0.8+b*0.2;if(th<uDis)discard;if(th<uDis+0.07)c+=uDisC*1.6;}
+ c=mix(c,uFlc.rgb,uFlc.a);
+ c=c/(1.0+c*0.15);float dF=max(dV-uFO,0.0);float f=1.0-exp(-dF*dF*uFog.a*uFog.a);c=mix(c,uFog.rgb,f);gl_FragColor=vec4(c,1.0);}`;
+const G={gl:null,p:null,u:null,vb:null,ib:null,tex:null,ok:false};
+function shd(gl,t,s){const o=gl.createShader(t);gl.shaderSource(o,s);gl.compileShader(o);if(!gl.getShaderParameter(o,gl.COMPILE_STATUS))throw new Error('DINO3 shader: '+gl.getShaderInfoLog(o));return o}
+function b64(s){const b=atob(s),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u}
+let VB=null,IB=null;
+function build(gl){G.gl=gl;G.ok=false;G.tex=null;
+ const p=gl.createProgram();gl.attachShader(p,shd(gl,gl.VERTEX_SHADER,VS));gl.attachShader(p,shd(gl,gl.FRAGMENT_SHADER,FS));['aP','aN','aT','aJ','aW'].forEach((a,i)=>gl.bindAttribLocation(p,i,a));gl.linkProgram(p);
+ if(!gl.getProgramParameter(p,gl.LINK_STATUS))throw new Error('DINO3 programa: '+gl.getProgramInfoLog(p));G.p=p;G.u={};
+ for(const n of['uVP','uM','uB','uMin','uSz','uTex','uCam','uFog','uFO','uAmb','uSD','uSC','uLp','uLc','uFlc','uDis','uDisC'])G.u[n]=gl.getUniformLocation(p,n);
+ if(!VB){VB=b64(DATA.vb);IB=b64(DATA.ib)}
+ G.vb=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,G.vb);gl.bufferData(gl.ARRAY_BUFFER,VB,gl.STATIC_DRAW);
+ G.ib=gl.createBuffer();gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,G.ib);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,IB,gl.STATIC_DRAW);
+ const im=new Image();im.onload=()=>{if(G.gl!==gl||gl.isContextLost())return;const t=gl.createTexture();gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,t);gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,false);
+  gl.texImage2D(gl.TEXTURE_2D,0,gl.RGB,gl.RGB,gl.UNSIGNED_BYTE,im);gl.generateMipmap(gl.TEXTURE_2D);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR_MIPMAP_LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);G.tex=t};im.src=DATA.tex;
+ G.ok=true}
+function ensure(){const gl=H3.gl&&H3.gl();if(!gl||gl.isContextLost())return null;if(G.gl!==gl||!G.ok){try{build(gl)}catch(e){console.error(e);G.ok=false;G.bad=1;return null}}return gl}
+const here=()=>typeof world!=='undefined'&&world===4;
+DINO3.own=e=>!!(e&&e.dino&&here()&&!G.bad);
+
+// ---------- animações: amostra um clipe (rotação, deslocamento e escala de cada osso) e mistura dois clipes na troca ----------
+const CL=DATA.clips,PAR=DATA.par,JP=DATA.jp;
+const BASE=JP.map((p,i)=>PAR[i]>=0?[p[0]-JP[PAR[i]][0],p[1]-JP[PAR[i]][1],p[2]-JP[PAR[i]][2]]:p.slice());
+function pose(){return{t:new Float32Array(NB*3),q:new Float32Array(NB*4),s:new Float32Array(NB*3)}}
+function sample(name,time,o){const C=CL[name],loop=C.loop,T=C.T;let u=loop?((time%T)+T)%T:clp(time,0,T);const f=u/T*(C.n-1),i0=Math.floor(f),i1=min(i0+1,C.n-1),a=f-i0;
+ for(let b=0;b<NB;b++){const ch=C.ch[DATA.bones[b]];
+  let tx=BASE[b][0],ty=BASE[b][1],tz=BASE[b][2],qx=0,qy=0,qz=0,qw=1,sx=1,sy=1,sz=1;
+  if(ch){if(ch.t){const t=ch.t,k0=i0*3,k1=i1*3;tx+=t[k0]+(t[k1]-t[k0])*a;ty+=t[k0+1]+(t[k1+1]-t[k0+1])*a;tz+=t[k0+2]+(t[k1+2]-t[k0+2])*a}
+   if(ch.r){const r=ch.r,k0=i0*4,k1=i1*4;qx=r[k0]+(r[k1]-r[k0])*a;qy=r[k0+1]+(r[k1+1]-r[k0+1])*a;qz=r[k0+2]+(r[k1+2]-r[k0+2])*a;qw=r[k0+3]+(r[k1+3]-r[k0+3])*a}
+   if(ch.s){const s=ch.s,k0=i0*3,k1=i1*3;sx=s[k0]+(s[k1]-s[k0])*a;sy=s[k0+1]+(s[k1+1]-s[k0+1])*a;sz=s[k0+2]+(s[k1+2]-s[k0+2])*a}}
+  o.t[b*3]=tx;o.t[b*3+1]=ty;o.t[b*3+2]=tz;o.q[b*4]=qx;o.q[b*4+1]=qy;o.q[b*4+2]=qz;o.q[b*4+3]=qw;o.s[b*3]=sx;o.s[b*3+1]=sy;o.s[b*3+2]=sz}
+ return o}
+function mix(a,b,k){for(let i=0;i<a.t.length;i++){a.t[i]+=(b.t[i]-a.t[i])*k;a.s[i]+=(b.s[i]-a.s[i])*k}
+ for(let i=0;i<NB;i++){const j=i*4;const d=a.q[j]*b.q[j]+a.q[j+1]*b.q[j+1]+a.q[j+2]*b.q[j+2]+a.q[j+3]*b.q[j+3],sg=d<0?-1:1;for(let c=0;c<4;c++)a.q[j+c]+=(b.q[j+c]*sg-a.q[j+c])*k}}
+const WM=new Float32Array(NB*16),BM=new Float32Array(NB*16);
+function bones(o){for(let b=0;b<NB;b++){let x=o.q[b*4],y=o.q[b*4+1],z=o.q[b*4+2],w=o.q[b*4+3];const l=sqrt(x*x+y*y+z*z+w*w)||1;x/=l;y/=l;z/=l;w/=l;
+  const sx=o.s[b*3],sy=o.s[b*3+1],sz=o.s[b*3+2],L=TL;
+  L[0]=(1-2*(y*y+z*z))*sx;L[1]=2*(x*y+w*z)*sx;L[2]=2*(x*z-w*y)*sx;L[3]=0;
+  L[4]=2*(x*y-w*z)*sy;L[5]=(1-2*(x*x+z*z))*sy;L[6]=2*(y*z+w*x)*sy;L[7]=0;
+  L[8]=2*(x*z+w*y)*sz;L[9]=2*(y*z-w*x)*sz;L[10]=(1-2*(x*x+y*y))*sz;L[11]=0;
+  L[12]=o.t[b*3];L[13]=o.t[b*3+1];L[14]=o.t[b*3+2];L[15]=1;
+  const p=PAR[b],W=WM.subarray(b*16,b*16+16);if(p>=0)M4.mul(W,WM.subarray(p*16,p*16+16),L);else W.set(L);
+  // matriz do osso para a pele: mundo * (posição de descanso)^-1 (o descanso não tem rotação)
+  const B=BM.subarray(b*16,b*16+16),j=JP[b];B.set(W);B[12]=W[12]-(W[0]*j[0]+W[4]*j[1]+W[8]*j[2]);B[13]=W[13]-(W[1]*j[0]+W[5]*j[1]+W[9]*j[2]);B[14]=W[14]-(W[2]*j[0]+W[6]*j[1]+W[10]*j[2])}}
+const TL=new Float32Array(16),PA=pose(),PB=pose();
+
+// ---------- passeio: ponto de casa + até 6 lugares livres perto (testados quando o mapa fica pronto) ----------
+function lineOk(x0,z0,x1,z1){const n=Math.ceil(hypot(x1-x0,z1-z0)/8);for(let i=0;i<=n;i++){const u=i/n,x=x0+(x1-x0)*u,z=z0+(z1-z0)*u;for(const[a,b]of[[0,0],[16,0],[-16,0],[0,16],[0,-16]])if(DBW.blocked(x+a,z+b))return false}return true}
+let prepRev=-1;
+function prepHomes(){if(!DBW||!DBW.ready)return false;if(prepRev===DBW.rev)return true;prepRev=DBW.rev;
+ for(const e of WD[4].EN){if(!e.dino)continue;let hx=e.hx,hz=e.hz;
+  // casa presa numa mesa de pedra (ou o ADM pôs algo em cima): procura o lugar livre mais perto, em espiral (igual para todo mundo)
+  if(!lineOk(hx,hz,hx,hz)){let ok=false;for(let r=24;r<400&&!ok;r+=24)for(let k=0;k<16&&!ok;k++){const a=k/16*TAU,x=hx+cos(a)*r,z=hz+sin(a)*r;if(lineOk(x,z,x,z)){hx=x;hz=z;ok=true}}}
+  e.chx=hx;e.chz=hz;e.wp=[];for(let k=0;k<6;k++){const a=k/6*TAU+e.di*.7,R=70+((e.di*37+k*53)%60),x=hx+cos(a)*R,z=hz+sin(a)*R;if(lineOk(hx,hz,x,z))e.wp.push([x,z])}
+  if(!e._m3||!e._m3.placed){e.x=hx-8;e.y=hz-14;(e._m3||(e._m3={})).placed=1}}
+ return true}
+const SRV=()=>Date.now()+((window.MP&&MP.off)||0);
+// onde o dinossauro deveria estar agora (segue o relógio: 22 s por volta → parado em casa, vai até um lugar, fica lá, volta)
+function plan(e){if(!e.wp||!e.wp.length)return[e.chx,e.chz];const T=22,s=SRV()/1000+e.di*5.3,n=Math.floor(s/T),u=s-n*T,w=e.wp[(n*7+e.di)%e.wp.length],h=[e.chx,e.chz];
+ const L=(a,b,k)=>[a[0]+(b[0]-a[0])*k,a[1]+(b[1]-a[1])*k];
+ if(u<7)return h;const d=hypot(w[0]-h[0],w[1]-h[1]),tw=d/SPD;
+ if(u<7+tw)return L(h,w,(u-7)/tw);if(u<15+tw)return w;if(u<15+2*tw)return L(w,h,(u-15-tw)/tw);return h}
+
+// ---------- estado de cada um ----------
+function st(e){let m=e._m3;if(!m)m=e._m3={};if(m.clip===undefined){Object.assign(m,{yaw:(e.di*2.1)%TAU,alive:!e.dead,dieT:0,spT:0,clip:'idle',t0:0,prev:null,pt0:0,fT:0,atkN:0,nextAtk:0,hitT:0,mv:0,lx:e.x,ly:e.y})}return m}
+function play(m,name,now){if(m.clip===name)return;m.prev=m.clip;m.pt0=m.t0;m.fT=now;m.clip=name;m.t0=now}
+const ATK=['attack_bite','attack_claw','attack_bite','roar'];
+function think(e,m,now,dt){
+ if(!e.dead){if(!m.alive){m.alive=true;m.dieT=0;m.spT=now;m.clip='idle';m.t0=now;m.prev=null}}
+ else if(m.alive){m.alive=false;const dt0=e.back&&e.rsp?e.back-e.rsp:now;m.dieT=now-dt0<LIFE?dt0:now-LIFE-1;play(m,'death',m.dieT);m.prev=null}
+ if(e.dead)return;
+ const x=e.x+8,z=e.y+14,inFight=typeof fight!=='undefined'&&fight===e,px=P.x+8,pz=P.y+14,dP=hypot(px-x,pz-z);
+ // anda até onde o passeio manda (parado enquanto luta)
+ let mv=0;
+ if(!inFight&&now-(e.lh||0)>2500&&e.chx!==undefined){const g=plan(e),dx=g[0]-x,dz=g[1]-z,d=hypot(dx,dz);
+  if(d>1.5){const run=d>140,sp=(run?SPD*2.6:SPD)*dt,k=min(1,sp/d),nx=x+dx*k,nz=z+dz*k;
+   if(!DBW.blocked(nx,nz)||d>300){e.x=nx-8;e.y=nz-14;mv=run?2:1;m.yaw+=clp(angd(m.yaw,atan2(dx,dz)),-.12,.12)}}}
+ m.mv=mv;
+ if(!mv){let tg=null;if(inFight||dP<200)tg=atan2(px-x,pz-z);if(tg!==null)m.yaw+=clp(angd(m.yaw,tg),-.07,.07)}
+ const busy=m.clip!=='idle'&&m.clip!=='walk'&&m.clip!=='run'&&now-m.t0<CL[m.clip].T*1000;
+ if(busy)return;
+ // na luta: ataca de tempos em tempos (mordida, garrada, mordida, rugido)
+ if(inFight&&now>=m.nextAtk){play(m,ATK[m.atkN++%ATK.length],now);m.nextAtk=now+CL[m.clip].T*1000+900+((e.di*331+m.atkN*97)%900);return}
+ if(!inFight)m.nextAtk=max(m.nextAtk,now+700);
+ // apanhou: encolhe (no máximo de 1,6 em 1,6 s)
+ if(now-(e.lh||0)<150&&now-m.hitT>1600){m.hitT=now;play(m,'hit',now);return}
+ play(m,mv===2?'run':mv===1?'walk':'idle',now)}
+function animPose(m,now){const o=sample(m.clip,(now-m.t0)/1000,PA);
+ if(m.prev){const k=(now-m.fT)/180;if(k>=1)m.prev=null;else{sample(m.prev,(now-m.pt0)/1000,PB);mix(PB,PA,ease(k));return PB}}
+ return o}
+
+// ---------- desenho ----------
+const LP=new Float32Array(16),LC=new Float32Array(12),MW=new Float32Array(16),AMB=new Float32Array(3);
+function lights4(x,y,z){LP.fill(0);LC.fill(0);const L=SC.lights;if(!L)return;const best=[];
+ for(const l of L){if(!(l.k>0))continue;const d=hypot(l.x-x,l.y-y,l.z-z);if(d>l.r+20)continue;best.push([d/l.r,l])}
+ best.sort((a,b)=>a[0]-b[0]);for(let i=0;i<4&&i<best.length;i++){const l=best[i][1];LP[i*4]=l.x;LP[i*4+1]=l.y;LP[i*4+2]=l.z;LP[i*4+3]=l.r;const k=l.k*.78;LC[i*3]=l.cr*k;LC[i*3+1]=l.cg*k;LC[i*3+2]=l.cb*k}}
+const SD=(()=>{const v=[-.45,.78,.42],l=hypot(v[0],v[1],v[2]);return[v[0]/l,v[1]/l,v[2]/l]})(),SCOL=[1.05,.95,.8];
+const gy=(x,z)=>{try{return SC.floorY(x,z)}catch(e){return 0}};
+let lastT=0;
+function visible(now){const out=[];const C=H3.cam().p,dt=lastT?clp((now-lastT)/1000,0,.1):0;lastT=now;prepHomes();
+ for(const e of WD[4].EN){if(!e.dino)continue;const m=st(e);think(e,m,now,dt);
+  const dying=e.dead&&m.dieT&&now-m.dieT<LIFE+200;if(e.dead&&!dying)continue;
+  const x=e.x+8,z=e.y+14,d=hypot(C[0]-x,C[2]-z);if(d>1400)continue;const g=gy(x,z);
+  if(H3.vis&&!H3.vis(x,g+HGT*.5,z,HGT*.8))continue;out.push({e,m,x,z,gy:g,d,dying})}
+ out.sort((a,b)=>a.d-b.d);if(out.length>10)out.length=10;return out}
+DINO3.draw=function(){const gl=ensure();if(!gl||!here())return;DINO3.on=true;const now=DINO3.frz||Date.now(),L=visible(now);DINO3.list=L;if(!L.length||!G.tex)return;
+ const VP=H3.gl_frame().VP,cam=H3.cam().p,fog=H3.fogv(),S=H3.S||{},Cm=S.cam,F=S.foc||Cm,FO=Cm&&F?max(0,hypot(Cm.x-F.x,Cm.y-F.y,Cm.z-F.z)-26):0,u=G.u,amb=SC.amb||[1,1,1];
+ gl.useProgram(G.p);gl.uniformMatrix4fv(u.uVP,false,VP);gl.uniform3f(u.uCam,cam[0],cam[1],cam[2]);gl.uniform4fv(u.uFog,fog);gl.uniform1f(u.uFO,FO);
+ AMB[0]=amb[0]*.92;AMB[1]=amb[1]*.9;AMB[2]=amb[2]*.9;gl.uniform3fv(u.uAmb,AMB);gl.uniform3fv(u.uSD,SD);gl.uniform3fv(u.uSC,SCOL);gl.uniform1i(u.uTex,0);
+ gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,G.tex);
+ gl.bindBuffer(gl.ARRAY_BUFFER,G.vb);for(let i=0;i<5;i++)gl.enableVertexAttribArray(i);
+ gl.vertexAttribPointer(0,3,gl.UNSIGNED_SHORT,true,24,0);gl.vertexAttribPointer(1,3,gl.BYTE,true,24,8);gl.vertexAttribPointer(2,2,gl.UNSIGNED_SHORT,true,24,12);gl.vertexAttribPointer(3,4,gl.UNSIGNED_BYTE,false,24,16);gl.vertexAttribPointer(4,4,gl.UNSIGNED_BYTE,true,24,20);
+ gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,G.ib);gl.uniform3fv(u.uMin,DATA.min);gl.uniform3fv(u.uSz,DATA.size);
+ const sc=HGT/DATA.h;
+ for(const R of L){const{e,m}=R;let dis=0;
+  bones(animPose(m,now));
+  if(R.dying){const du=(now-m.dieT)/LIFE;dis=clp((du-.72)/.28,0,1);R.du=du}
+  else if(m.spT&&now-m.spT<1200)dis=1-(now-m.spT)/1200;
+  M4.trs(MW,R.x,R.gy,R.z,0,m.yaw,0,sc,sc,sc);R.M=MW.slice();
+  lights4(R.x,R.gy+HGT*.5,R.z);gl.uniform4fv(u.uLp,LP);gl.uniform3fv(u.uLc,LC);
+  gl.uniformMatrix4fv(u.uM,false,MW);gl.uniformMatrix4fv(u.uB,false,BM);
+  const lh=now-(e.lh||0);gl.uniform4f(u.uFlc,1,1,1,!R.dying&&lh<90?.35:0);gl.uniform1f(u.uDis,dis);gl.uniform3f(u.uDisC,1,.72,.3);
+  gl.drawElements(gl.TRIANGLES,DATA.ni,gl.UNSIGNED_SHORT,0)}
+ for(let i=3;i<5;i++)gl.disableVertexAttribArray(i)};
+// sombra no chão e poeira quando ele cai
+DINO3.sprites=function(){const T=H3.tex;if(!T||!DINO3.on||!here())return;const now=Date.now();
+ for(const R of DINO3.list){const du=R.dying?R.du||0:0,fade=R.dying?1-clp((du-.7)/.3,0,1):1;
+  if(T.blob){const w=46*(R.dying?1+clp(du*2.5,0,1)*.5:1);H3.flat(T.blob,R.x,R.gy+.3,R.z,w,w,null,[1,1,1,.7*fade],false)}
+  const FX=H3.fx;if(FX&&R.dying&&du>.3&&du<.42&&Math.random()<.6)for(let i=0;i<3;i++)FX.emit({x:R.x+(Math.random()-.5)*60,y:R.gy+2,z:R.z+(Math.random()-.5)*60,vx:(Math.random()-.5)*.3,vy:.05+Math.random()*.1,vz:(Math.random()-.5)*.3,g:0,life:1400,s0:6,s1:16,c:[.86,.66,.42],a:.4,add:false,tex:'dot',drag:.99})}};
+DINO3.top=e=>{const x=e.x+8,z=e.y+14;return gy(x,z)+HGT+6};
+
+// ---------- ligação com o jogo ----------
+// o cartaz 2D não é desenhado (A.m3) e a barra de vida fica em cima da cabeça (HM3.top)
+{const H=window.HM3||(window.HM3={own:()=>false,top:()=>0}),_o=H.own,_t=H.top;
+ H.own=e=>(e&&e.dino)?DINO3.own(e):(_o?_o(e):false);H.top=e=>(e&&e.dino)?DINO3.top(e):(_t?_t(e):0)}
+// alvo das habilidades e dos lutadores
+{const _tg=SC.tgt;SC.tgt=e=>{if(e&&e.dino){const x=e.x+8,z=e.y+14,g=gy(x,z);return[x,g+HGT*.5,z,26,g]}return _tg?_tg(e):null}}
+{const _bp=SC.bossPlan;SC.bossPlan=function(t,C){const r=_bp?_bp.apply(this,arguments):null;return()=>{if(r)r();try{DINO3.draw(t)}catch(e){if(!DINO3.err){DINO3.err=1;console.error('DINO3',e)}}}}}
+{const _sp=SC.sprites;SC.sprites=function(t){const r=_sp?_sp.apply(this,arguments):undefined;try{DINO3.sprites(t)}catch(e){}return r}}
+{const _fr=SC.free;SC.free=function(){G.ok=false;G.gl=null;G.tex=null;return _fr?_fr.apply(this,arguments):undefined}}
+{const _lv=SC.leave;SC.leave=function(){DINO3.on=false;DINO3.list=[];lastT=0;return _lv?_lv.apply(this,arguments):undefined}}
+DINO3.dbg={G,st,plan,POS,DEF};
+})();
 </script>
 <script>
 // ===== Editor do ADM: edits.js (aplica os ajustes publicados, todo mundo) · editor.js (painel de edição, só ADM) =====
