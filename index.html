@@ -23386,7 +23386,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261030222241;
+const GAME_BUILD=20261030223342;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
@@ -24423,6 +24423,28 @@ wrapFx('field',(t,C,S)=>{const f=FX();if(!f||rnd()>.22)return;const a=rnd()*TAU,
 const halFF=(t,C,S)=>{const f=FX();if(!f||rnd()>.3)return;const a=rnd()*TAU,r=25+rnd()*150,x=C.x+cos(a)*r,z=C.z+sin(a)*r;
  f.emit({x,y:fy(S,x,z)+2+rnd()*12,z,vx:(rnd()-.5)*.12,vy:(rnd()-.5)*.05,vz:(rnd()-.5)*.12,g:0,life:1800+rnd()*1800,s0:2.6,s1:1.6,c:[.75,1,.35],a:.95,add:true,tex:'glow',drag:.995})};
 wrapFx('hal',halFF);
+// ---------- sombra debaixo dos personagens, do jogador e dos monstros ----------
+// Toda sombra redonda (tex.blob) vira três camadas: um núcleo escuro e firme bem embaixo dos pés (contato com o chão), uma penumbra larga e clara
+// em volta e, nos mundos com sol (ou lua), a sombra "projetada": comprida, saindo dos pés para o lado oposto ao sol, do tamanho que o sol manda
+// (mais curta com o sol alto). Com Sombras em Ultra, quem está na sombra de uma árvore ou casa perde a sombra projetada (já está no escuro).
+// Continua sendo só um quadrado com textura no chão: o custo é o mesmo de antes (3 em vez de 1).
+const CAST={field:1,db:1,hal:.42,ice:.22};
+{const _mk=H3.makeTex;H3.makeTex=function(){const r=_mk.apply(this,arguments);try{const T=H3.tex,mk=(w,h,fn)=>{const c=document.createElement('canvas');c.width=w;c.height=h;fn(c.getContext('2d'),w,h);return H3.texNew(c,true)};
+  T.blobC=mk(64,64,x=>{const g=x.createRadialGradient(32,32,0,32,32,32);g.addColorStop(0,'rgba(0,0,0,.92)');g.addColorStop(.38,'rgba(0,0,0,.78)');g.addColorStop(.7,'rgba(0,0,0,.28)');g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.fillRect(0,0,64,64)});
+  T.blobS=mk(64,128,x=>{for(let y=0;y<128;y++){const v=y/127,a=Math.pow(1-v,1.35)*(v<.06?v/.06:1);const g=x.createLinearGradient(0,0,64,0),w=.5-.06*v;g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(.5-w*.62,'rgba(0,0,0,'+(a*.5).toFixed(3)+')');g.addColorStop(.5,'rgba(0,0,0,'+(a*.82).toFixed(3)+')');g.addColorStop(.5+w*.62,'rgba(0,0,0,'+(a*.5).toFixed(3)+')');g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.fillRect(0,y,64,1)}})}catch(e){console.error('GFX2 sombra',e)}return r}}
+{const _fl=H3.flat;
+ H3.flat=function(t,x,y,z,w,d,uv,rgba,add,rot){const T=H3.tex;
+  if(!G.on||add||!T||t!==T.blob||!T.blobC||!T.blobS)return _fl.apply(this,arguments);
+  const a=rgba?rgba[3]:1;if(!(a>.01))return;
+  _fl(T.blob,x,y-.02,z,w*1.08,d*1.08,null,[1,1,1,a*.36],false,rot||0);          // penumbra larga
+  _fl(T.blobC,x,y+.04,z,w*.58,d*.58,null,[1,1,1,Math.min(1,a*1.05)],false,rot||0);   // contato
+  let id='';try{const sc=H3.curSC&&H3.curSC();id=sc&&sc.id||''}catch(e){}
+  const k=CAST[id]||0;if(!k)return;
+  const S=H3.sunDir&&H3.sunDir();if(!S||S[1]<.08)return;const hor=Math.hypot(S[0],S[2])||1e-3,dx=-S[0]/hor,dz=-S[2]/hor;
+  let sv=1;try{const v=H3.sunVis&&H3.sunVis(x,y+w*.5,z);if(v!==null&&v!==undefined)sv=v}catch(e){}if(sv<.05)return;
+  const hgt=Math.max(w,d)*.95,L=hgt*Math.min(1.45,Math.max(.35,hor/S[1]))+w*.35,cx=x+dx*L*.42,cz=z+dz*L*.42;
+  let yy=y;try{const sc=H3.curSC&&H3.curSC();if(sc&&sc.floorY){const y2=sc.floorY(x+dx*L*.8,z+dz*L*.8);if(y2+.3>yy&&y2-yy<6)yy=y2+.3}}catch(e){}
+  _fl(T.blobS,cx,yy+.06,cz,w*.62,L,null,[1,1,1,a*.8*k*sv],false,Math.atan2(-dx,dz))};}
 // sombra nos cantos: liga o H3.aoOn enquanto cada cena se monta
 for(const k in (H3.scenes||{})){const S=H3.scenes[k];for(const f of['build','stepBuild']){const o=S[f];if(typeof o!=='function')continue;S[f]=function(){H3.aoOn=G.on;try{return o.apply(this,arguments)}finally{H3.aoOn=false}}}}
 })();
