@@ -23323,7 +23323,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261030214859;
+const GAME_BUILD=20261030220221;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
@@ -24144,11 +24144,10 @@ if(FLD&&FLD.reg){let pm=null,py=0;
 </script>
 <script src="dados3d/dino.js"></script><script>window.DINO_DATA||document.write('<script src="https://jpi437.github.io/Game-/dados3d/dino.js?r='+Date.now()+'"><\/script>')</script><script>
 // ===================== Mundo 2 · Dragon Ball: os Dinossauros do Deserto de Yajirobe (modelo 3D com esqueleto de 25 ossos, window.DINO_DATA) =====================
-// Inimigos só do 3D, espalhados pelo deserto (depois do penhasco). Cada um passeia devagar em volta do seu ponto (andando entre o ponto e lugares livres
-// perto dele, sempre igual para todos os jogadores porque segue o relógio), olha para o jogador quando ele chega perto, ataca (mordida, garrada e rugido)
+// Inimigos só do 3D, espalhados pelo deserto (depois do penhasco). Cada um fica parado no seu lugar, olha para o jogador quando ele chega perto, ataca (mordida, garrada e rugido)
 // enquanto está na luta, encolhe quando apanha e, ao morrer, cai de lado, fecha os olhos e se desfaz; quando renasce aparece de novo no lugar.
 // Animações (geradas fora, em dados3d/dino.js): idle · walk · run · attack_bite · attack_claw · roar · hit · death.
-// A luta, a vida, o prêmio (moedas) e o renascimento são os de sempre do jogo (WD[4].EN); aqui é só o desenho 3D e o passeio.
+// A luta, a vida, o prêmio (moedas) e o renascimento são os de sempre do jogo (WD[4].EN); aqui é o desenho 3D e a barra de vida em cima da cabeça.
 (function(){
 'use strict';
 const H3=window.H3,DATA=window.DINO_DATA;
@@ -24157,16 +24156,15 @@ const SC=H3.scenes.db,M4=H3.M4,DBW=window.DBW;
 const PI=Math.PI,TAU=PI*2,sin=Math.sin,cos=Math.cos,abs=Math.abs,min=Math.min,max=Math.max,hypot=Math.hypot,atan2=Math.atan2,sqrt=Math.sqrt;
 const clp=(v,a,b)=>v<a?a:v>b?b:v,ease=u=>u<=0?0:u>=1?1:u*u*(3-2*u);
 const angd=(a,b)=>{let d=(b-a)%TAU;if(d>PI)d-=TAU;if(d<-PI)d+=TAU;return d};
-const HGT=72;                       // altura no mundo (o jogador tem ~28): o dinossauro fica bem maior que ele
+const HGT=108;                      // altura no mundo (o jogador tem ~28): o dinossauro fica bem maior que ele
 const LIFE=4200;                    // morte: 2,6 s de animação, um tempo caído e depois se desfaz
-const SPD=30;                       // velocidade do passeio (unidades por segundo)
 const NB=DATA.bones.length;
 const DINO3=window.DINO3={on:false,list:[]};
 
 // ---------- os inimigos (posições fixas: o índice de cada um é o mesmo para todos os jogadores) ----------
 // (mundo) o deserto vai de x ≈ 3340 até 6016; a estrada de terra corta o meio (z ≈ 2240) e as mesas de pedra ficam espalhadas
 const POS=[[3800,1200],[4200,3000],[4600,1800],[4800,3800],[5100,800],[5300,2600],[5500,4000],[5700,1600],[4400,600],[4000,3800],[5000,3200],[5600,3000]];
-const DEF={t:1,s:4.2,vh:66,max:600000,coin:[150,220],r:20,orb:46,eng:62,rsp:20000,fy:.6,fcy:6,ty:30,tr:22};
+const DEF={t:1,s:6.3,vh:99,max:600000,coin:[150,220],r:30,orb:66,eng:90,rsp:20000,fy:.6,fcy:9,ty:45,tr:33};
 function mkEn(x,z,i){return{x:x-8,y:z-14,hx:x,hz:z,t:DEF.t,s:DEF.s,vh:DEF.vh,mon:'dino',dino:1,di:i,max:DEF.max,coin:DEF.coin,r:DEF.r,orb:DEF.orb,eng:DEF.eng,rsp:DEF.rsp,fy:DEF.fy,fcy:DEF.fcy,ty:DEF.ty,tr:DEF.tr,hp:DEF.max,dead:false,back:0}}
 {const L=WD[4].EN;if(!L.some(e=>e.dino))POS.forEach((p,i)=>L.push(mkEn(p[0],p[1],i)))}
 // no 2D o dinossauro não tem desenho (o Mundo 2 só existe no 3D)
@@ -24239,23 +24237,15 @@ function bones(o){for(let b=0;b<NB;b++){let x=o.q[b*4],y=o.q[b*4+1],z=o.q[b*4+2]
   const B=BM.subarray(b*16,b*16+16),j=JP[b];B.set(W);B[12]=W[12]-(W[0]*j[0]+W[4]*j[1]+W[8]*j[2]);B[13]=W[13]-(W[1]*j[0]+W[5]*j[1]+W[9]*j[2]);B[14]=W[14]-(W[2]*j[0]+W[6]*j[1]+W[10]*j[2])}}
 const TL=new Float32Array(16),PA=pose(),PB=pose();
 
-// ---------- passeio: ponto de casa + até 6 lugares livres perto (testados quando o mapa fica pronto) ----------
-function lineOk(x0,z0,x1,z1){const n=Math.ceil(hypot(x1-x0,z1-z0)/8);for(let i=0;i<=n;i++){const u=i/n,x=x0+(x1-x0)*u,z=z0+(z1-z0)*u;for(const[a,b]of[[0,0],[16,0],[-16,0],[0,16],[0,-16]])if(DBW.blocked(x+a,z+b))return false}return true}
+// ---------- lugar de cada um: o ponto fixo, ou o lugar livre mais perto se tiver uma pedra em cima (testado quando o mapa fica pronto) ----------
+function lineOk(x0,z0,x1,z1){const n=Math.ceil(hypot(x1-x0,z1-z0)/8);for(let i=0;i<=n;i++){const u=i/n,x=x0+(x1-x0)*u,z=z0+(z1-z0)*u;for(const[a,b]of[[0,0],[24,0],[-24,0],[0,24],[0,-24]])if(DBW.blocked(x+a,z+b))return false}return true}
 let prepRev=-1;
 function prepHomes(){if(!DBW||!DBW.ready)return false;if(prepRev===DBW.rev)return true;prepRev=DBW.rev;
  for(const e of WD[4].EN){if(!e.dino)continue;let hx=e.hx,hz=e.hz;
   // casa presa numa mesa de pedra (ou o ADM pôs algo em cima): procura o lugar livre mais perto, em espiral (igual para todo mundo)
   if(!lineOk(hx,hz,hx,hz)){let ok=false;for(let r=24;r<400&&!ok;r+=24)for(let k=0;k<16&&!ok;k++){const a=k/16*TAU,x=hx+cos(a)*r,z=hz+sin(a)*r;if(lineOk(x,z,x,z)){hx=x;hz=z;ok=true}}}
-  e.chx=hx;e.chz=hz;e.wp=[];for(let k=0;k<6;k++){const a=k/6*TAU+e.di*.7,R=70+((e.di*37+k*53)%60),x=hx+cos(a)*R,z=hz+sin(a)*R;if(lineOk(hx,hz,x,z))e.wp.push([x,z])}
-  if(!e._m3||!e._m3.placed){e.x=hx-8;e.y=hz-14;(e._m3||(e._m3={})).placed=1}}
+  e.chx=hx;e.chz=hz;e.x=hx-8;e.y=hz-14}
  return true}
-const SRV=()=>Date.now()+((window.MP&&MP.off)||0);
-// onde o dinossauro deveria estar agora (segue o relógio: 22 s por volta → parado em casa, vai até um lugar, fica lá, volta)
-function plan(e){if(!e.wp||!e.wp.length)return[e.chx,e.chz];const T=22,s=SRV()/1000+e.di*5.3,n=Math.floor(s/T),u=s-n*T,w=e.wp[(n*7+e.di)%e.wp.length],h=[e.chx,e.chz];
- const L=(a,b,k)=>[a[0]+(b[0]-a[0])*k,a[1]+(b[1]-a[1])*k];
- if(u<7)return h;const d=hypot(w[0]-h[0],w[1]-h[1]),tw=d/SPD;
- if(u<7+tw)return L(h,w,(u-7)/tw);if(u<15+tw)return w;if(u<15+2*tw)return L(w,h,(u-15-tw)/tw);return h}
-
 // ---------- estado de cada um ----------
 function st(e){let m=e._m3;if(!m)m=e._m3={};if(m.clip===undefined){Object.assign(m,{yaw:(e.di*2.1)%TAU,alive:!e.dead,dieT:0,spT:0,clip:'idle',t0:0,prev:null,pt0:0,fT:0,atkN:0,nextAtk:0,hitT:0,mv:0,lx:e.x,ly:e.y})}return m}
 function play(m,name,now){if(m.clip===name)return;m.prev=m.clip;m.pt0=m.t0;m.fT=now;m.clip=name;m.t0=now}
@@ -24265,13 +24255,9 @@ function think(e,m,now,dt){
  else if(m.alive){m.alive=false;const dt0=e.back&&e.rsp?e.back-e.rsp:now;m.dieT=now-dt0<LIFE?dt0:now-LIFE-1;play(m,'death',m.dieT);m.prev=null}
  if(e.dead)return;
  const x=e.x+8,z=e.y+14,inFight=typeof fight!=='undefined'&&fight===e,px=P.x+8,pz=P.y+14,dP=hypot(px-x,pz-z);
- // anda até onde o passeio manda (parado enquanto luta)
- let mv=0;
- if(!inFight&&now-(e.lh||0)>2500&&e.chx!==undefined){const g=plan(e),dx=g[0]-x,dz=g[1]-z,d=hypot(dx,dz);
-  if(d>1.5){const run=d>140,sp=(run?SPD*2.6:SPD)*dt,k=min(1,sp/d),nx=x+dx*k,nz=z+dz*k;
-   if(!DBW.blocked(nx,nz)||d>300){e.x=nx-8;e.y=nz-14;mv=run?2:1;m.yaw+=clp(angd(m.yaw,atan2(dx,dz)),-.12,.12)}}}
- m.mv=mv;
- if(!mv){let tg=null;if(inFight||dP<200)tg=atan2(px-x,pz-z);if(tg!==null)m.yaw+=clp(angd(m.yaw,tg),-.07,.07)}
+ // fica parado no lugar dele (não passeia): só vira para o jogador quando ele chega perto
+ if(e.chx!==undefined&&(abs(e.x+8-e.chx)>.5||abs(e.y+14-e.chz)>.5)){e.x=e.chx-8;e.y=e.chz-14}
+ {let tg=null;if(inFight||dP<260)tg=atan2(px-x,pz-z);if(tg!==null)m.yaw+=clp(angd(m.yaw,tg),-.07,.07)}
  const busy=m.clip!=='idle'&&m.clip!=='walk'&&m.clip!=='run'&&now-m.t0<CL[m.clip].T*1000;
  if(busy)return;
  // na luta: ataca de tempos em tempos (mordida, garrada, mordida, rugido)
@@ -24279,7 +24265,7 @@ function think(e,m,now,dt){
  if(!inFight)m.nextAtk=max(m.nextAtk,now+700);
  // apanhou: encolhe (no máximo de 1,6 em 1,6 s)
  if(now-(e.lh||0)<150&&now-m.hitT>1600){m.hitT=now;play(m,'hit',now);return}
- play(m,mv===2?'run':mv===1?'walk':'idle',now)}
+ play(m,'idle',now)}
 function animPose(m,now){const o=sample(m.clip,(now-m.t0)/1000,PA);
  if(m.prev){const k=(now-m.fT)/180;if(k>=1)m.prev=null;else{sample(m.prev,(now-m.pt0)/1000,PB);mix(PB,PA,ease(k));return PB}}
  return o}
@@ -24320,8 +24306,8 @@ DINO3.draw=function(){const gl=ensure();if(!gl||!here())return;DINO3.on=true;con
 // sombra no chão e poeira quando ele cai
 DINO3.sprites=function(){const T=H3.tex;if(!T||!DINO3.on||!here())return;const now=Date.now();
  for(const R of DINO3.list){const du=R.dying?R.du||0:0,fade=R.dying?1-clp((du-.7)/.3,0,1):1;
-  if(T.blob){const w=46*(R.dying?1+clp(du*2.5,0,1)*.5:1);H3.flat(T.blob,R.x,R.gy+.3,R.z,w,w,null,[1,1,1,.7*fade],false)}
-  const FX=H3.fx;if(FX&&R.dying&&du>.3&&du<.42&&Math.random()<.6)for(let i=0;i<3;i++)FX.emit({x:R.x+(Math.random()-.5)*60,y:R.gy+2,z:R.z+(Math.random()-.5)*60,vx:(Math.random()-.5)*.3,vy:.05+Math.random()*.1,vz:(Math.random()-.5)*.3,g:0,life:1400,s0:6,s1:16,c:[.86,.66,.42],a:.4,add:false,tex:'dot',drag:.99})}};
+  if(T.blob){const w=69*(R.dying?1+clp(du*2.5,0,1)*.5:1);H3.flat(T.blob,R.x,R.gy+.3,R.z,w,w,null,[1,1,1,.7*fade],false)}
+  const FX=H3.fx;if(FX&&R.dying&&du>.3&&du<.42&&Math.random()<.6)for(let i=0;i<3;i++)FX.emit({x:R.x+(Math.random()-.5)*90,y:R.gy+2,z:R.z+(Math.random()-.5)*60,vx:(Math.random()-.5)*.3,vy:.05+Math.random()*.1,vz:(Math.random()-.5)*.3,g:0,life:1400,s0:6,s1:16,c:[.86,.66,.42],a:.4,add:false,tex:'dot',drag:.99})}};
 DINO3.top=e=>{const x=e.x+8,z=e.y+14;return gy(x,z)+HGT+6};
 
 // ---------- ligação com o jogo ----------
@@ -24329,12 +24315,22 @@ DINO3.top=e=>{const x=e.x+8,z=e.y+14;return gy(x,z)+HGT+6};
 {const H=window.HM3||(window.HM3={own:()=>false,top:()=>0}),_o=H.own,_t=H.top;
  H.own=e=>(e&&e.dino)?DINO3.own(e):(_o?_o(e):false);H.top=e=>(e&&e.dino)?DINO3.top(e):(_t?_t(e):0)}
 // alvo das habilidades e dos lutadores
-{const _tg=SC.tgt;SC.tgt=e=>{if(e&&e.dino){const x=e.x+8,z=e.y+14,g=gy(x,z);return[x,g+HGT*.5,z,26,g]}return _tg?_tg(e):null}}
+{const _tg=SC.tgt;SC.tgt=e=>{if(e&&e.dino){const x=e.x+8,z=e.y+14,g=gy(x,z);return[x,g+HGT*.5,z,39,g]}return _tg?_tg(e):null}}
 {const _bp=SC.bossPlan;SC.bossPlan=function(t,C){const r=_bp?_bp.apply(this,arguments):null;return()=>{if(r)r();try{DINO3.draw(t)}catch(e){if(!DINO3.err){DINO3.err=1;console.error('DINO3',e)}}}}}
 {const _sp=SC.sprites;SC.sprites=function(t){const r=_sp?_sp.apply(this,arguments):undefined;try{DINO3.sprites(t)}catch(e){}return r}}
 {const _fr=SC.free;SC.free=function(){G.ok=false;G.gl=null;G.tex=null;return _fr?_fr.apply(this,arguments):undefined}}
 {const _lv=SC.leave;SC.leave=function(){DINO3.on=false;DINO3.list=[];lastT=0;return _lv?_lv.apply(this,arguments):undefined}}
-DINO3.dbg={G,st,plan,POS,DEF};
+// barra de vida: o mesmo desenho do 2D (window.HPBAR) num canvas pequeno, preso em cima da cabeça (no Mundo 2 os inimigos não passam pela folha de figurinhas)
+const HB=document.createElement('canvas');HB.width=96;HB.height=30;const HBX=HB.getContext('2d');HBX.imageSmoothingEnabled=false;
+DINO3.bars=function(x,t,C,sc){if(!here()||typeof window.HPBAR!=='function'||!H3.proj)return;const HL=[];
+ for(const R of DINO3.list){const e=R.e;if(e.dead)continue;const near=hypot(P.x-e.x,P.y-e.y)<e.eng+60;if(!(e.hp<e.max||e.t>0||near||fight===e))continue;
+  const p=H3.proj(R.x,DINO3.top(e),R.z);if(!p||p[2]<1||p[2]>520)continue;HL.push([p,e])}
+ HL.sort((a,b)=>b[0][2]-a[0][2]);
+ for(const[p,e]of HL){const vh=e.vh,sg=g,cx0=cam.x,cy0=cam.y;HBX.clearRect(0,0,96,30);g=HBX;cam.x=e.x+8-48;cam.y=e.y+16-vh-8-22;
+  try{window.HPBAR(e,t)}catch(z){}finally{g=sg;cam.x=cx0;cam.y=cy0}
+  const k=(sc||1)*clp(130/p[2],.75,1.25);x.imageSmoothingEnabled=false;x.drawImage(HB,Math.round(p[0]-48*k),Math.round(p[1]-22*k),Math.round(96*k),Math.round(30*k))}};
+{const _ox=SC.overlayExtra;SC.overlayExtra=function(x,t,C,sc){const r=_ox?_ox.apply(this,arguments):undefined;try{DINO3.bars(x,t,C,sc)}catch(e){if(!DINO3.err2){DINO3.err2=1;console.error('DINO3 barra',e)}}return r}}
+DINO3.dbg={G,st,POS,DEF};
 })();
 </script>
 <script>
