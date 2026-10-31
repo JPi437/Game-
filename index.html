@@ -1847,6 +1847,10 @@ const SK={
  'Jeff the Killer':{n:'VÁ DORMIR!',h:6,d:2400,m:1.75,ch:0,tk:6,at:[650,850,1050,1250,1450,1750],w:[.08,.08,.08,.08,.08,.6],rec:450,fx:'slash',c:'#ff1744',c2:'#ffffff',lc:'#ff5252'},   // puxa a faca e esfaqueia: 5 facadas + a última com força (3D: CH3)
  'Sonic.exe':{n:'RASANTES DO EXE!',h:7,d:2800,m:1.9,ch:0,tk:6,at:[600,900,1200,1500,1800,2100],w:[.12,.12,.12,.12,.12,.4],rec:450,fx:'burst',c:'#2962ff',c2:'#ff1744',lc:'#ff5252'},   // some e passa como bola 6 vezes, do azul ao vermelho (3D: CH3)
  Jason:{n:'FACÃO DAS SOMBRAS!',h:7,d:3000,m:2,ch:0,tk:2,at:[1600,2100],w:[.65,.35],rec:500,fx:'slash',c:'#b0bec5',c2:'#b71c1c',lc:'#ff5252'},   // vira fumaça, aparece atrás do inimigo e empala com o facão (3D: CH3)
+ Chucky:{n:'HORA DE BRINCAR!',h:6,d:2600,m:1.75,ch:0,tk:8,at:[720,870,1020,1170,1320,1470,1620,1850],w:[.07,.07,.07,.07,.07,.07,.07,.51],rec:450,fx:'slash',c:'#ff1744',c2:'#ffffff',lc:'#ff5252'},   // corre, salta, fica pendurado no inimigo dando facadas (3D: CH3)
+ Baldi:{n:'RÉGUA DA DISCIPLINA!',h:7,d:3000,m:1.9,ch:0,tk:4,at:[1800,2050,2300,2550],w:[.2,.2,.2,.4],rec:500,fx:'burst',c:'#76ff03',c2:'#ffe082',lc:'#b2ff59'},   // bate a régua na mão e avança dando reguadas
+ Nemesis:{n:'LANÇA-FOGUETES!',h:7,d:3000,m:2,ch:0,tk:3,at:[1600,1800,2000],w:[.7,.15,.15],rec:600,fx:'burst',c:'#ff6d00',c2:'#ffd23f',lc:'#ff8a3d'},   // bazuca no ombro, foguete e explosão
+ 'Slender Man':{n:'DISTORÇÃO!',h:7,d:3200,m:2,ch:0,tk:6,at:[900,1300,1700,2100,2500,2900],w:[.12,.12,.12,.12,.12,.4],rec:500,fx:'burst',c:'#212121',c2:'#ffffff',lc:'#e0e0e0'},   // distorce a realidade: dano psicológico
  Ghostface:{n:'SORRIA PARA A FOTO!',h:7,d:3000,m:1.9,ch:0,tk:3,at:[1150,1400,1700],w:[.25,.25,.5],rec:500,fx:'burst',c:'#eceff1',c2:'#212121',lc:'#ffffff'},   // câmera + outro Ghostface sai da névoa e esfaqueia; foto na última facada (3D: CH3)
  Springtrap:{n:'MACHADO!',h:7,d:4300,m:3,ch:0,tk:2,at:[1300,3250],w:[.45,.55],rec:900,fx:'burst',c:'#7cb342',c2:'#1b5e20',lc:'#9ccc65'}};   // pega o machado, arremessa, grita, pula e arranca (3D: SPR3)
 const SKD={n:'GOLPE ESPECIAL!',h:8,d:2000,m:2.5,ch:0,tk:6,fx:'burst',c:'#ffffff',c2:'#ffd23f',lc:'#ffd23f'};
@@ -18123,8 +18127,8 @@ function state(q,A){let s=q._c3;if(!s||s.nm!==A.m.nm){s={nm:A.m.nm,yaw:A.yaw,cur
 function phase(el,T){let a=0;for(let k=0;k<T.length;k++){if(el<T[k])return{k,p:(el-a)/(T[k]-a)};a=T[k]}return null}
 const PUNMS=300;
 // ---------- habilidades: cada uma devolve {px,py,pz,tg} e mexe nos ossos depois da animação base (post) ----------
-const SKD={Goku:3400,Luffy:2000,Gon:1800,Itadori:1300,'Goku Kaioken':4200,Yajirobe:1600,Yamcha:2200,Tenshinhan:2300,Gohan:2200,Kuririn:2000,Nappa:2200,Vegeta:2600,Piccolo:2600,Chara:2600,Sally:2600,Ghostface:3000,'Jeff the Killer':2400,'Sonic.exe':2800,Jason:3000};
-const ABORT={Goku:2800,Luffy:1800,Gon:1500,Itadori:900,'Goku Kaioken':3750,Yajirobe:950,Yamcha:1850,Tenshinhan:1950,Gohan:1800,Kuririn:1500,Nappa:1700,Vegeta:2400,Piccolo:2000,Chara:1900,Sally:2000,Ghostface:1700,'Jeff the Killer':1500,'Sonic.exe':2000,Jason:1500};   // inimigo morreu antes disso: cancela
+const SKD={Goku:3400,Luffy:2000,Gon:1800,Itadori:1300,'Goku Kaioken':4200,Yajirobe:1600,Yamcha:2200,Tenshinhan:2300,Gohan:2200,Kuririn:2000,Nappa:2200,Vegeta:2600,Piccolo:2600,Chara:2600,Sally:2600,Ghostface:3000,'Jeff the Killer':2400,'Sonic.exe':2800,Jason:3000,Chucky:2600,Baldi:3000,Nemesis:3000,'Slender Man':3200};
+const ABORT={Goku:2800,Luffy:1800,Gon:1500,Itadori:900,'Goku Kaioken':3750,Yajirobe:950,Yamcha:1850,Tenshinhan:1950,Gohan:1800,Kuririn:1500,Nappa:1700,Vegeta:2400,Piccolo:2000,Chara:1900,Sally:2000,Ghostface:1700,'Jeff the Killer':1500,'Sonic.exe':2000,Jason:1500,Chucky:1700,Baldi:1700,Nemesis:1400,'Slender Man':2000};   // inimigo morreu antes disso: cancela
 // ponto do inimigo e direção até ele
 function tgtInfo(s,E){const sx=s.sx,sz=s.sz,sy=s.sy;let Ex,Ez,Ey,Er;if(E){Ex=E.x;Ez=E.z;Ey=E.y;Er=E.r}else{Ex=sx+sin(s.yaw)*40;Ez=sz+cos(s.yaw)*40;Ey=sy+8;Er=12}
  const fx=Ex-sx,fz=Ez-sz,fl=hypot(fx,fz)||1;return{Ex,Ey,Ez,Er,ux:fx/fl,uz:fz/fl,dist:fl,sx,sy,sz}}
@@ -18805,7 +18809,201 @@ function jason(s,el,dt,t,I){const R=base(I);
   if(once(s,1<<1,el,JS_AT[1])){const P=toCam(I.Ex,I.Ey+3,I.Ez,I.Er*.3);burst(P[0],P[1],P[2],22,2,500,DARKR);shake(200,24)}
   if(el>=1600&&el<2150&&E&&rnd()<.6){const P=MM?ptW(MM,[0,.2,0]):[I.Ex,I.Ey,I.Ez];E.emit({x:P[0]+(rnd()-.5)*3,y:P[1],z:P[2]+(rnd()-.5)*3,vx:(rnd()-.5)*.2,vy:-.05,vz:(rnd()-.5)*.2,g:.035,life:600,s0:1.5,s1:.9,c:DARKR[(rnd()*3)|0],a:1,drag:1,add:false})}};
  return R}
-const SKF={Goku:goku,Luffy:luffy,Gon:gon,Itadori:itadori,'Goku Kaioken':gokuKai,Yajirobe:yajirobe,Yamcha:yamcha,Tenshinhan:tenshinhan,Gohan:gohan,Kuririn:kuririn,Nappa:nappa,Vegeta:vegeta,Piccolo:piccolo,Chara:chara,Sally:sally,Ghostface:ghostface,'Jeff the Killer':jeff,'Sonic.exe':sonicExe,Jason:jason};
+// ===================== Halloween: habilidades 3D de Chucky, Baldi, Nemesis e Slender Man =====================
+//  · Chucky       HORA DE BRINCAR (2,6 s): corre até o inimigo com a faca (0–380) · salta e se agarra nele (380–620) · pendurado, com a mão
+//                 esquerda agarrada e as pernas soltas, dá 7 facadas (720–1620) e uma última com força (1850) · pula de volta com um mortal (1950–2400)
+//  · Baldi        RÉGUA DA DISCIPLINA (3 s): puxa a régua das costas (0–350) · bate a régua na palma da mão três vezes (550/900/1250) ·
+//                 avança correndo (1400–1680) · 4 reguadas de cima para baixo no inimigo (1800/2050/2300/2550, a última mais forte) · volta pulando
+//  · Nemesis      LANÇA-FOGUETES (3 s): puxa a bazuca das costas (0–450) · apoia no ombro direito (450–800) · mira com o laser (800–1350) ·
+//                 dispara (1350): clarão, fumaça para trás e coice · o foguete voa com rastro de fogo (1350–1600) · explosão (1600) e fogo (1800/2000) · abaixa
+//  · Slender Man  DISTORÇÃO (3,2 s): fica parado, abre os braços e a realidade em volta dele se distorce (anéis tortos, estática, cópias
+//                 tremidas dele mesmo e tentáculos de sombra) · 6 pulsos de "dano psicológico" no inimigo (900–2900), o último mais forte
+// Objetos novos (régua, bazuca e foguete) feitos por código aqui mesmo, no mesmo formato do CH3_PROPS (cor por face).
+{const PR=window.CH3_PROPS||(window.CH3_PROPS={});
+ const mk=build=>{const P=[],N=[],C=[];
+  const tri=(a,b,c,col)=>{const u=[b[0]-a[0],b[1]-a[1],b[2]-a[2]],v=[c[0]-a[0],c[1]-a[1],c[2]-a[2]],n=nrm3(crs(u,v));for(const p of[a,b,c]){P.push(p[0],p[1],p[2]);N.push(n[0]*127|0,n[1]*127|0,n[2]*127|0,0);C.push(col[0],col[1],col[2])}};
+  const quad=(a,b,c,d,col)=>{tri(a,b,c,col);tri(a,c,d,col)};
+  // caixa centrada em (x,y,z) com meias medidas (a,b,c)
+  const box=(x,y,z,a,b,c,col)=>{const p=(i,j,k)=>[x+i*a,y+j*b,z+k*c];
+   quad(p(1,-1,-1),p(1,1,-1),p(1,1,1),p(1,-1,1),col);quad(p(-1,-1,1),p(-1,1,1),p(-1,1,-1),p(-1,-1,-1),col);
+   quad(p(-1,1,-1),p(-1,1,1),p(1,1,1),p(1,1,-1),col);quad(p(-1,-1,1),p(-1,-1,-1),p(1,-1,-1),p(1,-1,1),col);
+   quad(p(-1,-1,1),p(1,-1,1),p(1,1,1),p(-1,1,1),col);quad(p(1,-1,-1),p(-1,-1,-1),p(-1,1,-1),p(1,1,-1),col)};
+  // tubo ao longo de +Y (raio r0 em y0 e r1 em y1), centro em (x,z)
+  const tube=(x,z,y0,y1,r0,r1,n,col,cap)=>{for(let i=0;i<n;i++){const a0=i/n*TAU,a1=(i+1)/n*TAU,c0=cos(a0),s0=sin(a0),c1=cos(a1),s1=sin(a1);
+    quad([x+c0*r0,y0,z+s0*r0],[x+c1*r0,y0,z+s1*r0],[x+c1*r1,y1,z+s1*r1],[x+c0*r1,y1,z+s0*r1],col);
+    if(cap&&r1>0)tri([x,y1,z],[x+c0*r1,y1,z+s0*r1],[x+c1*r1,y1,z+s1*r1],cap);if(cap&&r0>0)tri([x,y0,z],[x+c1*r0,y0,z+s1*r0],[x+c0*r0,y0,z+s0*r0],cap)}};
+  build({tri,quad,box,tube});
+  const enc=a=>{const u=new Uint8Array(a.buffer);let s='';for(let i=0;i<u.length;i+=8192)s+=String.fromCharCode.apply(null,u.subarray(i,i+8192));return btoa(s)};
+  return{n:P.length/3,p:enc(new Float32Array(P)),nr:enc(new Int8Array(N)),c:enc(new Uint8Array(C))}};
+ // régua de madeira do Baldi (cabo na origem, ao longo de +Y), com as marquinhas pretas
+ if(!PR.ruler)PR.ruler=mk(({box})=>{const W=[214,160,84],D=[60,40,20];box(0,.15,0,.024,.17,.004,W);
+  for(let i=0;i<16;i++){const y=-.005+i*.02,l=i%5===0?.012:.007;box(.024-l,y,.0045,l,.0012,.0008,D);box(.024-l,y,-.0045,l,.0012,.0008,D)}});
+ // bazuca do Nemesis: tubo verde ao longo de +Y (frente), luneta em cima (+Z), empunhadura embaixo
+ if(!PR.bazooka)PR.bazooka=mk(({box,tube})=>{const G=[70,82,52],G2=[52,62,40],K=[30,30,32],M=[110,110,105];
+  tube(0,0,-.30,.30,.052,.052,14,G,null);tube(0,0,.30,.34,.052,.06,14,G2,K);tube(0,0,-.36,-.30,.07,.052,14,G2,K);
+  for(const y of[-.18,.02,.2])tube(0,0,y-.012,y+.012,.056,.056,14,K,null);
+  box(0,.02,.075,.014,.07,.022,K);tube(0,.075,.09,.13,.016,.018,8,M,K);   // luneta
+  box(0,-.02,-.085,.016,.025,.04,K);box(0,.14,-.075,.014,.02,.03,K)});      // empunhadura e apoio da frente
+ // foguete: ogiva verde, corpo cinza e aletas
+ if(!PR.rocket)PR.rocket=mk(({box,tube})=>{const G=[86,104,60],S=[150,150,140],R=[170,40,30];
+  tube(0,0,-.12,.05,.032,.032,10,S,S);tube(0,0,.05,.13,.042,.0,10,G,null);tube(0,0,.05,.07,.042,.042,10,R,null);
+  for(let i=0;i<4;i++){const a=i*PI/2;box(cos(a)*.04,-.1,sin(a)*.04,.004+.03*abs(cos(a)),.025,.004+.03*abs(sin(a)),S)}});}
+// medidas do personagem: comprimento do braço (skeleton) e o quanto ele é maior/menor que o jogador
+const armLen=()=>hypot(...RT[LA_R])+hypot(...RT[HA_R]);
+const skDir=d=>{const M=MODEL;return nrm3([M[0]*d[0]+M[4]*d[1]+M[8]*d[2],M[1]*d[0]+M[5]*d[1]+M[9]*d[2],M[2]*d[0]+M[6]*d[1]+M[10]*d[2]])};
+const BLOOD=[[.55,0,.02],[.85,.05,.08],[.3,0,0]],FIRE=[[1,.85,.3],[1,.5,.08],[1,.25,.04],[1,1,.8]],SMK=[[.18,.17,.16],[.28,.27,.26],[.1,.1,.1]];
+// ---------- Chucky ----------
+const CK_AT=[720,870,1020,1170,1320,1470,1620],CK_FIN=1850,CK_ALL=CK_AT.concat([CK_FIN]);
+function chucky(s,el,dt,t,I){const R=base(I);const fy=(x,z)=>H3.floorAt?H3.floorAt(x,z):I.sy;
+ const lx=I.Ex-I.ux*(I.Er+5),lz=I.Ez-I.uz*(I.Er+5),ly=fy(lx,lz);
+ const hx=I.Ex-I.ux*(I.Er*.62+2),hz=I.Ez-I.uz*(I.Er*.62+2),hy=fy(hx,hz)+clp(I.Er*.85,6,34);
+ let hang=0;
+ if(el<380){const p=sm(sg(el,0,380));R.px=lerp(I.sx,lx,p);R.pz=lerp(I.sz,lz,p);R.py=lerp(I.sy,ly,p);setPose(s,JOG,s.t+dt*2,.08)}
+ else if(el<620){const p=sg(el,380,620),e=sm(p);R.px=lerp(lx,hx,e);R.pz=lerp(lz,hz,e);R.py=lerp(ly,hy,e)+10*sin(PI*p);setPose(s,AIR,s.t+dt,.08);hang=sm(sg(el,500,620))}
+ else if(el<1950){R.px=hx;R.pz=hz;R.py=hy+sin(el/70)*.4;setPose(s,AIR,.35+.05*sin(el/120),.12);hang=1}
+ else if(el<2400){const p=sg(el,1950,2400),e=sm(p);R.px=lerp(hx,I.sx,e);R.pz=lerp(hz,I.sz,e);R.py=lerp(hy,I.sy,e)+16*sin(PI*p);setPose(s,AIR,s.t+dt,.1);hang=1-sm(sg(el,1950,2100))}
+ else{R.px=I.sx;R.pz=I.sz;R.py=I.sy;setPose(s,'Idle_Loop',.3,.15)}
+ // facada atual: ergue (110 ms; a última 260 ms), crava e puxa de volta (60 ms)
+ let ci=-1,u=0,dn=false;for(let i=0;i<CK_ALL.length;i++){const w=i===CK_ALL.length-1?260:110,a=CK_ALL[i]-w,b=CK_ALL[i]+60;if(el>=a&&el<b){ci=i;dn=el<CK_ALL[i];u=dn?(el-a)/w:(el-CK_ALL[i])/60;break}}
+ const kn=el<60?0:el<260?eOut(sg(el,60,260)):el<2450?1:1-sg(el,2450,2600);
+ const flip=el>=1950&&el<2400?sm(sg(el,1980,2350)):0;
+ R.post=()=>{const AL=armLen(),S=fromJ(UA_R,[0,0,0]),SL=fromJ(UA_L,[0,0,0]);
+  if(flip>0){turn(PEL,[1,0,0],-TAU*flip);return}   // mortal para trás
+  const UP=[S[0]-.1*AL,S[1]+.75*AL,S[2]+.2*AL],HIT=[S[0]+.25*AL,S[1]-.25*AL,S[2]+.95*AL],RUN=[S[0]+.05*AL,S[1]-.55*AL,S[2]+.35*AL];
+  let T=hang>0?UP:RUN,lean=0;
+  if(hang>0&&ci>=0){if(dn){T=lerp3(UP,HIT,u<.4?0:sm((u-.4)/.6));lean=sm(u)}else{T=lerp3(HIT,UP,sm(u));lean=1-sm(u)}}
+  if(ci===CK_ALL.length-1)lean*=1.5;
+  turn(SP1,[1,0,0],(.32*hang+.25*lean)*1);turn(SP3,[0,1,0],-.2*lean*hang);turn(HEAD,[1,0,0],-.2*hang);
+  ik(UA_R,LA_R,HA_R,T,[-1,-.6,-.3],max(.5,hang));
+  if(hang>0)ik(UA_L,LA_L,HA_L,[SL[0]-.25*AL,SL[1]+.15*AL,SL[2]+.9*AL],[1,-.4,-.3],hang)};   // a mão esquerda agarrada no inimigo
+ R.fx=()=>{let KM=null;if(kn>0){const d=hang>0&&ci>=0&&dn&&u>.4?toward(I.Ex,I.Ey+2,I.Ez):nrm3(fore());KM=bladeAt('knife',d,kn*1.25)}
+  if(KM&&el>=60&&el<300){const p=ptW(KM,[0,.12,0]),k=sin(PI*sg(el,60,300));glow(p[0],p[1],p[2],6*k,[1,1,1],.9*k)}
+  const tr=s.trail||(s.trail=[]);if(KM&&ci>=0&&dn&&u>.35)tr.push({p:ptW(KM,[0,.15,0]),t:el});while(tr.length&&el-tr[0].t>100)tr.shift();
+  for(let i=1;i<tr.length;i++){const a=tr[i-1],b=tr[i],k=1-(el-b.t)/100;H3.strip(H3.tex.beam,a.p[0],a.p[1],a.p[2],b.p[0],b.p[1],b.p[2],1.8*k,[1,1,1,.7*k],true);H3.strip(H3.tex.beam,a.p[0],a.p[1],a.p[2],b.p[0],b.p[1],b.p[2],3*k,[.9,.05,.08,.4*k],true)}
+  const E=E_();
+  if(once(s,1<<12,el,600)){burst(hx,hy+2,hz,10,1.2,300,[[1,1,1],[.8,.8,.8]]);shake(90,10)}   // agarrou
+  CK_ALL.forEach((a,i)=>{if(once(s,1<<i,el,a)){const f=i===CK_ALL.length-1,P=toCam(I.Ex,hy+4,I.Ez,I.Er*.45);burst(P[0],P[1],P[2],f?32:12,f?2.3:1.4,f?540:400,BLOOD);shake(f?300:90,f?[40,30,50]:12);
+   if(E)for(let j=0;j<(f?16:6);j++)E.emit({x:P[0],y:P[1],z:P[2],vx:(rnd()-.5)*1.2,vy:.4+rnd()*.8,vz:(rnd()-.5)*1.2,g:.045,life:600+rnd()*400,s0:1.6+rnd()*1.2,s1:.7,c:BLOOD[(rnd()*3)|0],a:1,drag:.985,add:false})}});
+  if(KM&&el>CK_AT[0]&&el<2300&&E&&rnd()<.3){const p=ptW(KM,[0,.14,0]);E.emit({x:p[0],y:p[1],z:p[2],vx:0,vy:-.1,vz:0,g:.03,life:500,s0:1,s1:.5,c:[.6,0,.03],a:1,drag:1,add:false})}};
+ return R}
+// ---------- Baldi ----------
+const BD_SLAP=[550,900,1250],BD_AT=[1800,2050,2300,2550];
+function baldi(s,el,dt,t,I){const R=base(I);const fy=(x,z)=>H3.floorAt?H3.floorAt(x,z):I.sy;
+ const lx=I.Ex-I.ux*(I.Er+6),lz=I.Ez-I.uz*(I.Er+6),ly=fy(lx,lz);
+ if(el<1400){setPose(s,'Idle_Loop',.3+el/6000,.15)}
+ else if(el<1680){const p=sm(sg(el,1400,1680));R.px=lerp(I.sx,lx,p);R.pz=lerp(I.sz,lz,p);R.py=lerp(I.sy,ly,p);setPose(s,JOG,s.t+dt*2,.08)}
+ else if(el<2650){R.px=lx;R.pz=lz;R.py=ly;setPose(s,'Idle_Loop',.4,.12)}
+ else{const p=sm(sg(el,2650,3000));R.px=lerp(lx,I.sx,p);R.pz=lerp(lz,I.sz,p);R.py=lerp(ly,I.sy,p)+6*sin(PI*p);setPose(s,AIR,s.t+dt,.12)}
+ // batidas na mão (0..1 em cada uma) e reguadas no inimigo
+ const ph=(L,up,dn)=>{for(let i=0;i<L.length;i++){const w=i===L.length-1&&L===BD_AT?260:up,a=L[i]-w,b=L[i]+dn;if(el>=a&&el<b)return{i,dn:el<L[i],u:el<L[i]?(el-a)/w:(el-L[i])/dn}}return null};
+ const sl=el<1400?ph(BD_SLAP,180,140):null,wk=el>=1680&&el<2700?ph(BD_AT,170,90):null;
+ const rs=el<100?0:el<350?eOut(sg(el,100,350)):el<2850?1:1-sg(el,2850,3000);
+ R.post=()=>{const AL=armLen(),S=fromJ(UA_R,[0,0,0]),SL=fromJ(UA_L,[0,0,0]);
+  const PALM=[SL[0]-.5*AL,SL[1]-.62*AL,SL[2]+.55*AL];
+  let T,lean=0;
+  if(el<350){T=lerp3(fromJ(SP1,[-.2*AL,-.1*AL,-.25*AL]),[S[0]+.2*AL,S[1]-.3*AL,S[2]+.5*AL],sm(sg(el,100,350)))}
+  else if(el<1400){const UPs=[S[0]+.15*AL,S[1]+.2*AL,S[2]+.45*AL],DNs=[PALM[0]+.32*AL,PALM[1]+.1*AL,PALM[2]+.05*AL];T=UPs;
+   if(sl)T=sl.dn?lerp3(UPs,DNs,eIn(sl.u)):lerp3(DNs,UPs,sm(sl.u));
+   ik(UA_L,LA_L,HA_L,PALM,[1,-1,-.2],1);turn(HEAD,[1,0,0],.12);if(sl&&!sl.dn)turn(HEAD,[1,0,0],.08*(1-sl.u))}
+  else if(el<1680)T=[S[0]+.1*AL,S[1]+.35*AL,S[2]+.25*AL];
+  else{const UP=[S[0]+.02*AL,S[1]+.9*AL,S[2]+.05*AL],HIT=[S[0]-.12*AL,S[1]-.15*AL,S[2]+1*AL];T=UP;
+   if(wk){if(wk.dn){T=lerp3(UP,HIT,wk.u<.35?0:sm((wk.u-.35)/.65));lean=sm(wk.u)}else{T=lerp3(HIT,UP,sm(wk.u));lean=1-sm(wk.u)}}
+   if(wk&&wk.i===BD_AT.length-1)lean*=1.5;turn(SP1,[1,0,0],.25*lean);turn(SP3,[0,1,0],.15*lean)}
+  ik(UA_R,LA_R,HA_R,T,[-1,-.5,-.4],el>2850?1-sg(el,2850,3000):1)};
+ R.fx=()=>{if(rs<=0)return;let d;
+  if(el<350)d=nrm3(fore());
+  else if(el<1400){const h=jointW(HA_R),l=jointW(HA_L);d=nrm3([l[0]-h[0],l[1]-h[1]-1.5,l[2]-h[2]]);if(!sl)d=nrm3(lerp3(d,skDir([0,1,.4]),.4))}
+  else if(wk&&wk.dn&&wk.u>.35)d=toward(I.Ex,I.Ey+2,I.Ez);else d=nrm3(lerp3(fore(),skDir([0,1,.3]),.3));
+  const RM=bladeAt('ruler',d,rs*1.25);
+  // estalo da régua na palma
+  BD_SLAP.forEach((a,i)=>{if(once(s,1<<i,el,a)){const p=jointW(HA_L);glow(p[0],p[1]+1,p[2],9,[1,1,1],.8);burst(p[0],p[1]+1,p[2],6,.9,220,[[1,1,1],[1,.95,.8]]);shake(60,6)}});
+  if(el>=500&&el<1400){const p=jointW(HA_L);for(const a of BD_SLAP){const k=1-sg(el,a,a+180);if(k>0&&k<1)H3.spr(H3.tex.ring,p[0],p[1]+1,p[2],6+10*(1-k),6+10*(1-k),null,[1,1,1,.7*k],true,0,true)}}
+  // rastro da régua na descida e o golpe
+  const tr=s.trail||(s.trail=[]);if(RM&&wk&&wk.dn&&wk.u>.3)tr.push({p:ptW(RM,[0,.3,0]),t:el});while(tr.length&&el-tr[0].t>110)tr.shift();
+  for(let i=1;i<tr.length;i++){const a=tr[i-1],b=tr[i],k=1-(el-b.t)/110;H3.strip(H3.tex.beam,a.p[0],a.p[1],a.p[2],b.p[0],b.p[1],b.p[2],3*k,[1,.95,.75,.6*k],true)}
+  BD_AT.forEach((a,i)=>{if(once(s,1<<(i+4),el,a)){const f=i===BD_AT.length-1,P=toCam(I.Ex,I.Ey+4,I.Ez,I.Er*.45);burst(P[0],P[1],P[2],f?28:14,f?2.2:1.5,f?500:380,[[1,.95,.6],[1,1,1],[.9,.6,.2]]);
+   glow(P[0],P[1],P[2],f?34:20,[1,.95,.7],.7);shake(f?280:120,f?[36,26,44]:16);if(H3.tex.ring)H3.spr(H3.tex.ring,P[0],P[1],P[2],f?40:24,f?40:24,null,[1,1,.85,.8],true,0,true)}});
+  for(const a of BD_AT){const k=1-sg(el,a,a+200);if(k>0&&k<1){const P=toCam(I.Ex,I.Ey+4,I.Ez,I.Er*.45),r=(a===BD_AT[3]?44:26)*(1.6-k);H3.spr(H3.tex.ring,P[0],P[1],P[2],r,r,null,[1,.95,.7,.6*k],true,0,true)}}};
+ return R}
+// ---------- Nemesis ----------
+const NM_FIRE=1350,NM_HIT=1600,NM_AT=[1600,1800,2000];
+function nemesis(s,el,dt,t,I){const R=base(I);R.px=I.sx-I.ux*3;R.pz=I.sz-I.uz*3;setPose(s,'Idle_Loop',.3+el/7000,.15);
+ const on=el<200?0:el<450?eOut(sg(el,200,450)):el<2750?1:1-sg(el,2750,3000);
+ const sh=el<450?0:el<800?sm(sg(el,450,800)):el<2300?1:1-sm(sg(el,2300,2700));   // apoiado no ombro
+ const rec=el>=NM_FIRE&&el<NM_FIRE+500?sin(PI*sg(el,NM_FIRE,NM_FIRE+500))*(el<NM_FIRE+120?1:1-sg(el,NM_FIRE+120,NM_FIRE+500)):0;
+ // bazuca no espaço do esqueleto: origem, frente (Y) e cima (Z)
+ let BO=null,BY=null,BZ=null;
+ const bz=()=>{const AL=armLen(),S=fromJ(UA_R,[0,0,0]);
+  const Os=[S[0]+.02*AL,S[1]+.2*AL,S[2]-.02*AL-.08*rec],Ys=nrm3([-.06,.04+.12*rec,1]),Zs=nrm3(crs(crs(Ys,[0,1,0]),Ys));
+  const Ob=fromJ(SP3,[-.18*AL,.25*AL,-.3*AL]),Yb=nrm3([.15,1,-.25]),Zb=nrm3(crs(crs(Yb,[0,0,-1]),Yb));
+  let O=sh>0?lerp3(Ob,Os,sh):Ob,Y=nrm3(lerp3(Yb,Ys,sh)),Z=nrm3(lerp3(Zb,Zs,sh));Z=nrm3(crs(crs(Y,Z),Y));if(Z[1]<0&&sh>.5)Z=[-Z[0],-Z[1],-Z[2]];
+  if(el<450){const h=fromJ(HA_R,[0,0,0]),k=sg(el,200,450);O=lerp3(h,Ob,k)}
+  BO=O;BY=Y;BZ=Z};
+ const at=(o)=>[BO[0]+BY[0]*o[1]+BZ[0]*o[2]+o[0]*0,BO[1]+BY[1]*o[1]+BZ[1]*o[2],BO[2]+BY[2]*o[1]+BZ[2]*o[2]];
+ R.post=()=>{const AL=armLen();bz();const al=min(1,on*1.5);if(al<=0)return;
+  if(el<450)ik(UA_R,LA_R,HA_R,fromJ(SP3,[-.18*AL,.3*AL,-.25*AL]),[-1,.2,-.6],sm(sg(el,0,300)));
+  else{ik(UA_R,LA_R,HA_R,at([0,-.02,-.11]),[-1,-1,-.2],al);ik(UA_L,LA_L,HA_L,at([0,.15,-.09]),[1,-1,-.2],al*sh)}
+  turn(SP1,[1,0,0],-.12*rec);turn(SP3,[0,1,0],.18*sh);turn(HEAD,[0,1,0],-.12*sh)};
+ R.fx=()=>{if(!BO)bz();const E=E_(),T=H3.tex;let BM_=null;
+  if(on>0)BM_=propM('bazooka',MODEL,BO,crs(BY,BZ),BY,BZ,on);
+  const muz=BM_?ptW(BM_,[0,.36,0]):null,back=BM_?ptW(BM_,[0,-.36,0]):null,tgt=[I.Ex,I.Ey+3,I.Ez];
+  // mira: laser vermelho da luneta até o inimigo e o ponto piscando
+  if(BM_&&el>=800&&el<NM_FIRE){const k=sg(el,800,950),sc=ptW(BM_,[0,.13,.09]);H3.strip(T.beam,sc[0],sc[1],sc[2],tgt[0],tgt[1],tgt[2],.5*k,[1,.05,.05,.5*k],true);
+   glow(tgt[0],tgt[1],tgt[2],6+2*sin(el/40),[1,.1,.1],.8*k);glow(muz[0],muz[1],muz[2],4+6*sg(el,950,NM_FIRE),[1,.6,.2],.3*k)}
+  // disparo: clarão na boca, fumaça para trás e o foguete
+  if(once(s,1<<0,el,NM_FIRE)&&muz){burst(muz[0],muz[1],muz[2],18,1.8,320,FIRE);shake(200,[30,22,36]);
+   if(E)for(let j=0;j<22;j++){const v=nrm3([back[0]-muz[0],back[1]-muz[1],back[2]-muz[2]]);E.emit({x:back[0],y:back[1],z:back[2],vx:v[0]*(.8+rnd())+(rnd()-.5)*.5,vy:v[1]*(.8+rnd())+rnd()*.3,vz:v[2]*(.8+rnd())+(rnd()-.5)*.5,g:-.004,life:900+rnd()*600,s0:5+rnd()*4,s1:13,c:SMK[(rnd()*3)|0],a:.6,drag:.95,add:false})}}
+  if(muz&&el>=NM_FIRE&&el<NM_FIRE+140){const k=1-sg(el,NM_FIRE,NM_FIRE+140);glow(muz[0],muz[1],muz[2],26*k+6,[1,.75,.3],.95*k);E&&E.light&&E.light(muz[0],muz[1],muz[2],160,[1,.6,.25],2.4*k)}
+  if(el>=NM_FIRE&&el<NM_HIT){if(!s.rk0&&muz)s.rk0=muz.slice();const a=s.rk0||muz,p=eIn(sg(el,NM_FIRE,NM_HIT))*.85+sg(el,NM_FIRE,NM_HIT)*.15,P=[lerp(a[0],tgt[0],p),lerp(a[1],tgt[1],p)+3*sin(PI*p),lerp(a[2],tgt[2],p)],Y=nrm3([tgt[0]-a[0],tgt[1]-a[1],tgt[2]-a[2]]);
+   let Z=nrm3(crs(Y,[0,1,0]));if(!isFinite(Z[0]))Z=[1,0,0];const s0=hypot(MODEL[0],MODEL[1],MODEL[2]);propM('rocket',IDM4,P,crs(Y,Z),Y,Z,s0*1.1);
+   const tl=[P[0]-Y[0]*4,P[1]-Y[1]*4,P[2]-Y[2]*4];glow(tl[0],tl[1],tl[2],9,[1,.6,.2],.9);glow(tl[0],tl[1],tl[2],4,[1,1,.8],.9);E&&E.light&&E.light(tl[0],tl[1],tl[2],90,[1,.55,.2],1.4);
+   if(E)for(let j=0;j<3;j++)E.emit({x:tl[0],y:tl[1],z:tl[2],vx:(rnd()-.5)*.2,vy:.05+rnd()*.1,vz:(rnd()-.5)*.2,g:-.002,life:700+rnd()*400,s0:3,s1:8,c:j?SMK[(rnd()*3)|0]:FIRE[(rnd()*3)|0],a:j?.5:.9,drag:.97,add:!j})}
+  else s.rk0=null;
+  // explosão e o fogo que fica
+  NM_AT.forEach((a,i)=>{if(once(s,1<<(i+1),el,a)){const f=i===0,P=toCam(tgt[0],tgt[1],tgt[2],I.Er*.3);
+   burst(P[0],P[1],P[2],f?60:18,f?3.4:1.8,f?700:450,FIRE,f);burst(P[0],P[1]+2,P[2],f?30:10,f?2:1.2,f?1300:800,SMK,true,false);shake(f?520:160,f?[60,44,70]:[24,18,28]);
+   if(E&&f)for(let j=0;j<16;j++){const an=rnd()*TAU;E.emit({x:P[0],y:P[1],z:P[2],vx:cos(an)*(1.5+rnd()),vy:1+rnd()*1.2,vz:sin(an)*(1.5+rnd()),g:.06,life:800+rnd()*400,s0:1.4,s1:.6,c:[.25,.22,.2],a:1,drag:.98,add:false})}}});
+  if(el>=NM_HIT&&el<2500){const k=el<NM_HIT+150?1:1-sg(el,NM_HIT+150,2500),P=toCam(tgt[0],tgt[1],tgt[2],I.Er*.3);
+   glow(P[0],P[1],P[2],(40+16*sin(el/50))*k,[1,.5,.12],.7*k);glow(P[0],P[1],P[2],22*k,[1,.9,.6],.6*k);E&&E.light&&E.light(P[0],P[1],P[2],260,[1,.5,.15],3*k);
+   if(H3.tex.ring&&el<NM_HIT+400){const q=sg(el,NM_HIT,NM_HIT+400);H3.flat(H3.tex.ring,tgt[0],(H3.floorAt?H3.floorAt(tgt[0],tgt[2]):I.sy)+.5,tgt[2],20+90*q,20+90*q,null,[1,.6,.25,.7*(1-q)],true)}
+   if(E&&rnd()<.8*k)E.emit({x:P[0]+(rnd()-.5)*14,y:P[1]-2+rnd()*6,z:P[2]+(rnd()-.5)*14,vx:0,vy:.4+rnd()*.4,vz:0,g:-.005,life:600,s0:6,s1:1,c:FIRE[(rnd()*3)|0],a:.9,drag:.97})}};
+ return R}
+// ---------- Slender Man ----------
+const SL_AT=[900,1300,1700,2100,2500,2900];
+const STAT=[[1,1,1],[0,0,0],[.6,.6,.6],[.75,0,.05]];
+function slender(s,el,dt,t,I){const R=base(I);R.px=I.sx;R.pz=I.sz;setPose(s,'Idle_Loop',.6+el/9000,.2);
+ const k=el<700?sm(sg(el,0,700)):el<2950?1:1-sm(sg(el,2950,3200));   // força da distorção
+ const gl_=sin(el/37)*sin(el/91);                                      // tremida
+ if(k>.2&&rnd()<.12*k){R.px+=(rnd()-.5)*2.4*k;R.pz+=(rnd()-.5)*2.4*k}
+ R.flc=[0,0,0,(.15+.25*abs(gl_))*k];
+ // cópias tremidas (uma por vez, aparece e some de lado)
+ const gi=Math.floor(el/230),gp=(el%230)/230;
+ if(k>.4&&gi%2===0&&gp<.6){const sd=(gi%4===0?1:-1)*(5+3*((gi*7)%3)),px=-I.uz,pz=I.ux;
+  s.cl={vis:1,x:I.sx+px*sd,y:I.sy+(rnd()-.5)*.6,z:I.sz+pz*sd,yaw:Math.atan2(I.ux,I.uz)+(rnd()-.5)*.3,anim:'Idle_Loop',time:.6,cut:-1e9,dark:.82,shadowOff:1,
+   after:null}}else s.cl=null;
+ R.post=()=>{const AL=armLen(),S=fromJ(UA_R,[0,0,0]),SL=fromJ(UA_L,[0,0,0]),o=.08*sin(el/160);
+  ik(UA_R,LA_R,HA_R,[S[0]-.55*AL,S[1]-.35*AL+o*AL,S[2]+.3*AL],[-1,.2,-.6],k);ik(UA_L,LA_L,HA_L,[SL[0]+.55*AL,SL[1]-.35*AL-o*AL,SL[2]+.3*AL],[1,.2,-.6],k);
+  turn(HEAD,[0,0,1],.35*k*gl_);turn(HEAD,[1,0,0],-.1*k);if(rnd()<.05*k)turn(HEAD,[0,1,0],(rnd()-.5)*.8)};
+ R.fx=()=>{const E=E_(),T=H3.tex;if(k<=0)return;const x=I.sx,z=I.sz,y=I.sy,tgt=[I.Ex,I.Ey+3,I.Ez];
+  // anéis tortos no chão e no ar em volta dele (giram e pulsam)
+  if(T.ring){for(let i=0;i<3;i++){const q=((el/900)+i/3)%1,r=(14+60*q)*k;H3.flat(T.ring,x,y+.4+i*.05,z,r*(1+.15*sin(el/120+i)),r*(1-.15*sin(el/120+i)),null,[.12,.02,.16,.6*(1-q)*k],false,el/600*(i%2?1:-1))}
+   for(let i=0;i<2;i++){const q=((el/1300)+i/2)%1,r=(10+30*q)*k;H3.spr(T.ring,x,y+20+6*sin(el/300+i),z,r,r*.6,null,[.25,0,.3,.45*(1-q)*k],true,el/400*(i?1:-1),true)}
+   H3.flat(T.glow,x,y+.3,z,70*k,70*k,null,[0,0,0,.55*k],false)}
+  // estática preta e branca em volta dele e do inimigo
+  for(const [cx,cy,cz,rr,n] of [[x,y+16,z,16,4],[tgt[0],tgt[1]+4,tgt[2],I.Er+4,3]])for(let i=0;i<n;i++){if(rnd()>.7*k)continue;const yy=cy-rr+rnd()*rr*2,a=rnd()*TAU,rr2=rr*(.4+rnd()*.6),c=STAT[(rnd()*4)|0];
+   H3.strip(T.beam,cx+cos(a)*rr2,yy,cz+sin(a)*rr2,cx+cos(a)*rr2+(rnd()-.5)*14,yy,cz+sin(a)*rr2+(rnd()-.5)*14,1+rnd()*2,[c[0],c[1],c[2],.8],c[0]>.5)}
+  // tentáculos de sombra das costas até o inimigo (ondulam)
+  if(el>=600){const bk=jointW(SP3),q=sg(el,600,1000)*(el>2900?1-sg(el,2900,3150):1);
+   for(let i=0;i<4;i++){const a=i/4*TAU+el/700,o=[bk[0]+cos(a)*6,bk[1]+4+sin(a)*5,bk[2]+sin(a)*6],m=[lerp(o[0],tgt[0],.5)+cos(a+el/200)*10,lerp(o[1],tgt[1],.5)+12+sin(el/150+i)*6,lerp(o[2],tgt[2],.5)+sin(a+el/200)*10];
+    const e=lerp3(o,tgt,q);jag(o,lerp3(o,m,q),4,2,1.6*q,[0,0,0,.75],false);jag(lerp3(o,m,q),e,4,2,1.2*q,[.08,0,.1,.75],false)}}
+  if(E&&rnd()<.5*k){const a=rnd()*TAU,r=8+rnd()*20;E.emit({x:x+cos(a)*r,y:y+rnd()*30,z:z+sin(a)*r,vx:-cos(a)*.08,vy:.05,vz:-sin(a)*.08,g:0,life:700,s0:3,s1:7,c:[0,0,0],a:.5,drag:.99,add:false})}
+  // pulsos de dano psicológico no inimigo: escurece, pisca branco/preto e a estática estoura
+  SL_AT.forEach((a,i)=>{if(once(s,1<<i,el,a)){const f=i===SL_AT.length-1,P=toCam(tgt[0],tgt[1],tgt[2],I.Er*.3);burst(P[0],P[1],P[2],f?36:14,f?2.2:1.4,f?600:420,STAT,false,false);shake(f?320:110,f?[34,26,40]:12)}});
+  for(const a of SL_AT){const q=el-a;if(q<0||q>260)continue;const f=a===SL_AT[5],P=toCam(tgt[0],tgt[1],tgt[2],I.Er*.3),w=1-q/260,blk=(q/40|0)%2;
+   H3.spr(T.glow,P[0],P[1],P[2],(f?60:36)*w+10,(f?60:36)*w+10,null,blk?[0,0,0,.7*w]:[1,1,1,.6*w],!blk,0,true);
+   if(T.ring)H3.spr(T.ring,P[0],P[1],P[2],(f?70:40)*(1-w)+8,(f?70:40)*(1-w)+8,null,[.4,0,.5,.7*w],true,0,true)}};
+ return R}
+const SKF={Goku:goku,Luffy:luffy,Gon:gon,Itadori:itadori,'Goku Kaioken':gokuKai,Yajirobe:yajirobe,Yamcha:yamcha,Tenshinhan:tenshinhan,Gohan:gohan,Kuririn:kuririn,Nappa:nappa,Vegeta:vegeta,Piccolo:piccolo,Chara:chara,Sally:sally,Ghostface:ghostface,'Jeff the Killer':jeff,'Sonic.exe':sonicExe,Jason:jason,Chucky:chucky,Baldi:baldi,Nemesis:nemesis,'Slender Man':slender};
 CH3.sk=nm=>!!SKF[nm];
 // ---------- aura do Kaioken: chama vermelha em volta do corpo (brilho que pulsa + labaredas subindo + faíscas) ----------
 const KAI=[[1,.12,.1],[1,.35,.2],[.85,0,.05],[1,.65,.5]];
