@@ -9413,6 +9413,57 @@ const SHEET={
 })();
 </script>
 <script>
+// ===================== Gráficos extras do 3D (leves): cor de cada mundo, luz em faixas nos personagens, vinheta e partículas de clima =====================
+// · Cor de cada mundo: um ajuste de saturação, contraste e tom no fim de cada shader da cena (céu, chão, cenário, personagens, partículas).
+//   Não tem passe extra na tela: o código é colocado dentro dos shaders quando eles são compilados (gancho em gl.shaderSource do contexto do 3D)
+//   e os valores são enviados quando cada programa é usado (gancho em gl.useProgram). Só entra nos shaders que têm névoa (uFog): sombras e filtros ficam como estão.
+// · Personagens em estilo desenho: nos shaders que usam a luz uMD (jogador, lutadores, monstros), a luz do sol vira 2 faixas bem marcadas e o brilho da borda fica nítido.
+// · Sombra nos cantos: ao montar as cenas, a base das paredes, troncos e pedras fica mais escura (feito no MB.pack, ver H3.aoOn; custo zero durante o jogo).
+// · Vinheta suave em todos os mundos (CSS, sem custo) · redemoinhos de poeira no deserto, sementes voando no Mundo 1 e vaga-lumes no Halloween.
+(function(){
+'use strict';
+const PI=Math.PI,TAU=PI*2,sin=Math.sin,cos=Math.cos,hypot=Math.hypot,min=Math.min,max=Math.max,rnd=Math.random;
+// ---------- cor de cada mundo (desvios: 0 = sem mudança) · sat, contraste, tom r/g/b ----------
+const GR={field:[.12,.06,.03,.01,-.03],db:[.10,.08,.05,.01,-.06],hal:[.06,.04,-.03,-.05,.05],halIn:[.05,.04,.03,-.03,0],ice:[-.05,.06,-.05,0,.06],hall:[.06,.06,.05,-.02,-.04],lich:[0,.04,-.02,.03,-.02],raid:[.05,.05,0,0,0]};
+const Z=[0,0,0,0,0];
+const G=window.GFX2={on:true,GR};
+try{if(localStorage.getItem('mp_fx2')==='0')G.on=false}catch(e){}
+const CEL=`float celD(float d){return smoothstep(-0.02,0.07,d)*0.55+smoothstep(0.40,0.48,d)*0.45;}
+float celR(float r){return smoothstep(0.56,0.72,r)*0.7;}
+`;
+const TAIL=`
+uniform vec4 uGrA;uniform vec3 uGrT;
+vec3 grd_(vec3 c){float l=dot(c,vec3(0.299,0.587,0.114));c=mix(vec3(l),c,1.0+uGrA.x);c=(c-0.5)*(1.0+uGrA.y)+0.5;return max(c*(1.0+uGrT),0.0);}
+void main(){main_g_();`;
+function patch(src){
+ if(typeof src!=='string'||src.indexOf('gl_FragColor')<0||src.indexOf('uFog')<0||src.indexOf('main_g_')>=0)return src;
+ const m=/void\s+main\s*\(\s*(void)?\s*\)/.exec(src);if(!m)return src;
+ // personagens: luz do sol em faixas e brilho da borda nítido
+ if(src.indexOf('uMD')>=0){
+  src=src.split('max(dot(n,uMD),0.0)').join('celD(dot(n,uMD))');
+  src=src.split('pow(1.0-max(dot(n,V),0.0),2.0)').join('celR(1.0-max(dot(n,V),0.0))');
+  src=src.split('pow(1.0-max(dot(n,V),0.0),3.0)').join('celR(1.0-max(dot(n,V),0.0))');
+  const m2=/void\s+main\s*\(\s*(void)?\s*\)/.exec(src);src=src.slice(0,m2.index)+CEL+src.slice(m2.index)}
+ const m3=/void\s+main\s*\(\s*(void)?\s*\)/.exec(src);
+ src=src.slice(0,m3.index)+'void main_g_()'+src.slice(m3.index+m3[0].length);
+ const add=src.indexOf('uAdd')>=0;   // sprites somados (brilhos): ficam como estão
+ return src+TAIL+(add?'if(uAdd<0.5)':'')+'gl_FragColor.rgb=grd_(gl_FragColor.rgb);}\n'}
+const LOC=new WeakMap();let GV=1,curId=null,curV=Z;
+function sceneId(){try{const H3=window.H3,s=H3&&H3.curSC&&H3.curSC();return s&&s.id||''}catch(e){return ''}}
+function apply(gl,p){const id=G.on?sceneId():'';if(id!==curId){curId=id;curV=(G.on&&GR[id])||Z;GV++}
+ let L=LOC.get(p);if(!L){L={a:gl.getUniformLocation(p,'uGrA'),t:gl.getUniformLocation(p,'uGrT'),v:0};LOC.set(p,L)}
+ if(!L.a||L.v===GV)return;L.v=GV;gl.uniform4f(L.a,curV[0],curV[1],0,0);if(L.t)gl.uniform3f(L.t,curV[2],curV[3],curV[4])}
+G.refresh=()=>{curId=null};
+window.GRADE_GL=function(gl){if(!gl||gl._gr2)return;gl._gr2=1;
+ const ss=gl.shaderSource.bind(gl),up=gl.useProgram.bind(gl);
+ gl.shaderSource=function(sh,src){let s=src;try{s=patch(src)}catch(e){s=src}return ss(sh,s)};
+ gl.useProgram=function(p){up(p);if(p)try{apply(gl,p)}catch(e){}}};
+// o contexto já existe (3D ligado antes deste script): os shaders já compilados ficam sem o ajuste até o próximo (re)carregamento do 3D
+try{const H3=window.H3,gl=H3&&H3.gl&&H3.gl();if(gl)window.GRADE_GL(gl)}catch(e){}
+
+})();
+</script>
+<script>
 // ===================== Modo 3D do Salão do Demônio (TESTE) — parte 1: motor WebGL =====================
 // Motor 3D pequeno e sem biblioteca: malhas "low poly" de cor chapada (cada face tem a sua cor), luz por pixel com até 12 luzes de ponto
 // (tochas, brasas, bolas de fogo...), névoa, cartazes (sprites) para personagens e brilhos, e um canvas 2D por cima para textos.
@@ -9514,7 +9565,8 @@ class MB{
  get count(){return this.a.length/10}
  // empacota num buffer (28 bytes por vértice: posição e normal em float, cor em bytes). pack() não precisa do WebGL (dá para fazer aos poucos, antes de ter o contexto); build() = pack() + subir para a placa
  pack(){const A=this.a,n=A.length/10,buf=new ArrayBuffer(n*28),f=new Float32Array(buf),u=new Uint8Array(buf),pk=this.pk;let sx=0,sy=0,sz=0;
-  for(let i=0;i<n;i++){const s=i*10,d=i*7,o=i*28+24;f[d]=A[s];f[d+1]=A[s+1];f[d+2]=A[s+2];f[d+3]=A[s+3];f[d+4]=A[s+4];f[d+5]=A[s+5];u[o]=A[s+6];u[o+1]=A[s+7];u[o+2]=A[s+8];
+  const AO=H3.aoOn&&!this.noAO&&H3.aoBake?H3.aoBake(A,n,pk):null;   // sombra nos cantos (só enquanto as cenas são montadas)
+  for(let i=0;i<n;i++){const s=i*10,d=i*7,o=i*28+24;f[d]=A[s];f[d+1]=A[s+1];f[d+2]=A[s+2];f[d+3]=A[s+3];f[d+4]=A[s+4];f[d+5]=A[s+5];if(AO){const k=AO[i];u[o]=A[s+6]*k;u[o+1]=A[s+7]*k;u[o+2]=A[s+8]*k}else{u[o]=A[s+6];u[o+1]=A[s+7];u[o+2]=A[s+8]}
    if(pk){const v=A[s+9],sw=min(15,floor(v*.5+1e-6));u[o+3]=sw*16+min(15,Math.round((v-sw*2)*15))}else u[o+3]=A[s+9]*255;
    sx+=A[s];sy+=A[s+1];sz+=A[s+2]}
   let cx=sx/(n||1),cy=sy/(n||1),cz=sz/(n||1),rad=0;const bb=[1e9,1e9,1e9,-1e9,-1e9,-1e9];
@@ -9523,6 +9575,15 @@ class MB{
  build(gl){return H3.upload(gl,this.pack())}
 }
 H3.MB=MB;
+// sombra nos cantos (feita uma vez, ao montar a cena): paredes, troncos e pedras ficam mais escuros perto da base. A "base" de cada pedaço de 12 x 12 é o
+// ponto mais baixo da própria malha ali; só escurece faces de lado ou para baixo (o chão e os topos não mudam), nunca folhas que balançam nem o que brilha.
+H3.aoBake=function(A,n,pk){const CS=12,mp=new Map();let y0=1e9,y1=-1e9;const key=(x,z)=>Math.floor(x/CS)*100003+Math.floor(z/CS);
+ for(let i=0;i<n;i++){const s=i*10,y=A[s+1];if(y<y0)y0=y;if(y>y1)y1=y;const k=key(A[s],A[s+2]),m=mp.get(k);if(m===undefined||y<m)mp.set(k,y)}
+ const R=Math.max(2,Math.min(14,(y1-y0)*.3)),o=new Float32Array(n);
+ for(let i=0;i<n;i++){const s=i*10,ny=A[s+4],e=A[s+9];o[i]=1;
+  if(pk){const sw=Math.floor(e*.5+1e-6);if(sw>0||e-sw*2>.01)continue}else if(e>.01)continue;
+  if(ny>.7)continue;let k=(A[s+1]-mp.get(key(A[s],A[s+2])))/R;k=k<0?0:k>1?1:k;k=k*k*(3-2*k);let fct=.62+.38*k;if(ny<-.5)fct=Math.min(fct,.84);o[i]=fct}
+ return o};
 H3.upload=(gl,p)=>{const vbo=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,vbo);gl.bufferData(gl.ARRAY_BUFFER,p.buf,gl.STATIC_DRAW);const m={vbo,n:p.n,cx:p.cx,cy:p.cy,cz:p.cz,rad:p.rad,pk:p.pk,bb:p.bb};try{H3.lodKeep&&H3.lodKeep(p,m,gl)}catch(e){}return m};
 
 // ---------- WebGL ----------
@@ -9649,7 +9710,8 @@ vec3 waterShade(vec3 base,vec3 p,vec3 V,float cs){
  float sd=max(dot(R,uSun),0.0);float gl=pow(sd,110.0)*1.8+pow(sd,14.0)*0.14;
  vec3 lg=mix(uGndA,uSkyA,0.75)+uSunC*(uSun.y*0.8)*cs;
  vec3 col=base*lg*(0.9+0.1*a*b);
- return mix(col,refl,fr*0.72)+uSunC*gl*cs;}
+ float sp=pow(max(sin(q.x*1.9+t*2.7+a)*sin(q.y*1.7-t*2.2+b),0.0),28.0)*smoothstep(0.0,0.3,uSun.y);
+ return mix(col,refl,fr*0.72)+uSunC*(gl+sp*(0.25+fr*0.6))*cs;}
 `;
 // sombras do sol (mapa de profundidade visto do sol, em volta do jogador): uSh = [0 desligado · 1 simples · 2 suave (PCF), deslocamento pela normal, início e fim do sumiço]
 const SH_COMMON=`uniform sampler2D uShT;uniform mat4 uSM;uniform vec4 uSh;uniform vec2 uShR;uniform vec3 uFoc;uniform vec4 uCut;
@@ -9940,6 +10002,7 @@ function flushSprites(fogv){
 function init(canvas){
  cv=canvas;if(gl)return true;
  try{gl=cv.getContext('webgl',{antialias:true,alpha:false,depth:true,stencil:false,powerPreference:'high-performance',preserveDrawingBuffer:false})||cv.getContext('experimental-webgl')}catch(e){gl=null}
+ if(gl&&window.GRADE_GL)try{GRADE_GL(gl)}catch(e){}   // cor de cada mundo e personagens em estilo desenho (ver 'Gráficos extras do 3D')
  if(!gl){H3.ok=false;return false}
  if(!setup()){H3.ok=false;gl=null;return false}
  cv.addEventListener('webglcontextlost',e=>{e.preventDefault();lost=true;if(H3.onLost)H3.onLost()},false);
@@ -10783,7 +10846,7 @@ const PI=Math.PI,TAU=PI*2,sin=Math.sin,cos=Math.cos,abs=Math.abs,min=Math.min,ma
 const clp=(v,a,b)=>v<a?a:v>b?b:v;
 const NM3='Herobrine 3D',ALT_Y=14.6,BZ=-16;                    // nome do personagem · topo do altar · Z do Demônio
 const angd=(a,b)=>{let d=(b-a)%TAU;if(d>PI)d-=TAU;if(d<-PI)d+=TAU;return d};
-const SCN=H3.scenes=H3.scenes||{};let SC=null;                  // cenas registradas · cena do modo 3D em uso
+const SCN=H3.scenes=H3.scenes||{};let SC=null;H3.curSC=()=>SC;                  // cenas registradas · cena do modo 3D em uso
 const sceneNow=()=>world===0?(X.inRoom()?SCN.hall:(SCN.field||null)):world===2?SCN.ice:world===4?(SCN.db||null):world===3?(SCN.raid||null):world===1?((window.LICH&&LICH.in)?(SCN.lich||null):(window.HAL&&HAL.inside)?(SCN.halIn||null):(SCN.hal||null)):null;
 const S=H3.S={mode:0,yaw:0,pitch:0,moving:false,step:0,dead:false,built:false,qs0:1,punchT:0,bossYaw:0,fr:0,cam:{x:0,y:21,z:131,yaw:0,pitch:0,fov:1},foc:{x:0,y:0,z:131},cssW:896,cssH:412,px:0,pz:131,err:0,ft:16,lastT:0,hint:0,sc:null,
  jh:0,jv:0,isoY:null};
@@ -24182,13 +24245,13 @@ varying vec3 vP;varying vec3 vN;varying vec2 vT;
 void main(){vec3 p=uMin+aP*uSz;mat4 S=uB[int(aJ.x+0.5)]*aW.x+uB[int(aJ.y+0.5)]*aW.y+uB[int(aJ.z+0.5)]*aW.z+uB[int(aJ.w+0.5)]*aW.w;
  vec4 w=uM*(S*vec4(p,1.0));vP=w.xyz;vN=(uM*(S*vec4(aN,0.0))).xyz;vT=aT;gl_Position=uVP*w;}`;
 const FS=HP+`varying vec3 vP;varying vec3 vN;varying vec2 vT;
-uniform sampler2D uTex;uniform vec3 uCam;uniform vec4 uFog;uniform float uFO;uniform vec3 uAmb;uniform vec3 uSD;uniform vec3 uSC;uniform vec4 uLp[4];uniform vec3 uLc[4];
+uniform sampler2D uTex;uniform vec3 uCam;uniform vec4 uFog;uniform float uFO;uniform vec3 uAmb;uniform vec3 uMD;uniform vec3 uSC;uniform vec4 uLp[4];uniform vec3 uLc[4];
 uniform vec4 uFlc;uniform float uDis;uniform vec3 uDisC;
 void main(){vec3 alb=texture2D(uTex,vT).rgb;vec3 n=normalize(vN);vec3 V=uCam-vP;float dV=length(V);V/=dV;if(dot(n,V)<0.0)n=-n;
- vec3 lg=uAmb*(0.55+0.25*max(n.y,0.0))+uSC*max(dot(n,uSD),0.0)*1.0;
+ vec3 lg=uAmb*(0.55+0.25*max(n.y,0.0))+uSC*max(dot(n,uMD),0.0)*1.0;
  for(int i=0;i<4;i++){vec3 d=uLp[i].xyz-vP;float r=uLp[i].w;float a=1.0-dot(d,d)/(r*r);if(a>0.0)lg+=uLc[i]*a*a*(0.35+0.65*max(dot(n,normalize(d)),0.0));}
  vec3 c=alb*lg;float fr=pow(1.0-max(dot(n,V),0.0),3.0);c+=uSC*fr*0.18;
- vec3 H=normalize(uSD+V);c+=uSC*pow(max(dot(n,H),0.0),24.0)*0.12;
+ vec3 H=normalize(uMD+V);c+=uSC*pow(max(dot(n,H),0.0),24.0)*0.12;
  if(uDis>0.0){float nz=fract(sin(dot(floor(vT*64.0),vec2(12.9898,78.233)))*43758.5453);float b=fract(52.9829189*fract(dot(gl_FragCoord.xy,vec2(0.06711056,0.00583715))));float th=nz*0.8+b*0.2;if(th<uDis)discard;if(th<uDis+0.07)c+=uDisC*1.6;}
  c=mix(c,uFlc.rgb,uFlc.a);
  c=c/(1.0+c*0.15);float dF=max(dV-uFO,0.0);float f=1.0-exp(-dF*dF*uFog.a*uFog.a);c=mix(c,uFog.rgb,f);gl_FragColor=vec4(c,1.0);}`;
@@ -24199,7 +24262,7 @@ let VB=null,IB=null;
 function build(gl){G.gl=gl;G.ok=false;G.tex=null;
  const p=gl.createProgram();gl.attachShader(p,shd(gl,gl.VERTEX_SHADER,VS));gl.attachShader(p,shd(gl,gl.FRAGMENT_SHADER,FS));['aP','aN','aT','aJ','aW'].forEach((a,i)=>gl.bindAttribLocation(p,i,a));gl.linkProgram(p);
  if(!gl.getProgramParameter(p,gl.LINK_STATUS))throw new Error('DINO3 programa: '+gl.getProgramInfoLog(p));G.p=p;G.u={};
- for(const n of['uVP','uM','uB','uMin','uSz','uTex','uCam','uFog','uFO','uAmb','uSD','uSC','uLp','uLc','uFlc','uDis','uDisC'])G.u[n]=gl.getUniformLocation(p,n);
+ for(const n of['uVP','uM','uB','uMin','uSz','uTex','uCam','uFog','uFO','uAmb','uMD','uSC','uLp','uLc','uFlc','uDis','uDisC'])G.u[n]=gl.getUniformLocation(p,n);
  if(!VB){VB=b64(DATA.vb);IB=b64(DATA.ib)}
  G.vb=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,G.vb);gl.bufferData(gl.ARRAY_BUFFER,VB,gl.STATIC_DRAW);
  G.ib=gl.createBuffer();gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,G.ib);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,IB,gl.STATIC_DRAW);
@@ -24287,7 +24350,7 @@ function visible(now){const out=[];const C=H3.cam().p,dt=lastT?clp((now-lastT)/1
 DINO3.draw=function(){const gl=ensure();if(!gl||!here())return;DINO3.on=true;const now=DINO3.frz||Date.now(),L=visible(now);DINO3.list=L;if(!L.length||!G.tex)return;
  const VP=H3.gl_frame().VP,cam=H3.cam().p,fog=H3.fogv(),S=H3.S||{},Cm=S.cam,F=S.foc||Cm,FO=Cm&&F?max(0,hypot(Cm.x-F.x,Cm.y-F.y,Cm.z-F.z)-26):0,u=G.u,amb=SC.amb||[1,1,1];
  gl.useProgram(G.p);gl.uniformMatrix4fv(u.uVP,false,VP);gl.uniform3f(u.uCam,cam[0],cam[1],cam[2]);gl.uniform4fv(u.uFog,fog);gl.uniform1f(u.uFO,FO);
- AMB[0]=amb[0]*.92;AMB[1]=amb[1]*.9;AMB[2]=amb[2]*.9;gl.uniform3fv(u.uAmb,AMB);gl.uniform3fv(u.uSD,SD);gl.uniform3fv(u.uSC,SCOL);gl.uniform1i(u.uTex,0);
+ AMB[0]=amb[0]*.92;AMB[1]=amb[1]*.9;AMB[2]=amb[2]*.9;gl.uniform3fv(u.uAmb,AMB);gl.uniform3fv(u.uMD,SD);gl.uniform3fv(u.uSC,SCOL);gl.uniform1i(u.uTex,0);
  gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,G.tex);
  gl.bindBuffer(gl.ARRAY_BUFFER,G.vb);for(let i=0;i<5;i++)gl.enableVertexAttribArray(i);
  gl.vertexAttribPointer(0,3,gl.UNSIGNED_SHORT,true,24,0);gl.vertexAttribPointer(1,3,gl.BYTE,true,24,8);gl.vertexAttribPointer(2,2,gl.UNSIGNED_SHORT,true,24,12);gl.vertexAttribPointer(3,4,gl.UNSIGNED_BYTE,false,24,16);gl.vertexAttribPointer(4,4,gl.UNSIGNED_BYTE,true,24,20);
@@ -24331,6 +24394,37 @@ DINO3.bars=function(x,t,C,sc){if(!here()||typeof window.HPBAR!=='function'||!H3.
   const k=(sc||1)*clp(130/p[2],.75,1.25);x.imageSmoothingEnabled=false;x.drawImage(HB,Math.round(p[0]-48*k),Math.round(p[1]-22*k),Math.round(96*k),Math.round(30*k))}};
 {const _ox=SC.overlayExtra;SC.overlayExtra=function(x,t,C,sc){const r=_ox?_ox.apply(this,arguments):undefined;try{DINO3.bars(x,t,C,sc)}catch(e){if(!DINO3.err2){DINO3.err2=1;console.error('DINO3 barra',e)}}return r}}
 DINO3.dbg={G,st,POS,DEF};
+})();
+</script>
+<script>
+// ===================== Gráficos extras do 3D (parte 2): vinheta, partículas de clima e sombra nos cantos ao montar as cenas =====================
+(function(){
+'use strict';
+const H3=window.H3;if(!H3||!window.GFX2)return;const G=H3.GFX2=window.GFX2;
+const PI=Math.PI,TAU=PI*2,sin=Math.sin,cos=Math.cos,rnd=Math.random;
+// ---------- vinheta suave (todos os mundos; Halloween e Lich mantêm a deles) ----------
+{const st=document.createElement('style');st.textContent='body.h3on:not(.h3hal):not(.h3lich) #h3ov{background:radial-gradient(ellipse at 50% 48%,rgba(0,0,0,0) 58%,rgba(20,14,8,.16) 82%,rgba(10,6,2,.34) 100%)}';document.head.appendChild(st)}
+
+// ---------- partículas de clima (no frameFx de cada cena) ----------
+const FX=()=>H3.fx;
+function wrapFx(id,fn){const S=H3.scenes&&H3.scenes[id];if(!S)return;const _f=S.frameFx;S.frameFx=function(t,C){const r=_f?_f.apply(this,arguments):undefined;try{if(G.on&&C)fn(t,C,S)}catch(e){if(!G.err){G.err=1;console.error('GFX2',e)}}return r}}
+const fy=(S,x,z)=>{try{return S.floorY?S.floorY(x,z):0}catch(e){return 0}};
+// deserto: redemoinhos de poeira (de vez em quando, um perto da câmera, andando devagar e girando)
+const DEV=[];let devT=0;
+wrapFx('db',(t,C,S)=>{const f=FX();if(!f)return;const now=Date.now(),DBW=window.DBW,K=DBW&&DBW.K||2;
+ if(C.x>1668*K&&now>devT&&DEV.length<2){devT=now+5000+rnd()*7000;const a=rnd()*TAU,r=140+rnd()*220;DEV.push({x:C.x+cos(a)*r,z:C.z+sin(a)*r,vx:(rnd()-.5)*.5,vz:(rnd()-.5)*.5,t0:now,dur:6000+rnd()*4000})}
+ for(let i=DEV.length-1;i>=0;i--){const d=DEV[i],u=(now-d.t0)/d.dur;if(u>1){DEV.splice(i,1);continue}d.x+=d.vx;d.z+=d.vz;const k=Math.sin(PI*u),g=fy(S,d.x,d.z);
+  for(let j=0;j<2;j++){if(rnd()>k)continue;const h=rnd(),an=rnd()*TAU,rr=3+h*16;
+   f.emit({x:d.x+cos(an)*rr,y:g+1+h*38,z:d.z+sin(an)*rr,vx:-sin(an)*.9+d.vx,vy:.12+h*.1,vz:cos(an)*.9+d.vz,g:0,life:1500+rnd()*700,s0:5+h*6,s1:12+h*14,c:[.88,.7,.47],a:.32,add:false,tex:'dot',drag:.97})}}});
+// Mundo 1: sementes de dente-de-leão voando com o vento perto do jogador
+wrapFx('field',(t,C,S)=>{const f=FX();if(!f||rnd()>.22)return;const a=rnd()*TAU,r=30+rnd()*170,x=C.x+cos(a)*r,z=C.z+sin(a)*r;
+ f.emit({x,y:fy(S,x,z)+3+rnd()*16,z,vx:.18+rnd()*.12,vy:.015+rnd()*.03,vz:(rnd()-.5)*.1,g:0,life:4500+rnd()*2500,s0:1.4,s1:1.1,c:[1,1,.94],a:.75,add:true,tex:'glow',drag:1})});
+// Halloween: vaga-lumes verde-amarelos perto do chão
+const halFF=(t,C,S)=>{const f=FX();if(!f||rnd()>.3)return;const a=rnd()*TAU,r=25+rnd()*150,x=C.x+cos(a)*r,z=C.z+sin(a)*r;
+ f.emit({x,y:fy(S,x,z)+2+rnd()*12,z,vx:(rnd()-.5)*.12,vy:(rnd()-.5)*.05,vz:(rnd()-.5)*.12,g:0,life:1800+rnd()*1800,s0:2.6,s1:1.6,c:[.75,1,.35],a:.95,add:true,tex:'glow',drag:.995})};
+wrapFx('hal',halFF);
+// sombra nos cantos: liga o H3.aoOn enquanto cada cena se monta
+for(const k in (H3.scenes||{})){const S=H3.scenes[k];for(const f of['build','stepBuild']){const o=S[f];if(typeof o!=='function')continue;S[f]=function(){H3.aoOn=G.on;try{return o.apply(this,arguments)}finally{H3.aoOn=false}}}}
 })();
 </script>
 <script>
