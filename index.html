@@ -23586,7 +23586,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261103054000;
+const GAME_BUILD=20261103061500;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
@@ -25155,7 +25155,7 @@ function* gen(gl){
   SHAFT.push([x*K,z*K,30+r()*44,.05+r()*.06])}
  NJW.pct=.92;yield;
  // sobe o fixo para a placa de vídeo
- for(const c of CH){c.gm=c.g.count?H3.upload(gl,c.g.pack()):null;c.om=c.o.count?H3.upload(gl,c.o.pack()):null;c.g=null;c.o=null;yield}
+ for(const c of CH){c.gm=c.g.count?H3.upload(gl,c.g.pack()):null;c.om=c.o.count?H3.upload(gl,c.o.pack()):null;if(c.om){c.om.src=null;c.om.lod=null}c.g=null;c.o=null;yield}
  for(let f=0;f<WFF;f++){const mb=new MB(900+f,{pk:true});mb.push().S(K,K,K);wfSheet(mb,f);mb.pop();WFM.push(H3.upload(gl,mb.pack()))}   // quadros da cachoeira
  NJW.pct=1;NJW.ready=true;NJW.rev++;grassClear()}
 function step(ms){const gl=H3.gl();if(!gl)return false;if(NJW.ready)return true;if(!building)building=gen(gl);const t0=performance.now();
@@ -25365,11 +25365,13 @@ function islandH(I,x,z){const d=islD(I,x,z);if(d>1.45)return null;
  if(d>1)return WL-4-40*sm(1,1.4,d);
  if(d>.8)return lerp(5,WL-4,sm(.8,1,d));
  const hill=(vn(x/170,z/170,3)*.75+vn(x/60,z/60,5)*.25)*26*sm(.8,.35,d);return 5+hill}
+const PADS=[];   // chão plano debaixo das casas, moinhos e farol: {x,z,hw,hd,a,h}
 function baseH(x,z){let h=WL-44;for(const I of ISL)if(I.on){const v=islandH(I,x,z);if(v!==null&&v>h)h=v}
  // praça do porto e vila: mais plano
  const pd=hypot(x-PORT.x,(z-PORT.z)*1.2);if(pd<170){const k=1-sm(90,170,pd);h=lerp(h,max(h,6),k);if(pd<110&&islD(I1,x,z)<1.02)h=lerp(h,6,1-sm(70,110,pd))}
  const rd=roadD(x,z);if(rd<30&&h>4)h=lerp(h,max(5,h*.85),1-sm(10,30,rd));
  for(const Q of PAST)if(inRect(Q,x,z,30))h=lerp(h,h*.9,.5);
+ for(const Q of PADS){const c=cos(Q.a),sn=sin(Q.a),dx=x-Q.x,dz=z-Q.z,d=max(abs(dx*c-dz*sn)-Q.hw,abs(dx*sn+dz*c)-Q.hd);if(d<16)h=lerp(h,Q.h,1-sm(0,16,d))}
  return h}
 const onPier=(x,z)=>(abs(x-PIER.x)<PIER.hw&&z>PIER.z0&&z<PIER.z1)||(abs(z-PIERT.z)<PIERT.hw&&x>PIERT.x0&&x<PIERT.x1);
 const BSC=1.7,DECK=5.2;                                // tamanho do barco e altura do convés (acima da água, projeto)
@@ -25415,20 +25417,55 @@ function text(mb,str,px,d,col,e){const n=str.length,w=(n*6-1)*px,x0=-w/2;
 // ============================================================ construções (projeto, a malha toda leva S(K)) ============================================================
 const WALLC=['#f3e6c4','#efd6a8','#e9dcc8','#d9c6e6','#f2d0b4','#e6e0b8'],ROOFC=['#c0473a','#5d9a4a','#4b74b8','#b9573a','#8a5aa8','#3f8f8a','#c98a2e'];
 const WOOD='#6b4a30',WOOD2='#8a6440',WOODD='#4a3122';
-function house(mb,x,z,yaw,r,big){const w=(big?60:34)+r()*16,d=(big?40:28)+r()*10,h=(big?30:18)+r()*10,wc=WALLC[(r()*WALLC.length)|0],rc=ROOFC[(r()*ROOFC.length)|0],y=floorY(x,z);
- mb.push().T(x,y-1,z).RY(yaw);
- mb.box(w+2,3,d+2,'#9a9488',0,true);mb.push().T(0,2,0).box(w,h,d,wc,0,true).pop();
- for(const sx of[-1,1])mb.push().T(sx*(w/2-1),2,0).box(2.4,h,d+.6,WOOD,0,true).pop();   // cantoneiras de madeira
- mb.push().T(0,2+h-2,0).box(w+.8,2,d+.8,WOOD,0,true).pop();
- // janelas e porta (frente +z e trás)
- for(const sd of[-1,1]){const z=sd*(d/2+.3);const nwin=max(1,floor((w-10)/14));
-  for(let i=0;i<nwin;i++){const xx=-w/2+(i+.5)*w/nwin;if(sd>0&&abs(xx)<7)continue;mb.push().T(xx,2+h*.45,z).box(7,8,.8,'#3d5a7a',.15,true).pop();mb.push().T(xx,2+h*.45-1,z+sd*.3).box(8.6,1.2,1,'#f5f0e6',0,true).pop()}
-  if(sd>0){mb.push().T(0,2,z).box(big?16:7,big?18:12,.8,WOODD,0,true).pop();mb.push().T(0,2+(big?18:12),z).box(big?18:9,1.4,1.4,'#f5f0e6',0,true).pop()}}
- if(h>24){for(const sd of[-1,1])for(let i=0;i<3;i++){const xx=-w/2+(i+.5)*w/3;mb.push().T(xx,2+h*.78,sd*(d/2+.3)).box(6,6,.8,'#3d5a7a',.15,true).pop()}}
- mb.push();roofGable(mb,w,d/2+5,2+h,2+h+d*.42,rc,3);mb.pop();
- for(const sx of[-1,1]){const x0=sx*(w/2+.2);th(mb,[x0,2+h,-d/2],[x0,2+h,d/2],[x0,2+h+d*.42-1,0],wc,0,[sx,0,0])}
- if(r()<.75)mb.push().T(w*.25*(r()<.5?-1:1),2+h+d*.18,-d*.15).box(5,d*.42,5,'#a0786a',0,true).pop();   // chaminé
- mb.pop();return{w,d}}
+function houseP(r,big){return{w:(big?60:34)+r()*16,d:(big?40:28)+r()*10,h:(big?30:18)+r()*10,wc:WALLC[(r()*WALLC.length)|0],rc:ROOFC[(r()*ROOFC.length)|0],chim:r()<.75?(r()<.5?-1:1):0,big:!!big,fl:r()<.7,lamp:r()<.5}}
+const FLW=['#ff6f91','#ffd23f','#ffffff','#b38cff','#ff8a3d'];
+function house(mb,x,z,yaw,H,r){const{w,d,h,wc,rc,big}=H,y=floorY(x,z);
+ mb.push().T(x,y-1.5,z).RY(yaw);
+ mb.box(w+3,4,d+3,'#9a9488',0,true);mb.push().T(0,2.5,0).box(w,h,d,wc,0,true).pop();
+ for(const sx of[-1,1])mb.push().T(sx*(w/2-1),2.5,0).box(2.4,h,d+.6,WOOD,0,true).pop();   // cantoneiras de madeira
+ mb.push().T(0,2.5+h-2,0).box(w+.8,2,d+.8,WOOD,0,true).pop();
+ // janelas (com floreira embaixo) e porta com degrau
+ for(const sd of[-1,1]){const zf=sd*(d/2+.3),nwin=max(1,floor((w-10)/14));
+  for(let i=0;i<nwin;i++){const xx=-w/2+(i+.5)*w/nwin;if(sd>0&&abs(xx)<8)continue;const yw=2.5+min(h*.45,10);
+   mb.push().T(xx,yw,zf).box(7,8,.8,'#3d5a7a',.15,true).pop();mb.push().T(xx,yw-1,zf+sd*.3).box(8.6,1.2,1,'#f5f0e6',0,true).pop();mb.push().T(xx,yw+8,zf+sd*.3).box(8.6,1,1,'#f5f0e6',0,true).pop();
+   if(H.fl&&sd>0){mb.push().T(xx,yw-3.4,zf+sd*1.4).box(8,2.4,2.6,'#8a5a34',0,true).pop();for(let k=0;k<4;k++)mb.push().T(xx-3+k*2,yw-.6,zf+sd*1.4).sph(1.1,2,5,FLW[(k+i)%FLW.length],.1).pop()}}
+  if(sd>0){const dw=big?16:7,dh=big?18:12;mb.push().T(0,2.5,zf).box(dw,dh,.8,WOODD,0,true).pop();mb.push().T(0,2.5+dh,zf).box(dw+2,1.4,1.4,'#f5f0e6',0,true).pop();
+   mb.push().T(dw*.3,2.5+dh*.5,zf+.6).sph(.6,2,4,'#d8b25a',.2).pop();mb.push().T(0,-1,zf+2.4).box(dw+4,3.5,4.6,'#a9a397',0,true).pop();
+   if(H.lamp){mb.push().T(dw/2+3,2.5+dh-1,zf+1.6).box(2.4,3.2,2.4,'#ffe6a8',.9,true).push().T(0,3.2,0).box(3,.8,3,'#3c3f45',0,true).pop().pop()}}}
+ if(h>24){for(const sd of[-1,1])for(let i=0;i<3;i++){const xx=-w/2+(i+.5)*w/3;mb.push().T(xx,2.5+h*.78,sd*(d/2+.3)).box(6,6,.8,'#3d5a7a',.15,true).pop()}}
+ mb.push();roofGable(mb,w,d/2+5,2.5+h,2.5+h+d*.42,rc,3);mb.pop();
+ for(const sx of[-1,1]){const x0=sx*(w/2+.2);th(mb,[x0,2.5+h,-d/2],[x0,2.5+h,d/2],[x0,2.5+h+d*.42-1,0],wc,0,[sx,0,0]);mb.push().T(x0,2.5+h+d*.12,0).box(.8,4,4,'#3d5a7a',.15,true).pop()}
+ if(H.chim)mb.push().T(w*.25*H.chim,2.5+h+d*.18,-d*.15).box(5,d*.42,5,'#a0786a',0,true).push().T(0,d*.42,0).box(6,1.4,6,'#7d5a4a',0,true).pop().pop();
+ mb.pop();
+ if(H.chim){const c=cos(yaw),sn=sin(yaw),lx=w*.25*H.chim,lz=-d*.15;CHIM.push([(x+lx*c+lz*sn)*K,(y+1+h+d*.6+2)*K,(z-lx*sn+lz*c)*K])}
+ return{w,d}}
+// arbusto (bolas de folhas; às vezes com flores), palmeira da praia, pedra da praia, poste de luz, banco, poço, varal
+function bush(mb,x,z,s,r,fl){const y=floorY(x,z),G=['#3f8f3a','#4a9a40','#358a34','#56a548'];mb.push().T(x,y-1,z).S(s,s,s);mb.sw=1;
+ for(let k=0;k<4;k++){const a=k/4*TAU+r(),d=k?3.2:0;mb.push().T(cos(a)*d,3.2+(k?0:1.2),sin(a)*d).S(1,.8,1).sph(4.2-(k?.8:0),3,7,G[(k+((r()*2)|0))%4],0).pop()}
+ if(fl)for(let k=0;k<7;k++){const a=r()*TAU,e=r()*.9;mb.push().T(cos(a)*4.4*cos(e),3.4+sin(e)*3.8,sin(a)*4.4*cos(e)).sph(.9,2,4,fl,.15).pop()}
+ mb.sw=0;mb.pop()}
+function palm(mb,x,z,s,r){const y=floorY(x,z),lean=(r()-.5)*.6,a0=r()*TAU;mb.push().T(x,y-.5,z).RY(a0).S(s,s,s);
+ const pts=[],rs=[];for(let i=0;i<=6;i++){const u=i/6;pts.push([sin(u*1.4)*8*lean*4,u*40,0]);rs.push(2.3-u*1)}
+ mb.tube(pts,rs,7,'#9a7a4c',0,{cols:['#9a7a4c','#7e6038']});const top=pts[6];mb.sw=3;
+ for(let k=0;k<9;k++){const a=k/9*TAU,ca=cos(a),sa=sin(a),L=19+r()*4;const p0=[top[0],top[1],top[2]],p1=[top[0]+ca*L*.55,top[1]+3,top[2]+sa*L*.55],p2=[top[0]+ca*L,top[1]-7,top[2]+sa*L],w=3.4,px=-sa*w,pz=ca*w;
+  mb.quad(p0,[p1[0]+px,p1[1],p1[2]+pz],p2,[p1[0]-px,p1[1],p1[2]-pz],k%2?'#3f9a3a':'#52b048')}
+ for(let k=0;k<3;k++)mb.push().T(top[0]+cos(k*2.1)*1.6,top[1]-1.6,top[2]+sin(k*2.1)*1.6).sph(1.4,2,5,'#6b4a20',0).pop();
+ mb.sw=0;mb.pop()}
+function rock(mb,x,z,s,r){const y=floorY(x,z);mb.push().T(x,y-2*s,z).RY(r()*TAU).S(s*(1+r()*.4),s*.65,s);mb.cyl(6,4,6,6,['#8f8a80','#a39d92','#7d786e'][(r()*3)|0],0,{rot:r()});mb.pop()}
+function lamppost(mb,x,z){const y=floorY(x,z);mb.push().T(x,y-.5,z).cyl(1.6,1.2,2,8,'#3c3f45',0).push().T(0,2,0).cyl(.6,.6,20,6,'#3c3f45',0).pop().push().T(0,22,0).box(4.4,5.4,4.4,'#ffe6a8',.9,true).pop().push().T(0,27.4,0).cyl(3.6,.4,2.8,6,'#3c3f45',0).pop().pop();return y+24.5}
+function bench(mb,x,z,yaw){const y=floorY(x,z);mb.push().T(x,y,z).RY(yaw);mb.push().T(0,4,0).box(16,1.2,5,'#8a6440',0,true).pop();mb.push().T(0,6,-2.4).box(16,4,1,'#8a6440',0,true).pop();for(const sx of[-1,1])mb.push().T(sx*6.5,0,0).box(1.2,4,4,'#3c3f45',0,true).pop();mb.pop()}
+function well(mb,x,z){const y=floorY(x,z);mb.push().T(x,y-1,z);mb.cyl(9,9,7,12,'#a9a397',0,{cs:['#a9a397','#9a9488']});mb.push().T(0,6.9,0).cyl(7.6,7.6,.4,12,'#3a6fa0',.15).pop();
+ for(const sd of[-1,1])mb.push().T(sd*8,7,0).box(1.6,14,1.6,WOOD,0,true).pop();mb.push().T(0,20,0).RZ(PI/2).T(0,-9,0).cyl(.8,.8,18,6,WOODD,0).pop();
+ mb.push();roofGable(mb,18,8,19,25,'#b9573a',2);mb.pop();mb.push().T(0,12,0).cyl(.15,.15,8,4,'#d8c38e',0).pop();mb.push().T(0,10,0).cyl(1.8,1.4,3,8,'#8a5a34',0).pop();mb.pop()}
+function laundry(mb,x0,z0,x1,z1,r){const y0=floorY(x0,z0),y1=floorY(x1,z1);for(const[x,z,y]of[[x0,z0,y0],[x1,z1,y1]])mb.push().T(x,y,z).cyl(.7,.7,16,6,WOOD,0).pop();
+ const n=6;for(let i=0;i<n;i++){const t=(i+.5)/n,x=lerp(x0,x1,t),z=lerp(z0,z1,t),y=lerp(y0,y1,t)+15-sin(t*PI)*2,a=atan2(x1-x0,z1-z0);mb.sw=2;mb.push().T(x,y-5,z).RY(a+PI/2).box(.3,6+r()*3,4+r()*2,['#ffffff','#7fb6e8','#ff8a8a','#ffe08a','#9be09b'][(r()*5)|0],0).pop();mb.sw=0}
+ const L=hypot(x1-x0,z1-z0);mb.push().T((x0+x1)/2,(y0+y1)/2+15.4,(z0+z1)/2).RY(atan2(x1-x0,z1-z0)).box(.25,.25,L,'#e8e2d0',0).pop()}
+function cart(mb,x,z,yaw){const y=floorY(x,z);mb.push().T(x,y,z).RY(yaw);mb.push().T(0,5,0).box(12,4,18,'#8a6440',0,true).pop();for(const sd of[-1,1])mb.push().T(sd*7,5,2).RZ(PI/2).T(0,-.7,0).cyl(4.6,4.6,1.4,10,'#6b4a30',0).pop();
+ mb.push().T(0,8,12).RX(-.25).box(1,1,14,WOODD,0).pop();for(let k=0;k<3;k++)mb.push().T(-3+k*3,9+(k%2),-3+k*3).RZ(PI/2).T(0,-3,0).cyl(2.8,2.8,6,8,'#e2c46a',0).pop();mb.pop()}
+function trough(mb,x,z,yaw){const y=floorY(x,z);mb.push().T(x,y,z).RY(yaw).box(8,4,20,'#8a6440',0,true).push().T(0,3.4,0).box(6,.6,18,'#5fb0d8',.15,true).pop().pop()}
+// gaivota (dois quadros: asas em cima e embaixo), unidades do mundo
+function gullMB(up){const mb=new MB(up?901:902);mb.push().S(1,.7,1.6).sph(2.2,2,6,'#f4f4f2',0).pop();mb.push().T(0,.4,3.2).sph(1.3,2,5,'#f4f4f2',0).pop();mb.push().T(0,.2,4.6).box(.6,.5,1.6,'#e8a23a',0).pop();
+ const wy=up?3.4:-1.8;for(const sd of[-1,1]){th(mb,[0,.6,1],[sd*7,wy,-.5],[0,.6,-1.6],'#e8e8e4',0,[0,1,0]);th(mb,[sd*7,wy,-.5],[sd*12,wy-1.4,-2.2],[sd*6,wy,-1.6],'#3c3f45',0,[0,1,0])}return mb}
 // moinho de vento: torre redonda que afina, varanda com grade, chapéu; as pás são outra malha (girando)
 const MILL=[];
 function millTower(mb,x,z,yaw,r){const y=floorY(x,z),H=66,R0=14,R1=9.5,tc=['#f4ead8','#efe2c8','#f6e4cf'][(r()*3)|0],cap=['#3f7f8a','#b9573a','#5d8a4a'][(r()*3)|0];
@@ -25526,7 +25563,7 @@ function boatMB(seed,small){const mb=new MB(seed||555,{pk:true});mb.jit=.03;cons
 
 // ---------- oceano e espuma da praia ----------
 const CS=600,NCX=MW/CS,NCZ=MH/CS,GC=20,WS=40;
-const SAND=[236,214,160],SAND2=[222,196,140],GR0=[84,164,58],GR1=[112,184,70],ROADC=[214,184,128];
+const SAND=[236,214,160],SAND2=[222,196,140],GR0=[84,164,58],GR1=[112,184,70],ROADC=[192,162,112];
 function waterCol(x,z){const h=baseH(x,z);const deep=clp((WL-h)/40,0,1);return mixc([96,214,206],[28,92,170],sm(0,.9,deep))}
 function gcol(x,z){const h=baseH(x,z);
  if(h<3.5)return mixc(SAND2,SAND,vn(x/30,z/30,8));
@@ -25574,7 +25611,7 @@ function treeVar(gl,key){if(TV[key])return TV[key];const G=H3.fld&&H3.fld.nat&&H
 const TKEYS=['g13.0','g16.1','g19.0','d13.1','d16.0','a13.0'];
 
 // ============================================================ montagem ============================================================
-let CH=[],LIGHTS=[],OBJ=[],GLOW=[],building=null,SAILS=null,BOAT=null,BOATP=null,BOATS=[],CLOUD=[];
+let CH=[],LIGHTS=[],OBJ=[],GLOW=[],CHIM=[],GULLS=[],GULLM=null,building=null,SAILS=null,BOAT=null,BOATP=null,BOATS=[],CLOUD=[];
 const CHK=(x,z)=>{const i=clp(floor(x/CS),0,NCX-1),j=clp(floor(z/CS),0,NCZ-1);return CH[j*NCX+i]};
 const SPAWN={x:PIER.x*K,z:(PIER.z0+30)*K},BKd={x:PORT.x+70,z:PORT.z-10},BACK={x:BKd.x*K,z:BKd.z*K};
 const M1P={x:472,z:584};   // portal no Mundo 1 (a leste do portal do Mundo 2)
@@ -25582,64 +25619,87 @@ OCW.SPAWN=SPAWN;OCW.BACK=BACK;OCW.M1P=M1P;
 function addTree(key,xd,zd,s,yaw,col){const x=xd*K,z=zd*K,y=floorW(x,z)-1,v=TV[key];if(!v)return;const o={v:key,x,z,y,s,m:M4.trs(new Float32Array(16),x,y,z,0,yaw,0,s,s,s),tint:[1,1,1]},M=o.m;
  o.wx=M[0]*v.cx+M[4]*v.cy+M[8]*v.cz+M[12];o.wy=M[1]*v.cx+M[5]*v.cy+M[9]*v.cz+M[13];o.wz=M[2]*v.cx+M[6]*v.cy+M[10]*v.cz+M[14];o.rad=v.rad*s*1.02;OBJ.push(o);if(col)circ(xd,zd,col)}
 function* gen(gl){
- CG.fill(0);LIGHTS=[];OBJ=[];GLOW=[];MILL.length=0;FOAM=[];BOATS=[];CLOUD=[];
+ CG.fill(0);LIGHTS=[];OBJ=[];GLOW=[];MILL.length=0;FOAM=[];BOATS=[];CLOUD=[];PADS.length=0;CHIM.length=0;GULLS=[];
  const r=rng(20261103);
  CH=[];for(let j=0;j<NCZ;j++)for(let i=0;i<NCX;i++){const o=new MB(600+j*NCX+i,{pk:true});o.push().S(K,K,K);CH.push({i,j,g:new MB(200+j*NCX+i,{pk:true}),o,gm:null,om:null,cx:(i+.5)*CS*K,cz:(j+.5)*CS*K})}
  OCW.pct=.02;yield;
+ // ---- 1) onde fica cada construção (o chão debaixo delas fica plano) ----
+ const occ=[];const free=(x,z,R)=>{for(const o of occ)if(hypot(o[0]-x,o[1]-z)<o[2]+R)return false;if(roadD(x,z)<RHW+R*.7+4)return false;for(const Q of PAST)if(inRect(Q,x,z,R+8))return false;if(inRect(WHEAT,x,z,R+6))return false;
+  if(hypot(x-PORT.x,(z-PORT.z)*1.2)<95+R*.5)return false;if(islD(I1,x,z)>.74)return false;return true};
+ const WH={x:PORT.x-92,z:PORT.z-34,yaw:0,P:houseP(r,true)};PADS.push({x:WH.x,z:WH.z,hw:WH.P.w/2+4,hd:WH.P.d/2+6,a:0,h:6});
+ occ.push([WH.x,WH.z,50],[BKd.x,BKd.z,30]);
+ const HOUSES=[];
+ for(let k=0;k<700&&HOUSES.length<26;k++){const x=I1.x-300+r()*520,z=I1.z-40+r()*330;if(!free(x,z,30))continue;
+  let best=1e9,bx=0,bz=0;for(const P of ROADS)for(const p of P){const d=hypot(p[0]-x,p[1]-z);if(d<best){best=d;bx=p[0];bz=p[1]}}
+  const yaw=round(atan2(bx-x,bz-z)/(PI/2))*(PI/2),P=houseP(r,false);const H={x,z,yaw,P};HOUSES.push(H);occ.push([x,z,max(P.w,P.d)*.62+6]);
+  PADS.push({x,z,hw:P.w/2+4,hd:P.d/2+7,a:yaw,h:max(5.5,islandH(I1,x,z)||6)})}
+ const MILLS=[];for(const[dx,dz]of[[-40,-380],[140,-350],[-400,-30],[390,-20],[-300,200],[360,150],[-160,-330]]){let x=I1.x+dx,z=I1.z+dz;for(let k=0;k<20&&islD(I1,x,z)>.7;k++){x=lerp(x,I1.x,.06);z=lerp(z,I1.z,.06)}
+  MILLS.push([x,z,atan2(I1.x+120-x,I1.z+600-z)*.3+.3]);occ.push([x,z,30]);PADS.push({x,z,hw:20,hd:20,a:0,h:max(5.5,islandH(I1,x,z)||6)})}
+ let LH=[PORT.x+190,PSH-6];for(let k=0;k<20&&islD(I1,LH[0],LH[1])<.95;k++)LH[1]+=6;
+ OCW.pct=.05;yield;
+ // ---- 2) chão, mar e bordas ----
  rect(0,0,MW-1,40);rect(0,MH-41,MW-1,MH-1);rect(0,0,40,MH-1);rect(MW-41,0,MW-1,MH-1);
  for(const c of CH){ground(c.g,c.i,c.j);water(c.g,c.i,c.j);OCW.pct=min(.2,OCW.pct+.006);yield}
  // ---- porto ----
  {const mb=CHK(PIER.x,PIER.z0+100).o;pier(mb,r);
   for(const z of[PIER.z0+60,PIER.z0+150])for(const sd of[-1,1]){const x=PIER.x+sd*(PIER.hw-2);LIGHTS.push({x:x*K,y:(PIER.y+22)*K,z:z*K,r:60,cr:1,cg:.85,cb:.55,k:.15});GLOW.push([x*K,(PIER.y+22.5)*K,z*K,8,[1,.88,.6]])}}
- {const mb=CHK(PORT.x,PORT.z).o;const wx=PORT.x-90,wz=PORT.z-30;mb.push();const q=house(mb,wx,wz,0,r,true);mb.pop();orect(wx,wz,q.w/2+2,q.d/2+2,0);   // armazém
+ {const mb=CHK(PORT.x,PORT.z).o;const q=house(mb,WH.x,WH.z,0,WH.P,r);orect(WH.x,WH.z,q.w/2+2,q.d/2+2,0);   // armazém
   for(let k=0;k<6;k++)crate(mb,PORT.x-40+(k%3)*11,PORT.z+18+((k/3)|0)*12,1,r);for(let k=0;k<5;k++)barrel(mb,PORT.x+44+(k%3)*8,PORT.z+24+((k/3)|0)*9);
-  crate(mb,PIER.x-10,PIER.z0+40,.8,r);barrel(mb,PIER.x+12,PIER.z0+46)}
- {const lx=PORT.x+190,lz=PSH-6;let x=lx,z=lz;for(let k=0;k<20&&islD(I1,x,z)<.95;k++){z+=6}const yt=lighthouse(CHK(x,z).o,x,z);LIGHTS.push({x:x*K,y:yt*K,z:z*K,r:200,cr:1,cg:.92,cb:.6,k:.25});GLOW.push([x*K,yt*K,z*K,22,[1,.93,.65]])}
- // portal de volta
+  crate(mb,PIER.x-10,PIER.z0+40,.8,r);barrel(mb,PIER.x+12,PIER.z0+46);
+  for(const sd of[-1,1]){bench(mb,PORT.x+sd*40,PORT.z-40,0);circ(PORT.x+sd*40,PORT.z-40,8)}
+  for(const[x,z]of[[PORT.x-60,PORT.z+30],[PORT.x+70,PORT.z-50]]){const yt=lamppost(mb,x,z);circ(x,z,3);LIGHTS.push({x:x*K,y:yt*K,z:z*K,r:70,cr:1,cg:.85,cb:.55,k:.15});GLOW.push([x*K,yt*K,z*K,9,[1,.88,.6]])}
+  // redes e um barquinho na areia
+  for(let k=0;k<3;k++){const x=PORT.x-130-k*16,z=PSH+4+k*3;const y=floorY(x,z);mb.push().T(x,y+.3,z).RY(.4+k).S(1,.15,1).sph(6,2,8,'#7a8a6a',0).pop()}}
+ {const yt=lighthouse(CHK(LH[0],LH[1]).o,LH[0],LH[1]);LIGHTS.push({x:LH[0]*K,y:yt*K,z:LH[1]*K,r:200,cr:1,cg:.92,cb:.6,k:.25});GLOW.push([LH[0]*K,yt*K,LH[1]*K,22,[1,.93,.65]])}
  {const mb=CHK(BKd.x,BKd.z).o;mb.push().T(BKd.x,floorY(BKd.x,BKd.z),BKd.z).S(1/K,1/K,1/K).RY(PI/2);mb.inst(portalMB(),mb.m);mb.push().T(0,62,0);signMB(mb,'MUNDO 1');mb.pop();mb.pop();for(const sd of[-1,1])circ(BKd.x,BKd.z+sd*13,2.5)}
  OCW.pct=.3;yield;
- // ---- vila ----
- const occ=[];const free=(x,z,R)=>{for(const o of occ)if(hypot(o[0]-x,o[1]-z)<o[2]+R)return false;if(roadD(x,z)<RHW+R*.7+4)return false;for(const Q of PAST)if(inRect(Q,x,z,R+8))return false;if(inRect(WHEAT,x,z,R+6))return false;
-  if(hypot(x-PORT.x,(z-PORT.z)*1.2)<95+R*.5)return false;if(islD(I1,x,z)>.74)return false;return true};
- occ.push([PORT.x-90,PORT.z-30,48],[BKd.x,BKd.z,30]);
- let nh=0;for(let k=0;k<500&&nh<26;k++){const x=I1.x-280+r()*480,z=I1.z-30+r()*300;if(!free(x,z,30))continue;
-  // vira para a estrada mais próxima
-  let best=1e9,bx=0,bz=0;for(const P of ROADS)for(const p of P){const d=hypot(p[0]-x,p[1]-z);if(d<best){best=d;bx=p[0];bz=p[1]}}
-  const yaw=round(atan2(bx-x,bz-z)/(PI/2))*(PI/2)+(r()-.5)*.15,mb=CHK(x,z).o;const q=house(mb,x,z,yaw,r,false);orect(x,z,q.w/2+2,q.d/2+2,-yaw);occ.push([x,z,max(q.w,q.d)*.62]);nh++}
+ // ---- vila: casas, jardins, poço, postes, varais ----
+ for(const H of HOUSES){const mb=CHK(H.x,H.z).o,q=house(mb,H.x,H.z,H.yaw,H.P,r);orect(H.x,H.z,q.w/2+2,q.d/2+2,H.yaw);
+  const c=cos(H.yaw),sn=sin(H.yaw),loc=(lx,lz)=>[H.x+lx*c+lz*sn,H.z-lx*sn+lz*c];
+  for(const sx of[-1,1])if(r()<.75){const[bx,bz]=loc(sx*(q.w/2+7),q.d/2-4);if(free(bx,bz,0)||true){bush(mb,bx,bz,.8+r()*.3,r,r()<.5?FLW[(r()*FLW.length)|0]:null);circ(bx,bz,4)}}
+  if(r()<.35){const[bx,bz]=loc(-q.w/2-4,-q.d/2-8),[ex,ez]=loc(q.w/2+4,-q.d/2-8);laundry(mb,bx,bz,ex,ez,r);circ(bx,bz,2);circ(ex,ez,2)}}
+ {const[wx,wz]=R(-70,60);const mb=CHK(wx,wz).o;well(mb,wx,wz);circ(wx,wz,11);for(let k=0;k<6;k++){const a=k/6*TAU;bush(mb,wx+cos(a)*24,wz+sin(a)*24,.7,r,FLW[k%FLW.length]);circ(wx+cos(a)*24,wz+sin(a)*24,3)}}
+ {let acc=0;for(const P of ROADS)for(let i=1;i<P.length;i++){acc+=hypot(P[i][0]-P[i-1][0],P[i][1]-P[i-1][1]);if(acc<90)continue;acc=0;
+   const[ax,az]=P[i-1],[bx,bz]=P[i],l=hypot(bx-ax,bz-az)||1,nx=-(bz-az)/l,nz=(bx-ax)/l,x=bx+nx*(RHW+5),z=bz+nz*(RHW+5);if(islD(I1,x,z)>.8||!free(x,z,4))continue;
+   const mb=CHK(x,z).o,yt=lamppost(mb,x,z);circ(x,z,3);LIGHTS.push({x:x*K,y:yt*K,z:z*K,r:60,cr:1,cg:.85,cb:.55,k:.12});GLOW.push([x*K,yt*K,z*K,8,[1,.88,.6]])}}
+ {const[x,z]=R(10,70);const mb=CHK(x,z).o,y=floorY(x+22,z+22);mb.push().T(x+22,y,z+22).cyl(1.2,1.2,26,6,WOOD2,0);for(const[a,yy]of[[.6,22],[-1.9,18],[2.6,14]])mb.push().T(0,yy,0).RY(a).T(5,0,0).box(12,3.4,1,'#d8c38e',0,true).pop();mb.pop();circ(x+22,z+22,2)}   // placa
  OCW.pct=.4;yield;
  // ---- pastos cercados, trigal, animais e feno ----
  for(const Q of PAST){const c=[[-1,-1],[1,-1],[1,1],[-1,1]].map(([a,b])=>rectPt(Q,a*Q.hw,b*Q.hd)),mb=CHK(Q.x,Q.z).o;
   for(let i=0;i<4;i++){const A=c[i],B=c[(i+1)%4];if(i===Q.gate){const m1=[lerp(A[0],B[0],.42),lerp(A[1],B[1],.42)],m2=[lerp(A[0],B[0],.58),lerp(A[1],B[1],.58)];fence(mb,A[0],A[1],m1[0],m1[1],r);fence(mb,m2[0],m2[1],B[0],B[1],r)}else fence(mb,A[0],A[1],B[0],B[1],r)}
   for(let k=0;k<6;k++){const[x,z]=rectPt(Q,(r()-.5)*Q.hw*1.5,(r()-.5)*Q.hd*1.5);hay(mb,x,z,r)}
-  for(let k=0;k<16;k++){const[x,z]=rectPt(Q,(r()-.5)*Q.hw*1.7,(r()-.5)*Q.hd*1.7);if(Q===PAST[0])sheep(mb,x,z,r);else if(k<5)cow(mb,x,z,r);else sheep(mb,x,z,r)}}
+  {const[x,z]=rectPt(Q,Q.hw*.6,-Q.hd*.6);trough(mb,x,z,Q.a);circ(x,z,10)}
+  for(let k=0;k<16;k++){const[x,z]=rectPt(Q,(r()-.5)*Q.hw*1.7,(r()-.5)*Q.hd*1.7);if(Q===PAST[0])sheep(mb,x,z,r);else if(k<5)cow(mb,x,z,r);else sheep(mb,x,z,r)}
+  for(let k=0;k<30;k++){const[x,z]=rectPt(Q,(r()-.5)*Q.hw*1.9,(r()-.5)*Q.hd*1.9),y=floorY(x,z);mb.push().T(x,y+.4,z).sph(.9,2,4,['#ffffff','#ffd23f','#ffffff'][k%3],.1).pop()}}
  {const Q=WHEAT,mb=CHK(Q.x,Q.z).o;for(let i=-Q.hw+4;i<Q.hw;i+=7)for(let j=-Q.hd+3;j<Q.hd;j+=5){const[x,z]=rectPt(Q,i+(r()-.5)*2,j+(r()-.5)*2),y=floorY(x,z);mb.sw=3;
    mb.push().T(x,y-.4,z).RY(r()*TAU).cyl(2.8,1.6,6+r()*2,5,['#e2c26a','#d8b252','#ecd27e'][(r()*3)|0],0,{cap0:false}).pop();mb.sw=0}
-  const c=[[-1,-1],[1,-1],[1,1],[-1,1]].map(([a,b])=>rectPt(Q,a*(Q.hw+6),b*(Q.hd+6)));for(let i=0;i<4;i++)if(i!==2)fence(mb,c[i][0],c[i][1],c[(i+1)%4][0],c[(i+1)%4][1],r)}
+  const c=[[-1,-1],[1,-1],[1,1],[-1,1]].map(([a,b])=>rectPt(Q,a*(Q.hw+6),b*(Q.hd+6)));for(let i=0;i<4;i++)if(i!==2)fence(mb,c[i][0],c[i][1],c[(i+1)%4][0],c[(i+1)%4][1],r);
+  const[cx,cz]=rectPt(Q,-Q.hw-18,Q.hd*.2);cart(mb,cx,cz,Q.a+.4);orect(cx,cz,8,12,Q.a+.4)}
  OCW.pct=.5;yield;
- // ---- moinhos de vento ----
- for(const[dx,dz]of[[-40,-380],[140,-350],[-400,-30],[390,-20],[-300,200],[360,150],[-160,-330]]){let x=I1.x+dx,z=I1.z+dz;for(let k=0;k<20&&islD(I1,x,z)>.7;k++){x=lerp(x,I1.x,.06);z=lerp(z,I1.z,.06)}
-  const yaw=atan2(I1.x+120-x,I1.z+600-z)*.3+.3;millTower(CHK(x,z).o,x,z,yaw,r);occ.push([x,z,26])}
+ for(const[x,z,yaw]of MILLS)millTower(CHK(x,z).o,x,z,yaw,r);
  OCW.pct=.56;yield;
- // ---- árvores ----
+ // ---- vegetação: árvores, arbustos, palmeiras e pedras da praia ----
  for(const k of TKEYS)treeVar(gl,k);
  let nt=0;for(let k=0;k<900&&nt<120;k++){const x=I1.x-520+r()*1040,z=I1.z-520+r()*1040;if(!free(x,z,10))continue;const d=islD(I1,x,z);if(d>.76)continue;
   const key=TKEYS[(r()*TKEYS.length)|0];addTree(key,x,z,.9+r()*.4,r()*TAU,4);occ.push([x,z,12]);nt++}
+ for(let k=0;k<500;k++){const x=I1.x-520+r()*1040,z=I1.z-520+r()*1040;const d=islD(I1,x,z);if(d>.78||!free(x,z,5))continue;const mb=CHK(x,z).o;bush(mb,x,z,.7+r()*.6,r,r()<.35?FLW[(r()*FLW.length)|0]:null);circ(x,z,4);occ.push([x,z,6])}
+ for(let k=0;k<70;k++){const a=r()*TAU,d=.86+r()*.08,x=I1.x+cos(a)*I1.R*shapeK(I1,a)*d,z=I1.z+sin(a)*I1.R*shapeK(I1,a)*d;if(abs(x-PIER.x)<70&&z>I1.z)continue;if(hypot(x-LH[0],z-LH[1])<40)continue;
+  const mb=CHK(x,z).o;if(r()<.55){palm(mb,x,z,.9+r()*.4,r);circ(x,z,3)}else{rock(mb,x,z,.8+r()*1.4,r);circ(x,z,5)}}
  OCW.pct=.64;yield;
- // ---- barco atracado (decoração) ----
  {const bx=(PIER.x+PIER.hw+26)*K,bz=(PIER.z0+120)*K;BOATS.push({x:bx,z:bz,yaw:PI,ph:1.3});orect(PIER.x+PIER.hw+26,PIER.z0+120,14,36,0)}
- // ---- malhas que mexem: pás, barco, espuma ----
- SAILS=H3.upload(gl,millSails().pack());BOAT=H3.upload(gl,boatMB(555).pack());BOATP=H3.upload(gl,boatMB(556,true).pack());
+ SAILS=H3.upload(gl,millSails().pack());BOAT=H3.upload(gl,boatMB(555).pack());BOATP=H3.upload(gl,boatMB(556,true).pack());GULLM=[H3.upload(gl,gullMB(1).pack()),H3.upload(gl,gullMB(0).pack())];
+ for(let i=0;i<10;i++)GULLS.push({cx:(i<6?PORT.x+(r()-.5)*300:I1.x+(r()-.5)*600)*K,cz:(i<6?PSH+60+(r()-.5)*200:I1.z+(r()-.5)*600)*K,R:(60+r()*90)*K,y:(70+r()*60)*K,sp:(.25+r()*.2)*(r()<.5?-1:1),ph:r()*TAU,m:new Float32Array(16)});
  for(let f=0;f<FOAMF;f++){FOAM.push(H3.upload(gl,foamMB(I1,f).pack()));OCW.pct=.66+.1*f/FOAMF;yield}
- // nuvens
- {const rc=rng(77);for(let i=0;i<22;i++){const mb=new MB(9100+i,{pk:true}),n=7+((rc()*5)|0),L=220+rc()*240,W=110;for(let k=0;k<n;k++){const u=k/(n-1)-.5,R=(1-abs(u)*1.1)*(60+rc()*40)+26;mb.push().T(u*L+(rc()-.5)*40,(1-abs(u)*1.4)*R*.35,(rc()-.5)*W*.7).S(1,.55,.9).sph(R,5,10,[252,252,255],.6).pop()}
+ {const rc=rng(77);for(let i=0;i<22;i++){const mb=new MB(9100+i,{pk:true}),n=7+((rc()*5)|0),L=220+rc()*240,W=110;for(let k=0;k<n;k++){const u=k/(n-1)-.5,R2=(1-abs(u)*1.1)*(60+rc()*40)+26;mb.push().T(u*L+(rc()-.5)*40,(1-abs(u)*1.4)*R2*.35,(rc()-.5)*W*.7).S(1,.55,.9).sph(R2,5,10,[252,252,255],.6).pop()}
    CLOUD.push({m:H3.upload(gl,mb.pack()),x:rc()*WW,y:700+rc()*300,z:rc()*WH,sp:6+rc()*8,mt:new Float32Array(16)})}}
  OCW.pct=.8;yield;
- for(const c of CH){c.gm=c.g.count?H3.upload(gl,c.g.pack()):null;c.om=c.o.count?H3.upload(gl,c.o.pack()):null;c.g=null;c.o=null;yield}
+ // sobe o fixo; as malhas juntadas por pedaço ficam SEM a versão simplificada automática (ela apagava casas inteiras de longe)
+ for(const c of CH){c.gm=c.g.count?H3.upload(gl,c.g.pack()):null;c.om=c.o.count?H3.upload(gl,c.o.pack()):null;if(c.om){c.om.src=null;c.om.lod=null}c.g=null;c.o=null;yield}
  OCW.pct=1;OCW.ready=true;OCW.rev++;grassClear()}
 function step(ms){const gl=H3.gl();if(!gl)return false;if(OCW.ready)return true;if(!building)building=gen(gl);const t0=performance.now();
  while(performance.now()-t0<ms){const s=building.next();if(s.done){building=null;return true}}return OCW.ready}
 function freeAll(){const gl=H3.gl();if(gl&&!gl.isContextLost()){const del=m=>{if(m)try{gl.deleteBuffer(m.vbo)}catch(e){}};
-  for(const c of CH){del(c.gm);del(c.om)}for(const m of FOAM)del(m);del(SAILS);del(BOAT);del(BOATP);for(const c of CLOUD)del(c.m);for(const k in TV)for(const m of TV[k].m)del(m)}
+  for(const c of CH){del(c.gm);del(c.om)}for(const m of FOAM)del(m);del(SAILS);del(BOAT);del(BOATP);if(GULLM)for(const m of GULLM)del(m);GULLM=null;for(const c of CLOUD)del(c.m);for(const k in TV)for(const m of TV[k].m)del(m)}
  grassClear();CH=[];OBJ=[];TV={};FOAM=[];CLOUD=[];SAILS=null;BOAT=null;BOATP=null;OCW.ready=false;building=null;OCW.pct=0}
 OCW.stats=()=>{let g=0,o=0;for(const c of CH){if(c.gm)g+=c.gm.n;if(c.om)o+=c.om.n}return{g:g/3|0,o:o/3|0,obj:OBJ.length}};
 
@@ -25685,6 +25745,7 @@ function draw(t,dyn){H3.skyDraw();const F=H3.S.foc||H3.S.cam,s=t/1000;boatTick(t
  if(SAILS)for(const w of MILL){if(hypot(w.x-F.x,w.z-F.z)>2400)continue;mYZ(w.m,w.x,w.y,w.z,w.yaw,w.ph+s*w.sp);if(H3.vis(w.x,w.y,w.z,110))H3.mesh(SAILS,w.m,LIGHTS,dyn,{rad:110,cx:w.x,cy:w.y,cz:w.z})}
  if(BOAT){for(const b of BOATS){mYZ(MT,b.x,WL*K+sin(s*1.3+b.ph)*.8,b.z,b.yaw,sin(s*.9+b.ph)*.04,BSC);if(H3.vis(b.x,40,b.z,80))H3.mesh(BOAT,MT,LIGHTS,dyn,{rad:130,cx:b.x,cy:60,cz:b.z})}
   if(PB.k>.02&&typeof P!=='undefined'){const x=P.x+8,z=P.y+14,sink=(1-PB.k)*30;mYZ(PB.m,x,WL*K-sink+sin(s*2.1)*.9,z,PB.yaw,sin(s*1.6)*.05*(PB.mv>.5?.6:1),BSC);H3.mesh(BOATP||BOAT,PB.m,LIGHTS,dyn,{rad:130,cx:x,cy:60,cz:z})}}
+ if(GULLM)for(const g of GULLS){const a=g.ph+s*g.sp,x=g.cx+cos(a)*g.R,z=g.cz+sin(a)*g.R,y=g.y+sin(s*.7+g.ph)*20;if(hypot(x-F.x,z-F.z)>1800)continue;mYZ(g.m,x,y,z,a+(g.sp>0?PI:0),sin(s*1.3+g.ph)*.25);H3.mesh(GULLM[floor(s*5+g.ph*3)%2],g.m,null,dyn,{rad:14,cx:x,cy:y,cz:z})}
  for(const c of CLOUD){let x=((c.x+s*c.sp)%(WW+1600)+WW+1600)%(WW+1600)-800;if(hypot(x-F.x,c.z-F.z)>3200)continue;M4.trs(c.mt,x,c.y,c.z,0,0,0,1.3,1.3,1.3);if(!H3.vis(x,c.y,c.z,c.m.rad*1.3))continue;H3.mesh(c.m,c.mt,null,null,{rad:c.m.rad*1.3,cx:x,cy:c.y,cz:c.z,fog:.15,eg:1.25})}
  grassDraw()}
 function shadow(t,F){for(const c of CH)if(c.om&&H3.shVis(c.om.cx,c.om.cy,c.om.cz,c.om.rad))H3.shMesh(c.om,null,false);
@@ -25704,7 +25765,9 @@ function frameFx(t,Cm){shadowTune();{const C=H3.S.foc||Cm,F=FLO();grassStep(C,F.
  // esteira do barco
  if(PB.on&&PB.mv>.6&&R()<.8){const bx=P.x+8-sin(PB.yaw)*58,bz=P.y+14-cos(PB.yaw)*58;FX.emit({x:bx+(R()-.5)*10,y:WL*K+.8,z:bz+(R()-.5)*10,vx:(R()-.5)*.2,vy:.02,vz:(R()-.5)*.2,g:0,life:1600+R()*800,s0:6,s1:18,c:[1,1,1],a:.55,add:false,tex:'glow',drag:.98});
   if(R()<.5)FX.emit({x:P.x+8+sin(PB.yaw)*62+(R()-.5)*14,y:WL*K+2,z:P.y+14+cos(PB.yaw)*62+(R()-.5)*14,vx:(R()-.5)*.6,vy:.5+R()*.4,vz:(R()-.5)*.6,g:.03,life:700,s0:3,s1:1,c:[1,1,1],a:.7,add:false,tex:'glow',drag:.98})}
- if(R()<.35&&hypot(Cm.x-BACK.x,Cm.z-BACK.z)<500)FX.emit({x:BACK.x+(R()-.5)*4,y:floorW(BACK.x,BACK.z)+8+R()*36,z:BACK.z+(R()-.5)*36,vx:0,vy:.25,vz:0,g:0,life:900,s0:2.4,s1:.4,c:[.4,.85,1],a:.9,tex:'dot'})}
+ if(R()<.35&&hypot(Cm.x-BACK.x,Cm.z-BACK.z)<500)FX.emit({x:BACK.x+(R()-.5)*4,y:floorW(BACK.x,BACK.z)+8+R()*36,z:BACK.z+(R()-.5)*36,vx:0,vy:.25,vz:0,g:0,life:900,s0:2.4,s1:.4,c:[.4,.85,1],a:.9,tex:'dot'});
+ for(const c of CHIM)if(R()<.05&&hypot(Cm.x-c[0],Cm.z-c[2])<1100)FX.emit({x:c[0],y:c[1],z:c[2],vx:.12+R()*.1,vy:.35+R()*.15,vz:(R()-.5)*.1,g:-.001,life:3200+R()*1500,s0:8,s1:34,c:[.86,.86,.88],a:.3,add:false,tex:'glow',drag:.995});
+ if(R()<.12&&!PB.on){const a=R()*TAU,rr=40+R()*160,x=Cm.x+cos(a)*rr,z=Cm.z+sin(a)*rr;if(baseH(x/K,z/K)>6.5)FX.emit({x,y:floorW(x,z)+6+R()*10,z,vx:(R()-.5)*.5,vy:(R()-.3)*.15,vz:(R()-.5)*.5,g:0,life:2500,s0:2.2,s1:2.2,c:[[1,.85,.3],[1,1,1],[.7,.85,1],[1,.6,.8]][(R()*4)|0],a:.95,add:false,tex:'dot',drag:.995})}}
 
 // ---------- a cena 3D ----------
 const SUN=[-.4,.82,.4],SUNC=[1.14,1.06,.92],SKYA=[.28,.56,.96],SKYB=[.72,.86,.99],GNDA=[.4,.42,.34];
