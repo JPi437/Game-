@@ -23586,7 +23586,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261103061500;
+const GAME_BUILD=20261103063000;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
@@ -25020,7 +25020,7 @@ function portalMB(){const mb=new MB(779);mb.jit=.03;
  for(let k=0;k<8;k++){const a=k/8*TAU;mb.push().T(cos(a)*21,27+sin(a)*21,0).RZ(a).box(2,3.4,8.4,'#5fe3c8',.8).pop()}
  for(const sd of[-1,1])mb.push().T(sd*26,4,0).cyl(3.8,3.3,30,8,'#7a7d74',0).push().T(0,30,0).box(7,5,7,'#f2dfa6',.9).push().T(0,4.5,0).cyl(5.6,1,4,6,'#6f726b',0).pop().pop().pop();
  return mb}
-function signMB(mb,label){mb.box(92,22,1.6,'#3a2a1a',0);for(const ry of[0,PI])mb.push().RY(ry).T(0,-7,.8).push();text(mb,label,2,.8,'#7ff0d6',.5);mb.pop().pop()}
+function signMB(mb,label){mb.box(92,22,1.6,'#3a2a1a',0);for(const ry of[0,PI]){mb.push().RY(ry).T(0,-7,.8);text(mb,label,2,.8,'#7ff0d6',.5);mb.pop()}}   // (antes ficava empilhado e deslocava o resto do pedaço)
 
 // ---------- chão (pedaços de 512 de projeto = 1024 do mundo) ----------
 const CS=512,NCX=Math.ceil(MW/CS),NCZ=Math.ceil(MH/CS),GC=20;
@@ -25599,7 +25599,7 @@ function portalMB(){const mb=new MB(781);mb.jit=.03;
  for(let k=0;k<8;k++){const a=k/8*TAU;mb.push().T(cos(a)*21,27+sin(a)*21,0).RZ(a).box(2.4,3,8.8,'#d8b25a',.3).pop()}
  for(const sd of[-1,1])mb.push().T(sd*26,4,0).cyl(3,2.6,30,8,'#8a6440',0).push().T(0,30,0).sph(3.6,2,8,'#d8b25a',.3).pop().pop();
  return mb}
-function signMB(mb,label){mb.box(92,22,1.6,'#3a2a1a',0);for(const ry of[0,PI])mb.push().RY(ry).T(0,-7,.8).push();text(mb,label,2,.8,'#8fe0ff',.5);mb.pop().pop()}
+function signMB(mb,label){mb.box(92,22,1.6,'#3a2a1a',0);for(const ry of[0,PI]){mb.push().RY(ry).T(0,-7,.8);text(mb,label,2,.8,'#8fe0ff',.5);mb.pop()}}   // (antes ficava empilhado e deslocava o resto do pedaço)
 
 // ---------- árvores do Mundo 1 ----------
 let TV={};
@@ -25672,7 +25672,7 @@ function* gen(gl){
   for(let k=0;k<16;k++){const[x,z]=rectPt(Q,(r()-.5)*Q.hw*1.7,(r()-.5)*Q.hd*1.7);if(Q===PAST[0])sheep(mb,x,z,r);else if(k<5)cow(mb,x,z,r);else sheep(mb,x,z,r)}
   for(let k=0;k<30;k++){const[x,z]=rectPt(Q,(r()-.5)*Q.hw*1.9,(r()-.5)*Q.hd*1.9),y=floorY(x,z);mb.push().T(x,y+.4,z).sph(.9,2,4,['#ffffff','#ffd23f','#ffffff'][k%3],.1).pop()}}
  {const Q=WHEAT,mb=CHK(Q.x,Q.z).o;for(let i=-Q.hw+4;i<Q.hw;i+=7)for(let j=-Q.hd+3;j<Q.hd;j+=5){const[x,z]=rectPt(Q,i+(r()-.5)*2,j+(r()-.5)*2),y=floorY(x,z);mb.sw=3;
-   mb.push().T(x,y-.4,z).RY(r()*TAU).cyl(2.8,1.6,6+r()*2,5,['#e2c26a','#d8b252','#ecd27e'][(r()*3)|0],0,{cap0:false}).pop();mb.sw=0}
+   for(let q=0;q<3;q++){const ox=(r()-.5)*4,oz=(r()-.5)*3,h=8+r()*3,c=['#e2c26a','#d8b252','#ecd27e'][(r()*3)|0];mb.push().T(x+ox,y-.4,z+oz).RZ((r()-.5)*.15).cyl(.45,.3,h,4,'#c9b060',0,{cap0:false}).push().T(0,h,0).S(.75,2,.75).sph(1,2,5,c,.05).pop().pop()}mb.sw=0}   // trigo: talos finos com espiga
   const c=[[-1,-1],[1,-1],[1,1],[-1,1]].map(([a,b])=>rectPt(Q,a*(Q.hw+6),b*(Q.hd+6)));for(let i=0;i<4;i++)if(i!==2)fence(mb,c[i][0],c[i][1],c[(i+1)%4][0],c[(i+1)%4][1],r);
   const[cx,cz]=rectPt(Q,-Q.hw-18,Q.hd*.2);cart(mb,cx,cz,Q.a+.4);orect(cx,cz,8,12,Q.a+.4)}
  OCW.pct=.5;yield;
@@ -25701,6 +25701,7 @@ function step(ms){const gl=H3.gl();if(!gl)return false;if(OCW.ready)return true;
 function freeAll(){const gl=H3.gl();if(gl&&!gl.isContextLost()){const del=m=>{if(m)try{gl.deleteBuffer(m.vbo)}catch(e){}};
   for(const c of CH){del(c.gm);del(c.om)}for(const m of FOAM)del(m);del(SAILS);del(BOAT);del(BOATP);if(GULLM)for(const m of GULLM)del(m);GULLM=null;for(const c of CLOUD)del(c.m);for(const k in TV)for(const m of TV[k].m)del(m)}
  grassClear();CH=[];OBJ=[];TV={};FOAM=[];CLOUD=[];SAILS=null;BOAT=null;BOATP=null;OCW.ready=false;building=null;OCW.pct=0}
+OCW.chunks=()=>CH;
 OCW.stats=()=>{let g=0,o=0;for(const c of CH){if(c.gm)g+=c.gm.n;if(c.om)o+=c.om.n}return{g:g/3|0,o:o/3|0,obj:OBJ.length}};
 
 // ---------- capim com flores nas partes de grama ----------
