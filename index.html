@@ -23585,7 +23585,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261103045500;
+const GAME_BUILD=20261103050500;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
@@ -24885,10 +24885,18 @@ function vines(mb,x,z,y0,L,r){const n=round(L/7);let px=x,pz=z;mb.sw=2;
  for(let i=0;i<n;i++){const y=y0-i*7,w=2.6+r()*1.6,c=i%3?'#4f6e3a':'#5f8244';qh(mb,[px-w,y,pz],[px+w,y,pz],[px+w*.7,y-7.4,pz+.6],[px-w*.7,y-7.4,pz+.6],c,0,[0,0,1]);px+=(r()-.5)*1.5;pz+=.5}
  mb.sw=0}
 let LIPW=170,WFZT=230;   // altura da água na borda e z do topo da queda (calculados na montagem)
-function waterfall(mb,r){const top=LIPW,bot=WL-2,zT=WFZT,N=24,M=16;
+// parede de água em quadros (flipbook): cada quadro tem as listras deslocadas um pouco para baixo; o desenho troca o quadro com o tempo,
+// então a água parece cair sem custar nada a mais (só uma malha por quadro é desenhada). As listras ficam mais longas embaixo (a água acelera).
+const WFF=8;
+function wfSheet(mb,f){const top=LIPW,bot=WL-2,zT=WFZT,N=30,M=18,ph=f/WFF,jit=mb.jit;mb.jit=0;
+ const col=(k,u)=>{const v=sqrt(u)*14-ph,n=vn(k*1.25,v*1.6,41)*.65+vn(k*2.9+7,v*3.4,43)*.35,w=sm(.8,1,u)*.5+(u<.05?.35:0),q=clp(n+w,0,1);
+  return q>.62?[246,252,254]:q>.5?[226,242,248]:q>.38?[196,226,238]:[160,204,222]};
  for(let i=0;i<N;i++){const u0=i/N,u1=(i+1)/N,y0=lerp(top,bot,u0),y1=lerp(top,bot,u1),z0=zT+92*sqrt(u0),z1=zT+92*sqrt(u1),hw0=lerp(66,92,u0),hw1=lerp(66,92,u1);
-  for(let k=0;k<M;k++){const a=k/M,b=(k+1)/M,nz=vn(k*1.7,i*.55,41),c=nz>.55?[244,251,253]:nz>.35?[214,236,244]:[176,214,230];
-   qh(mb,[PCX-hw0+2*hw0*a,y0,z0],[PCX-hw0+2*hw0*b,y0,z0],[PCX-hw1+2*hw1*b,y1,z1],[PCX-hw1+2*hw1*a,y1,z1],c,.42,[0,.25,1])}}
+  for(let k=0;k<M;k++){const a=k/M,b=(k+1)/M,c0=col(k,u0),c1=col(k,u1);
+   qh(mb,[PCX-hw0+2*hw0*a,y0,z0],[PCX-hw0+2*hw0*b,y0,z0],[PCX-hw1+2*hw1*b,y1,z1],[PCX-hw1+2*hw1*a,y1,z1],null,.42,[0,.25,1],[c0,c0,c1,c1])}}
+ mb.jit=jit}
+let WFM=[];
+function waterfall(mb,r){const top=LIPW,bot=WL-2,zT=WFZT;
  // água do canal em cima (corre do norte até a borda)
  for(let z=12;z<zT;z+=12){const z1=min(zT,z+12),y0=baseH(PCX,z)+3,y1=z1>=zT?top:baseH(PCX,z1)+3;
   qh(mb,[PCX-62,y0,z],[PCX+62,y0,z],[PCX+62,y1,z1],[PCX-62,y1,z1],[92,150,168],.12,[0,1,0],[[80,140,160],[80,140,160],[150,200,214],[150,200,214]])}
@@ -25058,7 +25066,7 @@ function addTree(kind,v,xd,zd,s,yaw,tint,colR){const x=xd*K,z=zd*K,y=floorW(x,z)
  o.wx=M[0]*vv.cx+M[4]*vv.cy+M[8]*vv.cz+M[12];o.wy=M[1]*vv.cx+M[5]*vv.cy+M[9]*vv.cz+M[13];o.wz=M[2]*vv.cx+M[6]*vv.cy+M[10]*vv.cz+M[14];o.rad=vv.rad*s*1.02;
  OBJ.push(o);if(colR)circ(xd,zd,colR);return o}
 function* gen(gl){
- CG.fill(0);LIGHTS=[];OBJ=[];GLOW=[];SHAFT=[];OCC.clear();PV=[];
+ CG.fill(0);LIGHTS=[];OBJ=[];GLOW=[];SHAFT=[];OCC.clear();PV=[];WFM=[];
  const r=rng(20261103);
  CH=[];for(let j=0;j<NCZ;j++)for(let i=0;i<NCX;i++){const o=new MB(500+j*NCX+i,{pk:true});o.push().S(K,K,K);CH.push({i,j,g:new MB(100+j*NCX+i,{pk:true}),o,gm:null,om:null,cx:(i+.5)*CS*K,cz:(j+.5)*CS*K})}
  {const e0=[BRG.x+BRS*BL,BRG.z+BRC*BL],e1=[BRG.x-BRS*BL,BRG.z-BRC*BL];BRB=max(baseH(e0[0],e0[1]),baseH(e1[0],e1[1]),-1)}
@@ -25147,11 +25155,12 @@ function* gen(gl){
  NJW.pct=.92;yield;
  // sobe o fixo para a placa de vídeo
  for(const c of CH){c.gm=c.g.count?H3.upload(gl,c.g.pack()):null;c.om=c.o.count?H3.upload(gl,c.o.pack()):null;c.g=null;c.o=null;yield}
+ for(let f=0;f<WFF;f++){const mb=new MB(900+f,{pk:true});mb.push().S(K,K,K);wfSheet(mb,f);mb.pop();WFM.push(H3.upload(gl,mb.pack()))}   // quadros da cachoeira
  NJW.pct=1;NJW.ready=true;NJW.rev++;grassClear()}
 function step(ms){const gl=H3.gl();if(!gl)return false;if(NJW.ready)return true;if(!building)building=gen(gl);const t0=performance.now();
  while(performance.now()-t0<ms){const s=building.next();if(s.done){building=null;return true}}return NJW.ready}
 function freeAll(){const gl=H3.gl();if(gl&&!gl.isContextLost()){const del=m=>{if(m)try{gl.deleteBuffer(m.vbo)}catch(e){}};
-  for(const c of CH){del(c.gm);del(c.om)}for(const v of PV)for(const m of v.m)del(m);for(const k in TV)for(const m of TV[k].m)del(m)}
+  for(const c of CH){del(c.gm);del(c.om)}for(const m of WFM)del(m);WFM=[];for(const v of PV)for(const m of v.m)del(m);for(const k in TV)for(const m of TV[k].m)del(m)}
  grassClear();CH=[];OBJ=[];PV=[];TV={};NJW.ready=false;building=null;NJW.pct=0}
 NJW.stats=()=>{let g=0,o=0,n=0;for(const c of CH){if(c.gm)g+=c.gm.n;if(c.om)o+=c.om.n}return{g:g/3|0,o:o/3|0,obj:OBJ.length}};
 
@@ -25184,6 +25193,7 @@ function grassDraw(){const F=FLO();if(F.off)return;const cam=H3.S.foc||H3.S.cam,
 // ---------- desenho ----------
 const FAR=3200,FARP=1700,FART=1300,LODP=[420,950],LODT=[300,700];
 function draw(t,dyn){H3.skyDraw();const F=H3.S.foc||H3.S.cam;
+ if(WFM.length&&hypot(PCX*K-F.x,PLZ*K-F.z)<FAR){const m=WFM[floor(t/55)%WFM.length];if(H3.vis(m.cx,m.cy,m.cz,m.rad))H3.mesh(m,null,LIGHTS,dyn,{})}
  for(const c of CH){const d=hypot(c.cx-F.x,c.cz-F.z);if(d>FAR+CS*K)continue;
   if(c.gm&&H3.vis(c.gm.cx,c.gm.cy,c.gm.cz,c.gm.rad))H3.mesh(c.gm,null,LIGHTS,dyn,{});
   if(c.om&&H3.vis(c.om.cx,c.om.cy,c.om.cz,c.om.rad))H3.mesh(c.om,null,LIGHTS,dyn,{})}
