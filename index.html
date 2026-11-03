@@ -23585,7 +23585,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261103042100;
+const GAME_BUILD=20261103043300;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
@@ -24617,8 +24617,9 @@ const mixc=(a,b,t)=>[lerp(a[0],b[0],t),lerp(a[1],b[1],t),lerp(a[2],b[2],t)],mulc
 const K=2;                                             // escala: mundo = projeto x K
 const WID=5,MW=3008,MH=2256,WW=MW*K,WH=MH*K,TW=WW/16,TH=WH/16;
 const WALLZ=1990,WT=16,GXC=1504,GHW=60;                // (projeto) muro: linha z e espessura · portão: centro e meia-largura do vão
-const PCX=1504,PCZ=470,PRX=230,PRZ=150,WL=-8;          // lago da cachoeira (elipse) e nível da água
-const CF=54;                                           // largura (em z) da subida do penhasco
+const PCX=1504,PCZ=540,PRX=340,PRZ=200,WL=-8;          // lago da cachoeira (elipse) e nível da água
+const CF=80;                                           // largura (em z) da subida do penhasco
+const PLZ=300,PLR=120,LIPH=300;                        // poço da queda (centro z, raio) e altura da borda da cachoeira
 const SPd={x:1504,z:1862},BKd={x:1300,z:1880};         // (projeto) chegada e portal de volta
 const SPAWN={x:SPd.x*K,z:SPd.z*K},BACK={x:BKd.x*K,z:BKd.z*K};
 const M1P={x:240,z:584};                               // portal no Mundo 1 (a oeste do portal do Mundo 2)
@@ -24631,7 +24632,7 @@ function rng(s){s=s>>>0;return()=>{s=(s+0x6D2B79F5)>>>0;let t=s;t=Math.imul(t^t>
 
 // ---------- linhas: trilha principal, trilhas, riacho (curvas suaves) ----------
 const pathX=z=>GXC+110*sin((clp(z,640,1900)-640)/1260*TAU);
-const pathD=(x,z)=>z<612?1e9:abs(x-pathX(z));
+const pathD=(x,z)=>z<700?1e9:abs(x-pathX(z));
 function segD(px,pz,ax,az,bx,bz){const dx=bx-ax,dz=bz-az,l2=dx*dx+dz*dz;let t=l2?((px-ax)*dx+(pz-az)*dz)/l2:0;t=clp(t,0,1);return hypot(px-ax-dx*t,pz-az-dz*t)}
 function cr(P,n){const o=[];for(let i=0;i<P.length-1;i++){const p0=P[max(0,i-1)],p1=P[i],p2=P[i+1],p3=P[min(P.length-1,i+2)];
   for(let k=0;k<n;k++){const t=k/n,t2=t*t,t3=t2*t,f=j=>.5*(2*p1[j]+(-p0[j]+p2[j])*t+(2*p0[j]-5*p1[j]+4*p2[j]-p3[j])*t2+(-p0[j]+3*p1[j]-3*p2[j]+p3[j])*t3);o.push([f(0),f(1)])}}
@@ -24639,7 +24640,7 @@ function cr(P,n){const o=[];for(let i=0;i<P.length-1;i++){const p0=P[max(0,i-1)]
 const BRG={x:630,z:1005},BRA=atan2(-300,-215),BL=46,BWd=13;   // ponte do riacho: centro, direção, meio-comprimento, meia-largura
 const TRW=cr([[pathX(1250),1250],[1080,1195],[820,1095],[BRG.x,BRG.z],[520,880],[440,792]],8);   // trilha oeste (santuário)
 const TRE=cr([[pathX(1500),1500],[1780,1475],[2020,1425],[2150,1396]],8);                       // trilha leste (clareira de treino)
-const STR=cr([[1336,572],[1190,650],[1030,705],[880,805],[740,925],[BRG.x,BRG.z],[480,1105],[330,1195],[180,1285],[-30,1372]],8);   // riacho (sai do lago para o oeste)
+const STR=cr([[1214,640],[1110,690],[1010,735],[880,805],[740,925],[BRG.x,BRG.z],[480,1105],[330,1195],[180,1285],[-30,1372]],8);   // riacho (sai do lago para o oeste)
 // campos de distância (grade de 8) para o riacho e as trilhas
 const FG=8,FW=MW/FG,FH=MH/FG;
 function mkField(Ls){const F=new Float32Array(FW*FH).fill(999);
@@ -24654,15 +24655,15 @@ const strD=(x,z)=>fAt(SDF,x,z),trD=(x,z)=>fAt(TDF,x,z);
 // ---------- lugares ----------
 const TCX=2262,TCZ=1372,TCR=150;                       // clareira de treino
 const SHX=430,SHZ=742,SHR=118;                         // santuário
-const STX=1310,STZ=312,STA=.22,STS=1.2;                        // guardião de pedra (centro da base, giro)
+const STX=1230,STZ=330,STA=.3,STS=1.45;                        // guardião de pedra (centro da base, giro)
 const plazaE=(x,z)=>((x-GXC)/380)**2+((z-(WALLZ-120))/175)**2;   // praça do portão (< 1)
 const pondE=(x,z)=>((x-PCX)/PRX)**2+((z-PCZ)/PRZ)**2;
-const plungeD=(x,z)=>hypot(x-PCX,(z-292)*1.25);         // poço da queda d'água
-const waterK=(x,z)=>max(1-pondE(x,z),1-plungeD(x,z)/76);  // > 0 = água
+const plungeD=(x,z)=>hypot(x-PCX,(z-PLZ)*1.25);        // poço da queda d'água
+const waterK=(x,z)=>max(1-pondE(x,z),1-plungeD(x,z)/PLR);  // > 0 = água
 
 // ---------- penhascos do vale (norte) ----------
-function zbF(x){const ad=abs(x-PCX),bowl=ad<290?sqrt(1-(ad/290)*(ad/290)):0,horn=exp(-(((ad-330)/90)**2));return 380+170*horn-110*bowl+(vn(x/70,3.7,21)-.5)*40*sm(110,300,ad)}
-function topF(x){const ad=abs(x-PCX);return lerp(170,196+(vn(x/240,1.3,23)-.5)*80,sm(34,110,ad))}
+function zbF(x){const ad=abs(x-PCX),bowl=ad<430?sqrt(1-(ad/430)*(ad/430)):0,horn=exp(-(((ad-480)/110)**2));return 400+210*horn-150*bowl+(vn(x/70,3.7,21)-.5)*44*sm(160,420,ad)}
+function topF(x){const ad=abs(x-PCX);return lerp(LIPH,330+(vn(x/240,1.3,23)-.5)*90,sm(70,180,ad))}
 const ZBT=new Float32Array(MW+1),TPT=new Float32Array(MW+1);for(let x=0;x<=MW;x++){ZBT[x]=zbF(x);TPT[x]=topF(x)}
 const zbA=x=>ZBT[clp(round(x),0,MW)],topA=x=>TPT[clp(round(x),0,MW)];
 
@@ -24676,16 +24677,19 @@ function baseH(x,z){
  const pe=plazaE(x,z);if(pe<1.6)h*=lerp(.2,1,sm(.8,1.6,pe));
  const sd=strD(x,z);if(sd<60){h=max(h,-2);if(sd<36)h=lerp(h,-11,1-sm(12,36,sd))}
  const e=pondE(x,z),pl=plungeD(x,z);
- if(e<1.7||pl<120){let w=e<1?-9-14*(1-e):lerp(-7,h,sm(1,1.7,e));if(pl<120)w=min(w,pl<76?-10-12*(1-pl/76):lerp(-8,h,sm(76,120,pl)));h=e<1.7?w:min(h,w)}
+ if(e<1.7||pl<PLR+60){const h0=h;let w=1e9;
+  if(e<1.7)w=e<1?WL-1.5-16*(1-e):e<1.1?lerp(WL-1.5,WL+1.6,(e-1)/.1):lerp(WL+1.6,h0,sm(1.1,1.7,e));
+  if(pl<PLR+60)w=min(w,pl<PLR?WL-2-14*(1-pl/PLR):pl<PLR+10?lerp(WL-2,WL+1.6,(pl-PLR)/10):lerp(WL+1.6,h0,sm(PLR+10,PLR+60,pl)));h=w}
  const Z=zbA(x);if(z<Z){const kk=sm(Z,Z-CF,z),T=topA(x)+max(0,Z-CF-z)*.22+(vn(x/130,z/130,7)-.5)*30*sm(Z-CF,Z-CF-90,z);h=lerp(h,T,kk);
-  const ad=abs(x-PCX);if(ad<46&&z<Z-CF+8)h-=8*(1-sm(26,46,ad))}   // canal do rio em cima da cachoeira
+  const ad=abs(x-PCX);if(ad<84&&z<Z-CF+8)h-=10*(1-sm(56,84,ad))}   // canal do rio em cima da cachoeira
  return h}
 // ponte: tabuleiro em arco por cima do riacho
 const BRS=sin(BRA),BRC=cos(BRA);
 const brLocal=(x,z)=>{const dx=x-BRG.x,dz=z-BRG.z;return[dx*BRS+dz*BRC,dx*BRC-dz*BRS]};
 let BRB=-2;   // altura das margens nas pontas da ponte (calculada na montagem)
 const deckY=s=>BRB+9*(1-(s/BL)*(s/BL));
-function floorD(x,z){const h=baseH(x,z);const[s,w]=brLocal(x,z);if(abs(s)<BL&&abs(w)<BWd)return max(h,deckY(s)+.6);return h}
+function floorD(x,z){let h=baseH(x,z);if(h<WL&&waterK(x,z)>-.1)h=WL;else if(h<-7.4&&strD(x,z)<21)h=-7.4;   // a água do lago, do poço e do riacho é chão: dá para andar por cima
+ const[s,w]=brLocal(x,z);if(abs(s)<BL&&abs(w)<BWd)return max(h,deckY(s)+.6);return h}
 let LOCAL=false;
 const floorY=(x,z)=>LOCAL?0:floorD(x,z);
 const floorW=(x,z)=>floorD(x/K,z/K)*K;
@@ -24875,23 +24879,23 @@ function rockPrism(mb,x,y,z,R,h,col,r,yaw){mb.push().T(x,y,z).RY(yaw).S(1+(r()-.
 const rcol=(r,y)=>{const c=ROCKC[((floor(y/20)+((r()*2)|0))%ROCKC.length+ROCKC.length)%ROCKC.length];return mulc(c,.92+r()*.14)};
 function cliffColumn(mb,x,r){const Z=zbA(x),T=topA(x),n=4+((r()*2)|0);let y=-14;
  for(let L=0;L<n;L++){const u=(L+.5)/n,hh=(T+14)/n*(.9+r()*.25),zf=Z-CF*sm(0,1,min(1,(y+hh*.5)/T))+4;
-  const R=12+r()*16-u*3;rockPrism(mb,x+(r()-.5)*10,y,zf+(r()-.5)*8,R,hh,rcol(r,y),r,(r()-.5)*.6);if(r()<.4)mb.push().T(x,y+hh,zf).S(1,.22,1).sph(R*.9,2,6,['#5d7444','#6a8150','#4f6739'][(r()*3)|0],0).pop();y+=hh*.86}
+  const R=15+r()*20-u*4;rockPrism(mb,x+(r()-.5)*10,y,zf+(r()-.5)*8,R,hh,rcol(r,y),r,(r()-.5)*.6);if(r()<.4)mb.push().T(x,y+hh,zf).S(1,.22,1).sph(R*.9,2,6,['#5d7444','#6a8150','#4f6739'][(r()*3)|0],0).pop();y+=hh*.86}
  if(r()<.8)mb.push().T(x+(r()-.5)*10,T-2,Z-CF+2).S(1,.35,1).sph(9+r()*7,2,6,['#5d7444','#6a8150','#4f6739'][(r()*3)|0],0).pop()}   // musgo na borda
 function vines(mb,x,z,y0,L,r){const n=round(L/7);let px=x,pz=z;mb.sw=2;
  for(let i=0;i<n;i++){const y=y0-i*7,w=2.6+r()*1.6,c=i%3?'#4f6e3a':'#5f8244';qh(mb,[px-w,y,pz],[px+w,y,pz],[px+w*.7,y-7.4,pz+.6],[px-w*.7,y-7.4,pz+.6],c,0,[0,0,1]);px+=(r()-.5)*1.5;pz+=.5}
  mb.sw=0}
 let LIPW=170,WFZT=230;   // altura da água na borda e z do topo da queda (calculados na montagem)
-function waterfall(mb,r){const top=LIPW,bot=WL-2,zT=WFZT,N=18,M=10;
- for(let i=0;i<N;i++){const u0=i/N,u1=(i+1)/N,y0=lerp(top,bot,u0),y1=lerp(top,bot,u1),z0=zT+62*sqrt(u0),z1=zT+62*sqrt(u1),hw0=lerp(38,52,u0),hw1=lerp(38,52,u1);
+function waterfall(mb,r){const top=LIPW,bot=WL-2,zT=WFZT,N=24,M=16;
+ for(let i=0;i<N;i++){const u0=i/N,u1=(i+1)/N,y0=lerp(top,bot,u0),y1=lerp(top,bot,u1),z0=zT+92*sqrt(u0),z1=zT+92*sqrt(u1),hw0=lerp(66,92,u0),hw1=lerp(66,92,u1);
   for(let k=0;k<M;k++){const a=k/M,b=(k+1)/M,nz=vn(k*1.7,i*.55,41),c=nz>.55?[244,251,253]:nz>.35?[214,236,244]:[176,214,230];
    qh(mb,[PCX-hw0+2*hw0*a,y0,z0],[PCX-hw0+2*hw0*b,y0,z0],[PCX-hw1+2*hw1*b,y1,z1],[PCX-hw1+2*hw1*a,y1,z1],c,.42,[0,.25,1])}}
  // água do canal em cima (corre do norte até a borda)
  for(let z=12;z<zT;z+=12){const z1=min(zT,z+12),y0=baseH(PCX,z)+3,y1=z1>=zT?top:baseH(PCX,z1)+3;
-  qh(mb,[PCX-34,y0,z],[PCX+34,y0,z],[PCX+34,y1,z1],[PCX-34,y1,z1],[92,150,168],.12,[0,1,0],[[80,140,160],[80,140,160],[150,200,214],[150,200,214]])}
+  qh(mb,[PCX-62,y0,z],[PCX+62,y0,z],[PCX+62,y1,z1],[PCX-62,y1,z1],[92,150,168],.12,[0,1,0],[[80,140,160],[80,140,160],[150,200,214],[150,200,214]])}
  // pedras da borda e da base
- for(const sd of[-1,1]){for(let k=0;k<3;k++)rockPrism(mb,PCX+sd*(48+k*9),top-8-k*4,zT+(r()-.5)*10,9+r()*5,14,rcol(r,top),r,r());
-  for(let k=0;k<4;k++){const x=PCX+sd*(48+r()*40),z=300+r()*40;mb.push().T(x,WL-3,z).RY(r()*TAU).S(1,.6,1.2).cyl(9+r()*7,6+r()*3,10,6,rcol(r,0),0).pop()}}}
-function pondWater(mb){const s=10,x0=PCX-270,x1=PCX+270,z0=190,z1=660,jit=mb.jit;mb.jit=0;
+ for(const sd of[-1,1]){for(let k=0;k<4;k++)rockPrism(mb,PCX+sd*(74+k*12),top-10-k*5,zT+(r()-.5)*12,12+r()*7,20,rcol(r,top),r,r());
+  for(let k=0;k<6;k++){const x=PCX+sd*(90+r()*60),z=PLZ+20+r()*70;mb.push().T(x,WL-3,z).RY(r()*TAU).S(1,.6,1.2).cyl(9+r()*7,6+r()*3,10,6,rcol(r,0),0).pop()}}}
+function pondWater(mb){const s=12,x0=PCX-390,x1=PCX+390,z0=150,z1=800,jit=mb.jit;mb.jit=0;
  const col=(x,z)=>{const w=waterK(x,z),p=plungeD(x,z);let c=mixc([92,156,150],[28,78,90],clp(w*2.6,0,1));if(p<62)c=mixc(c,[236,246,248],Math.pow(1-p/62,1.4)*.85);return c};
  for(let z=z0;z<z1;z+=s)for(let x=x0;x<x1;x+=s){if(max(waterK(x,z),waterK(x+s,z),waterK(x,z+s),waterK(x+s,z+s))<-.07)continue;
   mb.quad([x,WL,z],[x,WL,z+s],[x+s,WL,z+s],[x+s,WL,z],null,.07,[col(x,z),col(x,z+s),col(x+s,z+s),col(x+s,z)])}
@@ -25020,7 +25024,7 @@ function gcol(x,z){const h=baseH(x,z);
  if(h>16&&(x<190||x>MW-190)){const n=vn(x/60,z/60,15);return n>.62?ROCKC[1]:mixc(TOPG0,TOPG1,vn(x/120,z/120,16))}
  const n=vn(x/120,z/120,2),n2=vn(x/33,z/33,4);let c=mixc(MOSS0,MOSS1,n);c=mulc(c,.92+n2*.12);
  const np=vn(x/70,z/70,9);if(np>.56)c=mixc(c,NEEDLE,sm(.56,.72,np)*.75);
- const e=pondE(x,z),pl=plungeD(x,z);if(e<1.6||pl<100){const k=max(1-sm(1.25,1.6,e),1-sm(80,100,pl));c=mixc(c,mulc(PEB,.9+vn(x/14,z/14,8)*.2),k);if(e<1.08||pl<78)c=mulc(c,.8)}
+ const e=pondE(x,z),pl=plungeD(x,z);if(e<1.6||pl<PLR+50){const k=max(1-sm(1.25,1.6,e),1-sm(PLR+25,PLR+50,pl));c=mixc(c,mulc(PEB,.9+vn(x/14,z/14,8)*.2),k);if(e<1.14||pl<PLR+12)c=mulc(c,.8)}
  const sd=strD(x,z);if(sd<30)c=mixc(c,[88,80,60],1-sm(16,30,sd));
  if(hypot(x-TCX,z-TCZ)<TCR)c=mixc(c,[98,128,64],.55*(1-sm(TCR*.6,TCR,hypot(x-TCX,z-TCZ))));
  if(hypot(x-TCX,z-TCZ)<56)c=mixc(c,DIRT,.6*(1-sm(40,56,hypot(x-TCX,z-TCZ))));
@@ -25042,10 +25046,10 @@ const OCC=new Map();const occK=(x,z)=>(floor(x/40)+100)*1000+floor(z/40)+100;
 function occFree(x,z,R){const i0=floor(x/40),j0=floor(z/40);for(let i=i0-2;i<=i0+2;i++)for(let j=j0-2;j<=j0+2;j++){const L=OCC.get((i+100)*1000+j+100);if(L)for(const o of L)if(hypot(o[0]-x,o[1]-z)<o[2]+R)return false}return true}
 function occAdd(x,z,R){const k=occK(x,z);let L=OCC.get(k);if(!L)OCC.set(k,L=[]);L.push([x,z,R])}
 function forestOK(x,z,pad){if(x<26||x>MW-26||z<26||z>WALLZ-36-pad)return false;
- if(pondE(x,z)<1.85+pad*.01||plungeD(x,z)<120)return false;
+ if(pondE(x,z)<1.8+pad*.01||plungeD(x,z)<PLR+60)return false;
  if(pathD(x,z)<30+pad||trD(x,z)<20+pad||strD(x,z)<30+pad)return false;
  if(plazaE(x,z)<1.05)return false;
- if(hypot(x-TCX,z-TCZ)<TCR+pad||hypot(x-SHX,z-SHZ)<SHR+pad||hypot(x-STX,z-STZ)<130)return false;
+ if(hypot(x-TCX,z-TCZ)<TCR+pad||hypot(x-SHX,z-SHZ)<SHR+pad||hypot(x-STX,z-STZ)<230)return false;
  if(z<zbA(x)+26+pad*.5)return false;
  const[s,w]=brLocal(x,z);if(abs(s)<BL+20&&abs(w)<BWd+20)return false;
  return true}
@@ -25064,8 +25068,6 @@ function* gen(gl){
  rect(0,0,MW-1,30);rect(0,0,30,MH-1);rect(MW-31,0,MW-1,MH-1);rect(0,WALLZ-12,MW-1,MH-1);
  for(let j=0;j<GH;j++){const z=j*4+2;for(let i=0;i<GW;i++){const x=i*4+2;let b=false;
    if(z<zbA(x)-8)b=true;else if((x<118||x>MW-118)&&z<WALLZ-110)b=true;
-   else if(pondE(x,z)<.93||plungeD(x,z)<70)b=true;
-   else if(strD(x,z)<19){const[s,w]=brLocal(x,z);if(!(abs(s)<BL-2&&abs(w)<BWd-2))b=true}
    if(b)CG[j*GW+i]=1}
   if((j&63)===63){NJW.pct=.02+.06*j/GH;yield}}
  for(const c of CH){ground(c.g,c.i,c.j);if(((c.i+c.j)&1)===1){NJW.pct=min(.2,NJW.pct+.008);yield}}
@@ -25093,12 +25095,12 @@ function* gen(gl){
   for(const sd of[-1,1])circ(BKd.x,BKd.z+sd*13,2.5)}
  NJW.pct=.36;yield;
  // ---- vale: penhascos, cachoeira, lago, guardião, torii, lanternas ----
- for(let x=24;x<MW-10;x+=17){if(abs(x-PCX)<42)continue;cliffColumn(CHK(x,zbA(x)).o,x,r);if(x%170<17){NJW.pct=min(.48,NJW.pct+.006);yield}}
- {const mb=CHK(PCX,300).o;waterfall(mb,r);pondWater(mb);for(const sd of[-1,1])for(let k=0;k<4;k++){const x=PCX+sd*(46+k*22),z=zbA(PCX+sd*(46+k*22))-CF*.55;vines(mb,x,z+4,topA(x)-2,60+r()*70,r)}}
+ for(let x=24;x<MW-10;x+=19){if(abs(x-PCX)<76)continue;cliffColumn(CHK(x,zbA(x)).o,x,r);if(x%190<19){NJW.pct=min(.48,NJW.pct+.006);yield}}
+ {const mb=CHK(PCX,300).o;waterfall(mb,r);pondWater(mb);for(const sd of[-1,1])for(let k=0;k<4;k++){const x=PCX+sd*(84+k*30),z=zbA(PCX+sd*(84+k*30))-CF*.55;vines(mb,x,z+4,topA(x)-2,90+r()*110,r)}}
  streamWater(CHK(700,950).o);
  {const mb=CHK(STX,STZ).o,y=floorY(STX,STZ+60);mb.push().T(STX,y,STZ).RY(STA).S(STS,STS,STS);guardian(mb,r);mb.pop();circ(STX,STZ,62*STS);orect(STX,STZ,94*STS,64*STS,STA)}
- torii(CHK(PCX,592).o,PCX,WL,592,1,0);
- for(const[x,z]of[[PCX-74,668],[PCX+74,668],[PCX+170,352],[PCX-250,476],[PCX+250,476]]){const yt=toro(CHK(x,z).o,x,z,1.25,r);circ(x,z,7);GLOW.push([x*K,yt*K,z*K,14,[1,.85,.55]])}
+ torii(CHK(PCX,690).o,PCX,WL,690,1.3,0);for(const sd of[-1,1])circ(PCX+sd*44*1.3,690,8);
+ for(const[x,z]of[[PCX-92,790],[PCX+92,790],[PCX+230,350],[PCX-370,580],[PCX+370,580]]){const yt=toro(CHK(x,z).o,x,z,1.25,r);circ(x,z,7);GLOW.push([x*K,yt*K,z*K,14,[1,.85,.55]])}
  for(let k=0;k<18;k++){const a=r()*TAU,x=PCX+cos(a)*PRX*(1.05+r()*.35),z=PCZ+sin(a)*PRZ*(1.05+r()*.35);if(z<zbA(x)+6||pathD(x,z)<30)continue;boulder(CHK(x,z).o,x,z,1.2+r()*1.6,r);circ(x,z,8)}
  for(let k=0;k<7;k++){const a=PI*.15+r()*PI*.7,x=PCX+cos(a)*PRX*.8,z=PCZ+sin(a)*PRZ*.8;const mb=CHK(x,z).o;mb.push().T(x,WL-4,z).RY(r()*TAU).S(1,.55,1.2).cyl(8+r()*6,5,10,6,rcol(r,0),0).pop()}
  NJW.pct=.52;yield;
@@ -25161,7 +25163,7 @@ function tuft(mb,x,y,z,g,H,rnd){const n=3+((rnd()*3)|0);
  for(let i=0;i<n;i++){const a=rnd()*TAU,dd=rnd()*1.3,h=H*(.6+rnd()*.6),k=.88+rnd()*.28;
   blade(mb,x+cos(a)*dd,y-.25,z+sin(a)*dd,rnd()*TAU,(.7+rnd()*.5)*.85,h,h*(.2+rnd()*.35),[g[0]*.55*k,g[1]*.6*k,g[2]*.5*k],[min(255,g[0]*1.1*k+10),min(255,g[1]*1.3*k+12),min(255,g[2]*.9*k)],8+((rnd()*5)|0))}}
 function grassy(x,z){const xd=x/K,zd=z/K;if(zd>WALLZ-20||xd<30||zd<30||xd>MW-30)return false;if(zd<zbA(xd)+4)return false;
- if(pathD(xd,zd)<20||trD(xd,zd)<12||strD(xd,zd)<22)return false;if(plazaE(xd,zd)<.85)return false;if(pondE(xd,zd)<1.3||plungeD(xd,zd)<90)return false;
+ if(pathD(xd,zd)<20||trD(xd,zd)<12||strD(xd,zd)<22)return false;if(plazaE(xd,zd)<.85)return false;if(pondE(xd,zd)<1.3||plungeD(xd,zd)<PLR+20)return false;
  if(blockedD(xd,zd))return false;return true}
 function grassChunk(ci,cj){const cs=GR.cs,x0=ci*cs,z0=cj*cs,mb=new MB(((ci*7919)^(cj*104729))+37,{pk:true}),rnd=mb.r,GS=5.6,N=Math.ceil(cs/GS);
  for(let gz=0;gz<N;gz++)for(let gx=0;gx<N;gx++){const x=x0+(gx+rnd())*GS,z=z0+(gz+rnd())*GS;
@@ -25195,13 +25197,13 @@ function shadow(t,F){for(const c of CH)if(c.om&&H3.shVis(c.om.cx,c.om.cy,c.om.cz
 function sprites(t){const T=H3.tex;if(!T)return;const s=t/1000,F=H3.S.foc||H3.S.cam;if(!F)return;
  const y=floorW(BACK.x,BACK.z)+27;H3.spr(T.glow,BACK.x,y,BACK.z,54,54,null,[.35,1,.85,.3+.08*sin(s*3)],true,0,true);H3.spr(T.glow,BACK.x,y,BACK.z,30,30,null,[.7,1,.95,.45],true,0,true);
  for(const g of GLOW){if(hypot(g[0]-F.x,g[2]-F.z)>1400)continue;H3.spr(T.glow,g[0],g[1],g[2],g[3]*2,g[3]*2,null,[g[4][0],g[4][1],g[4][2],.42+.06*sin(s*2.3+g[0])],true,0,true)}
- const wx=PCX*K,dW=hypot(wx-F.x,300*K-F.z);
+ const wx=PCX*K,dW=hypot(wx-F.x,PLZ*K-F.z);
  if(dW<2400){const top=LIPW*K,bot=WL*K,zT=WFZT*K;
-  for(let i=0;i<26;i++){const ph=((s*.42+i*.6180339)%1),u=ph,u2=min(1,ph+.07),xo=((i*37)%17-8)/8*40*K*(.8+.3*u);
-   const y0=lerp(top,bot,u),y1=lerp(top,bot,u2),z0=zT+62*K*sqrt(u)+3,z1=zT+62*K*sqrt(u2)+3,a=.32*sin(PI*min(1,u*1.3));
-   H3.strip(T.beam,wx+xo,y0,z0,wx+xo,y1,z1,7+((i*7)%5),[1,1,1,a],true)}
-  for(let i=0;i<6;i++){const a=i/6*TAU+s*.15,rr=(30+18*sin(s*.7+i))*K;H3.spr(T.glow,wx+cos(a)*rr,bot+(14+8*sin(s+i))*K,292*K+sin(a)*rr*.6,110*K,90*K,null,[.92,.97,1,.22],false,0,true)}
-  H3.spr(T.glow,wx,bot+30*K,300*K,170*K,120*K,null,[.9,.96,1,.25],false,0,true)}
+  for(let i=0;i<40;i++){const ph=((s*.34+i*.6180339)%1),u=ph,u2=min(1,ph+.06),xo=((i*37)%17-8)/8*70*K*(.8+.3*u);
+   const y0=lerp(top,bot,u),y1=lerp(top,bot,u2),z0=zT+92*K*sqrt(u)+3,z1=zT+92*K*sqrt(u2)+3,a=.32*sin(PI*min(1,u*1.3));
+   H3.strip(T.beam,wx+xo,y0,z0,wx+xo,y1,z1,10+((i*7)%7),[1,1,1,a],true)}
+  for(let i=0;i<8;i++){const a=i/8*TAU+s*.15,rr=(55+26*sin(s*.7+i))*K;H3.spr(T.glow,wx+cos(a)*rr,bot+(18+10*sin(s+i))*K,(PLZ+10)*K+sin(a)*rr*.6,170*K,130*K,null,[.92,.97,1,.22],false,0,true)}
+  H3.spr(T.glow,wx,bot+44*K,(PLZ+20)*K,280*K,190*K,null,[.9,.96,1,.25],false,0,true)}
  // raios de sol entre as árvores (faixas inclinadas na direção do sol)
  const sd=H3.sunDir?H3.sunDir():[-.5,.7,.5];
  for(const q of SHAFT){const d=hypot(q[0]-F.x,q[1]-F.z);if(d>900)continue;const k=(1-sm(500,900,d))*q[3],g=floorW(q[0],q[1]),L=300;
@@ -25217,9 +25219,9 @@ function frameFx(t,Cm){shadowTune();{const C=H3.S.foc||Cm,F=FLO();grassStep(C,F.
  const FX=H3.fx;if(!FX)return;const R=Math.random;
  if(R()<.42){const a=R()*TAU,rr=90+R()*420,x=Cm.x+cos(a)*rr,z=Cm.z+sin(a)*rr;if(z<(WALLZ-30)*K){const g=floorW(x,z);
   FX.emit({x,y:g+6+R()*26,z,vx:.12+R()*.1,vy:.004,vz:(R()-.5)*.08,g:0,life:6000+R()*4000,s0:60+R()*40,s1:130+R()*60,c:[.86,.9,.9],a:.11,add:false,tex:'glow',drag:1})}}
- const wx=PCX*K,wz=292*K;if(hypot(Cm.x-wx,Cm.z-wz)<1500){
-  for(let i=0;i<2;i++)if(R()<.8){const a=R()*TAU,sp=.4+R()*1.6;FX.emit({x:wx+(R()-.5)*60*K,y:WL*K+4,z:wz+(R()-.5)*20*K,vx:cos(a)*sp,vy:1.2+R()*1.8,vz:sin(a)*sp*.6+.4,g:.035,life:900+R()*700,s0:4+R()*4,s1:10,c:[.95,.98,1],a:.5,add:false,tex:'glow',drag:.985})}
-  if(R()<.35)FX.emit({x:wx+(R()-.5)*90*K,y:WL*K+10+R()*30,z:wz+R()*40*K,vx:(R()-.5)*.3,vy:.18+R()*.15,vz:.25+R()*.2,g:0,life:4000+R()*2000,s0:50,s1:120,c:[.92,.96,1],a:.16,add:false,tex:'glow',drag:.998})}
+ const wx=PCX*K,wz=(PLZ-10)*K;if(hypot(Cm.x-wx,Cm.z-wz)<1800){
+  for(let i=0;i<3;i++)if(R()<.8){const a=R()*TAU,sp=.4+R()*1.8;FX.emit({x:wx+(R()-.5)*130*K,y:WL*K+4,z:wz+(R()-.5)*20*K,vx:cos(a)*sp,vy:1.2+R()*1.8,vz:sin(a)*sp*.6+.4,g:.035,life:900+R()*700,s0:4+R()*4,s1:10,c:[.95,.98,1],a:.5,add:false,tex:'glow',drag:.985})}
+  if(R()<.45)FX.emit({x:wx+(R()-.5)*170*K,y:WL*K+10+R()*40,z:wz+R()*70*K,vx:(R()-.5)*.3,vy:.18+R()*.15,vz:.25+R()*.2,g:0,life:4000+R()*2000,s0:50,s1:120,c:[.92,.96,1],a:.16,add:false,tex:'glow',drag:.998})}
  if(R()<.35&&hypot(Cm.x-BACK.x,Cm.z-BACK.z)<500)FX.emit({x:BACK.x+(R()-.5)*4,y:floorW(BACK.x,BACK.z)+8+R()*36,z:BACK.z+(R()-.5)*36,vx:0,vy:.25,vz:0,g:0,life:900,s0:2.4,s1:.4,c:[.4,1,.85],a:.9,tex:'dot'});
  if(R()<.25){const a=R()*TAU,rr=40+R()*200,x=Cm.x+cos(a)*rr,z=Cm.z+sin(a)*rr;FX.emit({x,y:floorW(x,z)+10+R()*60,z,vx:.1+R()*.08,vy:-.03,vz:(R()-.5)*.06,g:0,life:5000,s0:1.3,s1:1,c:[1,.96,.8],a:.7,add:true,tex:'glow',drag:1})}}
 
