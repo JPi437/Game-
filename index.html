@@ -482,7 +482,7 @@ function sanSave(o){
  let nid=Math.max(top+1,SAN.int(o.nid,1,1e9,1));
  chars.forEach(k=>{if(!k.id){k.id=nid++;seen.add(k.id)}});
  const ou=o.ups&&typeof o.ups==='object'?o.ups:{},ups={};
- for(const k of ['x2','x3','x4','x5','auto','autostar','autopas','slot','gate','db'])if(ou[k])ups[k]=1;
+ for(const k of ['x2','x3','x4','x5','auto','autostar','autopas','slot','gate','db','nj','oc'])if(ou[k])ups[k]=1;
  if(ou.inv)ups.inv=SAN.int(ou.inv,0,1000,0);
  const eq=[];(Array.isArray(o.equipped)?o.equipped:(o.equipped?[o.equipped]:[])).forEach(id=>{id=SAN.int(id,1,1e9,0);if(id&&seen.has(id)&&!eq.includes(id))eq.push(id)});
  const qf=q=>({st:SAN.int(q&&q.st,0,10,0),n:SAN.int(q&&q.n,0,1e6,0)}),oa=o.aset&&typeof o.aset==='object'?o.aset:{};
@@ -492,7 +492,7 @@ function sanSave(o){
   mountEq:typeof o.mountEq==='string'&&/^[a-z0-9_]{1,20}$/.test(o.mountEq)?o.mountEq:null,
   pity:SAN.int(o.pity,0,1e6,0),ess:SAN.num(o.ess,0,1e15,0),pk:SAN.num(o.pk,0,1e15,0),ppity:SAN.int(o.ppity,0,1e6,0),
   aset:{sell:five(oa.sell),feed:five(oa.feed),unit:oa.unit==null?null:SAN.int(oa.unit,1,1e9,0)||null},
-  w:+o.w===4?4:SAN.int(o.w,0,2,0),px:Number.isFinite(+o.px)&&o.px!==null?SAN.num(o.px,-1000,20000,0):null,py:Number.isFinite(+o.py)&&o.py!==null?SAN.num(o.py,-1000,20000,0):null};
+  w:[4,5,6].includes(+o.w)?+o.w:SAN.int(o.w,0,2,0),px:Number.isFinite(+o.px)&&o.px!==null?SAN.num(o.px,-1000,20000,0):null,py:Number.isFinite(+o.py)&&o.py!==null?SAN.num(o.py,-1000,20000,0):null};
  // campos de outros módulos (itens, buffs, conquistas, visual...): só passam se forem JSON "pequeno e comum"; cada módulo valida o seu
  for(const k of Object.keys(o)){if(k in s||!/^[A-Za-z0-9_]{1,16}$/.test(k))continue;const v=o[k];
   if(v===null||['number','string','boolean'].includes(typeof v)){if(typeof v!=='string'||v.length<=4000)s[k]=v}
@@ -9733,7 +9733,8 @@ float shadowAt(vec3 p,vec3 n){
  vec4 q=uSM*vec4(p+n*uSh.y,1.0);vec3 s=q.xyz*0.5+0.5;
  if(s.x<=0.002||s.x>=0.998||s.y<=0.002||s.y>=0.998||s.z>=1.0)return 1.0;
  float z=s.z-uShR.y;float k;
- if(uSh.x>1.5){float o=uShR.x;k=(shTap(s.xy+vec2(-o,-o),z)+shTap(s.xy+vec2(o,-o),z)+shTap(s.xy+vec2(-o,o),z)+shTap(s.xy+vec2(o,o),z)+shTap(s.xy,z)*2.0)/6.0;}
+ if(uSh.x>1.5){float o=uShR.x*1.6,an=6.2831853*fract(52.9829189*fract(dot(gl_FragCoord.xy,vec2(0.06711056,0.00583715))));vec2 d0=vec2(cos(an),sin(an))*o,d1=vec2(-d0.y,d0.x),d2=(d0+d1)*0.62,d3=(d0-d1)*0.62;
+  k=(shTap(s.xy,z)*2.0+shTap(s.xy+d0,z)+shTap(s.xy-d0,z)+shTap(s.xy+d1,z)+shTap(s.xy-d1,z)+shTap(s.xy+d2,z)+shTap(s.xy-d2,z)+shTap(s.xy+d3,z)+shTap(s.xy-d3,z))/10.0;}
  else k=shTap(s.xy,z);
  return mix(k,1.0,fo);}
 `;
@@ -10154,7 +10155,7 @@ H3.shadowOn=()=>!!(SHS.on&&P.sh);
 H3.shBegin=function(fx,fy,fz){
  SHS.pend=false;if(!SHS.on||!P.sh||!gl)return false;const res=min(SHS.res,MAXT);RTS.sh=rtMake(RTS.sh,res,res,true,false);if(!RTS.sh){SHS.on=0;return false}
  const fxv=-SUN[0],fyv=-SUN[1],fzv=-SUN[2];let rx=-fzv,rz=fxv;const rl=Math.hypot(rx,rz)||1;rx/=rl;rz/=rl;
- const ux=-rz*fyv,uy=rz*fxv-rx*fzv,uz=rx*fyv,E=SHS.ext,D=800,tx=2*E/res;
+ const ux=-rz*fyv,uy=rz*fxv-rx*fzv,uz=rx*fyv,E=SHS.ext,D=SHS.D||800,tx=2*E/res;
  let a=rx*fx+rz*fz,b=ux*fx+uy*fy+uz*fz;a=Math.round(a/tx)*tx;b=Math.round(b/tx)*tx;const c=fxv*fx+fyv*fy+fzv*fz;
  const m=SHS.mat;m.fill(0);m[0]=rx/E;m[8]=rz/E;m[12]=-a/E;m[1]=ux/E;m[5]=uy/E;m[9]=uz/E;m[13]=-b/E;m[2]=fxv/D;m[6]=fyv/D;m[10]=fzv/D;m[14]=-c/D;m[15]=1;
  SHS.ax=[rx,rz,ux,uy,uz];SHS.a=a;SHS.b=b;SHS.texel=1/res;SHS.nOff=tx*1.4;SHS.bias=1.2/(2*D)+tx/(2*D);
@@ -23718,9 +23719,19 @@ renderMt=function(){
 // ---------- Mundos ----------
 const WDEF=[
  {n:0,name:'Mundo 1',c:'#43b047',c2:'#1b5e20',pool:()=>NAMES},
+ {n:4,name:'Mundo 2 · Dragon Ball',c:'#f39c12',c2:'#8a3a00'},
+ {n:5,name:'Mundo 3 · Floresta dos Pinheiros',c:'#2fbf8f',c2:'#0e4d3a'},
+ {n:6,name:'Mundo 4 · Arquipélago',c:'#2f8fd8',c2:'#0b3a66'},
  {n:1,name:'Halloween',c:'#ff8f00',c2:'#bf360c',pool:()=>HNAMES},
  {n:2,name:'Boss Mundial',c:'#26c6da',c2:'#00374a'},
  {n:3,name:'Raid',c:'#8e5cd6',c2:'#3a1a6a'}];
+// botões dos mundos só em 3D (viagem rápida): liberados depois de passar pelo portal uma vez
+{const _r0=renderW;renderW=function(){_r0();const L=$('wList');if(!L)return;
+ for(const[n,ok,txt,lk,go]of[[4,!!ups.db,'Cidade do Oeste e deserto','Libere o portal no Mundo 1',()=>window.DBW&&DBW.travel&&DBW.travel()],
+   [5,!!ups.nj,'Floresta de pinheiros gigantes','Entre pelo portal no Mundo 2',()=>window.NJW&&NJW.travel&&NJW.travel()],
+   [6,!!ups.oc,'Ilhas e navios pelo mar','Entre pelo portal no Mundo 2',()=>window.OCW&&OCW.travel&&OCW.travel()]]){
+  const b=document.createElement('button');b.className='btn wb'+(ok?'':' dis');b.dataset.n=n;b.innerHTML='Mundo<br><small style="font-size:11px">'+(ok?txt:lk)+'</small>';
+  b.onclick=()=>{if(!ok){try{toast(lk)}catch(e){}return}$('wM').style.display='none';lock=false;go()};L.appendChild(b)}}}
 const _rw=renderW;
 renderW=function(){
  try{_rw()}catch(e){}
@@ -23777,6 +23788,7 @@ const M1P={x:352,z:584};                              // portal no Mundo 1
 const STW={x:820,z:2240};                             // (mundo) estátua da estrela (roleta dos personagens de Dragon Ball) — WCFG[4].s aponta para cá
 let STM=null;
 const DBW=window.DBW={WID,K,MW:WW,MH:WH,ready:false,pct:0,M1P,SPAWN,BACK,rev:0};
+DBW.P3={x:300,z:2060};DBW.P4={x:300,z:2420};   // (mundo) portais do Mundo 3 (ao norte do cruzamento da chegada) e do Mundo 4 (ao sul); quem desenha cada um é o módulo do mundo
 
 // ---------- ruído ----------
 function h2(i,j,s){let h=(i*374761393+j*668265263+((s|0)*1442695041))|0;h=Math.imul(h^(h>>>13),1274126177);h^=h>>>16;return(h>>>0)/4294967296}
@@ -24357,6 +24369,9 @@ DBW.go=function(){if(world!==0||Date.now()<cool)return;
  goWorld(WID);P.x=SPAWN.x-8;P.y=SPAWN.z-14;P.dir=3;try{save()}catch(e){}toast_('Mundo 2 · Dragon Ball! Cidade do Oeste')};
 DBW.back=function(){if(world!==WID||Date.now()<cool)return;cool=Date.now()+4000;
  goWorld(0);P.x=M1P.x-8;P.y=M1P.z+46-14;P.dir=2;try{save()}catch(e){}toast_('De volta ao Mundo 1')};
+// viagem rápida (menu Mundos): só para quem já liberou o portal
+DBW.travel=function(){if(!ups.db)return false;if(world===WID)return true;cool=Date.now()+4000;goWorld(WID);P.x=SPAWN.x-8;P.y=SPAWN.z-14;P.dir=3;try{save()}catch(e){}
+ try{if(!H3.mode&&H3.setMode)H3.setMode(2)}catch(e){}guard3D();toast_('Mundo 2 · Dragon Ball! Cidade do Oeste');return true};
 setInterval(()=>{try{if(typeof world==='undefined'||lock)return;const x=P.x+8,z=P.y+14;
  if(world===0&&hypot(x-M1P.x,z-M1P.z)<16)DBW.go();
  else if(world===WID&&hypot(x-BACK.x,z-BACK.z)<16)DBW.back()}catch(e){}},120);
@@ -24715,7 +24730,7 @@ const ROCKC=[[100,102,92],[86,90,80],[110,108,96],[78,84,74],[94,100,84],[104,98
 const GST='#8f918a',GST2='#73766e',MOSSH='#62764a';
 
 // ---------- letras (5 x 7) para as placas ----------
-const FONT={M:'10001110111010110101100011000110001',U:'10001100011000110001100011000101110',N:'10001110011010110011100011000110001',D:'11110100011000110001100011000111110',
+const FONT={'2':'01110100010000100010001000100011111',M:'10001110111010110101100011000110001',U:'10001100011000110001100011000101110',N:'10001110011010110011100011000110001',D:'11110100011000110001100011000111110',
  O:'01110100011000110001100011000101110','1':'00100011000010000100001000010001110','3':'11110000010000101110000010000111110'};
 function text(mb,str,px,d,col,e){const n=str.length,w=(n*6-1)*px,x0=-w/2;
  for(let k=0;k<n;k++){const g=FONT[str[k]];if(!g)continue;for(let r=0;r<7;r++)for(let c=0;c<5;c++)if(g[r*5+c]==='1')mb.push().T(x0+(k*6+c+.5)*px,(6-r+.5)*px,d/2).box(px*1.02,px*1.02,d,col,e||0).pop()}}
@@ -25100,7 +25115,7 @@ function* gen(gl){
  for(let k=0;k<7;k++){const x=GXC-260-k*14+(r()-.5)*6,z=WALLZ-24-(k%2)*12,y=floorY(x,z),mb=CHK(x,z).o;if(k<4)mb.push().T(x,y,z).cyl(6,6,13,10,'#6b4a30',0,{cs:['#6b4a30','#5b3c28']}).push().T(0,3,0).cyl(6.3,6.3,1.4,10,'#2b2b31',0).pop().push().T(0,9,0).cyl(6.3,6.3,1.4,10,'#2b2b31',0).pop().pop();
   else mb.push().T(x,y,z).RY(r()).box(13,11,13,'#8a6440',0,true).pop();circ(x,z,8)}
  // portal de volta (no tamanho do Mundo 1: desfaz a escala)
- {const mb=CHK(BKd.x,BKd.z).o;mb.push().T(BKd.x,floorY(BKd.x,BKd.z),BKd.z).S(1/K,1/K,1/K).RY(PI/2);mb.inst(portalMB(),mb.m);mb.push().T(0,62,0);signMB(mb,'MUNDO 1');mb.pop();mb.pop();
+ {const mb=CHK(BKd.x,BKd.z).o;mb.push().T(BKd.x,floorY(BKd.x,BKd.z),BKd.z).S(1/K,1/K,1/K).RY(PI/2);mb.inst(portalMB(),mb.m);mb.push().T(0,62,0);signMB(mb,'MUNDO 2');mb.pop();mb.pop();
   for(const sd of[-1,1])circ(BKd.x,BKd.z+sd*13,2.5)}
  NJW.pct=.36;yield;
  // ---- vale: penhascos, cachoeira, lago, guardião, torii, lanternas ----
@@ -25273,35 +25288,38 @@ try{WD[WID]={map:map5,EN:[]};QS[WID]=QS[0]}catch(e){console.error('NJW mundo',e)
 NJW.map=map5;
 let cool=0;
 function toast_(m){try{if(typeof toast==='function')toast(m)}catch(e){}}
-NJW.go=function(){if(world!==0||Date.now()<cool)return;cool=Date.now()+4000;
+NJW.go=function(){if(world!==4||Date.now()<cool)return;cool=Date.now()+4000;ups.nj=1;
  goWorld(WID);P.x=SPAWN.x-8;P.y=SPAWN.z-14;P.dir=0;try{save()}catch(e){}toast_('Mundo 3 · Floresta dos Pinheiros')};
-NJW.back=function(){if(world!==WID||Date.now()<cool)return;cool=Date.now()+4000;
- goWorld(0);P.x=M1P.x-8;P.y=M1P.z+46-14;P.dir=2;try{save()}catch(e){}toast_('De volta ao Mundo 1')};
+NJW.back=function(){if(world!==WID||Date.now()<cool)return;cool=Date.now()+4000;const D=window.DBW;
+ goWorld(4);if(D&&D.P3){P.x=D.P3.x-8;P.y=D.P3.z+(70)-14}P.dir=0;try{save()}catch(e){}toast_('De volta ao Mundo 2 · Dragon Ball')};
+// viagem rápida (menu Mundos): só para quem já entrou neste mundo pelo portal
+NJW.travel=function(){if(!ups.nj)return false;if(world===WID)return true;cool=Date.now()+4000;goWorld(WID);P.x=SPAWN.x-8;P.y=SPAWN.z-14;P.dir=0;try{save()}catch(e){}
+ try{if(!H3.mode&&H3.setMode)H3.setMode(2)}catch(e){}guard3D();toast_('Mundo 3 · Floresta dos Pinheiros');return true};
 setInterval(()=>{try{if(typeof world==='undefined'||lock)return;const x=P.x+8,z=P.y+14;
- if(world===0&&hypot(x-M1P.x,z-M1P.z)<16)NJW.go();
+ if(world===4&&window.DBW&&DBW.P3&&hypot(x-DBW.P3.x,z-DBW.P3.z)<16)NJW.go();
  else if(world===WID&&hypot(x-BACK.x,z-BACK.z)<16)NJW.back()}catch(e){}},120);
-setTimeout(()=>{try{const sv=typeof SV!=='undefined'?SV:null;if(sv&&sv.w===WID){goWorld(WID);if(typeof sv.px==='number'&&!NJW.solid(sv.px+8,sv.py+14)&&sv.px<WW&&sv.py<WH){P.x=sv.px;P.y=sv.py}else{P.x=SPAWN.x-8;P.y=SPAWN.z-14}guard3D()}}catch(e){}},0);
+setTimeout(()=>{try{const sv=typeof SV!=='undefined'?SV:null;if(sv&&sv.w===WID){ups.nj=1;goWorld(WID);if(typeof sv.px==='number'&&!NJW.solid(sv.px+8,sv.py+14)&&sv.px<WW&&sv.py<WH){P.x=sv.px;P.y=sv.py}else{P.x=SPAWN.x-8;P.y=SPAWN.z-14}guard3D()}}catch(e){}},0);
 // o Mundo 3 só existe no 3D: ao reabrir nele, liga o 3D; se o 3D não ligar, volta para o Mundo 1 ao lado do portal
 function guard3D(){const t0=Date.now();let tried=0;const iv=setInterval(()=>{try{
  if(world!==WID){clearInterval(iv);return}
  const S=H3.S||{};if(H3.mode>0&&!S.ld){clearInterval(iv);return}
  if(S.ld||(document.getElementById('startM')&&getComputedStyle(document.getElementById('startM')).display!=='none'))return;
  if(!H3.mode&&H3.setMode&&tried<3&&!lock){tried++;try{H3.setMode(2)}catch(e){console.error('NJW 3D',e)}}
- if(!H3.mode&&(tried>=3||Date.now()-t0>60000)){clearInterval(iv);goWorld(0);P.x=M1P.x-8;P.y=M1P.z+46-14;P.dir=2;try{save()}catch(e){}toast_('O Mundo 3 precisa do 3D: voltamos para o Mundo 1, ao lado do portal')}
+ if(!H3.mode&&(tried>=3||Date.now()-t0>60000)){clearInterval(iv);const M_=window.DBW&&DBW.M1P||M1P;goWorld(0);P.x=M_.x-8;P.y=M_.z+46-14;P.dir=2;try{save()}catch(e){}toast_('O Mundo 3 precisa do 3D: voltamos para o Mundo 1')}
 }catch(e){}},1500)}
 NJW.guard3D=guard3D;
 
 // ---------- o portal no Mundo 1 (parte do campo 3D) ----------
 const FLD=H3.fld;
-if(FLD&&FLD.reg){let pm=null,py=0;
- FLD.reg({build:function*(gl){py=FLD.hAt(M1P.x,M1P.z);const mb=new MB(780);mb.push().T(M1P.x,py-.4,M1P.z);mb.inst(portalMB(),mb.m);mb.pop();
-   mb.push().T(M1P.x,py+62,M1P.z);signMB(mb,'MUNDO 3');mb.pop();
-   pm=H3.upload(gl,mb.pack());yield 1},
-  draw:(t,dyn)=>{if(pm&&H3.vis(pm.cx,pm.cy,pm.cz,pm.rad))H3.mesh(pm,null,FLD.lights,dyn,{})},
-  sprites:t=>{const T=H3.tex;if(!T||!pm)return;const s=t/1000;H3.spr(T.glow,M1P.x,py+27,M1P.z,54,54,null,[.35,1,.85,.3+.08*sin(s*3)],true,0,true)},
-  frame:(t,C,dt)=>{const FX=H3.fx;if(FX&&pm&&Math.random()<.35&&hypot(C.x-M1P.x,C.z-M1P.z)<500)FX.emit({x:M1P.x+(Math.random()-.5)*36,y:py+8+Math.random()*36,z:M1P.z+(Math.random()-.5)*4,vx:0,vy:.25,vz:0,g:0,life:900,s0:2.4,s1:.4,c:[.4,1,.85],a:.9,tex:'dot'})},
-  free:()=>{const gl=H3.gl();if(gl&&pm)gl.deleteBuffer(pm.vbo);pm=null}});
-}
+// ---------- o portal para cá fica no Mundo 2 (Dragon Ball), perto do cruzamento da chegada (antes ficava no Mundo 1) ----------
+{const SD=H3.scenes&&H3.scenes.db,DB=window.DBW;if(SD&&DB&&DB.P3){const PP=DB.P3;let pm=null,py=0;
+ const mk=()=>{const gl=H3.gl();if(!gl)return;py=DB.floorY(PP.x,PP.z);const mb=new MB(780);mb.push().T(PP.x,py-.4,PP.z);mb.inst(portalMB(),mb.m);mb.push().T(0,62,0);signMB(mb,'MUNDO 3');mb.pop();mb.pop();pm=H3.upload(gl,mb.pack())};
+ const _d=SD.draw,_s=SD.sprites,_f=SD.frameFx,_sh=SD.shadow,_fr=SD.free;
+ SD.draw=function(t,dyn){const r=_d.apply(this,arguments);try{if(!pm&&DB.ready)mk();if(pm&&H3.vis(pm.cx,pm.cy,pm.cz,pm.rad))H3.mesh(pm,null,SD.lights||null,dyn,{})}catch(e){}return r};
+ SD.sprites=function(t){const r=_s.apply(this,arguments);try{const T=H3.tex;if(T&&pm){const s=t/1000;H3.spr(T.glow,PP.x,py+27,PP.z,54,54,null,[.35,1,.85,.3+.08*sin(s*3)],true,0,true)}}catch(e){}return r};
+ SD.frameFx=function(t,C){const r=_f.apply(this,arguments);try{const FX=H3.fx;if(FX&&pm&&C&&Math.random()<.35&&hypot(C.x-PP.x,C.z-PP.z)<500)FX.emit({x:PP.x+(Math.random()-.5)*36,y:py+8+Math.random()*36,z:PP.z+(Math.random()-.5)*4,vx:0,vy:.25,vz:0,g:0,life:900,s0:2.4,s1:.4,c:[.4,1,.85],a:.9,tex:'dot'})}catch(e){}return r};
+ if(_sh)SD.shadow=function(t,F){const r=_sh.apply(this,arguments);try{if(pm&&H3.shVis(pm.cx,pm.cy,pm.cz,pm.rad))H3.shMesh(pm,null,false)}catch(e){}return r};
+ SD.free=function(){const r=_fr.apply(this,arguments);try{const gl=H3.gl();if(gl&&pm&&!gl.isContextLost())gl.deleteBuffer(pm.vbo)}catch(e){}pm=null;return r}}}
 })();
 </script>
 <script>
@@ -25551,7 +25569,7 @@ function roofGable(mb,L,d,yE,yR,col,ov){const x0=-L/2-ov,x1=L/2+ov,c2=dk(col,.86
   qh(mb,[x0,yE-1,sd*d],[x1,yE-1,sd*d],[x1,yR-1.2,0],[x0,yR-1.2,0],'#5a4030',0,[0,-1,0])}
  mb.push().T(0,yR,0).box(L+ov*2+1,2.4,3.4,dk(col,.7),0).pop()}
 // letras 5 x 7
-const FONT={M:'10001110111010110101100011000110001',U:'10001100011000110001100011000101110',N:'10001110011010110011100011000110001',D:'11110100011000110001100011000111110',
+const FONT={'2':'01110100010000100010001000100011111',M:'10001110111010110101100011000110001',U:'10001100011000110001100011000101110',N:'10001110011010110011100011000110001',D:'11110100011000110001100011000111110',
  O:'01110100011000110001100011000101110','1':'00100011000010000100001000010001110','4':'00010001100101010010111110001000010'};
 function text(mb,str,px,d,col,e){const n=str.length,w=(n*6-1)*px,x0=-w/2;
  for(let k=0;k<n;k++){const g=FONT[str[k]];if(!g)continue;for(let r=0;r<7;r++)for(let c=0;c<5;c++)if(g[r*5+c]==='1')mb.push().T(x0+(k*6+c+.5)*px,(6-r+.5)*px,d/2).box(px*1.02,px*1.02,d,col,e||0).pop()}}
@@ -26408,7 +26426,7 @@ function* gen(gl){
   // redes e um barquinho na areia
   for(let k=0;k<3;k++){const x=PORT.x-130-k*16,z=PSH+4+k*3;const y=floorY(x,z);mb.push().T(x,y+.3,z).RY(.4+k).S(1,.15,1).sph(6,2,8,'#7a8a6a',0).pop()}}
  {const yt=lighthouse(CHK(LH[0],LH[1]).o,LH[0],LH[1]);LIGHTS.push({x:LH[0]*K,y:yt*K,z:LH[1]*K,r:200,cr:1,cg:.92,cb:.6,k:.25});GLOW.push([LH[0]*K,yt*K,LH[1]*K,22,[1,.93,.65]])}
- {const mb=CHK(BKd.x,BKd.z).o;mb.push().T(BKd.x,floorY(BKd.x,BKd.z),BKd.z).S(1/K,1/K,1/K).RY(PI/2);mb.inst(portalMB(),mb.m);mb.push().T(0,62,0);signMB(mb,'MUNDO 1');mb.pop();mb.pop();for(const sd of[-1,1])circ(BKd.x,BKd.z+sd*13,2.5)}
+ {const mb=CHK(BKd.x,BKd.z).o;mb.push().T(BKd.x,floorY(BKd.x,BKd.z),BKd.z).S(1/K,1/K,1/K).RY(PI/2);mb.inst(portalMB(),mb.m);mb.push().T(0,62,0);signMB(mb,'MUNDO 2');mb.pop();mb.pop();for(const sd of[-1,1])circ(BKd.x,BKd.z+sd*13,2.5)}
  OCW.pct=.3;yield;
  // ---- vila: casas, jardins, poço, postes, varais ----
  for(const H of HOUSES){const mb=CHK(H.x,H.z).o,q=house(mb,H.x,H.z,H.yaw,H.P,r);orect(H.x,H.z,q.w/2+2,q.d/2+2,H.yaw);
@@ -26727,9 +26745,10 @@ function sprites(t){const T=H3.tex;if(!T)return;const s=t/1000,F=H3.S.foc||H3.S.
  for(const g of GLOW){if(hypot(g[0]-F.x,g[2]-F.z)>2400)continue;H3.spr(T.glow,g[0],g[1],g[2],g[3]*2,g[3]*2,null,[g[4][0],g[4][1],g[4][2],.4+.06*sin(s*2.3+g[0])],true,0,true)}
  // brilhos do sol na água em volta da câmera
  for(let i=0;i<26;i++){const a=i*2.399,rr=60+((i*97)%13)*40,x=F.x+cos(a+s*.02)*rr,z=F.z+sin(a+s*.02)*rr,k=max(0,sin(s*2.2+i*1.7));if(k<.55)continue;if(baseH(x/K,z/K)>WL-1)continue;H3.spr(T.glow,x,WL*K+.5,z,10,4,null,[1,1,.95,(k-.55)*1.6],true,0,true)}}
-const SHW=[null,{res:1024,ext:340,f0:290,f1:330},{res:2048,ext:600,f0:520,f1:590},{res:2048,ext:860,f0:760,f1:850}];
+// sombras por nível (Configurações → Sombras): nas ilhas a área com sombra é bem maior; do Alto para cima o mapa é 4096 (suave e nítida) e cobre a ilha toda
+const SHW=[null,{on:1,res:2048,ext:460,f0:400,f1:450,D:900},{on:2,res:2048,ext:760,f0:670,f1:750,D:1100},{on:2,res:4096,ext:1250,f0:1100,f1:1240,D:1500},{on:2,res:4096,ext:1650,f0:1460,f1:1640,D:1900}];
 let shKey='';
-function shadowTune(){let sh=1;try{const L=H3.gfx&&H3.gfx.cur();sh=L?(L.sh|0):1}catch(e){}const c=SHW[sh],k=sh+'';if(k===shKey)return;shKey=k;if(c)H3.shadowCfg({on:sh,res:c.res,ext:c.ext,f0:c.f0,f1:c.f1});else H3.shadowCfg({on:0})}
+function shadowTune(){let lv=1;try{lv=H3.G3&&H3.G3.sh!==undefined?H3.G3.sh|0:1}catch(e){}const c=SHW[lv],k=lv+'';if(k===shKey)return;shKey=k;if(c)H3.shadowCfg(Object.assign({},c));else H3.shadowCfg({on:0,D:0})}
 function frameFx(t,Cm){shadowTune();{const C=H3.S.foc||Cm,F=FLO();grassStep(C,F.perF||2,F.msF||4);if((GR.tick++&31)===0)grassEvict(C)}
  const FX=H3.fx;if(!FX)return;const R=Math.random;
  // esteira do barco
@@ -26743,7 +26762,7 @@ function frameFx(t,Cm){shadowTune();{const C=H3.S.foc||Cm,F=FLO();grassStep(C,F.
  if(R()<.12&&!PB.on){const a=R()*TAU,rr=40+R()*160,x=Cm.x+cos(a)*rr,z=Cm.z+sin(a)*rr;if(baseH(x/K,z/K)>6.5)FX.emit({x,y:floorW(x,z)+6+R()*10,z,vx:(R()-.5)*.5,vy:(R()-.3)*.15,vz:(R()-.5)*.5,g:0,life:2500,s0:2.2,s1:2.2,c:[[1,.85,.3],[1,1,1],[.7,.85,1],[1,.6,.8]][(R()*4)|0],a:.95,add:false,tex:'dot',drag:.995})}}
 
 // ---------- a cena 3D ----------
-const SUN=[-.4,.82,.4],SUNC=[1.14,1.06,.92],SKYA=[.28,.56,.96],SKYB=[.72,.86,.99],GNDA=[.4,.42,.34];
+const SUN=[-.5,.66,.55],SUNC=[1.16,1.05,.88],SKYA=[.28,.56,.96],SKYB=[.72,.86,.99],GNDA=[.4,.42,.34];
 const SCN=H3.scenes=H3.scenes||{};
 SCN.ocean={id:'ocean',K:1,OX:0,OY:0,eye:25,camD:92,p3:-.18,pl:[[-.95,.85],[-1.0,.4]],amb:[1.08,1.06,1.0],camLight:[0,0,0],iso:false,
  get fx(){return typeof fight!=='undefined'&&fight?fight.x+8:0},get fz(){return typeof fight!=='undefined'&&fight?fight.y+14:0},
@@ -26760,7 +26779,7 @@ SCN.ocean={id:'ocean',K:1,OX:0,OY:0,eye:25,camD:92,p3:-.18,pl:[[-.95,.85],[-1.0,
   const ok=(x,z)=>!blocked(x,z);if(ok(o.x,o.z))return;if(ok(o.x,o.oz)){o.z=o.oz;return}if(ok(o.ox,o.z)){o.x=o.ox;return}o.x=o.ox;o.z=o.oz},
  camOk:pz=>(x,z)=>x>8&&z>8&&x<WW-8&&z<WH-8,camSolid:(x,z)=>blocked(x,z),
  camY:(cy,cz,cx)=>max(cy,floorW(cx===undefined?WW/2:cx,cz)+6),
- enter(){shKey='';ENV4=0;if(typeof P!=='undefined'&&P&&OCW.ready)grassStep({x:P.x+8,z:P.y+14},60,120);PB.lx=P.x+8;PB.lz=P.y+14},leave(){grassClear();shKey='';try{if(H3.gfx&&H3.gfx.apply)H3.gfx.apply()}catch(e){}},clear(){},
+ enter(){shKey='';ENV4=0;if(typeof P!=='undefined'&&P&&OCW.ready)grassStep({x:P.x+8,z:P.y+14},60,120);PB.lx=P.x+8;PB.lz=P.y+14},leave(){grassClear();shKey='';try{H3.shadowCfg({D:0})}catch(e){}try{if(H3.gfx&&H3.gfx.apply)H3.gfx.apply()}catch(e){}},clear(){},
  boss:()=>null,isTgt:e=>!!e,tgt:e=>e?[e.x+8,floorW(e.x+8,e.y+14)+16,e.y+14,30,floorW(e.x+8,e.y+14)]:null,bossPlan:()=>null,
  flicker:()=>{},draw,sprites,frameFx,shadow,shake:()=>null,flash:()=>0,fbPos:()=>null};
 
@@ -26769,28 +26788,34 @@ const map6=[];for(let y=0;y<TH;y++){map6[y]=new Array(TW).fill(0)}
 try{WD[WID]={map:map6,EN:[]};QS[WID]=QS[0]}catch(e){console.error('OCW mundo',e)}
 let cool=0;
 function toast_(m){try{if(typeof toast==='function')toast(m)}catch(e){}}
-OCW.go=function(){if(world!==0||Date.now()<cool)return;cool=Date.now()+4000;goWorld(WID);P.x=SPAWN.x-8;P.y=SPAWN.z-14;P.dir=0;try{save()}catch(e){}toast_('Mundo 4 · Ilha dos Moinhos')};
-OCW.back=function(){if(world!==WID||Date.now()<cool)return;cool=Date.now()+4000;goWorld(0);P.x=M1P.x-8;P.y=M1P.z+46-14;P.dir=2;try{save()}catch(e){}toast_('De volta ao Mundo 1')};
+OCW.go=function(){if(world!==4||Date.now()<cool)return;cool=Date.now()+4000;ups.oc=1;goWorld(WID);P.x=SPAWN.x-8;P.y=SPAWN.z-14;P.dir=0;try{save()}catch(e){}toast_('Mundo 4 · Ilha dos Moinhos')};
+OCW.back=function(){if(world!==WID||Date.now()<cool)return;cool=Date.now()+4000;const D=window.DBW;
+ goWorld(4);if(D&&D.P4){P.x=D.P4.x-8;P.y=D.P4.z+(-70)-14}P.dir=0;try{save()}catch(e){}toast_('De volta ao Mundo 2 · Dragon Ball')};
+// viagem rápida (menu Mundos): só para quem já entrou neste mundo pelo portal
+OCW.travel=function(){if(!ups.oc)return false;if(world===WID)return true;cool=Date.now()+4000;goWorld(WID);P.x=SPAWN.x-8;P.y=SPAWN.z-14;P.dir=0;try{save()}catch(e){}
+ try{if(!H3.mode&&H3.setMode)H3.setMode(2)}catch(e){}guard3D();toast_('Mundo 4 · Arquipélago');return true};
 let lastIsl=-2;   // ilha onde o jogador está (-1 = no mar; -2 = acabou de entrar no mundo: não avisa)
 setInterval(()=>{try{if(typeof world==='undefined'||lock)return;const x=P.x+8,z=P.y+14;
- if(world===0&&hypot(x-M1P.x,z-M1P.z)<16)OCW.go();else if(world===WID&&hypot(x-BACK.x,z-BACK.z)<16)OCW.back();
+ if(world===4&&window.DBW&&DBW.P4&&hypot(x-DBW.P4.x,z-DBW.P4.z)<16)OCW.go();else if(world===WID&&hypot(x-BACK.x,z-BACK.z)<16)OCW.back();
  if(world===WID&&OCW.ready){let cur=-1;for(let k=0;k<ISL.length;k++){const I=ISL[k];if(I.on&&islD(I,x/K,z/K)<1.02){cur=k;break}}if(cur!==lastIsl){if(cur>=0&&lastIsl!==-2)toast_(ISL[cur].nm);lastIsl=cur}}else if(world!==WID)lastIsl=-2}catch(e){}},120);
-setTimeout(()=>{try{const sv=typeof SV!=='undefined'?SV:null;if(sv&&sv.w===WID){goWorld(WID);if(typeof sv.px==='number'&&!OCW.solid(sv.px+8,sv.py+14)&&sv.px<WW&&sv.py<WH&&!isBoat((sv.px+8)/K,(sv.py+14)/K)){P.x=sv.px;P.y=sv.py}else{P.x=SPAWN.x-8;P.y=SPAWN.z-14}guard3D()}}catch(e){}},0);
+setTimeout(()=>{try{const sv=typeof SV!=='undefined'?SV:null;if(sv&&sv.w===WID){ups.oc=1;goWorld(WID);if(typeof sv.px==='number'&&!OCW.solid(sv.px+8,sv.py+14)&&sv.px<WW&&sv.py<WH&&!isBoat((sv.px+8)/K,(sv.py+14)/K)){P.x=sv.px;P.y=sv.py}else{P.x=SPAWN.x-8;P.y=SPAWN.z-14}guard3D()}}catch(e){}},0);
 function guard3D(){const t0=Date.now();let tried=0;const iv=setInterval(()=>{try{
  if(world!==WID){clearInterval(iv);return}const S=H3.S||{};if(H3.mode>0&&!S.ld){clearInterval(iv);return}
  if(S.ld||(document.getElementById('startM')&&getComputedStyle(document.getElementById('startM')).display!=='none'))return;
  if(!H3.mode&&H3.setMode&&tried<3&&!lock){tried++;try{H3.setMode(2)}catch(e){console.error('OCW 3D',e)}}
- if(!H3.mode&&(tried>=3||Date.now()-t0>60000)){clearInterval(iv);goWorld(0);P.x=M1P.x-8;P.y=M1P.z+46-14;P.dir=2;try{save()}catch(e){}toast_('O Mundo 4 precisa do 3D: voltamos para o Mundo 1, ao lado do portal')}
+ if(!H3.mode&&(tried>=3||Date.now()-t0>60000)){clearInterval(iv);const M_=window.DBW&&DBW.M1P||M1P;goWorld(0);P.x=M_.x-8;P.y=M_.z+46-14;P.dir=2;try{save()}catch(e){}toast_('O Mundo 4 precisa do 3D: voltamos para o Mundo 1')}
 }catch(e){}},1500)}
 // ---------- o portal no Mundo 1 ----------
 const FLD=H3.fld;
-if(FLD&&FLD.reg){let pm=null,py=0;
- FLD.reg({build:function*(gl){py=FLD.hAt(M1P.x,M1P.z);const mb=new MB(782);mb.push().T(M1P.x,py-.4,M1P.z);mb.inst(portalMB(),mb.m);mb.pop();mb.push().T(M1P.x,py+62,M1P.z);signMB(mb,'MUNDO 4');mb.pop();pm=H3.upload(gl,mb.pack());yield 1},
-  draw:(t,dyn)=>{if(pm&&H3.vis(pm.cx,pm.cy,pm.cz,pm.rad))H3.mesh(pm,null,FLD.lights,dyn,{})},
-  sprites:t=>{const T=H3.tex;if(!T||!pm)return;const s=t/1000;H3.spr(T.glow,M1P.x,py+27,M1P.z,54,54,null,[.35,.8,1,.3+.08*sin(s*3)],true,0,true)},
-  frame:(t,C,dt)=>{const FX=H3.fx;if(FX&&pm&&Math.random()<.35&&hypot(C.x-M1P.x,C.z-M1P.z)<500)FX.emit({x:M1P.x+(Math.random()-.5)*36,y:py+8+Math.random()*36,z:M1P.z+(Math.random()-.5)*4,vx:0,vy:.25,vz:0,g:0,life:900,s0:2.4,s1:.4,c:[.4,.85,1],a:.9,tex:'dot'})},
-  free:()=>{const gl=H3.gl();if(gl&&pm)gl.deleteBuffer(pm.vbo);pm=null}});
-}
+// ---------- o portal para cá fica no Mundo 2 (Dragon Ball), perto do cruzamento da chegada (antes ficava no Mundo 1) ----------
+{const SD=H3.scenes&&H3.scenes.db,DB=window.DBW;if(SD&&DB&&DB.P4){const PP=DB.P4;let pm=null,py=0;
+ const mk=()=>{const gl=H3.gl();if(!gl)return;py=DB.floorY(PP.x,PP.z);const mb=new MB(780);mb.push().T(PP.x,py-.4,PP.z);mb.inst(portalMB(),mb.m);mb.push().T(0,62,0);signMB(mb,'MUNDO 4');mb.pop();mb.pop();pm=H3.upload(gl,mb.pack())};
+ const _d=SD.draw,_s=SD.sprites,_f=SD.frameFx,_sh=SD.shadow,_fr=SD.free;
+ SD.draw=function(t,dyn){const r=_d.apply(this,arguments);try{if(!pm&&DB.ready)mk();if(pm&&H3.vis(pm.cx,pm.cy,pm.cz,pm.rad))H3.mesh(pm,null,SD.lights||null,dyn,{})}catch(e){}return r};
+ SD.sprites=function(t){const r=_s.apply(this,arguments);try{const T=H3.tex;if(T&&pm){const s=t/1000;H3.spr(T.glow,PP.x,py+27,PP.z,54,54,null,[.35,.8,1,.3+.08*sin(s*3)],true,0,true)}}catch(e){}return r};
+ SD.frameFx=function(t,C){const r=_f.apply(this,arguments);try{const FX=H3.fx;if(FX&&pm&&C&&Math.random()<.35&&hypot(C.x-PP.x,C.z-PP.z)<500)FX.emit({x:PP.x+(Math.random()-.5)*36,y:py+8+Math.random()*36,z:PP.z+(Math.random()-.5)*4,vx:0,vy:.25,vz:0,g:0,life:900,s0:2.4,s1:.4,c:[.4,.85,1],a:.9,tex:'dot'})}catch(e){}return r};
+ if(_sh)SD.shadow=function(t,F){const r=_sh.apply(this,arguments);try{if(pm&&H3.shVis(pm.cx,pm.cy,pm.cz,pm.rad))H3.shMesh(pm,null,false)}catch(e){}return r};
+ SD.free=function(){const r=_fr.apply(this,arguments);try{const gl=H3.gl();if(gl&&pm&&!gl.isContextLost())gl.deleteBuffer(pm.vbo)}catch(e){}pm=null;return r}}}
 })();
 </script>
 <script>
