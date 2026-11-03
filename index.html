@@ -2366,7 +2366,7 @@ const WCFG=[{w:W0,h:H0,s:[SX0,SY0],to:[TOX0,TOY0],gt:[GX0,GY0],np:[NX0,NY0],p:[S
  {w:W2,h:H2,s:[-50,-50],to:[-50,-50],gt:[20,19],np:[-99,-99],p:[15*T+8,20*T],d:0},
  null,{w:376,h:282,s:[50.75,139.125],to:[-50,-50],gt:[-50,-50],np:[-99,-99],p:[592,2226],d:3},   // 4: Mundo 2 · Dragon Ball (só 3D, js do fim do arquivo)
  {w:376,h:282,s:[-50,-50],to:[-50,-50],gt:[-50,-50],np:[-99,-99],p:[3000,3710],d:0},   // 5: Mundo 3 · Floresta dos Pinheiros (só 3D, js do fim do arquivo)
- {w:1200,h:750,s:[-50,-50],to:[-50,-50],gt:[-50,-50],np:[-99,-99],p:[2592,5400],d:0}];   // 6: Mundo 4 · Arquipélago (só 3D, js do fim do arquivo)
+ {w:1200,h:975,s:[-50,-50],to:[-50,-50],gt:[-50,-50],np:[-99,-99],p:[2592,5400],d:0}];   // 6: Mundo 4 · Arquipélago (só 3D, js do fim do arquivo)
 goWorld=function(n){if(n===world||!WCFG[n])return;if(n===1&&!ups.gate)return;if(n===2&&!wbCan()){toast('A Arena do Boss Mundial precisa de internet: entre na sua conta');return}
  const c=WCFG[n];world=n;W=c.w;H=c.h;SX=c.s[0];SY=c.s[1];TOX=c.to[0];TOY=c.to[1];GX=c.gt[0];GY=c.gt[1];NPC.x=c.np[0]*T;NPC.y=c.np[1]*T;
  map=WD[n].map;EN=WD[n].EN;qs=QS[n];fight=null;for(const k in fpos)delete fpos[k];P.x=c.p[0];P.y=c.p[1];P.dir=c.d;DY.length=0;PT.length=0;
@@ -23587,7 +23587,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261103163000;
+const GAME_BUILD=20261103183000;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
@@ -25341,7 +25341,11 @@ const FLD=H3.fld;
 // cúpula azul com estrelas, mezanino em ferradura com bar, e escadaria.
 // Ilha 5 · Templo da Maré: pátio de pedra elevado com muralhas de ondas, um pagode gigante (térreo com arcada + 6 andares, ~400 de altura, desenho
 // original com enfeites dourados), piscinas, estelas, lanternas de pedra, canais do mar com escadas, terraços com pavilhões, bastiões, portão norte,
-// trilha na selva até um santuário e uma enseada na frente. As outras 3 ilhas ainda não têm nada (só o lugar reservado em ISL).
+// trilha na selva até um santuário e uma enseada na frente.
+// Ilha 6 · Último Porto: a última cidade deste mar. Pátio gigante com a plataforma de execução (andaime de madeira de ~10 m com escada para subir),
+// palácio, catedral de cúpula, torre de vigia, quarteirões de casas, cais com armazéns, farol e o arco da faixa na avenida.
+// Depois dela, ao sul, o Paredão: uma parede de pedra vermelha que atravessa o mar de ponta a ponta e some nas nuvens; na frente da ilha 6 fica a
+// Montanha Reversa (dois esporões, faróis e um canal de água que sobe o paredão). Ainda não dá para subir: a correnteza empurra o barco de volta.
 // Entrada/saída: portal no Mundo 1 (a leste do portal do Mundo 2) e portal de volta na praça do porto.
 (function(){
 'use strict';
@@ -25351,7 +25355,7 @@ const MB=H3.MB,M4=H3.M4;
 const PI=Math.PI,TAU=PI*2,sin=Math.sin,cos=Math.cos,abs=Math.abs,min=Math.min,max=Math.max,floor=Math.floor,round=Math.round,sqrt=Math.sqrt,hypot=Math.hypot,atan2=Math.atan2;
 const clp=(v,a,b)=>v<a?a:v>b?b:v,lerp=(a,b,t)=>a+(b-a)*t,sm=(a,b,v)=>{v=clp((v-a)/(b-a),0,1);return v*v*(3-2*v)};
 const mixc=(a,b,t)=>[lerp(a[0],b[0],t),lerp(a[1],b[1],t),lerp(a[2],b[2],t)],mulc=(a,k)=>[a[0]*k,a[1]*k,a[2]*k];
-const K=2,WID=6,MW=9600,MH=6000,WW=MW*K,WH=MH*K,TW=WW/16,TH=WH/16;
+const K=2,WID=6,MW=9600,MH=7800,WW=MW*K,WH=MH*K,TW=WW/16,TH=WH/16;
 const WL=0;                                            // nível do mar (projeto)
 const BOOST=2.6;                                       // velocidade do barco (x a de andar)
 
@@ -25363,7 +25367,7 @@ function rng(s){s=s>>>0;return()=>{s=(s+0x6D2B79F5)>>>0;let t=s;t=Math.imul(t^t>
 // ---------- ilhas: as 8 posições (só a 1 está pronta) ----------
 // x,z = centro (projeto) · R = raio · on = já tem relevo
 const ISL=[{x:1300,z:2480,R:520,on:1,s:[.7,2.1,.3],nm:'Ilha 1 · Vila dos Moinhos'},{x:3434,z:2935,R:500,on:1,s:[1.57,1.6,.4],nm:'Ilha 2 · Forte Naval'},{x:5700,z:2650,R:560,on:1,s:[1.5708,0,1.5708],nm:'Ilha 3 · Cidade do Porto'},{x:8200,z:2900,R:850,on:1,ship:1,s:[0,0,0],nm:'Ilha 4 · Navio-Restaurante'},
- {x:7700,z:4700,R:620,on:1,s:[.4,1.9,.8],nm:'Ilha 5 · Templo da Maré'},{x:5500,z:4900,R:400},{x:3250,z:5000,R:400},{x:1200,z:4850,R:400}];   // fileira de cima (z ~ 2500-2900) e de baixo (z ~ 4900); ~1000 de mar entre vizinhas
+ {x:7700,z:4700,R:620,on:1,s:[.4,1.9,.8],nm:'Ilha 5 · Templo da Maré'},{x:5400,z:5000,R:700,on:1,s:[0,1.2,.5],nm:'Ilha 6 · Último Porto',fr:[.3,1.3]}];   // depois da 6: o Paredão   // fileira de cima (z ~ 2500-2900) e de baixo (z ~ 4900); ~1000 de mar entre vizinhas
 const I1=ISL[0];
 const shapeK=(I,a)=>1+.12*sin(2*a+I.s[0])+.08*sin(3*a+I.s[1])+.05*sin(5*a+I.s[2]);
 const islD=(I,x,z)=>{const dx=x-I.x,dz=z-I.z;return hypot(dx,dz)/(I.R*shapeK(I,atan2(dz,dx)))};   // 1 = beira da praia
@@ -25464,6 +25468,7 @@ I3.hf=islandH3;
 const near3=(x,z)=>abs(x-C3.x)<800&&abs(z-C3.z)<800;
 // chão de construções por cima da água: a ponte (rampa do cais até o convés) e o convés do navio
 function structF(x,z){
+ {const e=exeF(x,z);if(e>-99)return e}
  if(abs(x-BR3.x)<BR3.hw+.5&&z>BR3.z0&&z<BR3.z1)return z<=QZ?TOWNH+.6:lerp(TOWNH+.6,SHD,clp((z-QZ)/(BR3.zs-QZ),0,1));
  const u=(x-SH.x)/SH.L2;if(u>=-1&&u<=1&&abs(z-SH.z)<=shipHW(u)+1)return SHD;
  {const lx=x-S4.x,lz=z-S4.z;if(lx>-910&&lx<620&&abs(lz)<400)return f4(lx,lz)}
@@ -25514,6 +25519,29 @@ function islandH5(I,x,z){const d=islD(I,x,z);if(d>1.5)return null;
   for(const C of CAN5)if(x>=C[0]&&x<=C[1]&&z>=CZ5)h=z<=CZS5?lerp(PH5,1.5,(z-CZ5)/(CZS5-CZ5)):WL-30}
  return h}
 I5.hf=islandH5;I5.fr=[.3,1.25];
+
+// ---------- ilha 6 · Último Porto: a última cidade antes do Paredão. Cidade calçada com um pátio gigante no meio e a plataforma de execução
+// (andaime de madeira de ~10 m, com escada para subir), palácio, catedral de cúpula, torre de vigia, cais com armazéns, farol e o arco da faixa ----------
+const I6=ISL[5],C6={x:I6.x,z:I6.z},T6H=7,Q6Z=C6.z+440,Q6HW=300;                       // cidade plana · beira do cais (sul) · meia-largura do cais
+const PLZ6={x:C6.x,z:C6.z+10,hw:200,hd:150};                                           // o pátio gigante
+const EXE={x:C6.x,z:C6.z+20,hw:24,h:80,s0:C6.x+24,s1:C6.x+164,sw:10};                  // plataforma: deck 48x48 a 80 de altura; escada para leste (x de s0 a s1, z ±sw)
+const PIER6={x:C6.x-160,z0:Q6Z-4,z1:Q6Z+180,hw:16,y:7},PIERT6={z:Q6Z+158,hw:12,x0:C6.x-240,x1:C6.x-80};
+const near6=(x,z)=>abs(x-C6.x)<820&&abs(z-C6.z)<800;
+const town6=(x,z)=>{const rx=x-C6.x,rz=z-C6.z;return abs(rx)<470&&rz>-430&&z<=Q6Z};
+function islandH6(I,x,z){const d=islD(I,x,z);if(d>1.5)return null;
+ let h=d>1?WL-4-40*sm(1,1.4,d):d>.8?lerp(5,WL-4,sm(.8,1,d)):5+vn(x/140,z/140,61)*12*sm(.8,.45,d);
+ const rx=x-C6.x,rz=z-C6.z;
+ if(abs(rx)<490&&rz>-450&&z<=Q6Z+20){const k=(1-sm(470,490,abs(rx)))*(1-sm(-430,-450,rz))*(1-sm(.86,.97,d));if(k>0)h=lerp(h,T6H,k)}   // a cidade é plana
+ const kx=1-sm(Q6HW,Q6HW+16,abs(rx));if(kx>0&&rz>260){if(z<=Q6Z)h=lerp(h,T6H,kx*sm(260,300,rz));else h=lerp(h,min(h,WL-18),kx)}      // cais com água funda na frente
+ return h}
+I6.hf=islandH6;
+// chão das construções: o deck da plataforma e a escada
+function exeF(x,z){if(abs(x-EXE.x)<=EXE.hw&&abs(z-EXE.z)<=EXE.hw)return T6H+EXE.h;if(x>EXE.s0&&x<=EXE.s1&&abs(z-EXE.z)<=EXE.sw)return lerp(T6H+EXE.h,T6H,(x-EXE.s0)/(EXE.s1-EXE.s0));return -999}
+// ---------- o Paredão (uma parede de pedra vermelha que atravessa o mar de ponta a ponta, o topo some nas nuvens) e a Montanha Reversa ----------
+const WALLZ=6600,RMX=I6.x,RMW=95,WTOP=2600;                                             // face do paredão (projeto) · Montanha Reversa: x do meio, meia-largura do canal · altura
+function spurH(x,z){if(z<WALLZ-370||abs(x-RMX)>440)return -99;const t=sm(WALLZ-370,WALLZ+10,z);let h=-99;   // os dois esporões de pedra dos lados do canal
+ for(const sd of[-1,1]){const cx=RMX+sd*(RMW+120),w=120*(1-.3*t),dd=abs(x-cx)/w;if(dd<1.25){const v=WL-8+(46+t*t*560)*(1-sm(.6,1.25,dd))*(.86+.28*vn(x/40,z/40,71));if(v>h)h=v}}
+ return h}
 // ---------- relevo (projeto) ----------
 function islandH(I,x,z){const d=islD(I,x,z);if(d>1.45)return null;
  if(d>1)return WL-4-40*sm(1,1.4,d);
@@ -25521,6 +25549,7 @@ function islandH(I,x,z){const d=islD(I,x,z);if(d>1.45)return null;
  const hill=(vn(x/170,z/170,3)*.75+vn(x/60,z/60,5)*.25)*26*sm(.8,.35,d);return 5+hill}
 const PADS=[];   // chão plano debaixo das casas, moinhos e farol: {x,z,hw,hd,a,h}
 function baseH(x,z){let h=WL-44;for(const I of ISL)if(I.on){const v=(I.hf||islandH)(I,x,z);if(v!==null&&v>h)h=v}
+ if(z>WALLZ-380&&abs(x-RMX)<440){const v=spurH(x,z);if(v>h)h=v}   // esporões da Montanha Reversa
  // praça do porto e vila: mais plano
  const pd=hypot(x-PORT.x,(z-PORT.z)*1.2);if(pd<170){const k=1-sm(90,170,pd);h=lerp(h,max(h,6),k);if(pd<110&&islD(I1,x,z)<1.02)h=lerp(h,6,1-sm(70,110,pd))}
  const rd=roadD(x,z);if(rd<30&&h>4)h=lerp(h,max(5,h*.85),1-sm(10,30,rd));
@@ -25530,7 +25559,7 @@ function baseH(x,z){let h=WL-44;for(const I of ISL)if(I.on){const v=(I.hf||islan
   road2(x,z);if(R2d<RHW2+22){const k=1-sm(RHW2+1,RHW2+22,R2d);if(R2h>-90)h=lerp(h,R2h,k);else if(h>4)h=lerp(h,max(5,h*.9),k)}}
  for(const Q of PADS){const c=cos(Q.a),sn=sin(Q.a),dx=x-Q.x,dz=z-Q.z,d=max(abs(dx*c-dz*sn)-Q.hw,abs(dx*sn+dz*c)-Q.hd);if(d<16)h=lerp(h,Q.h,1-sm(0,16,d))}
  return h}
-const PIERS=[[PIER,PIERT],[PIER2,PIERT2]];
+const PIERS=[[PIER,PIERT],[PIER2,PIERT2],[PIER6,PIERT6]];
 const onPier=(x,z)=>{for(const[A,B]of PIERS)if((abs(x-A.x)<A.hw&&z>A.z0&&z<A.z1)||(abs(z-B.z)<B.hw&&x>B.x0&&x<B.x1))return true;return false};
 const BSC=1.7,DECK=5.2;                                // tamanho do barco e altura do convés (acima da água, projeto)
 function floorD(x,z){if(onPier(x,z))return PIER.y+.6;const s=structF(x,z);if(s>-99)return s;const h=baseH(x,z);if(h<WL-2.5)return WL+DECK;return h}
@@ -26270,6 +26299,145 @@ function pagoda5(mb){const y0=PH5,BX=95;mb.push().T(PX5,0,PZ5);
  for(const s of[-1,1])LIGHTS.push({x:(PX5+s*36)*K,y:(y0+36)*K,z:(PZ5+58)*K,r:90,cr:1,cg:.82,cb:.5,k:.18});
  return y+43}
 
+// ============================================================ ilha 6: construções (projeto; desenho original) ============================================================
+Object.assign(FONT,{I:'11111001000010000100001000010011111',L:'10000100001000010000100001000011111',P:'11110100011000111110100001000010000'});
+const TW6=['#f4ecdc','#efe3c8','#e9dccb','#f2e6d4','#dfe6ee','#f0d9c4','#e8e0f0'],TR6=['#3f6fae','#2f5f9a','#4a7fbf','#d0703a','#c8642e','#3f8a5a','#2f7f86'],WD6='#6b4428',WD6b='#8a6440';
+function townP6(r,w,d){const wc=TW6[(r()*TW6.length)|0];return{w,d,nf:r()<.5?3:2,wc,tc:dk(wc,.84),rc:TR6[(r()*TR6.length)|0],sh:['#2f5f9a','#3f8a5a','#a8432f','#2f7f86'][(r()*4)|0],chim:r()<.6?(r()<.5?-1:1):0,shop:r()<.4,awn:['#c0392b','#2c6fb0','#3f8f4a','#e0a030'][(r()*4)|0],stone:r()<.25,fl:r()<.6}}
+// palácio do governo: bloco branco de 2 andares, alas nas pontas, pórtico de 6 colunas com frontão, telhado azul e escadaria; de frente para +z
+function palace6(mb,x,z){const y=T6H,W=250,D=84,H=46,WC='#f6f2ea',TR='#d9d2c2',RF='#2f5f9a',RF2='#28507f';mb.push().T(x,y-1.5,z);
+ mb.box(W+6,4,D+6,'#b9b2a4',0,true);mb.push().T(0,2,0).box(W,H,D,WC,0,true).pop();
+ for(const yy of[2,2+H/2])mb.push().T(0,yy,0).box(W+.8,1.6,D+.8,TR,0,true).pop();mb.push().T(0,2+H-1.2,0).box(W+2.4,2.6,D+2.4,TR,0,true).pop();
+ for(const sd of[-1,1]){mb.push().T(sd*(W/2-26),2,0).box(52,H+12,D+8,WC,0,true).pop();mb.push().T(sd*(W/2-26),2+H+10.6,0).box(54.4,2.6,D+10.4,TR,0,true).pop();
+  mb.push().T(sd*(W/2-26),0,0);hipRoof5(mb,2+H+13.2,30,D/2+8,10,12,20,RF,RF2,0);mb.pop()}
+ mb.push();hipRoof5(mb,2+H+1.4,W/2-48,D/2+3,W/2-62,10,18,RF,RF2,0);mb.pop();
+ for(const sd of[-1,1])for(let rr=0;rr<2;rr++)for(let i=0;i<12;i++){const xx=-W/2+12+i*(W-24)/11;if(sd>0&&rr===0&&abs(xx)<30)continue;const yy=2+5+rr*H/2;
+  panZ(mb,xx,yy,sd*(D/2+.3)+(sd>0&&abs(xx)>W/2-52?sd*4:0),6,11,'#2f4660',.15,sd);panZ(mb,xx,yy+11,sd*(D/2+.5)+(sd>0&&abs(xx)>W/2-52?sd*4:0),8,1.4,TR,0,sd);panZ(mb,xx,yy-1.2,sd*(D/2+.5)+(sd>0&&abs(xx)>W/2-52?sd*4:0),8,1.2,TR,0,sd)}
+ // pórtico
+ const zp=D/2+14;for(let i=0;i<6;i++){const xx=-37.5+i*15;mb.push().T(xx,2,zp).cyl(2.6,2.3,H-4,12,'#fbf8f0',0).pop();mb.push().T(xx,2,zp).box(6.4,2,6.4,TR,0,true).pop();mb.push().T(xx,2+H-6,zp).box(6.4,2.4,6.4,TR,0,true).pop()}
+ mb.push().T(0,2+H-3.6,zp-6).box(88,5,18,TR,0,true).pop();th(mb,[-44,2+H+1.4,zp+3],[44,2+H+1.4,zp+3],[0,2+H+22,zp+3],WC,0,[0,0,1]);
+ {const pts=[[-46,2+H+1.4,zp+3.6],[0,2+H+23.4,zp+3.6],[46,2+H+1.4,zp+3.6]];mb.tube(pts,[1.2,1.2,1.2],5,TR,0)}
+ qh(mb,[-47,2+H+1.4,zp+3.4],[0,2+H+23.4,zp+3.4],[0,2+H+23.4,zp-12],[-47,2+H+1.4,zp-12],RF,0,[-1,1,0]);qh(mb,[47,2+H+1.4,zp+3.4],[0,2+H+23.4,zp+3.4],[0,2+H+23.4,zp-12],[47,2+H+1.4,zp-12],RF,0,[1,1,0]);
+ mb.push().T(0,2+H+9,zp+3.8).RY(0);{const pts=[];for(let k=0;k<=16;k++){const a=k/16*TAU;pts.push([cos(a)*4.4,sin(a)*4.4,0])}mb.tube(pts,pts.map(()=>.6),4,GD5,.15,{capEnd:false})}mb.pop();
+ for(let k=0;k<5;k++)mb.push().T(0,-1.5+0,zp+8+(4-k)*3.4).T(0,0,0).box(96-k*3,1.6+k*1.6,3.4,'#cfc8b8',0,true).pop();
+ panZ(mb,0,2,D/2+.4,16,22,'#5a3d26',0,1);panZ(mb,0,24,D/2+.5,19,2,TR,0,1);
+ // mastro com bandeira no telhado
+ mb.push().T(0,2+H+20,0).cyl(.7,.5,30,6,'#d8d8d8',0).pop();for(const s_ of[-1,1])qh(mb,[.6,2+H+50,0],[20,2+H+48,0],[20,2+H+40,0],[.6,2+H+41,0],'#2f5f9a',.04,[0,0,s_]);
+ mb.pop();orect(x,z,W/2+3,D/2+5,0);orect(x,z+D/2+14,50,10,0)}
+// catedral: nave com telhado laranja, fachada com rosácea, tambor octogonal e cúpula de gomos com lanterna; a fachada olha para -x (o pátio)
+function cathedral6(mb,x,z){const y=T6H,WC='#f3ead8',TR='#d8cbb0',OR='#d0703a',OR2='#b85e2c';mb.push().T(x,y-1.5,z);
+ mb.box(150,4,74,'#b9b2a4',0,true);mb.push().T(10,2,0).box(120,40,60,WC,0,true).pop();
+ mb.push().T(10,0,0).RY(PI/2);roofGable(mb,60,36,42,64,OR,4);mb.pop();
+ for(const sd of[-1,1]){mb.push().RY(sd>0?0:PI);for(let i=0;i<5;i++){const xx=-30+i*22;winA5(mb,sd>0?xx:-xx,13,30.3,7,16)}mb.pop()}
+ // fachada (lado -x)
+ mb.push().T(-52,2,0).box(8,56,64,WC,0,true).pop();th(mb,[-56.2,58,-32],[-56.2,58,32],[-56.2,82,0],WC,0,[-1,0,0]);
+ mb.push().T(-56.4,40,0).RY(-PI/2);{const pts=[];for(let k=0;k<=20;k++){const a=k/20*TAU;pts.push([cos(a)*9,sin(a)*9,0])}mb.tube(pts,pts.map(()=>1.1),4,TR,0,{capEnd:false});
+  for(let k=0;k<8;k++){const a=k/8*TAU;th(mb,[0,0,.2],[cos(a)*8.4,sin(a)*8.4,.2],[cos(a+TAU/8)*8.4,sin(a+TAU/8)*8.4,.2],k%2?'#4a7fbf':'#c0392b',.35,[0,0,1])}}mb.pop();
+ mb.push().T(-56.5,2,0).box(1,22,16,'#5a3d26',0,true).pop();
+ for(const sd of[-1,1]){mb.push().T(-52,2,sd*36).box(12,70,12,WC,0,true).pop();mb.push().T(-52,72,sd*36).cyl(7.4,0,16,4,OR,0,{rot:PI/4}).pop()}
+ // tambor e cúpula
+ const cx=36,yb=42;mb.push().T(cx,yb,0).cyl(34,34,6,8,TR,0,{rot:PI/8}).pop();mb.push().T(cx,yb+6,0).cyl(30,30,22,8,WC,0,{rot:PI/8}).pop();
+ for(let k=0;k<8;k++){const a=k/8*TAU;mb.push().T(cx+cos(a)*30.2,yb+12,sin(a)*30.2).RY(PI/2-a).box(6,11,.6,'#2f4660',.2,true).pop()}
+ mb.push().T(cx,yb+28,0);dome(mb,31,38,0,6,16,[OR,OR2],0,1);for(let k=0;k<8;k++){const a=k/8*TAU,pts=[];for(let i=0;i<=8;i++){const t=i/8*PI/2*.97;pts.push([cos(t)*cos(a)*31.6,sin(t)*38.6,cos(t)*sin(a)*31.6])}mb.tube(pts,pts.map(()=>1.1),4,'#f6f1e6',0)}
+ mb.push().T(0,37,0).cyl(5,5,9,8,'#f6f1e6',0).pop();mb.push().T(0,46,0).cyl(6,0,7,8,OR,0).pop();mb.push().T(0,53,0).sph(1.6,2,6,GD5,.3).pop();mb.pop();
+ mb.pop();orect(x+10,z,66,32,0);orect(x-52,z,7,40,0)}
+// torre de vigia de tijolo com ameias e telhado vermelho pontudo
+function tower6(mb,x,z){const y=T6H;mb.push().T(x,y-1.5,z);mb.box(36,3,36,'#9a9488',0,true);mb.push().T(0,2,0).box(30,92,30,'#b3624a',0,true).pop();
+ for(const hh of[22,46,70])mb.push().T(0,2+hh,0).box(30.6,1.4,30.6,'#8a4a36',0,true).pop();
+ for(let f=0;f<4;f++){mb.push().RY(f*PI/2);for(const hh of[30,56])panZ(mb,0,2+hh,15.3,5,10,'#2a2a30',0,1);panZ(mb,0,2,15.3,10,16,'#5a3d26',0,1);mb.pop()}
+ mb.push().T(0,94,0).box(36,3,36,'#8a4a36',0,true).pop();for(let f=0;f<4;f++){mb.push().RY(f*PI/2);for(let i=0;i<4;i++)mb.push().T(-13.5+i*9,97,16.5).box(5,6,3,'#b3624a',0,true).pop();mb.pop()}
+ mb.push().T(0,97,0).cyl(15,0,34,4,'#c0472f',0,{rot:PI/4}).pop();mb.push().T(0,131,0).cyl(.6,.5,12,5,'#d8d8d8',0).pop();for(const s_ of[-1,1])qh(mb,[.5,142,0],[12,141,0],[12,136,0],[.5,136.5,0],'#c0392b',.04,[0,0,s_]);
+ mb.pop();orect(x,z,17,17,0)}
+// armazém do cais: galpão comprido, telhado azul, portão grande para o cais (+z)
+function warehouse6(mb,x,z,w,r){const y=T6H,d=46,h=30,wc=['#e9e0cc','#dfd4bc','#e4dccb'][(r()*3)|0],rc=['#2f5f9a','#3f6fae','#28507f'][(r()*3)|0];mb.push().T(x,y-1.5,z);
+ mb.box(w+3,3,d+3,'#9a9488',0,true);mb.push().T(0,2,0).box(w,h,d,wc,0,true).pop();
+ for(const sx of[-1,1])mb.push().T(sx*(w/2-1),2,d/2-1).box(2.4,h,2.4,'#7a5434',0,true).pop();
+ const n=max(1,floor(w/34));for(let i=0;i<n;i++){const xx=-w/2+(i+.5)*w/n;panZ(mb,xx,2,d/2+.3,20,22,'#6b4428',0,1);for(let k=0;k<4;k++)panZ(mb,xx-7.5+k*5,2,d/2+.5,.8,22,'#4a3122',0,1);panZ(mb,xx,24,d/2+.4,22,1.6,'#4a3122',0,1);
+  for(const s_ of[-1,1])panZ(mb,xx,2,-d/2-.3,10,8,'#2f4660',.12,-1)}
+ mb.push();roofGable(mb,w,d/2+4,2+h,2+h+d*.36,rc,3);mb.pop();for(const sx of[-1,1])th(mb,[sx*(w/2+.2),2+h,-d/2],[sx*(w/2+.2),2+h,d/2],[sx*(w/2+.2),2+h+d*.36-1,0],wc,0,[sx,0,0]);
+ mb.pop();orect(x,z,w/2+2,d/2+2,0)}
+// muralha do cais (como a da cidade do porto)
+function quay6(mb){const y=T6H,yb=WL-20,c='#a39d92',c2='#c4bdb0';
+ mb.push().T(C6.x,yb,Q6Z+2.5).box(Q6HW*2+8,y-yb+.6,5,c,0,true).pop();mb.push().T(C6.x,y+.4,Q6Z+2.5).box(Q6HW*2+9,1.2,5.6,c2,0,true).pop();
+ for(const sd of[-1,1]){mb.push().T(C6.x+sd*(Q6HW+2.5),yb,Q6Z-90).box(5,y-yb+.6,185,c,0,true).pop();mb.push().T(C6.x+sd*(Q6HW+2.5),y+.4,Q6Z-90).box(5.6,1.2,186,c2,0,true).pop()}
+ for(let x=C6.x-Q6HW;x<=C6.x+Q6HW;x+=12)mb.push().T(x,WL-.2,Q6Z+5.2).box(5,1.6,.4,'#3a5a3a',0).pop();
+ // escadinha até a água ao lado do cais de madeira
+ for(let k=0;k<6;k++)mb.push().T(C6.x+60,WL-2,Q6Z+4+k*4).box(24,T6H-k*1.4+2,4,'#c4bdb0',0,true).pop()}
+// arco da avenida com a faixa
+function archBanner6(mb,x,z,label){const y=T6H,X=48;mb.push().T(x,y-1,z);
+ for(const sd of[-1,1]){mb.push().T(sd*X,0,0).box(10,52,10,'#cfc8b8',0,true).pop();mb.push().T(sd*X,52,0).box(12,3,12,'#b9b2a4',0,true).pop();mb.push().T(sd*X,55,0).sph(4,2,8,GD5,.2).pop()}
+ {const pts=[];for(let k=0;k<=14;k++){const t=k/14*PI;pts.push([-cos(t)*X,46+sin(t)*12,0])}mb.tube(pts,pts.map(()=>2.6),6,'#cfc8b8',0)}
+ mb.push().T(0,24,0).box(90,15,1.2,'#c2185b',.08,true).pop();mb.push().T(0,23.4,0).box(92,16.2,.8,'#f4f1ea',0,true).pop();
+ for(const ry of[0,PI]){mb.push().RY(ry).T(0,27.3,.8);text(mb,label,1.15,.6,'#ffffff',.3);mb.pop()}
+ mb.pop();for(const sd of[-1,1])orect(x+sd*X,z,6,6,0)}
+// a plataforma de execução: andaime de madeira com travas em X, deck com grade, pórtico em cima, bandeiras, lanternas e a escada (sobe pelo leste)
+function exe6(mb){const{x,z,hw,h}=EXE,y=T6H,top=y+h,W=WD6,W2=WD6b;mb.push().T(x,0,z);
+ for(const sx of[-1,1])for(const sz of[-1,1]){mb.push().T(sx*(hw-3),y-1,sz*(hw-3)).box(9,4,9,'#9a9488',0,true).pop();mb.push().T(sx*(hw-3),y,sz*(hw-3)).box(5.4,h,5.4,W,0,true).pop()}
+ for(const sx of[-1,1])mb.push().T(sx*(hw-3),y,0).box(3.4,h,3.4,W,0,true).pop();for(const sz of[-1,1])mb.push().T(0,y,sz*(hw-3)).box(3.4,h,3.4,W,0,true).pop();
+ // travas em X nos 4 lados, em 3 níveis
+ for(let f=0;f<4;f++){mb.push().RY(f*PI/2);const L=hw-3;for(let lv=0;lv<3;lv++){const y0=y+4+lv*h/3,y1=y0+h/3-4;
+   for(const[a,b]of[[[-L,y0],[0,y1]],[[0,y0],[-L,y1]],[[0,y0],[L,y1]],[[L,y0],[0,y1]]]){const dx=b[0]-a[0],dy=b[1]-a[1],len=hypot(dx,dy);mb.push().T((a[0]+b[0])/2,(a[1]+b[1])/2,L+.2).RZ(atan2(-dx,dy)).box(1.8,len,1.4,W2,0).pop()}
+   mb.push().T(0,y0+h/3-4,L+.2).box(2*L,2,1.6,W,0).pop()}mb.pop()}
+ // deck de tábuas, beirada e grade (com a abertura da escada a leste)
+ for(let i=0;i<12;i++)mb.push().T(-hw+(i+.5)*2*hw/12,top-1.4,0).box(2*hw/12-.3,1.6,2*hw+2,i%2?'#a47a50':'#9a7048',0,true).pop();
+ mb.push().T(0,top-3.4,0).box(2*hw+3,2,2*hw+3,W,0,true).pop();
+ const rail=(a,b)=>{const L=hypot(b[0]-a[0],b[1]-a[1]),n=max(1,round(L/5));for(let i=0;i<=n;i++)mb.push().T(lerp(a[0],b[0],i/n),top,lerp(a[1],b[1],i/n)).box(.9,8,.9,W2,0,true).pop();for(const hh of[3.6,7.6])mb.tube([[a[0],top+hh,a[1]],[b[0],top+hh,b[1]]],[.55,.55],4,W,0,{capEnd:false})};
+ rail([-hw,-hw],[hw,-hw]);rail([-hw,hw],[hw,hw]);rail([-hw,-hw],[-hw,hw]);rail([hw,-hw],[hw,-EXE.sw-1]);rail([hw,EXE.sw+1],[hw,hw]);
+ // pórtico de madeira no deck, com tábua de avisos e bandeiras; lanternas nos cantos
+ for(const sd of[-1,1])mb.push().T(-hw+8,top,sd*16).box(4,46,4,W,0,true).pop();mb.push().T(-hw+8,top+44,0).box(5,4,40,W,0,true).pop();
+ mb.push().T(-hw+9.5,top+30,0).box(1,10,18,'#c9a06a',0,true).pop();for(let k=0;k<4;k++)mb.push().T(-hw+10.2,top+38-k*2.2,0).box(.3,.6,12-k%2*3,'#4a3122',0,true).pop();
+ for(const sd of[-1,1]){mb.push().T(-hw+8,top+48,sd*16).cyl(.5,.4,16,5,'#d8d8d8',0).pop();for(const s_ of[-1,1])qh(mb,[-hw+8,top+63,sd*16+s_*.05],[-hw+8+16,top+62,sd*16+s_*.05],[-hw+8+16,top+55,sd*16+s_*.05],[-hw+8,top+56,sd*16+s_*.05],'#c0392b',.05,[0,0,s_])}
+ for(const sx of[-1,1])for(const sz of[-1,1])mb.push().T(sx*(hw-1),top+8,sz*(hw-1)).box(1,6,1,'#3c3f45',0,true).push().T(0,6,0).box(3.4,4,3.4,'#ffd98a',.9,true).pop().pop();
+ // escada (16 degraus por 7 de altura... 80 de altura em 140): degraus, longarinas e corrimão
+ const n=24;for(let i=0;i<n;i++){const xa=EXE.s0-x+i*(EXE.s1-EXE.s0)/n,xb=xa+(EXE.s1-EXE.s0)/n,yt=lerp(top,y,(i+1)/n)+(top-y)/n;mb.push().T((xa+xb)/2,yt-1.2,0).box(xb-xa+.4,1.2,2*EXE.sw,'#a47a50',0,true).pop()}
+ for(const sd of[-1,1]){const zz=sd*(EXE.sw+.6);mb.tube([[EXE.s0-x,top-2,zz],[EXE.s1-x,y-1,zz]],[1.3,1.3],5,W,0);mb.tube([[EXE.s0-x,top+8,zz],[EXE.s1-x,y+9,zz]],[.6,.6],4,W2,0);
+  for(let i=0;i<=8;i++){const xx=lerp(EXE.s0-x,EXE.s1-x,i/8),yy=lerp(top,y,i/8);mb.push().T(xx,yy-1,zz).box(.9,9.5,.9,W2,0,true).pop()}
+  for(let i=1;i<4;i++){const xx=lerp(EXE.s0-x,EXE.s1-x,i/4),yy=lerp(top,y,i/4);mb.push().T(xx,y,zz).box(3,yy-y,3,W,0,true).pop()}}
+ mb.pop();
+ // colisão: anel em volta do deck (menos a abertura da escada) e os lados da escada; os pilares
+ const R=hw+1.5,X0=x-R,X1=x+R,Z0=z-R,Z1=z+R;line(X0,Z0,X1,Z0,1.6);line(X0,Z1,X1,Z1,1.6);line(X0,Z0,X0,Z1,1.6);line(X1,Z0,X1,z-EXE.sw-1,1.6);line(X1,z+EXE.sw+1,X1,Z1,1.6);
+ for(const sd of[-1,1])line(EXE.s0,z+sd*(EXE.sw+1.5),EXE.s1,z+sd*(EXE.sw+1.5),1.6);
+ for(const sx of[-1,1])for(const sd of[-1,1])LIGHTS.push({x:(x+sx*(hw-1))*K,y:(top+16)*K,z:(z+sd*(hw-1))*K,r:70,cr:1,cg:.82,cb:.5,k:.15})}
+// ============================================================ o Paredão e a Montanha Reversa (malhas em unidades do mundo) ============================================================
+function paredaoZ(x,y){const g=abs(x-RMX),q=.3+.7*sm(RMW,RMW+160,g);let z=WALLZ+q*(30*(vn(x/90,y/260,81)-.5)*2+70*(vn(x/420,y/900,82)-.5)*2)-44*(1-sm(0,180,y));if(g<RMW+70)z+=70*(1-sm(RMW,RMW+70,g));return z}
+const WROWS=[-40,-10,10,30,55,85,120,160,205,255,310,370,440,520,610,710,820,940,1080,1240,1420,1620,1850,2100,2350,WTOP];
+function paredaoCol(x,y){const n=vn(x/60,y/45,83),st=.5+.5*sin(y/37+vn(x/300,y/200,84)*4);let c=mixc([168,90,78],[206,128,108],st*.7+n*.3);c=mixc(c,[150,76,66],sm(.62,.9,vn(x/18,y/140,85))*.6);
+ if(y<480&&vn(x/50,y/50,86)>.68)c=mixc(c,[86,128,70],.8);c=mixc(c,[236,196,186],sm(700,1300,y)*.5);c=mixc(c,[238,236,242],sm(950,1750,y)*.9);return c}
+function paredaoMesh(x0,x1){const mb=new MB(9300+x0,{pk:true}),step=20,cols=Math.ceil((x1-x0)/step),L=[-.42,.52,-.74],ll=hypot(L[0],L[1],L[2]);
+ const P=(x,y)=>[x,y,paredaoZ(x,y)];
+ for(let i=0;i<cols;i++)for(let j=0;j<WROWS.length-1;j++){const xa=x0+i*step,xb=xa+step,ya=WROWS[j],yb=WROWS[j+1],a=P(xa,ya),b=P(xb,ya),c=P(xb,yb),d=P(xa,yb);
+  const nx=(b[2]-a[2])/step,ny=(d[2]-a[2])/(yb-ya),nz=-1,nl=hypot(nx,ny,nz),sh=.62+.48*max(0,(nx*L[0]+ny*L[1]+nz*L[2])/(nl*ll));
+  const col=(q)=>mulc(paredaoCol(q[0],q[1]),sh),W=q=>[q[0]*K,q[1]*K,q[2]*K];
+  mb.wt(W(a),W(d),W(c),col(a),col(d),col(c),.5);mb.wt(W(a),W(c),W(b),col(a),col(c),col(b),.5)}
+ return mb}
+// nuvens grudadas no paredão (escondem o topo): 3 camadas, a de cima avança sobre o mar
+function paredaoNuvens(x0,x1,r){const mb=new MB(9500+x0,{pk:true});
+ for(const[y0,y1,z0,z1,R0,R1,step,fl]of[[380,600,WALLZ-140,WALLZ+10,60,120,120,.6],[600,860,WALLZ-280,WALLZ-40,90,170,120,.55],[860,1150,WALLZ-480,WALLZ-140,120,220,130,.5],[1150,1550,WALLZ-700,WALLZ-260,160,280,140,.45],[1550,2100,WALLZ-900,WALLZ-380,220,360,160,.42]])
+  for(let x=x0;x<x1;x+=step*(.6+r()*.5)){const n=4+((r()*3)|0),yc=y0+r()*(y1-y0),zc=z0+r()*(z1-z0);for(let k=0;k<n;k++){const R=R0+r()*(R1-R0);mb.push().T((x+(r()-.5)*step*1.4)*K,(yc+(r()-.5)*50)*K,(zc+(r()-.5)*120)*K).S(1.5,fl,1.2).sph(R*K*.5,3,8,[250,250,254],.64).pop()}}
+ return mb}
+// os esporões em malha própria (luz própria, como o paredão; cobre o chão deles, que fica só para andar e bater)
+function spurMesh(){const mb=new MB(9650,{pk:true}),st=8,X0=RMX-440,Z0=WALLZ-380,nx=110,nz=49,L=[-.42,.52,-.74],ll=hypot(L[0],L[1],L[2]),H=(x,z)=>spurH(x,z)+.8;
+ for(let j=0;j<nz;j++)for(let i=0;i<nx;i++){const xa=X0+i*st,za=Z0+j*st,xb=xa+st,zb=za+st,ha=H(xa,za),hb=H(xb,za),hc=H(xb,zb),hd=H(xa,zb);if(max(ha,hb,hc,hd)<WL-2)continue;
+  const nxv=-(hb-ha)/st,nzv=-(hd-ha)/st,nl=hypot(nxv,1,nzv),sh=.6+.5*max(0,(nxv*L[0]+L[1]+nzv*L[2])/(nl*ll)),
+   col=(x,z,h)=>{let c=mixc([166,92,80],[206,134,114],vn(x/30,z/30,72));if(h<WL+8)c=mixc(c,[120,112,104],.5);else if(vn(x/26,z/26,74)>.7&&h<300)c=mixc(c,[86,128,70],.7);return mulc(c,sh*(.92+vn(x/9,z/9,73)*.16))},W=(x,h,z)=>[x*K,h*K,z*K];
+  mb.wt(W(xa,ha,za),W(xa,hd,zb),W(xb,hc,zb),col(xa,za,ha),col(xa,zb,hd),col(xb,zb,hc),.5);mb.wt(W(xa,ha,za),W(xb,hc,zb),W(xb,hb,za),col(xa,za,ha),col(xb,zb,hc),col(xb,za,hb),.5)}
+ return mb}
+// o canal de água que sobe o paredão: caminho (z,y) da base no mar até o alto, e o lençol de água com listras brancas que sobem (quadros)
+const RMP=(()=>{const P=[],z0=WALLZ-330,zf=WALLZ-34;for(let i=0;i<=24;i++){const t=i/24;P.push([lerp(z0,zf,t),WL+.5+300*Math.pow(t,2.6)])}
+ for(let i=1;i<=34;i++){const t=i/34;P.push([zf+8*t-6*t*t,WL+.5+300+(WTOP-300)*t])}const L=[0];for(let i=1;i<P.length;i++)L.push(L[i-1]+hypot(P[i][0]-P[i-1][0],P[i][1]-P[i-1][1]));return{P,L,T:L[L.length-1]}})();
+function rmAt(s){const{P,L}=RMP;let i=1;while(i<L.length-1&&L[i]<s)i++;const t=clp((s-L[i-1])/max(1e-6,L[i]-L[i-1]),0,1),a=P[i-1],b=P[i],tz=b[0]-a[0],ty=b[1]-a[1],tl=hypot(tz,ty)||1;
+ return{z:lerp(a[0],b[0],t),y:lerp(a[1],b[1],t),tz:tz/tl,ty:ty/tl}}
+function rmSheet(){const mb=new MB(9700,{pk:true}),{P}=RMP,NX=8,n=P.length-1,W=(x,y,z)=>[x*K,y*K,z*K];
+ for(let i=0;i<n;i++){const ca=mixc([36,112,182],[128,206,238],i/n),cb=mixc([36,112,182],[128,206,238],(i+1)/n);
+  for(let j=0;j<NX;j++){const xa=RMX-RMW+j*2*RMW/NX,xb=xa+2*RMW/NX;
+   mb.wt(W(xa,P[i][1],P[i][0]),W(xa,P[i+1][1],P[i+1][0]),W(xb,P[i+1][1],P[i+1][0]),ca,cb,cb,.35);mb.wt(W(xa,P[i][1],P[i][0]),W(xb,P[i+1][1],P[i+1][0]),W(xb,P[i][1],P[i][0]),ca,cb,ca,.35)}}
+ return mb}
+const RMF=6,RMD=110;   // quadros das listras · distância entre listras ao longo do canal (projeto): o desenho se repete a cada RMD, então os quadros fazem um ciclo sem pulo
+function rmStreaks(f,seed){const mb=new MB(9800+f,{pk:true}),r=rng(seed),T=RMP.T,c1=[235,248,255],W=(x,y,z)=>[x*K,y*K,z*K];
+ for(let c=0;c<24;c++){const x=RMX-RMW+8+r()*(2*RMW-16),u=r()*RMD,w=1.5+r()*3.5,len=30+r()*60,off=1.2+r()*.8;
+  for(let s=u+f*RMD/RMF;s<T-len;s+=RMD){const a=rmAt(s),b=rmAt(s+len),ay=a.y+a.tz*off,az=a.z-a.ty*off,by=b.y+b.tz*off,bz=b.z-b.ty*off;
+   mb.wt(W(x-w,ay,az),W(x-w*.6,by,bz),W(x+w*.6,by,bz),c1,c1,c1,.6);mb.wt(W(x-w,ay,az),W(x+w*.6,by,bz),W(x+w,ay,az),c1,c1,c1,.6)}}
+ return mb}
+
 // ---------- barco (unidades do mundo, proa para +z): casco de madeira com faixa, mastro e vela com a rosa-dos-ventos ----------
 function boatMB(seed,small){const mb=new MB(seed||555,{pk:true});mb.jit=.03;const L=38,W=13,Hh=9;
  const hullY=z=>-2+3.2*Math.pow(abs(z)/L,2),hw=z=>W*(z>0?sqrt(max(0,1-Math.pow(z/L,2)))*.98:sqrt(max(0,1-Math.pow(z/(L*1.05),4))));
@@ -26304,6 +26472,7 @@ const CS=600,NCX=MW/CS,NCZ=MH/CS,GC=20,WS=40;
 const SAND=[236,214,160],SAND2=[222,196,140],GR0=[84,164,58],GR1=[112,184,70],ROADC=[192,162,112];
 function waterCol(x,z){const h=baseH(x,z);const deep=clp((WL-h)/40,0,1);return mixc([96,214,206],[28,92,170],sm(0,.9,deep))}
 function gcol(x,z){const h=baseH(x,z);
+ if(z>WALLZ-380&&abs(x-RMX)<440){const sv=spurH(x,z);if(sv>WL+1&&sv>=h-.01)return mulc(mixc([166,92,80],[204,132,112],vn(x/30,z/30,72)),.9+vn(x/9,z/9,73)*.2)}
  if(h<3.5)return mixc(SAND2,SAND,vn(x/30,z/30,8));
  const n=vn(x/120,z/120,2),n2=vn(x/33,z/33,4);let c=mixc(GR0,GR1,n);c=mulc(c,.92+n2*.12);
  if(h<6.5)c=mixc(c,SAND,1-sm(3.5,6.5,h));
@@ -26319,18 +26488,20 @@ function gcol(x,z){const h=baseH(x,z);
  if(near3(x,z)){   // ilha 3: rejunte escuro debaixo do calçamento, chão da floresta e a trilha
   if(paved3(x,z,.5))c=mulc([74,71,67],.94+vn(x/9,z/9,41)*.12);
   else{if(z<C3.z-60&&h>6)c=mixc(c,[62,126,50],.4);const td=trailD(x,z);if(td<10)c=mixc(c,mulc([150,118,80],.95+vn(x/12,z/12,42)*.1),1-sm(6,10,td))}}
+ if(near6(x,z)&&town6(x,z)&&h>4)c=(abs(x-PLZ6.x)<PLZ6.hw&&abs(z-PLZ6.z)<PLZ6.hd)?mulc([118,112,102],.95+vn(x/9,z/9,63)*.1):mulc([150,146,140],.9+vn(x/7,z/7,64)*.2);   // ilha 6: cidade calçada
  if(near5(x,z)){   // ilha 5: rejunte escuro debaixo das lajes do pátio; trilha e chão da selva
   if(inR(x,z,TX0-1,TX1+1,TZ0-1,TZ1+1)||inR(x,z,PIER5.x0,PIER5.x1,PIER5.z0,PIER5.z1+1))c=mulc([92,86,77],.95+vn(x/9,z/9,57)*.1);
   else{if(z<TZ0-30&&h>6)c=mixc(c,[56,122,46],.35);const td=trail5D(x,z);if(td<10)c=mixc(c,mulc([150,118,80],.95+vn(x/12,z/12,58)*.1),1-sm(6,10,td))}}
  return c}
-function ground(mb,cx,cz){const x0=cx*CS,z0=cz*CS,g=((x0<I2.x+760&&x0+CS>I2.x-760&&z0<I2.z+700&&z0+CS>I2.z-700)||(x0<C3.x+800&&x0+CS>C3.x-800&&z0<C3.z+800&&z0+CS>C3.z-800)||(x0<I5.x+780&&x0+CS>I5.x-780&&z0<I5.z+780&&z0+CS>I5.z-780))?10:GC,n=CS/g,n1=n+1,Hs=new Float32Array(n1*n1),Cs=new Array(n1*n1);
+function ground(mb,cx,cz){const x0=cx*CS,z0=cz*CS,g=((x0<I2.x+760&&x0+CS>I2.x-760&&z0<I2.z+700&&z0+CS>I2.z-700)||(x0<C3.x+800&&x0+CS>C3.x-800&&z0<C3.z+800&&z0+CS>C3.z-800)||(x0<I5.x+780&&x0+CS>I5.x-780&&z0<I5.z+780&&z0+CS>I5.z-780)||(x0<C6.x+820&&x0+CS>C6.x-820&&z0<C6.z+800&&z0+CS>C6.z-800)||(z0+CS>WALLZ-420&&z0<WALLZ+40&&x0<RMX+460&&x0+CS>RMX-460))?10:GC,n=CS/g,n1=n+1,Hs=new Float32Array(n1*n1),Cs=new Array(n1*n1);
  for(let j=0;j<=n;j++)for(let i=0;i<=n;i++)Hs[j*n1+i]=baseH(x0+i*g,z0+j*g);
  const col=k=>Cs[k]||(Cs[k]=gcol(x0+(k%n1)*g,z0+((k/n1)|0)*g)),p=k=>[(x0+(k%n1)*g)*K,Hs[k]*K,(z0+((k/n1)|0)*g)*K];
  for(let j=0;j<n;j++)for(let i=0;i<n;i++){const a=j*n1+i,b=a+1,d=a+n1,c=d+1;if(max(Hs[a],Hs[b],Hs[c],Hs[d])<WL-14)continue;   // fundo do mar longe das ilhas: não precisa (a água cobre)
   mb.wt(p(a),p(d),p(c),col(a),col(d),col(c));mb.wt(p(a),p(c),p(b),col(a),col(c),col(b))}}
 function water(mb,cx,cz){const x0=cx*CS,z0=cz*CS,x1=x0+CS,z1=z0+CS,y=WL*K,mx=x0+CS/2,mz=z0+CS/2;
  let ws=150;for(const I of ISL)if(I.on&&hypot(mx-I.x,mz-I.z)<I.R*1.6+CS)ws=WS;   // mar aberto, longe das ilhas: quadrados maiores (a cor é a mesma)
- for(let z=z0;z<z1;z+=ws)for(let x=x0;x<x1;x+=ws){const WS=ws;const a=[x,z],b=[x+WS,z],c=[x+WS,z+WS],d=[x,z+WS];if(min(baseH(x,z),baseH(x+WS,z),baseH(x+WS,z+WS),baseH(x,z+WS))>WL+1)continue;
+ if(z0>WALLZ+60)return;
+ for(let z=z0;z<z1;z+=ws)for(let x=x0;x<x1;x+=ws){const WS=ws;if(z>WALLZ+40)continue;const a=[x,z],b=[x+WS,z],c=[x+WS,z+WS],d=[x,z+WS];if(min(baseH(x,z),baseH(x+WS,z),baseH(x+WS,z+WS),baseH(x,z+WS))>WL+1)continue;
   const q=(P)=>[P[0]*K,y,P[1]*K],col=P=>waterCol(P[0],P[1]);mb.wt(q(a),q(d),q(c),col(a),col(d),col(c),.06);mb.wt(q(a),q(c),q(b),col(a),col(c),col(b),.06)}}
 // espuma da beira (quadros: a faixa branca sai da areia e se desfaz no mar)
 const FOAMF=6;let FOAM=[];
@@ -26362,7 +26533,7 @@ function treeVar(gl,key){if(TV[key])return TV[key];const G=H3.fld&&H3.fld.nat&&H
 const TKEYS=['g13.0','g16.1','g19.0','d13.1','d16.0','a13.0'];
 
 // ============================================================ montagem ============================================================
-let FOUNT=null,FIRE3=null,WHEEL=null,WHEELS=[],ENV4=0,CH=[],LIGHTS=[],OBJ=[],GLOW=[],CHIM=[],GULLS=[],GULLM=null,building=null,SAILS=null,BOAT=null,BOATP=null,BOATS=[],CLOUD=[];
+let FOUNT=null,FOUNT6=null,FIRE3=null,WHEEL=null,WHEELS=[],ENV4=0,WALLM=[],CLW=[],RMS=null,RMSF=[],MIST=[],rmWarn=0,CH=[],LIGHTS=[],OBJ=[],GLOW=[],CHIM=[],GULLS=[],GULLM=null,building=null,SAILS=null,BOAT=null,BOATP=null,BOATS=[],CLOUD=[];
 const CHK=(x,z)=>{const i=clp(floor(x/CS),0,NCX-1),j=clp(floor(z/CS),0,NCZ-1);return CH[j*NCX+i]};
 const SPAWN={x:PIER.x*K,z:(PIER.z0+30)*K},BKd={x:PORT.x+70,z:PORT.z-10},BACK={x:BKd.x*K,z:BKd.z*K};
 const M1P={x:472,z:584};   // portal no Mundo 1 (a leste do portal do Mundo 2)
@@ -26370,7 +26541,7 @@ OCW.SPAWN=SPAWN;OCW.BACK=BACK;OCW.M1P=M1P;
 function addTree(key,xd,zd,s,yaw,col){const x=xd*K,z=zd*K,y=floorW(x,z)-1,v=TV[key];if(!v)return;const o={v:key,x,z,y,s,m:M4.trs(new Float32Array(16),x,y,z,0,yaw,0,s,s,s),tint:[1,1,1]},M=o.m;
  o.wx=M[0]*v.cx+M[4]*v.cy+M[8]*v.cz+M[12];o.wy=M[1]*v.cx+M[5]*v.cy+M[9]*v.cz+M[13];o.wz=M[2]*v.cx+M[6]*v.cy+M[10]*v.cz+M[14];o.rad=v.rad*s*1.02;OBJ.push(o);if(col)circ(xd,zd,col)}
 function* gen(gl){
- CG.fill(0);LIGHTS=[];OBJ=[];GLOW=[];MILL.length=0;WHEELS=[];FOAM=[];BOATS=[];CLOUD=[];PADS.length=0;CHIM.length=0;GULLS=[];
+ CG.fill(0);LIGHTS=[];OBJ=[];GLOW=[];MILL.length=0;WHEELS=[];WALLM=[];CLW=[];RMS=null;RMSF=[];MIST=[];FOAM=[];BOATS=[];CLOUD=[];PADS.length=0;CHIM.length=0;GULLS=[];
  const r=rng(20261103);
  CH=[];for(let j=0;j<NCZ;j++)for(let i=0;i<NCX;i++){const sd=i<8&&j<6?j*8+i:1000+j*NCX+i,o=new MB(600+sd,{pk:true});o.push().S(K,K,K);CH.push({i,j,g:new MB(200+sd,{pk:true}),o,gm:null,om:null,cx:(i+.5)*CS*K,cz:(j+.5)*CS*K})}
  OCW.pct=.02;yield;
@@ -26662,6 +26833,72 @@ function* gen(gl){
   BOATS.push({x:PX5*K,z:5200*K,yaw:PI/2,ph:.7});orect(PX5,5200,36,14,0);
   for(let i=0;i<9;i++)GULLS.push({cx:(PX5+(r5()-.5)*500)*K,cz:(PZ5+(r5()-.5)*500)*K,R:(80+r5()*140)*K,y:((i<5?120:380)+r5()*80)*K,sp:(.2+r5()*.2)*(r5()<.5?-1:1),ph:r5()*TAU,m:new Float32Array(16)});
   OCW.pct=.96;yield}
+ // ================= ilha 6 · Último Porto =================
+ {const r6=rng(20261603),O=(x,z)=>CHK(x,z).o,rv=(rx,rz)=>[C6.x+rx,C6.z+rz],
+   lamp6=(mb,x,z)=>{const yt=lamppost(mb,x,z);circ(x,z,3);LIGHTS.push({x:x*K,y:yt*K,z:z*K,r:60,cr:1,cg:.85,cb:.55,k:.12});GLOW.push([x*K,yt*K,z*K,8,[1,.88,.6]])};
+  const RES=[[-140,140,-285,-160],[240,420,-62,62],[-326,-274,-96,-44],[-212,212,-152,172],[-56,56,160,440],[-470,470,340,440]];   // palácio, catedral, torre, pátio, avenida, cais (rx,rz)
+  const resv=(x,z,hw,hd)=>{const rx=x-C6.x,rz=z-C6.z;return RES.some(Q=>rx+hw>Q[0]&&rx-hw<Q[1]&&rz+hd>Q[2]&&rz-hd<Q[3])};
+  // grandes construções
+  palace6(O(...rv(0,-230)),...rv(0,-230));
+  cathedral6(O(...rv(330,0)),...rv(330,0));
+  tower6(O(...rv(-300,-70)),...rv(-300,-70));
+  exe6(O(EXE.x,EXE.z));
+  OCW.pct=.965;yield;
+  // casas nos quarteirões, de frente para as ruas
+  const BL=[[-450,-236,-410,-292],[-450,-236,-262,-140],[-450,-236,-112,12],[-450,-236,40,160],[-450,-236,190,322],
+            [236,450,-410,-292],[236,450,-262,-140],[236,450,96,210],[236,450,238,322],[-210,210,-415,-300],[-212,-64,190,322],[64,212,190,322]];
+  for(const[x0,x1,z0,z1]of BL){const half=(z1-z0)/2;for(const side of[0,1]){let cx=x0;while(x1-cx>=28){const w=min(30+r6()*14,x1-cx),d=min(24+r6()*8,half-2),x=C6.x+cx+w/2,z=C6.z+(side?z1-d/2:z0+d/2);cx+=w+3;
+     if(resv(x,z,w/2,d/2)||islD(I6,x,z)>.8||islD(I6,x+w/2,z+d/2)>.82||islD(I6,x-w/2,z-d/2)>.82)continue;townHouse(O(x,z),x,z,side?0:PI,townP6(r6,w,d))}}}
+  OCW.pct=.97;yield;
+  // o pátio: lajes em anéis em volta da plataforma, chafariz, barracas, bancos, postes e árvores em canteiros
+  {const PC=[[178,170,156],[160,152,138],[190,182,168]];for(let x=PLZ6.x-PLZ6.hw;x<PLZ6.x+PLZ6.hw;x+=10)for(let z=PLZ6.z-PLZ6.hd;z<PLZ6.z+PLZ6.hd;z+=10){const cx=x+5,cz=z+5;
+    if(abs(cx-EXE.x)<EXE.hw+2&&abs(cz-EXE.z)<EXE.hw+2)continue;const d=hypot(cx-EXE.x,cz-EXE.z),ring=floor(d/34),c=ring%3===2?PC[1]:(((x/10)+(z/10))&1?PC[0]:PC[2]),y=T6H+.25,mb=O(cx,cz);
+    qh(mb,[x+.3,y,z+.3],[x+9.7,y,z+.3],[x+9.7,y,z+9.7],[x+.3,y,z+9.7],c,0,[0,1,0])}}
+  {const[fx,fz]=rv(-120,-50),mb=O(fx,fz),yt=fountain(mb,fx,fz);FOUNT6=[fx*K,yt*K,fz*K]}
+  for(const[rx,rz,yaw]of[[-170,-118,0],[-120,-118,0],[110,-118,0],[160,-118,0],[-178,90,PI/2],[-178,40,PI/2]]){const[x,z]=rv(rx,rz);stall(O(x,z),x,z,yaw,r6)}
+  for(const[rx,rz,yaw]of[[-60,-120,0],[60,-120,0],[-60,150,PI],[60,150,PI]]){const[x,z]=rv(rx,rz);bench(O(x,z),x,z,yaw);circ(x,z,8)}
+  for(const[rx,rz]of[[-195,-135],[195,-135],[-195,155],[195,155],[-90,155],[90,155],[-195,-50],[195,-50]]){const[x,z]=rv(rx,rz);lamp6(O(x,z),x,z)}
+  for(const[rx,rz]of[[-150,140],[150,140],[-210,-10],[210,-10],[-100,-140],[100,-140]]){const[x,z]=rv(rx,rz),mb=O(x,z);planter(mb,x,z);addTree(TKEYS[(r6()*TKEYS.length)|0],x,z,.62+r6()*.15,r6()*TAU,0)}
+  // avenida até o cais, com o arco da faixa e postes
+  {const[x,z]=rv(0,300);archBanner6(O(x,z),x,z,'ULTIMO PORTO')}
+  for(let rz=190;rz<=420;rz+=58)for(const sd of[-1,1]){const[x,z]=rv(sd*50,rz);lamp6(O(x,z),x,z)}
+  // ruas: postes nas esquinas dos quarteirões
+  for(const[rx,rz]of[[-222,-280],[-222,-125],[-222,26],[-222,175],[222,-280],[222,-125],[222,80],[222,224],[-120,-290],[120,-290],[-325,330],[325,330]]){const[x,z]=rv(rx,rz);if(!blockedD(x,z))lamp6(O(x,z),x,z)}
+  // cais: muralha, armazéns, cabeços, caixas e barris, cais de madeira, escadinha e um barco
+  quay6(O(C6.x,Q6Z-40));
+  for(const rx of[-390,-300,-210,-120,120,210,300,390]){const[x,z]=rv(rx,385);if(islD(I6,x,z)<.95)warehouse6(O(x,z),x,z,72,r6)}
+  for(let x=C6.x-Q6HW+12;x<=C6.x+Q6HW-12;x+=30){if(abs(x-PIER6.x)<26||abs(x-(C6.x+60))<18||abs(x-C6.x)<50)continue;bollard(O(x,Q6Z-5),x,Q6Z-5)}
+  for(let k=0;k<6;k++){const x=C6.x+80+(k%3)*11,z=Q6Z-24+((k/3)|0)*11;crate(O(x,z),x,z,1,r6)}for(let k=0;k<5;k++){const x=C6.x-80-(k%3)*8,z=Q6Z-20+((k/3)|0)*9;barrel(O(x,z),x,z)}
+  pier(O(PIER6.x,PIER6.z0+90),r6,PIER6,PIERT6);
+  for(const z of[PIER6.z0+60,PIER6.z0+150])for(const sd of[-1,1]){const x=PIER6.x+sd*(PIER6.hw-2);LIGHTS.push({x:x*K,y:(PIER6.y+22)*K,z:z*K,r:60,cr:1,cg:.85,cb:.55,k:.15});GLOW.push([x*K,(PIER6.y+22.5)*K,z*K,8,[1,.88,.6]])}
+  {const bx=PIER6.x+PIER6.hw+26,bz=PIER6.z0+110;BOATS.push({x:bx*K,z:bz*K,yaw:PI,ph:2.6});orect(bx,bz,14,36,0)}
+  // farol na ponta sudoeste
+  {let x=C6.x-Q6HW-60,z=Q6Z+10;for(let k=0;k<30&&islD(I6,x,z)<.93;k++){x-=6;z+=3}const yt=lighthouse(O(x,z),x,z);LIGHTS.push({x:x*K,y:yt*K,z:z*K,r:200,cr:1,cg:.92,cb:.6,k:.25});GLOW.push([x*K,yt*K,z*K,22,[1,.93,.65]])}
+  // fora da cidade: árvores, arbustos, palmeiras e pedras na praia
+  {const occ6=[],ok=(x,z,R)=>{if(islD(I6,x,z)>.84||blockedD(x,z)||baseH(x,z)<4)return false;const rx=x-C6.x,rz=z-C6.z;if(abs(rx)<490+R&&rz>-450-R&&z<Q6Z+30)return false;for(const o of occ6)if(hypot(o[0]-x,o[1]-z)<o[2]+R)return false;return true};
+   for(let k=0,n=0;k<3000&&n<110;k++){const x=C6.x-760+r6()*1520,z=C6.z-760+r6()*1520;if(!ok(x,z,9))continue;addTree(TKEYS[(r6()*TKEYS.length)|0],x,z,.9+r6()*.45,r6()*TAU,4);occ6.push([x,z,11]);n++}
+   for(let k=0,n=0;k<2000&&n<120;k++){const x=C6.x-760+r6()*1520,z=C6.z-760+r6()*1520;if(!ok(x,z,4))continue;bush(O(x,z),x,z,.7+r6()*.6,r6,r6()<.3?FLW[(r6()*FLW.length)|0]:null);circ(x,z,4);occ6.push([x,z,5]);n++}
+   for(let k=0;k<90;k++){const a=r6()*TAU,d=.86+r6()*.08,x=C6.x+cos(a)*I6.R*shapeK(I6,a)*d,z=C6.z+sin(a)*I6.R*shapeK(I6,a)*d;if(abs(x-C6.x)<Q6HW+80&&z>C6.z+200)continue;const h=baseH(x,z);if(h>9||h<1||blockedD(x,z))continue;
+    const mb=O(x,z);if(r6()<.55){palm(mb,x,z,.9+r6()*.4,r6);circ(x,z,3)}else{rock(mb,x,z,.8+r6()*1.4,r6);circ(x,z,5)}}}
+  for(let i=0;i<8;i++)GULLS.push({cx:(C6.x+(r6()-.5)*500)*K,cz:(Q6Z+(r6()-.5)*300)*K,R:(70+r6()*120)*K,y:(90+r6()*80)*K,sp:(.22+r6()*.2)*(r6()<.5?-1:1),ph:r6()*TAU,m:new Float32Array(16)});
+  OCW.pct=.975;yield}
+ // ================= o Paredão e a Montanha Reversa =================
+ {const rw=rng(20261703);
+  WALLM.push({m:H3.upload(gl,spurMesh().pack()),cx:RMX*K});
+  for(let x0=-3000;x0<12600;x0+=600){WALLM.push({m:H3.upload(gl,paredaoMesh(x0,x0+600).pack()),cx:(x0+300)*K});if((x0/600)%4===0)yield}
+  for(let x0=-3000;x0<12600;x0+=1200)CLW.push({m:H3.upload(gl,paredaoNuvens(x0,x0+1200,rw).pack()),cx:(x0+600)*K});
+  RMS=H3.upload(gl,rmSheet().pack());for(let f=0;f<RMF;f++)RMSF.push(H3.upload(gl,rmStreaks(f,777).pack()));
+  OCW.pct=.985;yield;
+  // névoa em faixas na frente do paredão (sprites)
+  for(let i=0;i<170;i++)MIST.push({x:(-2000+rw()*13600)*K,y:(90+rw()*620)*K,z:(WALLZ-70-rw()*140)*K,w:(260+rw()*500)*K,h:(18+rw()*34)*K,a:.18+rw()*.25,ph:rw()*TAU});
+  for(let i=0;i<12;i++)MIST.push({x:(RMX+(rw()-.5)*500)*K,y:(30+rw()*260)*K,z:(WALLZ-200-rw()*200)*K,w:(120+rw()*200)*K,h:(30+rw()*50)*K,a:.08+rw()*.1,ph:rw()*TAU});
+  // pedras no pé do paredão, faróis nas pontas dos esporões
+  for(let x=60;x<MW-60;x+=140+rw()*80){if(abs(x-RMX)<460)continue;const z=WALLZ-40-rw()*30;rock(CHK(x,z).o,x,z,2.6+rw()*3,rw)}
+  for(const sd of[-1,1]){const x=RMX+sd*(RMW+120),z=WALLZ-345,yt=lighthouse(CHK(x,z).o,x,z);LIGHTS.push({x:x*K,y:yt*K,z:z*K,r:220,cr:1,cg:.92,cb:.6,k:.25});GLOW.push([x*K,yt*K,z*K,22,[1,.93,.65]])}
+  // colisão: o paredão inteiro, o canal e os esporões
+  rect(0,WALLZ-14,MW-1,MH-1);rect(RMX-RMW-6,WALLZ-345,RMX+RMW+6,WALLZ);
+  for(let z=WALLZ-380;z<WALLZ;z+=4)for(let x=RMX-440;x<RMX+440;x+=4)if(spurH(x+2,z+2)>WL+.5)CG[(z>>2)*GW+(x>>2)]=1;
+  OCW.pct=.99;yield}
  {const bx=(PIER.x+PIER.hw+26)*K,bz=(PIER.z0+120)*K;BOATS.push({x:bx,z:bz,yaw:PI,ph:1.3});orect(PIER.x+PIER.hw+26,PIER.z0+120,14,36,0)}
  SAILS=H3.upload(gl,millSails().pack());BOAT=H3.upload(gl,boatMB(555).pack());BOATP=H3.upload(gl,boatMB(556,true).pack());GULLM=[H3.upload(gl,gullMB(1).pack()),H3.upload(gl,gullMB(0).pack())];
  for(let i=0;i<10;i++)GULLS.push({cx:(i<6?PORT.x+(r()-.5)*300:I1.x+(r()-.5)*600)*K,cz:(i<6?PSH+60+(r()-.5)*200:I1.z+(r()-.5)*600)*K,R:(60+r()*90)*K,y:(70+r()*60)*K,sp:(.25+r()*.2)*(r()<.5?-1:1),ph:r()*TAU,m:new Float32Array(16)});
@@ -26675,9 +26912,10 @@ function* gen(gl){
 function step(ms){const gl=H3.gl();if(!gl)return false;if(OCW.ready)return true;if(!building)building=gen(gl);const t0=performance.now();
  while(performance.now()-t0<ms){const s=building.next();if(s.done){building=null;return true}}return OCW.ready}
 function freeAll(){const gl=H3.gl();if(gl&&!gl.isContextLost()){const del=m=>{if(m)try{gl.deleteBuffer(m.vbo)}catch(e){}};
-  for(const c of CH){del(c.gm);del(c.om)}for(const m of FOAM)del(m);del(SAILS);del(WHEEL);WHEEL=null;del(BOAT);del(BOATP);if(GULLM)for(const m of GULLM)del(m);GULLM=null;for(const c of CLOUD)del(c.m);for(const k in TV)for(const m of TV[k].m)del(m)}
+  for(const c of CH){del(c.gm);del(c.om)}for(const m of FOAM)del(m);for(const w of WALLM)del(w.m);for(const c of CLW)del(c.m);del(RMS);for(const m of RMSF)del(m);WALLM=[];CLW=[];RMS=null;RMSF=[];del(SAILS);del(WHEEL);WHEEL=null;del(BOAT);del(BOATP);if(GULLM)for(const m of GULLM)del(m);GULLM=null;for(const c of CLOUD)del(c.m);for(const k in TV)for(const m of TV[k].m)del(m)}
  grassClear();CH=[];OBJ=[];TV={};FOAM=[];CLOUD=[];SAILS=null;BOAT=null;BOATP=null;OCW.ready=false;building=null;OCW.pct=0}
 OCW.chunks=()=>CH;
+OCW.map={baseH,gcol:(x,z)=>gcol(x,z),waterCol,blockedD,ISL,WALLZ,RMX,RMW,MW,MH,PIERS,EXE,C6,Q6Z};   // para gerar a imagem do mapa
 OCW.dbg={road2:(x,z)=>road2(x,z),baseH,ROCKG,CG,GW,GH,I2,MC,TOP};   // para testes
 OCW.stats=()=>{let g=0,o=0;for(const c of CH){if(c.gm)g+=c.gm.n;if(c.om)o+=c.om.n}return{g:g/3|0,o:o/3|0,obj:OBJ.length}};
 
@@ -26694,6 +26932,7 @@ function flower(mb,x,y,z,ci,rnd){const h=2.5+rnd()*1.9,a=rnd()*TAU,tip=[0,0,0];b
 function grassy(x,z){const xd=x/K,zd=z/K;if(baseH(xd,zd)<6.5)return false;if(roadD(xd,zd)<RHW+2)return false;if(hypot(xd-PORT.x,(zd-PORT.z)*1.2)<110)return false;if(inRect(WHEAT,xd,zd,4))return false;if(blockedD(xd,zd))return false;
  if(abs(xd-I2.x)<760&&abs(zd-I2.z)<700){if(rockAt(xd,zd))return false;if(road2(xd,zd)<RHW2+2)return false;if(hypot(xd-PORT2.x,(zd-PORT2.z)*1.2)<110)return false;if(inBase(xd,zd,-2)&&baseDirt(xd,zd))return false}
  if(near3(xd,zd)){if(paved3(xd,zd,3))return false;if(zd<C3.z-30&&trailD(xd,zd)<9)return false}
+ if(zd>WALLZ-400)return false;if(near6(xd,zd)&&town6(xd,zd))return false;
  if(near5(xd,zd)){if(inR(xd,zd,TX0-14,TX1+14,TZ0-14,TZ1+14)||inR(xd,zd,PIER5.x0-12,PIER5.x1+12,PIER5.z0,PIER5.z1+14))return false;if(trail5D(xd,zd)<9)return false}
  return true}
 function grassChunk(ci,cj){const cs=GR.cs,x0=ci*cs,z0=cj*cs,mb=new MB(((ci*7919)^(cj*104729))+41,{pk:true}),rnd=mb.r,GS=5.1,N=Math.ceil(cs/GS);
@@ -26725,6 +26964,10 @@ function draw(t,dyn){H3.skyDraw();const F=H3.S.foc||H3.S.cam,s=t/1000;boatTick(t
  for(const o of OBJ){const dx=o.wx-F.x,dz=o.wz-F.z,d2=dx*dx+dz*dz;if(d2>(FART+o.rad)**2)continue;if(!H3.vis(o.wx,o.wy,o.wz,o.rad))continue;const d=sqrt(d2),v=TV[o.v];if(!v)continue;
   H3.lodDraw(v.m,d,LODT,o.m,LIGHTS,dyn,{di:H3.farFade(d,FART+o.rad),tint:o.tint,tr:.55,rad:o.rad,cx:o.wx,cy:o.wy,cz:o.wz})}
  if(SAILS)for(const w of MILL){if(hypot(w.x-F.x,w.z-F.z)>2400)continue;mYZ(w.m,w.x,w.y,w.z,w.yaw,w.ph+s*w.sp);if(H3.vis(w.x,w.y,w.z,110))H3.mesh(SAILS,w.m,LIGHTS,dyn,{rad:110,cx:w.x,cy:w.y,cz:w.z})}
+ // o Paredão (não faz sombra; a névoa pesa menos nele para ele aparecer de longe), as nuvens grudadas nele e a Montanha Reversa
+ for(const w of WALLM){if(abs(w.cx-F.x)>10000)continue;if(H3.vis(w.m.cx,w.m.cy,w.m.cz,w.m.rad))H3.mesh(w.m,null,null,dyn,{fog:.5})}
+ if(RMS&&H3.vis(RMS.cx,RMS.cy,RMS.cz,RMS.rad)){H3.mesh(RMS,null,null,dyn,{fog:.5});const fm=RMSF[floor(s*10)%RMF];if(fm)H3.mesh(fm,null,null,dyn,{fog:.5})}
+ for(const c of CLW){if(abs(c.cx-F.x)>10000)continue;if(H3.vis(c.m.cx,c.m.cy,c.m.cz,c.m.rad))H3.mesh(c.m,null,null,null,{fog:.22,eg:1.15})}
  if(WHEEL)for(const w of WHEELS){if(hypot(w.x-F.x,w.z-F.z)>4800)continue;mYZ(w.m,w.x,w.y,w.z,0,-s*.12,1);if(H3.vis(w.x,w.y,w.z,270))H3.mesh(WHEEL,w.m,LIGHTS,dyn,{rad:270,cx:w.x,cy:w.y,cz:w.z})}
  // dentro do navio-restaurante a luz ambiente fica amarelada e o sol de fora quase não entra (restaurante chique); ao sair volta ao normal
  {let tg=0;if(typeof P!=='undefined'&&P){const lx=(P.x+8)/K-S4.x,lz=(P.y+14)/K-S4.z;if(lx>FX4*G4+4&&lx<620&&abs(lz)<400&&f4(lx,lz)>-99)tg=1}
@@ -26743,18 +26986,24 @@ function shadow(t,F){for(const c of CH)if(c.om&&H3.shVis(c.om.cx,c.om.cy,c.om.cz
 function sprites(t){const T=H3.tex;if(!T)return;const s=t/1000,F=H3.S.foc||H3.S.cam;if(!F)return;
  const y=floorW(BACK.x,BACK.z)+27;H3.spr(T.glow,BACK.x,y,BACK.z,54,54,null,[.35,.8,1,.3+.08*sin(s*3)],true,0,true);H3.spr(T.glow,BACK.x,y,BACK.z,30,30,null,[.7,.95,1,.45],true,0,true);
  for(const g of GLOW){if(hypot(g[0]-F.x,g[2]-F.z)>2400)continue;H3.spr(T.glow,g[0],g[1],g[2],g[3]*2,g[3]*2,null,[g[4][0],g[4][1],g[4][2],.4+.06*sin(s*2.3+g[0])],true,0,true)}
+ for(const m of MIST){if(abs(m.x-F.x)>6000||abs(m.z-F.z)>6000)continue;H3.spr(T.glow,m.x,m.y,m.z,m.w,m.h,null,[1,1,1,m.a*(.8+.2*sin(s*.25+m.ph))],false,0,true)}
  // brilhos do sol na água em volta da câmera
  for(let i=0;i<26;i++){const a=i*2.399,rr=60+((i*97)%13)*40,x=F.x+cos(a+s*.02)*rr,z=F.z+sin(a+s*.02)*rr,k=max(0,sin(s*2.2+i*1.7));if(k<.55)continue;if(baseH(x/K,z/K)>WL-1)continue;H3.spr(T.glow,x,WL*K+.5,z,10,4,null,[1,1,.95,(k-.55)*1.6],true,0,true)}}
 // sombras por nível (Configurações → Sombras): nas ilhas a área com sombra é bem maior; do Alto para cima o mapa é 4096 (suave e nítida) e cobre a ilha toda
 const SHW=[null,{on:1,res:2048,ext:460,f0:400,f1:450,D:900},{on:2,res:2048,ext:760,f0:670,f1:750,D:1100},{on:2,res:4096,ext:1250,f0:1100,f1:1240,D:1500},{on:2,res:4096,ext:1650,f0:1460,f1:1640,D:1900}];
 let shKey='';
 function shadowTune(){let lv=1;try{lv=H3.G3&&H3.G3.sh!==undefined?H3.G3.sh|0:1}catch(e){}const c=SHW[lv],k=lv+'';if(k===shKey)return;shKey=k;if(c)H3.shadowCfg(Object.assign({},c));else H3.shadowCfg({on:0,D:0})}
-function frameFx(t,Cm){shadowTune();{const C=H3.S.foc||Cm,F=FLO();grassStep(C,F.perF||2,F.msF||4);if((GR.tick++&31)===0)grassEvict(C)}
+function frameFx(t,Cm){shadowTune();try{H3.clip(1.5,11000)}catch(e){}   // longe: o Paredão aparece do outro lado do mar
+ // a correnteza da Montanha Reversa empurra o barco de volta (ninguém sobe, por enquanto)
+ if(typeof P!=='undefined'&&P&&typeof world!=='undefined'&&world===WID&&OCW.ready){const px=(P.x+8)/K,pz=(P.y+14)/K;
+  if(abs(px-RMX)<190&&pz>WALLZ-980){const k=sm(WALLZ-980,WALLZ-380,pz);P.y-=1.4+6*k;if(Date.now()>rmWarn){rmWarn=Date.now()+5000;toast_('A correnteza da Montanha Reversa empurra o barco de volta! Ninguém consegue subir... por enquanto.')}}}{const C=H3.S.foc||Cm,F=FLO();grassStep(C,F.perF||2,F.msF||4);if((GR.tick++&31)===0)grassEvict(C)}
  const FX=H3.fx;if(!FX)return;const R=Math.random;
  // esteira do barco
  if(PB.on&&PB.mv>.6&&R()<.8){const bx=P.x+8-sin(PB.yaw)*58,bz=P.y+14-cos(PB.yaw)*58;FX.emit({x:bx+(R()-.5)*10,y:WL*K+.8,z:bz+(R()-.5)*10,vx:(R()-.5)*.2,vy:.02,vz:(R()-.5)*.2,g:0,life:1600+R()*800,s0:6,s1:18,c:[1,1,1],a:.55,add:false,tex:'glow',drag:.98});
   if(R()<.5)FX.emit({x:P.x+8+sin(PB.yaw)*62+(R()-.5)*14,y:WL*K+2,z:P.y+14+cos(PB.yaw)*62+(R()-.5)*14,vx:(R()-.5)*.6,vy:.5+R()*.4,vz:(R()-.5)*.6,g:.03,life:700,s0:3,s1:1,c:[1,1,1],a:.7,add:false,tex:'glow',drag:.98})}
  if(R()<.35&&hypot(Cm.x-BACK.x,Cm.z-BACK.z)<500)FX.emit({x:BACK.x+(R()-.5)*4,y:floorW(BACK.x,BACK.z)+8+R()*36,z:BACK.z+(R()-.5)*36,vx:0,vy:.25,vz:0,g:0,life:900,s0:2.4,s1:.4,c:[.4,.85,1],a:.9,tex:'dot'});
+ if(FOUNT6&&hypot(Cm.x-FOUNT6[0],Cm.z-FOUNT6[2])<700)for(let i=0;i<2;i++){const a=R()*TAU,v=.22+R()*.2;FX.emit({x:FOUNT6[0]+cos(a)*2,y:FOUNT6[1],z:FOUNT6[2]+sin(a)*2,vx:cos(a)*v,vy:.75+R()*.35,vz:sin(a)*v,g:.04,life:1100,s0:2.4,s1:1.3,c:[.78,.92,1],a:.85,add:false,tex:'dot',drag:.99})}
+ if(hypot(Cm.x-RMX*K,Cm.z-WALLZ*K)<4000)for(let i=0;i<3;i++){const x=(RMX+(R()-.5)*2*RMW)*K,z=(WALLZ-330+R()*60)*K;FX.emit({x,y:WL*K+2,z,vx:(R()-.5)*.6,vy:.6+R()*.9,vz:.4+R()*.6,g:-.002,life:2200+R()*1200,s0:10,s1:40,c:[.95,.98,1],a:.4,add:false,tex:'glow',drag:.99})}
  if(FOUNT&&hypot(Cm.x-FOUNT[0],Cm.z-FOUNT[2])<700)for(let i=0;i<2;i++){const a=R()*TAU,v=.22+R()*.2;FX.emit({x:FOUNT[0]+cos(a)*2,y:FOUNT[1],z:FOUNT[2]+sin(a)*2,vx:cos(a)*v,vy:.75+R()*.35,vz:sin(a)*v,g:.04,life:1100,s0:2.4,s1:1.3,c:[.78,.92,1],a:.85,add:false,tex:'dot',drag:.99})}
  if(FIRE3&&hypot(Cm.x-FIRE3[0],Cm.z-FIRE3[2])<600){if(R()<.5)FX.emit({x:FIRE3[0]+(R()-.5)*4,y:FIRE3[1],z:FIRE3[2]+(R()-.5)*4,vx:(R()-.5)*.2,vy:.5+R()*.4,vz:(R()-.5)*.2,g:-.002,life:900+R()*500,s0:2.2,s1:.4,c:[1,.6+R()*.3,.2],a:.95,tex:'dot'});
   if(R()<.12)FX.emit({x:FIRE3[0],y:FIRE3[1]+8,z:FIRE3[2],vx:.1,vy:.35,vz:0,g:-.001,life:2600,s0:6,s1:26,c:[.7,.7,.72],a:.25,add:false,tex:'glow',drag:.995})}
@@ -26797,7 +27046,7 @@ OCW.travel=function(){if(!ups.oc)return false;if(world===WID)return true;cool=Da
 let lastIsl=-2;   // ilha onde o jogador está (-1 = no mar; -2 = acabou de entrar no mundo: não avisa)
 setInterval(()=>{try{if(typeof world==='undefined'||lock)return;const x=P.x+8,z=P.y+14;
  if(world===4&&window.DBW&&DBW.P4&&hypot(x-DBW.P4.x,z-DBW.P4.z)<16)OCW.go();else if(world===WID&&hypot(x-BACK.x,z-BACK.z)<16)OCW.back();
- if(world===WID&&OCW.ready){let cur=-1;for(let k=0;k<ISL.length;k++){const I=ISL[k];if(I.on&&islD(I,x/K,z/K)<1.02){cur=k;break}}if(cur!==lastIsl){if(cur>=0&&lastIsl!==-2)toast_(ISL[cur].nm);lastIsl=cur}}else if(world!==WID)lastIsl=-2}catch(e){}},120);
+ if(world===WID&&OCW.ready){let cur=-1;for(let k=0;k<ISL.length;k++){const I=ISL[k];if(I.on&&islD(I,x/K,z/K)<1.02){cur=k;break}}if(cur<0&&z/K>WALLZ-1300)cur=90;if(cur!==lastIsl){if(cur>=0&&lastIsl!==-2)toast_(cur===90?'O Paredão · Montanha Reversa':ISL[cur].nm);lastIsl=cur}}else if(world!==WID)lastIsl=-2}catch(e){}},120);
 setTimeout(()=>{try{const sv=typeof SV!=='undefined'?SV:null;if(sv&&sv.w===WID){ups.oc=1;goWorld(WID);if(typeof sv.px==='number'&&!OCW.solid(sv.px+8,sv.py+14)&&sv.px<WW&&sv.py<WH&&!isBoat((sv.px+8)/K,(sv.py+14)/K)){P.x=sv.px;P.y=sv.py}else{P.x=SPAWN.x-8;P.y=SPAWN.z-14}guard3D()}}catch(e){}},0);
 function guard3D(){const t0=Date.now();let tried=0;const iv=setInterval(()=>{try{
  if(world!==WID){clearInterval(iv);return}const S=H3.S||{};if(H3.mode>0&&!S.ld){clearInterval(iv);return}
