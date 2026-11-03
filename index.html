@@ -2366,7 +2366,7 @@ const WCFG=[{w:W0,h:H0,s:[SX0,SY0],to:[TOX0,TOY0],gt:[GX0,GY0],np:[NX0,NY0],p:[S
  {w:W2,h:H2,s:[-50,-50],to:[-50,-50],gt:[20,19],np:[-99,-99],p:[15*T+8,20*T],d:0},
  null,{w:376,h:282,s:[50.75,139.125],to:[-50,-50],gt:[-50,-50],np:[-99,-99],p:[592,2226],d:3},   // 4: Mundo 2 · Dragon Ball (só 3D, js do fim do arquivo)
  {w:376,h:282,s:[-50,-50],to:[-50,-50],gt:[-50,-50],np:[-99,-99],p:[3000,3710],d:0},   // 5: Mundo 3 · Floresta dos Pinheiros (só 3D, js do fim do arquivo)
- {w:600,h:450,s:[-50,-50],to:[-50,-50],gt:[-50,-50],np:[-99,-99],p:[2592,5400],d:0}];   // 6: Mundo 4 · Arquipélago (só 3D, js do fim do arquivo)
+ {w:1200,h:750,s:[-50,-50],to:[-50,-50],gt:[-50,-50],np:[-99,-99],p:[2592,5400],d:0}];   // 6: Mundo 4 · Arquipélago (só 3D, js do fim do arquivo)
 goWorld=function(n){if(n===world||!WCFG[n])return;if(n===1&&!ups.gate)return;if(n===2&&!wbCan()){toast('A Arena do Boss Mundial precisa de internet: entre na sua conta');return}
  const c=WCFG[n];world=n;W=c.w;H=c.h;SX=c.s[0];SY=c.s[1];TOX=c.to[0];TOY=c.to[1];GX=c.gt[0];GY=c.gt[1];NPC.x=c.np[0]*T;NPC.y=c.np[1]*T;
  map=WD[n].map;EN=WD[n].EN;qs=QS[n];fight=null;for(const k in fpos)delete fpos[k];P.x=c.p[0];P.y=c.p[1];P.dir=c.d;DY.length=0;PT.length=0;
@@ -23586,7 +23586,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261103100000;
+const GAME_BUILD=20261103104500;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
@@ -25306,7 +25306,7 @@ if(FLD&&FLD.reg){let pm=null,py=0;
 </script>
 <script>
 // ===================== Mundo 4 · Arquipélago (só em 3D) =====================
-// Um oceano grande (projeto 4800 x 3600, mundo K = 2 vezes maior: 9600 x 7200) com lugar para 8 ilhas (ISL). Entre as ilhas o jogador vai de BARCO:
+// Um oceano grande (projeto 9600 x 6000, mundo K = 2 vezes maior: 19200 x 12000) com lugar para 8 ilhas (ISL), com uns 1000 (projeto) de mar entre uma e outra. Entre as ilhas o jogador vai de BARCO:
 // ao entrar na água funda o barco aparece embaixo dele (ele pilota com o mesmo controle de andar, mais rápido); ao chegar na areia ou no cais ele desce.
 // Ilha 1 · Vila dos Moinhos: ilha pequena de morros verdes, vila de casas de telhado colorido, estradas de terra, pastos grandes cercados (ovelhas,
 // vacas, fardos de feno), um campo de trigo, moinhos de vento com as pás girando, árvores, praia, e o porto (cais de madeira em T, armazém, caixas e
@@ -25324,7 +25324,7 @@ const MB=H3.MB,M4=H3.M4;
 const PI=Math.PI,TAU=PI*2,sin=Math.sin,cos=Math.cos,abs=Math.abs,min=Math.min,max=Math.max,floor=Math.floor,round=Math.round,sqrt=Math.sqrt,hypot=Math.hypot,atan2=Math.atan2;
 const clp=(v,a,b)=>v<a?a:v>b?b:v,lerp=(a,b,t)=>a+(b-a)*t,sm=(a,b,v)=>{v=clp((v-a)/(b-a),0,1);return v*v*(3-2*v)};
 const mixc=(a,b,t)=>[lerp(a[0],b[0],t),lerp(a[1],b[1],t),lerp(a[2],b[2],t)],mulc=(a,k)=>[a[0]*k,a[1]*k,a[2]*k];
-const K=2,WID=6,MW=4800,MH=3600,WW=MW*K,WH=MH*K,TW=WW/16,TH=WH/16;
+const K=2,WID=6,MW=9600,MH=6000,WW=MW*K,WH=MH*K,TW=WW/16,TH=WH/16;
 const WL=0;                                            // nível do mar (projeto)
 const BOOST=2.6;                                       // velocidade do barco (x a de andar)
 
@@ -25335,7 +25335,8 @@ function rng(s){s=s>>>0;return()=>{s=(s+0x6D2B79F5)>>>0;let t=s;t=Math.imul(t^t>
 
 // ---------- ilhas: as 8 posições (só a 1 está pronta) ----------
 // x,z = centro (projeto) · R = raio · on = já tem relevo
-const ISL=[{x:1300,z:2480,R:520,on:1,s:[.7,2.1,.3],nm:'Ilha 1 · Vila dos Moinhos'},{x:2600,z:2760,R:500,on:1,s:[1.57,1.6,.4],nm:'Ilha 2 · Forte Naval'},{x:3900,z:2550,R:420},{x:4150,z:1450,R:380},{x:3250,z:700,R:420},{x:2050,z:850,R:400},{x:850,z:1250,R:400},{x:2450,z:1700,R:400}];
+const ISL=[{x:1300,z:2480,R:520,on:1,s:[.7,2.1,.3],nm:'Ilha 1 · Vila dos Moinhos'},{x:3434,z:2935,R:500,on:1,s:[1.57,1.6,.4],nm:'Ilha 2 · Forte Naval'},{x:5650,z:2550,R:420},{x:7900,z:2900,R:380},
+ {x:7700,z:4850,R:420},{x:5500,z:4900,R:400},{x:3250,z:5000,R:400},{x:1200,z:4850,R:400}];   // fileira de cima (z ~ 2500-2900) e de baixo (z ~ 4900); ~1000 de mar entre vizinhas
 const I1=ISL[0];
 const shapeK=(I,a)=>1+.12*sin(2*a+I.s[0])+.08*sin(3*a+I.s[1])+.05*sin(5*a+I.s[2]);
 const islD=(I,x,z)=>{const dx=x-I.x,dz=z-I.z;return hypot(dx,dz)/(I.R*shapeK(I,atan2(dz,dx)))};   // 1 = beira da praia
@@ -25352,12 +25353,12 @@ const PIERT={z:PSH+205,hw:12,x0:I1.x-90,x1:I1.x+90};
 const R=(dx,dz)=>[I1.x+dx,I1.z+dz];
 const ROADS=[cr([[PORT.x,PORT.z+20],R(-8,130),R(16,10),R(56,-150),R(34,-300)],6),cr([R(10,70),R(-150,30),R(-290,-50)],6),cr([R(18,4),R(180,44),R(300,-12)],6)];
 const RHW=13;
-const FG=8,FW=MW/FG,FH=MH/FG;
-const RDF=new Float32Array(FW*FH).fill(999);
+const FG=8,FB1={x0:floor((I1.x-900)/FG)*FG,z0:floor((I1.z-900)/FG)*FG,w:226,h:226};   // grades de rua: só em volta de cada ilha
+const RDF=new Float32Array(FB1.w*FB1.h).fill(999);
 for(const P of ROADS)for(let i=0;i<P.length-1;i++){const[ax,az]=P[i],[bx,bz]=P[i+1];
- const x0=max(0,floor((min(ax,bx)-60)/FG)),x1=min(FW-1,floor((max(ax,bx)+60)/FG)),z0=max(0,floor((min(az,bz)-60)/FG)),z1=min(FH-1,floor((max(az,bz)+60)/FG));
- for(let j=z0;j<=z1;j++)for(let k=x0;k<=x1;k++){const d=segD(k*FG+4,j*FG+4,ax,az,bx,bz),q=j*FW+k;if(d<RDF[q])RDF[q]=d}}
-const roadD=(x,z)=>{const i=clp(floor(x/FG),0,FW-1),j=clp(floor(z/FG),0,FH-1);return RDF[j*FW+i]};
+ const x0=max(0,floor((min(ax,bx)-60-FB1.x0)/FG)),x1=min(FB1.w-1,floor((max(ax,bx)+60-FB1.x0)/FG)),z0=max(0,floor((min(az,bz)-60-FB1.z0)/FG)),z1=min(FB1.h-1,floor((max(az,bz)+60-FB1.z0)/FG));
+ for(let j=z0;j<=z1;j++)for(let k=x0;k<=x1;k++){const d=segD(FB1.x0+k*FG+4,FB1.z0+j*FG+4,ax,az,bx,bz),q=j*FB1.w+k;if(d<RDF[q])RDF[q]=d}}
+const roadD=(x,z)=>{const i=floor((x-FB1.x0)/FG),j=floor((z-FB1.z0)/FG);return i<0||j<0||i>=FB1.w||j>=FB1.h?999:RDF[j*FB1.w+i]};
 // pastos cercados (retângulos girados: centro, meia-largura, meia-altura, giro, lado do portão) e o trigal
 const PAST=[{x:I1.x-215,z:I1.z-150,hw:128,hd:92,a:.2,gate:1},{x:I1.x+222,z:I1.z-128,hw:122,hd:86,a:-.15,gate:3}];
 const WHEAT={x:I1.x+200,z:I1.z+196,hw:84,hd:56,a:.08};
@@ -25398,12 +25399,13 @@ const COAST2=(()=>{const P=[];for(let k=0;k<=18;k++){const a=PI/2-1.3+2.6*k/18,c
   for(let r=0;r<rs;r+=4)if(mountU(I2.x+ca*r,I2.z+sa*r)>1.08){rm=r;break}
   if(!rm||rs-rm<70)continue;const rr=rm+(rs-rm)*.4;P.push([I2.x+ca*rr,I2.z+sa*rr])}return P.length>2?cr(P,5):[]})();
 const ROADS2=[UP2,COAST2];
-const SEG2=[],R2G=new Int32Array(FW*FH).fill(-1),R2B=new Float32Array(FW*FH).fill(999);
+const FB2={x0:floor((I2.x-820)/FG)*FG,z0:floor((I2.z-780)/FG)*FG,w:206,h:196};
+const SEG2=[],R2G=new Int32Array(FB2.w*FB2.h).fill(-1),R2B=new Float32Array(FB2.w*FB2.h).fill(999);
 for(const P of ROADS2)for(let i=0;i<P.length-1;i++){const A=P[i],B=P[i+1],si=SEG2.length;SEG2.push([A[0],A[1],A.length>2?A[2]:-99,B[0],B[1],B.length>2?B[2]:-99]);
- const x0=max(0,floor((min(A[0],B[0])-60)/FG)),x1=min(FW-1,floor((max(A[0],B[0])+60)/FG)),z0=max(0,floor((min(A[1],B[1])-60)/FG)),z1=min(FH-1,floor((max(A[1],B[1])+60)/FG));
- for(let j=z0;j<=z1;j++)for(let k=x0;k<=x1;k++){const d=segD(k*FG+4,j*FG+4,A[0],A[1],B[0],B[1]),q=j*FW+k;if(d<R2B[q]){R2B[q]=d;R2G[q]=si}}}
+ const x0=max(0,floor((min(A[0],B[0])-60-FB2.x0)/FG)),x1=min(FB2.w-1,floor((max(A[0],B[0])+60-FB2.x0)/FG)),z0=max(0,floor((min(A[1],B[1])-60-FB2.z0)/FG)),z1=min(FB2.h-1,floor((max(A[1],B[1])+60-FB2.z0)/FG));
+ for(let j=z0;j<=z1;j++)for(let k=x0;k<=x1;k++){const d=segD(FB2.x0+k*FG+4,FB2.z0+j*FG+4,A[0],A[1],B[0],B[1]),q=j*FB2.w+k;if(d<R2B[q]){R2B[q]=d;R2G[q]=si}}}
 let R2d=999,R2h=-99;   // resultado da última consulta road2(x,z): distância da rua e altura da pista ali (-99 = rua que só segue o chão)
-function road2(x,z){const i=clp(floor(x/FG),0,FW-1),j=clp(floor(z/FG),0,FH-1),si=R2G[j*FW+i];if(si<0){R2d=999;R2h=-99;return R2d}
+function road2(x,z){const i=floor((x-FB2.x0)/FG),j=floor((z-FB2.z0)/FG),si=i<0||j<0||i>=FB2.w||j>=FB2.h?-1:R2G[j*FB2.w+i];if(si<0){R2d=999;R2h=-99;return R2d}
  const S=SEG2[si],dx=S[3]-S[0],dz=S[4]-S[1],l2=dx*dx+dz*dz;let t=l2?((x-S[0])*dx+(z-S[1])*dz)/l2:0;t=clp(t,0,1);R2d=hypot(x-S[0]-dx*t,z-S[1]-dz*t);R2h=S[2]>-90&&S[5]>-90?lerp(S[2],S[5],t):-99;return R2d}
 const near2=v=>abs(v[0]-I2.x)<760&&abs(v[1]-I2.z)<700;
 
@@ -25433,7 +25435,9 @@ const floorY=(x,z)=>LOCAL?0:floorD(x,z);
 const floorW=(x,z)=>floorD(x/K,z/K)*K;
 
 // ---------- colisão: grade de 4 x 4 (projeto) ----------
-const GW=MW>>2,GH=MH>>2,CG=new Uint8Array(GW*GH),ROCKG=new Uint8Array(GW*GH);   // ROCKG: paredões da ilha 2 (1 = encosta forte, 2 = paredão)
+const GW=MW>>2,GH=MH>>2,CG=new Uint8Array(GW*GH);
+const RB2={x0:floor((I2.x-I2.R*1.4)/4),z0:floor((I2.z-I2.R*1.3)/4),w:Math.ceil(I2.R*2.8/4)+2,h:Math.ceil(I2.R*2.6/4)+2},ROCKG=new Uint8Array(RB2.w*RB2.h);   // paredões da ilha 2 (1 = encosta forte, 2 = paredão)
+const rockAt=(x,z)=>{const i=((x/4)|0)-RB2.x0,j=((z/4)|0)-RB2.z0;return i<0||j<0||i>=RB2.w||j>=RB2.h?0:ROCKG[j*RB2.w+i]};
 function circ(x,z,r){const x0=max(0,(x-r)>>2),x1=min(GW-1,(x+r)>>2),z0=max(0,(z-r)>>2),z1=min(GH-1,(z+r)>>2);
  for(let j=z0;j<=z1;j++)for(let i=x0;i<=x1;i++){if(hypot(i*4+2-x,j*4+2-z)<=r)CG[j*GW+i]=1}}
 function rect(x0,z0,x1,z1){const a=max(0,x0>>2),b=min(GW-1,x1>>2),c=max(0,z0>>2),d=min(GH-1,z1>>2);for(let j=c;j<=d;j++)for(let i=a;i<=b;i++)CG[j*GW+i]=1}
@@ -25745,7 +25749,7 @@ function gcol(x,z){const h=baseH(x,z);
  const rd=roadD(x,z);if(rd<RHW+8)c=mixc(c,mulc(ROADC,.95+vn(x/14,z/14,6)*.1),1-sm(RHW-2,RHW+8,rd));
  const pd=hypot(x-PORT.x,(z-PORT.z)*1.2);if(pd<110&&h>4)c=mixc(c,mulc([186,176,158],.95+vn(x/10,z/10,7)*.1),1-sm(80,110,pd));
  if(abs(x-I2.x)<760&&abs(z-I2.z)<700){   // ilha 2: paredões de pedra, terra batida da base, ruas e praça
-  const rk=ROCKG[(clp(z,0,MH-1)>>2)*GW+(clp(x,0,MW-1)>>2)];if(rk)c=mixc(c,mulc([150,145,136],.84+vn(x/11,z/11,23)*.3),rk===2?.95:.62);
+  const rk=rockAt(x,z);if(rk)c=mixc(c,mulc([150,145,136],.84+vn(x/11,z/11,23)*.3),rk===2?.95:.62);
   if(inBase(x,z,-2)&&baseDirt(x,z))c=mixc(c,mulc([184,164,124],.94+vn(x/12,z/12,24)*.12),.9);
   road2(x,z);if(R2d<RHW2+7)c=mixc(c,mulc(inBase(x,z,20)?[150,142,126]:ROADC,.95+vn(x/14,z/14,6)*.1),1-sm(RHW2-2,RHW2+7,R2d));
   const p2=hypot(x-PORT2.x,(z-PORT2.z)*1.2);if(p2<110&&h>4)c=mixc(c,mulc([186,176,158],.95+vn(x/10,z/10,7)*.1),1-sm(80,110,p2))}
@@ -25755,8 +25759,9 @@ function ground(mb,cx,cz){const x0=cx*CS,z0=cz*CS,g=(x0<I2.x+760&&x0+CS>I2.x-760
  const col=k=>Cs[k]||(Cs[k]=gcol(x0+(k%n1)*g,z0+((k/n1)|0)*g)),p=k=>[(x0+(k%n1)*g)*K,Hs[k]*K,(z0+((k/n1)|0)*g)*K];
  for(let j=0;j<n;j++)for(let i=0;i<n;i++){const a=j*n1+i,b=a+1,d=a+n1,c=d+1;if(max(Hs[a],Hs[b],Hs[c],Hs[d])<WL-14)continue;   // fundo do mar longe das ilhas: não precisa (a água cobre)
   mb.wt(p(a),p(d),p(c),col(a),col(d),col(c));mb.wt(p(a),p(c),p(b),col(a),col(c),col(b))}}
-function water(mb,cx,cz){const x0=cx*CS,z0=cz*CS,x1=x0+CS,z1=z0+CS,y=WL*K;
- for(let z=z0;z<z1;z+=WS)for(let x=x0;x<x1;x+=WS){const a=[x,z],b=[x+WS,z],c=[x+WS,z+WS],d=[x,z+WS];if(min(baseH(x,z),baseH(x+WS,z),baseH(x+WS,z+WS),baseH(x,z+WS))>WL+1)continue;
+function water(mb,cx,cz){const x0=cx*CS,z0=cz*CS,x1=x0+CS,z1=z0+CS,y=WL*K,mx=x0+CS/2,mz=z0+CS/2;
+ let ws=150;for(const I of ISL)if(I.on&&hypot(mx-I.x,mz-I.z)<I.R*1.6+CS)ws=WS;   // mar aberto, longe das ilhas: quadrados maiores (a cor é a mesma)
+ for(let z=z0;z<z1;z+=ws)for(let x=x0;x<x1;x+=ws){const WS=ws;const a=[x,z],b=[x+WS,z],c=[x+WS,z+WS],d=[x,z+WS];if(min(baseH(x,z),baseH(x+WS,z),baseH(x+WS,z+WS),baseH(x,z+WS))>WL+1)continue;
   const q=(P)=>[P[0]*K,y,P[1]*K],col=P=>waterCol(P[0],P[1]);mb.wt(q(a),q(d),q(c),col(a),col(d),col(c),.06);mb.wt(q(a),q(c),q(b),col(a),col(c),col(b),.06)}}
 // espuma da beira (quadros: a faixa branca sai da areia e se desfaz no mar)
 const FOAMF=6;let FOAM=[];
@@ -25798,7 +25803,7 @@ function addTree(key,xd,zd,s,yaw,col){const x=xd*K,z=zd*K,y=floorW(x,z)-1,v=TV[k
 function* gen(gl){
  CG.fill(0);LIGHTS=[];OBJ=[];GLOW=[];MILL.length=0;FOAM=[];BOATS=[];CLOUD=[];PADS.length=0;CHIM.length=0;GULLS=[];
  const r=rng(20261103);
- CH=[];for(let j=0;j<NCZ;j++)for(let i=0;i<NCX;i++){const o=new MB(600+j*NCX+i,{pk:true});o.push().S(K,K,K);CH.push({i,j,g:new MB(200+j*NCX+i,{pk:true}),o,gm:null,om:null,cx:(i+.5)*CS*K,cz:(j+.5)*CS*K})}
+ CH=[];for(let j=0;j<NCZ;j++)for(let i=0;i<NCX;i++){const sd=i<8&&j<6?j*8+i:1000+j*NCX+i,o=new MB(600+sd,{pk:true});o.push().S(K,K,K);CH.push({i,j,g:new MB(200+sd,{pk:true}),o,gm:null,om:null,cx:(i+.5)*CS*K,cz:(j+.5)*CS*K})}
  OCW.pct=.02;yield;
  // ---- 1) onde fica cada construção (o chão debaixo delas fica plano) ----
  const occ=[];const free=(x,z,R)=>{for(const o of occ)if(hypot(o[0]-x,o[1]-z)<o[2]+R)return false;if(roadD(x,z)<RHW+R*.7+4)return false;for(const Q of PAST)if(inRect(Q,x,z,R+8))return false;if(inRect(WHEAT,x,z,R+6))return false;
@@ -25835,7 +25840,7 @@ function* gen(gl){
   for(let j=z0;j<=z1;j++){for(let i=0;i<nx;i++)Bq[i]=baseH((x0+i)*4,(j+1)*4);
    for(let i=0;i<nx-1;i++){const a=A[i],b=A[i+1],c=Bq[i],d=Bq[i+1];if(max(a,b,c,d)<WL+1)continue;
     const sl=max(abs(a-b),abs(c-d),abs(a-c),abs(b-d),abs(a-d)*.7071,abs(b-c)*.7071)/4;if(sl<.6)continue;
-    const cx=(x0+i)*4+2,cz=j*4+2;if(road2(cx,cz)<RHW2+1)continue;const q=j*GW+x0+i;ROCKG[q]=sl>.85?2:1;if(sl>.95&&min(a,b,c,d)>WL-1)CG[q]=1}
+    const cx=(x0+i)*4+2,cz=j*4+2;if(road2(cx,cz)<RHW2+1)continue;const q=j*GW+x0+i,qr=(j-RB2.z0)*RB2.w+(x0+i-RB2.x0);if(qr>=0&&qr<ROCKG.length)ROCKG[qr]=sl>.85?2:1;if(sl>.95&&min(a,b,c,d)>WL-1)CG[q]=1}
    const t=A;A=Bq;Bq=t;if((j&7)===0){OCW.pct=min(.1,OCW.pct+.001);yield}}}
  OCW.pct=max(OCW.pct,.1);yield;
  // ---- 2) chão, mar e bordas ----
@@ -25933,8 +25938,8 @@ function* gen(gl){
    lamp2(CHK(x,z).o,x,z);occ2.push([x,z,4])}}
  OCW.pct=.68;yield;
  // ---- ilha 2: pedras nos paredões, árvores nos terraços e na vila, arbustos, palmeiras e pedras na praia ----
- {let n=0;for(let k=0;k<9000&&n<380;k++){const x=I2.x-640+r2()*1280,z=I2.z-580+r2()*1160;if(x<4||z<4||x>=MW-4||z>=MH-4)continue;if(ROCKG[((z/4)|0)*GW+((x/4)|0)]!==2)continue;if(road2(x,z)<RHW2+5||inBase(x,z,12))continue;rock(CHK(x,z).o,x,z,1+r2()*1.9,r2);n++}}
- const okV=(x,z,R)=>{if(islD(I2,x,z)>.8||inBase(x,z,14)||blockedD(x,z))return false;if(ROCKG[((z/4)|0)*GW+((x/4)|0)])return false;if(road2(x,z)<RHW2+R)return false;if(hypot(x-PORT2.x,(z-PORT2.z)*1.2)<120)return false;for(const o of occ2)if(hypot(o[0]-x,o[1]-z)<o[2]+R)return false;return true};
+ {let n=0;for(let k=0;k<9000&&n<380;k++){const x=I2.x-640+r2()*1280,z=I2.z-580+r2()*1160;if(x<4||z<4||x>=MW-4||z>=MH-4)continue;if(rockAt(x,z)!==2)continue;if(road2(x,z)<RHW2+5||inBase(x,z,12))continue;rock(CHK(x,z).o,x,z,1+r2()*1.9,r2);n++}}
+ const okV=(x,z,R)=>{if(islD(I2,x,z)>.8||inBase(x,z,14)||blockedD(x,z))return false;if(rockAt(x,z))return false;if(road2(x,z)<RHW2+R)return false;if(hypot(x-PORT2.x,(z-PORT2.z)*1.2)<120)return false;for(const o of occ2)if(hypot(o[0]-x,o[1]-z)<o[2]+R)return false;return true};
  {let nt=0;for(let k=0;k<3000&&nt<150;k++){const x=I2.x-620+r2()*1240,z=I2.z-560+r2()*1120;if(!okV(x,z,10))continue;addTree(TKEYS[(r2()*TKEYS.length)|0],x,z,.9+r2()*.45,r2()*TAU,4);occ2.push([x,z,12]);nt++}}
  {let nb=0;for(let k=0;k<1500&&nb<260;k++){const x=I2.x-620+r2()*1240,z=I2.z-560+r2()*1120;if(!okV(x,z,5))continue;bush(CHK(x,z).o,x,z,.7+r2()*.6,r2,r2()<.3?FLW[(r2()*FLW.length)|0]:null);circ(x,z,4);occ2.push([x,z,6]);nb++}}
  for(let k=0;k<80;k++){const a=r2()*TAU,d=.86+r2()*.08,x=I2.x+cos(a)*I2.R*shapeK(I2,a)*d,z=I2.z+sin(a)*I2.R*shapeK(I2,a)*d;if(abs(x-PIER2.x)<70&&z>I2.z)continue;if(baseH(x,z)>9)continue;
@@ -25946,7 +25951,7 @@ function* gen(gl){
  SAILS=H3.upload(gl,millSails().pack());BOAT=H3.upload(gl,boatMB(555).pack());BOATP=H3.upload(gl,boatMB(556,true).pack());GULLM=[H3.upload(gl,gullMB(1).pack()),H3.upload(gl,gullMB(0).pack())];
  for(let i=0;i<10;i++)GULLS.push({cx:(i<6?PORT.x+(r()-.5)*300:I1.x+(r()-.5)*600)*K,cz:(i<6?PSH+60+(r()-.5)*200:I1.z+(r()-.5)*600)*K,R:(60+r()*90)*K,y:(70+r()*60)*K,sp:(.25+r()*.2)*(r()<.5?-1:1),ph:r()*TAU,m:new Float32Array(16)});
  for(let f=0;f<FOAMF;f++){FOAM.push(H3.upload(gl,foamMB(f).pack()));OCW.pct=.66+.1*f/FOAMF;yield}
- {const rc=rng(77);for(let i=0;i<22;i++){const mb=new MB(9100+i,{pk:true}),n=7+((rc()*5)|0),L=220+rc()*240,W=110;for(let k=0;k<n;k++){const u=k/(n-1)-.5,R2=(1-abs(u)*1.1)*(60+rc()*40)+26;mb.push().T(u*L+(rc()-.5)*40,(1-abs(u)*1.4)*R2*.35,(rc()-.5)*W*.7).S(1,.55,.9).sph(R2,5,10,[252,252,255],.6).pop()}
+ {const rc=rng(77);for(let i=0;i<44;i++){const mb=new MB(9100+i,{pk:true}),n=7+((rc()*5)|0),L=220+rc()*240,W=110;for(let k=0;k<n;k++){const u=k/(n-1)-.5,R2=(1-abs(u)*1.1)*(60+rc()*40)+26;mb.push().T(u*L+(rc()-.5)*40,(1-abs(u)*1.4)*R2*.35,(rc()-.5)*W*.7).S(1,.55,.9).sph(R2,5,10,[252,252,255],.6).pop()}
    CLOUD.push({m:H3.upload(gl,mb.pack()),x:rc()*WW,y:700+rc()*300,z:rc()*WH,sp:6+rc()*8,mt:new Float32Array(16)})}}
  OCW.pct=.8;yield;
  // sobe o fixo; as malhas juntadas por pedaço ficam SEM a versão simplificada automática (ela apagava casas inteiras de longe)
@@ -25972,7 +25977,7 @@ function flower(mb,x,y,z,ci,rnd){const h=2.5+rnd()*1.9,a=rnd()*TAU,tip=[0,0,0];b
  const R=1.2+rnd()*.6,col=FLC[ci],cen=[255,226,122],ex=tip[0],ey=tip[1]+.05,ez=tip[2],nn=[0,1,0];
  for(let i=0;i<5;i++){const a0=i/5*TAU+a,a1=(i+1)/5*TAU+a;mb.raw([ex,ey+.5,ez],[ex+cos(a0)*R,ey,ez+sin(a0)*R],[ex+cos(a1)*R,ey,ez+sin(a1)*R],nn,nn,nn,cen,col,col,18,18,18)}}
 function grassy(x,z){const xd=x/K,zd=z/K;if(baseH(xd,zd)<6.5)return false;if(roadD(xd,zd)<RHW+2)return false;if(hypot(xd-PORT.x,(zd-PORT.z)*1.2)<110)return false;if(inRect(WHEAT,xd,zd,4))return false;if(blockedD(xd,zd))return false;
- if(abs(xd-I2.x)<760&&abs(zd-I2.z)<700){if(ROCKG[((zd/4)|0)*GW+((xd/4)|0)])return false;if(road2(xd,zd)<RHW2+2)return false;if(hypot(xd-PORT2.x,(zd-PORT2.z)*1.2)<110)return false;if(inBase(xd,zd,-2)&&baseDirt(xd,zd))return false}
+ if(abs(xd-I2.x)<760&&abs(zd-I2.z)<700){if(rockAt(xd,zd))return false;if(road2(xd,zd)<RHW2+2)return false;if(hypot(xd-PORT2.x,(zd-PORT2.z)*1.2)<110)return false;if(inBase(xd,zd,-2)&&baseDirt(xd,zd))return false}
  return true}
 function grassChunk(ci,cj){const cs=GR.cs,x0=ci*cs,z0=cj*cs,mb=new MB(((ci*7919)^(cj*104729))+41,{pk:true}),rnd=mb.r,GS=5.1,N=Math.ceil(cs/GS);
  for(let gz=0;gz<N;gz++)for(let gx=0;gx<N;gx++){const x=x0+(gx+rnd())*GS,z=z0+(gz+rnd())*GS,r3=rnd();if(!grassy(x,z))continue;const g=gcol(x/K,z/K),y=floorW(x,z);
@@ -25994,7 +25999,7 @@ function boatTick(t){if(typeof P==='undefined'||!P)return;const x=P.x+8,z=P.y+14
  const dx=x-PB.lx,dz=z-PB.lz,mv=hypot(dx,dz);if(mv>.3&&mv<200){const ty=atan2(dx,dz);let d=ty-PB.yaw;while(d>PI)d-=TAU;while(d<-PI)d+=TAU;PB.yaw+=d*.12}
  PB.lx=x;PB.lz=z;PB.on=on;OCW.boat=on;PB.k=lerp(PB.k,on?1:0,.25);PB.mv=mv}
 // ---------- desenho ----------
-const FAR=3600,FART=1600,LODT=[300,700],MT=new Float32Array(16);
+const FAR=4200,FART=1600,LODT=[300,700],MT=new Float32Array(16);
 function draw(t,dyn){H3.skyDraw();const F=H3.S.foc||H3.S.cam,s=t/1000;boatTick(t);
  for(const c of CH){const d=hypot(c.cx-F.x,c.cz-F.z);if(d>FAR+CS*K)continue;
   if(c.gm&&H3.vis(c.gm.cx,c.gm.cy,c.gm.cz,c.gm.rad))H3.mesh(c.gm,null,LIGHTS,dyn,{});
@@ -26041,7 +26046,7 @@ SCN.ocean={id:'ocean',K:1,OX:0,OY:0,eye:25,camD:92,p3:-.18,pl:[[-.95,.85],[-1.0,
  build:gl=>{while(!step(50)){}},
  stepBuild:ms=>{try{return step(max(ms,14))}catch(e){console.error('OCW',e);return true}},progress:()=>OCW.pct,
  free:()=>freeAll(),
- env:()=>{H3.env({fog:[.76,.87,.97,.00042],ambT:[1.1,1.08,1.02],ambB:[.6,.62,.58],sun:SUN,sunC:SUNC,skyA:SKYA,skyB:SKYB,gndA:GNDA,wind:[1.4,.6],gscale:[1/WW,1/WH],detk:0,lmk:0,fogOff:0,trs:0,detkL:0,moonL:[0,0,0]});try{if(H3.fogOff)H3.fogOff(0);if(H3.tex)H3.tex.lm=null}catch(e){}},
+ env:()=>{H3.env({fog:[.76,.87,.97,.00032],ambT:[1.1,1.08,1.02],ambB:[.6,.62,.58],sun:SUN,sunC:SUNC,skyA:SKYA,skyB:SKYB,gndA:GNDA,wind:[1.4,.6],gscale:[1/WW,1/WH],detk:0,lmk:0,fogOff:0,trs:0,detkL:0,moonL:[0,0,0]});try{if(H3.fogOff)H3.fogOff(0);if(H3.tex)H3.tex.lm=null}catch(e){}},
  floorY:(x,z)=>floorW(x,z),
  // no barco anda BOOST vezes mais rápido; cais, casas, cercas e borda do mapa bloqueiam
  step:o=>{if(isBoat(o.ox/K,o.oz/K)||isBoat(o.x/K,o.z/K)){o.x=o.ox+(o.x-o.ox)*BOOST;o.z=o.oz+(o.z-o.oz)*BOOST}
@@ -26063,7 +26068,7 @@ let lastIsl=-2;   // ilha onde o jogador está (-1 = no mar; -2 = acabou de entr
 setInterval(()=>{try{if(typeof world==='undefined'||lock)return;const x=P.x+8,z=P.y+14;
  if(world===0&&hypot(x-M1P.x,z-M1P.z)<16)OCW.go();else if(world===WID&&hypot(x-BACK.x,z-BACK.z)<16)OCW.back();
  if(world===WID&&OCW.ready){let cur=-1;for(let k=0;k<ISL.length;k++){const I=ISL[k];if(I.on&&islD(I,x/K,z/K)<1.02){cur=k;break}}if(cur!==lastIsl){if(cur>=0&&lastIsl!==-2)toast_(ISL[cur].nm);lastIsl=cur}}else if(world!==WID)lastIsl=-2}catch(e){}},120);
-setTimeout(()=>{try{const sv=typeof SV!=='undefined'?SV:null;if(sv&&sv.w===WID){goWorld(WID);if(typeof sv.px==='number'&&!OCW.solid(sv.px+8,sv.py+14)&&sv.px<WW&&sv.py<WH){P.x=sv.px;P.y=sv.py}else{P.x=SPAWN.x-8;P.y=SPAWN.z-14}guard3D()}}catch(e){}},0);
+setTimeout(()=>{try{const sv=typeof SV!=='undefined'?SV:null;if(sv&&sv.w===WID){goWorld(WID);if(typeof sv.px==='number'&&!OCW.solid(sv.px+8,sv.py+14)&&sv.px<WW&&sv.py<WH&&!isBoat((sv.px+8)/K,(sv.py+14)/K)){P.x=sv.px;P.y=sv.py}else{P.x=SPAWN.x-8;P.y=SPAWN.z-14}guard3D()}}catch(e){}},0);
 function guard3D(){const t0=Date.now();let tried=0;const iv=setInterval(()=>{try{
  if(world!==WID){clearInterval(iv);return}const S=H3.S||{};if(H3.mode>0&&!S.ld){clearInterval(iv);return}
  if(S.ld||(document.getElementById('startM')&&getComputedStyle(document.getElementById('startM')).display!=='none'))return;
