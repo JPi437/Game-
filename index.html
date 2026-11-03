@@ -23585,7 +23585,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261103043300;
+const GAME_BUILD=20261103045500;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
@@ -25203,7 +25203,13 @@ function sprites(t){const T=H3.tex;if(!T)return;const s=t/1000,F=H3.S.foc||H3.S.
    const y0=lerp(top,bot,u),y1=lerp(top,bot,u2),z0=zT+92*K*sqrt(u)+3,z1=zT+92*K*sqrt(u2)+3,a=.32*sin(PI*min(1,u*1.3));
    H3.strip(T.beam,wx+xo,y0,z0,wx+xo,y1,z1,10+((i*7)%7),[1,1,1,a],true)}
   for(let i=0;i<8;i++){const a=i/8*TAU+s*.15,rr=(55+26*sin(s*.7+i))*K;H3.spr(T.glow,wx+cos(a)*rr,bot+(18+10*sin(s+i))*K,(PLZ+10)*K+sin(a)*rr*.6,170*K,130*K,null,[.92,.97,1,.22],false,0,true)}
-  H3.spr(T.glow,wx,bot+44*K,(PLZ+20)*K,280*K,190*K,null,[.9,.96,1,.25],false,0,true)}
+  H3.spr(T.glow,wx,bot+44*K,(PLZ+20)*K,280*K,190*K,null,[.9,.96,1,.25],false,0,true);
+  const zb0=(WFZT+88)*K;
+  for(let i=0;i<12;i++){const h=(i%4)/3,c=((i>>2)-1),br=.5+.5*sin(s*.6+i*1.3),sw=sin(s*.25+i*2.1);   // véu de fumaça d'água: 3 colunas x 4 alturas, mais denso embaixo
+   H3.spr(T.glow,wx+(c*95+sw*22)*K,bot+(40+h*150+br*12)*K,zb0+(18+h*36-abs(c)*10)*K,(260-h*60)*K,(200-h*30)*K,null,[1,1,1,(.55-h*.32)*(.7+.3*br)],false,0,true)}
+  for(let i=0;i<3;i++){const br=.5+.5*sin(s*.9+i*2);H3.spr(T.glow,wx+(i-1)*90*K,bot+(50+br*20)*K,zb0+30*K,320*K,220*K,null,[1,1,1,.1+.05*br],true,0,true)}   // brilho da névoa no sol   // véu de névoa (mais denso embaixo)
+  if(T.ring)for(let i=0;i<4;i++){const ph=(s*.22+i*.25)%1,sz=(70+ph*230)*K;H3.flat(T.ring,wx+((i%2)?-25:25)*K,bot+.6,zb0+(ph*40)*K,sz,sz*.7,null,[1,1,1,.32*(1-ph)],false,i)}   // espuma abrindo em anéis
+  H3.flat(T.glow,wx,bot+.5,zb0+10*K,260*K,150*K,null,[1,1,1,.45],false,0)}   // espuma branca embaixo da queda
  // raios de sol entre as árvores (faixas inclinadas na direção do sol)
  const sd=H3.sunDir?H3.sunDir():[-.5,.7,.5];
  for(const q of SHAFT){const d=hypot(q[0]-F.x,q[1]-F.z);if(d>900)continue;const k=(1-sm(500,900,d))*q[3],g=floorW(q[0],q[1]),L=300;
@@ -25217,11 +25223,15 @@ NJW.shadowTune=()=>{shKey='';shadowTune()};
 // névoa baixa entre as árvores, borrifo da cachoeira, partículas do portal e brilhos no ar
 function frameFx(t,Cm){shadowTune();{const C=H3.S.foc||Cm,F=FLO();grassStep(C,F.perF||2,F.msF||4);if((GR.tick++&31)===0)grassEvict(C)}
  const FX=H3.fx;if(!FX)return;const R=Math.random;
- if(R()<.42){const a=R()*TAU,rr=90+R()*420,x=Cm.x+cos(a)*rr,z=Cm.z+sin(a)*rr;if(z<(WALLZ-30)*K){const g=floorW(x,z);
+ if(R()<.42&&hypot(Cm.x-PCX*K,Cm.z-PLZ*K)>1300){const a=R()*TAU,rr=90+R()*420,x=Cm.x+cos(a)*rr,z=Cm.z+sin(a)*rr;if(z<(WALLZ-30)*K){const g=floorW(x,z);
   FX.emit({x,y:g+6+R()*26,z,vx:.12+R()*.1,vy:.004,vz:(R()-.5)*.08,g:0,life:6000+R()*4000,s0:60+R()*40,s1:130+R()*60,c:[.86,.9,.9],a:.11,add:false,tex:'glow',drag:1})}}
- const wx=PCX*K,wz=(PLZ-10)*K;if(hypot(Cm.x-wx,Cm.z-wz)<1800){
-  for(let i=0;i<3;i++)if(R()<.8){const a=R()*TAU,sp=.4+R()*1.8;FX.emit({x:wx+(R()-.5)*130*K,y:WL*K+4,z:wz+(R()-.5)*20*K,vx:cos(a)*sp,vy:1.2+R()*1.8,vz:sin(a)*sp*.6+.4,g:.035,life:900+R()*700,s0:4+R()*4,s1:10,c:[.95,.98,1],a:.5,add:false,tex:'glow',drag:.985})}
-  if(R()<.45)FX.emit({x:wx+(R()-.5)*170*K,y:WL*K+10+R()*40,z:wz+R()*70*K,vx:(R()-.5)*.3,vy:.18+R()*.15,vz:.25+R()*.2,g:0,life:4000+R()*2000,s0:50,s1:120,c:[.92,.96,1],a:.16,add:false,tex:'glow',drag:.998})}
+ // cachoeira: fumaça d'água no pé da queda (nuvens que sobem e se espalham), névoa baixa rolando por cima do lago,
+ // névoa subindo pela parte de baixo da parede de água e borrifo de gotas
+ const wx=PCX*K,wz=(WFZT+88)*K,dCam=hypot(Cm.x-wx,Cm.z-wz);if(dCam<2200){const near=dCam<1500,top=LIPW*K,bot=WL*K,zT=WFZT*K;
+  if(R()<(near?.5:.25)){const u=(R()-.5)*2;FX.emit({x:wx+u*95*K,y:bot+(28+R()*36)*K,z:wz+(R()-.2)*40*K,vx:u*.6+(R()-.5)*.3,vy:.35+R()*.45,vz:.5+R()*.6,g:-.001,life:4500+R()*3000,s0:110+R()*60,s1:380+R()*180,c:[1,1,1],a:.42+R()*.12,add:false,tex:'glow',drag:.994})}
+  if(R()<.22){const u=(R()-.5)*2;FX.emit({x:wx+u*150*K,y:bot+(26+R()*12)*K,z:wz+(20+R()*70)*K,vx:u*.9,vy:.04,vz:.6+R()*.6,g:0,life:6000+R()*3000,s0:150,s1:420,c:[.92,.96,.98],a:.24,add:false,tex:'glow',drag:.997})}
+  if(near&&R()<.25){const u=(R()-.5)*2,uu=1-R()*.38,y=lerp(top,bot,uu);FX.emit({x:wx+u*82*K,y,z:zT+92*K*sqrt(uu)+14*K,vx:u*.2,vy:.45+R()*.35,vz:.3+R()*.25,g:0,life:2600+R()*1400,s0:70,s1:220,c:[.95,.98,1],a:.2,add:false,tex:'glow',drag:.99})}
+  if(near&&R()<.75){const a=R()*TAU,sp=1.2+R()*2.4,u=(R()-.5)*2;FX.emit({x:wx+u*90*K,y:bot+4,z:wz+(R()-.5)*20*K,vx:cos(a)*sp*.8,vy:1.6+R()*2.2,vz:abs(sin(a))*sp+.5,g:.05,life:900+R()*700,s0:2.6+R()*1.6,s1:1,c:[.96,.99,1],a:.75,add:false,tex:'glow',drag:.99})}}
  if(R()<.35&&hypot(Cm.x-BACK.x,Cm.z-BACK.z)<500)FX.emit({x:BACK.x+(R()-.5)*4,y:floorW(BACK.x,BACK.z)+8+R()*36,z:BACK.z+(R()-.5)*36,vx:0,vy:.25,vz:0,g:0,life:900,s0:2.4,s1:.4,c:[.4,1,.85],a:.9,tex:'dot'});
  if(R()<.25){const a=R()*TAU,rr=40+R()*200,x=Cm.x+cos(a)*rr,z=Cm.z+sin(a)*rr;FX.emit({x,y:floorW(x,z)+10+R()*60,z,vx:.1+R()*.08,vy:-.03,vz:(R()-.5)*.06,g:0,life:5000,s0:1.3,s1:1,c:[1,.96,.8],a:.7,add:true,tex:'glow',drag:1})}}
 
