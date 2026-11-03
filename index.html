@@ -23587,7 +23587,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261103143000;
+const GAME_BUILD=20261103160000;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
@@ -26877,6 +26877,61 @@ const CAST={field:1,db:1,ninja:.85,ocean:1,hal:.42,ice:.22};
   if(cast)_fl(T.blobS,cast.cx,yy+.05,cast.cz,w*.62,cast.L,null,[1,1,1,a*.8*k*cast.sv],false,Math.atan2(-cast.dx,cast.dz))};}
 // sombra nos cantos: liga o H3.aoOn enquanto cada cena se monta
 for(const k in (H3.scenes||{})){const S=H3.scenes[k];for(const f of['build','stepBuild']){const o=S[f];if(typeof o!=='function')continue;S[f]=function(){H3.aoOn=G.on;try{return o.apply(this,arguments)}finally{H3.aoOn=false}}}}
+})();
+</script>
+<script>
+// ===================== Modo espectador (moderadores e ADM): câmera livre voando pelo mapa ou seguindo outro jogador =====================
+// Só a câmera se mexe: o personagem fica parado onde estava. Não dá poder nenhum além de olhar.
+// Joystick/WASD anda na direção do olhar, arrastar a tela gira a câmera, ▲▼ (ou Espaço/C) sobem e descem, Shift acelera.
+(function(){
+const MODS=['wnauak'];                                         // nicks dos moderadores (minúsculas)
+const D=document,H3=window.H3;if(!H3)return;
+const isMod=()=>{try{if(window.ADM&&ADM.isAdm&&ADM.isAdm())return true;const n=String(window.MP&&MP.nick||'').trim().toLowerCase();return !!n&&MODS.includes(n)}catch(e){return false}};
+const SP={on:false,mode:'free',x:0,y:60,z:0,yaw:0,pitch:-.2,fov:1,up:0,turbo:false,tg:null,od:90};window.SPEC=SP;
+const st=D.createElement('style');st.textContent=`#spBtn{position:fixed;right:12px;top:222px;z-index:60;display:none;padding:7px 11px;border-radius:14px;border:2px solid #fff;background:linear-gradient(#5b6bd6,#2a2f7a);color:#fff;font:bold 12px monospace;cursor:pointer;box-shadow:0 2px 6px #0006}
+#spBar{position:fixed;left:50%;top:8px;transform:translateX(-50%);z-index:61;display:none;gap:6px;align-items:center;padding:6px 8px;border-radius:12px;background:#141832e6;border:2px solid #7d8cff;color:#fff;font:bold 12px monospace;flex-wrap:wrap;justify-content:center;max-width:96vw}
+#spBar button{padding:6px 9px;border-radius:9px;border:1px solid #9aa6ff;background:#2a3170;color:#fff;font:bold 12px monospace;cursor:pointer}#spBar button.on{background:#5b6bd6}#spBar .nm{min-width:90px;text-align:center;color:#ffe27a}
+#spUD{position:fixed;right:18px;bottom:120px;z-index:61;display:none;flex-direction:column;gap:8px}#spUD button{width:52px;height:52px;border-radius:50%;border:2px solid #fff;background:#2a3170cc;color:#fff;font:bold 20px monospace}
+body.spOn #spBtn{background:linear-gradient(#d65b5b,#7a2a2a)}`;D.head.appendChild(st);
+const btn=D.createElement('button');btn.id='spBtn';btn.textContent='Espectador';D.body.appendChild(btn);
+const bar=D.createElement('div');bar.id='spBar';D.body.appendChild(bar);
+const ud=D.createElement('div');ud.id='spUD';ud.innerHTML='<button data-u="1">▲</button><button data-u="-1">▼</button>';D.body.appendChild(ud);
+ud.querySelectorAll('button').forEach(b=>{const u=+b.dataset.u;b.onpointerdown=e=>{SP.up=u;e.preventDefault();e.stopPropagation()};b.onpointerup=b.onpointerleave=b.onpointercancel=()=>{if(SP.up===u)SP.up=0}});
+function others(){const o=[];try{for(const k in MP.others){const r=MP.others[k];if(r&&(!MP.live||MP.live(r)))o.push([k,r])}}catch(e){}return o}
+function gh(x,z){try{return H3.floorAt(x,z)}catch(e){return 0}}
+function render(){const L=others(),i=L.findIndex(q=>q[0]===SP.tg),cur=i>=0?L[i][1]:null;
+ bar.innerHTML=`<span>MODO ESPECTADOR</span><button data-a="free" class="${SP.mode==='free'?'on':''}">Livre</button><button data-a="prev">◀</button><span class="nm">${SP.mode==='follow'&&cur?String(cur.n||'?').replace(/[<>&]/g,''):(L.length?'Seguir jogador':'Ninguém online aqui')}</span><button data-a="next">▶</button><button data-a="exit">Sair</button>`;
+ bar.querySelectorAll('button').forEach(b=>b.onclick=()=>{const a=b.dataset.a;
+  if(a==='exit')stop();else if(a==='free'){SP.mode='free'}else{const L2=others();if(!L2.length){toast_('Nenhum outro jogador neste mundo');return}let j=L2.findIndex(q=>q[0]===SP.tg);j=j<0?0:(j+(a==='next'?1:-1)+L2.length)%L2.length;SP.tg=L2[j][0];SP.mode='follow';SP.od=90}
+  render()})}
+function toast_(m){try{toast(m)}catch(e){}}
+function start(){if(!isMod())return;if(!H3.S||!H3.S.mode){toast_('Entre no modo 3D primeiro');return}
+ const C=H3.S.cam||{x:P.x+8,y:80,z:P.y+14,yaw:0,pitch:-.2,fov:1};Object.assign(SP,{on:true,mode:'free',x:C.x,y:C.y,z:C.z,yaw:C.yaw||0,pitch:C.pitch||-.2,fov:C.fov||1,up:0});
+ D.body.classList.add('spOn');btn.textContent='Sair do espectador';bar.style.display='flex';ud.style.display='flex';render();apply()}
+function stop(){SP.on=false;try{H3.S.dbg=null}catch(e){}D.body.classList.remove('spOn');btn.textContent='Espectador';bar.style.display='none';ud.style.display='none'}
+btn.onclick=()=>{SP.on?stop():start()};
+function basis(){const cp=Math.cos(SP.pitch);return{fw:[Math.sin(SP.yaw)*cp,Math.sin(SP.pitch),-Math.cos(SP.yaw)*cp],rt:[Math.cos(SP.yaw),0,Math.sin(SP.yaw)]}}
+function apply(){let x=SP.x,y=SP.y,z=SP.z;
+ if(SP.mode==='follow'){const r=MP.others&&MP.others[SP.tg];if(!r){SP.mode='free';render()}else{const px=r.x+8,pz=r.y+14,py=gh(px,pz)+14,cp=Math.cos(SP.pitch);
+   x=px-Math.sin(SP.yaw)*cp*SP.od;y=py-Math.sin(SP.pitch)*SP.od;z=pz+Math.cos(SP.yaw)*cp*SP.od;SP.x=x;SP.y=y;SP.z=z}}
+ y=Math.max(y,gh(x,z)+3);SP.y=y;H3.S.dbg={x,y,z,yaw:SP.yaw,pitch:SP.pitch,fov:SP.fov}}
+function step(jx_,jy_){const sp=(SP.turbo?5:1.6)*(SP.mode==='follow'?.6:1),m=Math.hypot(jx_,jy_);
+ if(SP.mode==='follow'){if(m>.15)SP.od=Math.max(20,Math.min(600,SP.od+jy_*sp*3));if(SP.up)SP.pitch=Math.max(-1.4,Math.min(.6,SP.pitch-SP.up*.02))}
+ else{const b=basis();if(m>.15){const fw=-jy_,sd=jx_;SP.x+=(b.fw[0]*fw+b.rt[0]*sd)*sp*3;SP.y+=b.fw[1]*fw*sp*3;SP.z+=(b.fw[2]*fw+b.rt[2]*sd)*sp*3}if(SP.up)SP.y+=SP.up*sp*2.4}
+ apply()}
+// o personagem fica parado: o joystick vai para a câmera
+if(typeof tick==='function'){const t0=tick;tick=function(){
+ if(SP.on){if(!isMod()||!H3.S||!H3.S.mode){stop();return t0.apply(this,arguments)}const sj=jx,sy=jy;jx=jy=0;try{step(sj,sy)}catch(e){}try{return t0.apply(this,arguments)}finally{jx=sj;jy=sy}}
+ return t0.apply(this,arguments)}}
+// arrastar a tela gira a câmera (fora dos botões e do joystick)
+let drag=null;const ui=t=>t&&t.closest&&t.closest('button,#joy,.modal,#spBar,#spUD,input,textarea,a');
+addEventListener('pointerdown',e=>{if(SP.on&&!ui(e.target)&&e.target!==joy)drag={id:e.pointerId,x:e.clientX,y:e.clientY}},true);
+addEventListener('pointermove',e=>{if(!SP.on||!drag||e.pointerId!==drag.id)return;const dx=e.clientX-drag.x,dy=e.clientY-drag.y;drag.x=e.clientX;drag.y=e.clientY;SP.yaw+=dx*.0056;SP.pitch=Math.max(-1.5,Math.min(1.5,SP.pitch-dy*.0046));apply();e.stopImmediatePropagation()},true);
+addEventListener('pointerup',e=>{if(drag&&e.pointerId===drag.id)drag=null},true);
+addEventListener('keydown',e=>{if(!SP.on)return;if(e.code==='Space'){SP.up=1;e.preventDefault()}else if(e.code==='KeyC')SP.up=-1;else if(e.key==='Shift')SP.turbo=true;else if(e.code==='Escape')stop()},true);
+addEventListener('keyup',e=>{if(!SP.on)return;if(e.code==='Space'&&SP.up===1)SP.up=0;else if(e.code==='KeyC'&&SP.up===-1)SP.up=0;else if(e.key==='Shift')SP.turbo=false},true);
+// o botão só aparece para moderador/ADM, no 3D
+setInterval(()=>{const ok=isMod()&&H3.S&&H3.S.mode>0;btn.style.display=ok?'block':'none';if(SP.on&&!ok)stop();if(SP.on)render()},1000);
 })();
 </script>
 <script>
