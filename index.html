@@ -9449,6 +9449,7 @@ function patch(src){
   src=src.split('max(dot(n,uMD),0.0)').join('celD(dot(n,uMD))');
   src=src.split('pow(1.0-max(dot(n,V),0.0),2.0)').join('celR(1.0-max(dot(n,V),0.0))');
   src=src.split('pow(1.0-max(dot(n,V),0.0),3.0)').join('celR(1.0-max(dot(n,V),0.0))');
+  if(src.indexOf('dot(n,V)')>=0)src=src.split('*max(n.y,0.0)').join('*max(n.y,0.0)+0.38*celR(1.0-max(dot(n,V),0.0))*smoothstep(-0.3,0.5,dot(n,uMD))');   // brilho de borda do lado do sol
   const m2=/void\s+main\s*\(\s*(void)?\s*\)/.exec(src);src=src.slice(0,m2.index)+CEL+src.slice(m2.index)}
  const m3=/void\s+main\s*\(\s*(void)?\s*\)/.exec(src);
  src=src.slice(0,m3.index)+'void main_g_()'+src.slice(m3.index+m3[0].length);
@@ -9463,6 +9464,9 @@ G.refresh=()=>{curId=null};
 window.ULN=window.ULN||new WeakMap();   // local de uniforme → nome (ver 'sombra de verdade dos personagens')
 window.GRADE_GL=function(gl){if(!gl||gl._gr2)return;gl._gr2=1;
  {const gul=gl.getUniformLocation.bind(gl);gl.getUniformLocation=function(p,n){const l=gul(p,n);if(l)try{window.ULN.set(l,n)}catch(e){}return l}}
+ // luz dos personagens (uMD): metade a luz de frente de antes, metade o sol do mundo (a sombra do rosto e o brilho da borda batem com o cenário)
+ {const u3=gl.uniform3fv.bind(gl),MDV=new Float32Array(3);gl.uniform3fv=function(l,v){try{if(G.on&&l&&window.ULN.get(l)==='uMD'){const H3=window.H3,S=H3&&H3.sunDir&&H3.sunDir();
+   if(S&&S[1]>-.05&&H3.on){let x=v[0]*.45+S[0]*.55,y=v[1]*.45+Math.max(.25,S[1])*.55,z=v[2]*.45+S[2]*.55;const q=Math.hypot(x,y,z)||1;MDV[0]=x/q;MDV[1]=y/q;MDV[2]=z/q;return u3(l,MDV)}}}catch(e){}return u3(l,v)}}
  const ss=gl.shaderSource.bind(gl),up=gl.useProgram.bind(gl);
  gl.shaderSource=function(sh,src){let s=src;try{s=patch(src)}catch(e){s=src}return ss(sh,s)};
  gl.useProgram=function(p){up(p);if(p)try{apply(gl,p)}catch(e){}}};
@@ -9514,7 +9518,7 @@ H3.C=C;H3.shade=shade;H3.mixC=mixC;H3.rng=rng;
 // vértice = x,y,z, normal, r,g,b, brilho próprio (0 = só recebe luz, 1 = brilha sozinho)
 // o = {pk:true}: malha "ao ar livre" (programa H3.out em js/31-h3-field.js): o byte de brilho leva também o balanço do vento (mb.sw = 0..14, 15 = água)
 class MB{
- constructor(seed,o){this.a=[];this.st=[M4.id()];this.m=this.st[0];this.r=rng(seed||7);this.jit=.07;this.pk=!!(o&&o.pk);this.sw=0}
+ constructor(seed,o){this.a=[];this.st=[M4.id()];this.m=this.st[0];this.r=rng(seed||7);this.jit=.07;this.pk=!!(o&&o.pk);this.sw=0;this.mat=0;this.mts=null;this.noMat=!!(o&&o.noMat)}
  push(){this.st.push(this.m.slice());this.m=this.st[this.st.length-1];return this}
  pop(){this.st.pop();this.m=this.st[this.st.length-1];return this}
  T(x,y,z){const m=this.m;m[12]+=m[0]*x+m[4]*y+m[8]*z;m[13]+=m[1]*x+m[5]*y+m[9]*z;m[14]+=m[2]*x+m[6]*y+m[10]*z;return this}
@@ -9526,6 +9530,7 @@ class MB{
  _t(a,b,d,c1,c2,c3,e,j){const ux=b[0]-a[0],uy=b[1]-a[1],uz=b[2]-a[2],vx=d[0]-a[0],vy=d[1]-a[1],vz=d[2]-a[2];
   let nx=uy*vz-uz*vy,ny=uz*vx-ux*vz,nz=ux*vy-uy*vx;const l=sqrt(nx*nx+ny*ny+nz*nz);if(l<1e-9)return;nx/=l;ny/=l;nz/=l;
   const A=this.a;if(this.pk)e+=this.sw*2;                // malha pk: brilho + 2 x balanço do vento (ver pack)
+  if(this.mat){(this.mts||(this.mts=[])).push(A.length/10,this.mat)}   // material marcado (telhado...): vai no pack
   A.push(a[0],a[1],a[2],nx,ny,nz,min(255,c1[0]*j),min(255,c1[1]*j),min(255,c1[2]*j),e);
   A.push(b[0],b[1],b[2],nx,ny,nz,min(255,c2[0]*j),min(255,c2[1]*j),min(255,c2[2]*j),e);
   A.push(d[0],d[1],d[2],nx,ny,nz,min(255,c3[0]*j),min(255,c3[1]*j),min(255,c3[2]*j),e)}
@@ -9575,8 +9580,15 @@ class MB{
  pack(){const A=this.a,n=A.length/10,buf=new ArrayBuffer(n*28),f=new Float32Array(buf),u=new Uint8Array(buf),pk=this.pk;let sx=0,sy=0,sz=0;
   const AO=H3.aoOn&&!this.noAO&&H3.aoBake?H3.aoBake(A,n,pk):null;   // sombra nos cantos (só enquanto as cenas são montadas)
   for(let i=0;i<n;i++){const s=i*10,d=i*7,o=i*28+24;f[d]=A[s];f[d+1]=A[s+1];f[d+2]=A[s+2];f[d+3]=A[s+3];f[d+4]=A[s+4];f[d+5]=A[s+5];if(AO){const k=AO[i];u[o]=A[s+6]*k;u[o+1]=A[s+7]*k;u[o+2]=A[s+8]*k}else{u[o]=A[s+6];u[o+1]=A[s+7];u[o+2]=A[s+8]}
-   if(pk){const v=A[s+9],sw=min(15,floor(v*.5+1e-6));u[o+3]=sw*16+min(15,Math.round((v-sw*2)*15))}else u[o+3]=A[s+9]*255;
+   if(pk){const v=A[s+9],sw=min(15,floor(v*.5+1e-6));u[o+3]=sw*16+min(15,Math.round((v-sw*2)*15));u[o]&=254;u[o+1]&=254}else u[o+3]=A[s+9]*255;
    sx+=A[s];sy+=A[s+1];sz+=A[s+2]}
+  if(pk&&!this.noMat&&H3.matOn!==false){   // texturas pintadas: pedra (paredes e pisos cinza retos), madeira (marrom reto) e telha (marcada pelos telhados)
+   const setM=(t,m)=>{for(let k=0;k<3;k++){const o=(t+k)*28+24;u[o]=(u[o]&254)|(m&1);u[o+1]=(u[o+1]&254)|((m>>1)&1)}};
+   for(let t=0;t+2<n;t+=3){const s=t*10;if(A[s+9]>=1.999)continue;const ny=Math.abs(A[s+4]);if(ny>.03&&ny<.997)continue;
+    const r=(A[s+6]+A[s+16]+A[s+26])/3,g=(A[s+7]+A[s+17]+A[s+27])/3,b=(A[s+8]+A[s+18]+A[s+28])/3,mx=max(r,g,b),mn=min(r,g,b),sat=mx>1?(mx-mn)/mx:0,val=mx/255;
+    let h=0;if(mx-mn>1){h=mx===r?((g-b)/(mx-mn)+6)%6:mx===g?(b-r)/(mx-mn)+2:(r-g)/(mx-mn)+4;h*=60}
+    if(h>=14&&h<=44&&sat>.3&&sat<.8&&val>.16&&val<.62)setM(t,2);else if(sat<.16&&val>.3&&val<.8)setM(t,1)}
+   if(this.mts){const M=this.mts;for(let i=0;i<M.length;i+=2)setM(M[i],M[i+1])}}
   let cx=sx/(n||1),cy=sy/(n||1),cz=sz/(n||1),rad=0;const bb=[1e9,1e9,1e9,-1e9,-1e9,-1e9];
   for(let i=0;i<n;i++){const s=i*10,x=A[s],y=A[s+1],z=A[s+2];rad=max(rad,Math.hypot(x-cx,y-cy,z-cz));if(x<bb[0])bb[0]=x;if(y<bb[1])bb[1]=y;if(z<bb[2])bb[2]=z;if(x>bb[3])bb[3]=x;if(y>bb[4])bb[4]=y;if(z>bb[5])bb[5]=z}
   return{buf,n,cx,cy,cz,rad,pk,bb}}
@@ -9659,7 +9671,7 @@ H3.lodDraw=(ms,d,edges,mt,lights,dyn,o)=>{const BF=.16;let l=0;while(l<edges.len
 // some/aparece suave perto do limite de distância (em vez de sumir de uma vez)
 H3.farFade=(d,far)=>{const k=far*.12;return d<far-k?1:max(0,(far-d)/k)};
 const P={lit:null,spr:null,out:null,ter:null,sky:null,sh:null,pix:null,rays:null,brt:null,blr:null,cmp:null},U={},UO={},UT={},US={},USH={},UPX={},URY={},UPP={b:{},l:{},c:{}},tex={};
-const RTS={main:null,sh:null,occ:null,ppA:null,ppB:null};let PPT=null,PPW=0,PPH=0;let qbuf=null,shTex1=null,MAXT=2048;      // alvos de desenho fora da tela (filtro de pixels, sombras, raios de sol)
+const RTS={main:null,sh:null,occ:null,ppA:null,ppB:null,ppC:null};let PPT=null,PPW=0,PPH=0;let qbuf=null,shTex1=null,MAXT=2048;      // alvos de desenho fora da tela (filtro de pixels, sombras, raios de sol)
 const VS_LIT=`attribute vec3 aP;attribute vec3 aN;attribute vec4 aC;uniform mat4 uVP;uniform mat4 uM;varying vec3 vP;varying vec3 vN;varying vec4 vC;
 void main(){vec4 w=uM*vec4(aP,1.0);vP=w.xyz;vN=(uM*vec4(aN,0.0)).xyz;vC=aC;gl_Position=uVP*w;}`;
 const FS_LIT=nl=>`#ifdef GL_FRAGMENT_PRECISION_HIGH
@@ -9741,8 +9753,8 @@ float shadowAt(vec3 p,vec3 n){
  else k=shTap(s.xy,z);
  return mix(k,1.0,fo);}
 `;
-const VS_OUT=`attribute vec3 aP;attribute vec3 aN;attribute vec4 aC;uniform mat4 uVP;uniform mat4 uM;uniform float uTv;uniform vec2 uWind;uniform vec2 uSq;varying vec3 vP;varying vec3 vN;varying vec3 vC;varying float vEm;varying float vWat;varying float vSw;
-void main(){float b=floor(aC.a*255.0+0.5),sw=floor(b/16.0);vEm=(b-sw*16.0)/15.0;vWat=sw>14.5?1.0:0.0;vSw=0.0;vec4 w=uM*vec4(aP,1.0);
+const VS_OUT=`attribute vec3 aP;attribute vec3 aN;attribute vec4 aC;uniform mat4 uVP;uniform mat4 uM;uniform float uTv;uniform vec2 uWind;uniform vec2 uSq;varying vec3 vP;varying vec3 vN;varying vec3 vC;varying float vEm;varying float vWat;varying float vSw;varying float vMat;
+void main(){float b=floor(aC.a*255.0+0.5),sw=floor(b/16.0);vMat=mod(floor(aC.r*255.0+0.5),2.0)+2.0*mod(floor(aC.g*255.0+0.5),2.0);vEm=(b-sw*16.0)/15.0;vWat=sw>14.5?1.0:0.0;vSw=0.0;vec4 w=uM*vec4(aP,1.0);
  if(uSq.x<0.999){float h=w.y-uSq.y;if(h>0.0)w.y=uSq.y+h*uSq.x;}
  float gk=0.0;if(sw>0.5&&sw<14.5){float k=sw/14.0;k*=k;float ph=w.x*0.043+w.z*0.037;float s=sin(uTv*1.7+ph)*0.65+sin(uTv*3.1+ph*2.3)*0.35;float gw=sin(dot(w.xz,vec2(0.0105,0.0068))-uTv*1.35)*0.5+0.5;gw=gw*gw*gw;w.xz+=uWind*(k*(s*(1.0+gw)+gw*0.7));w.y+=sin(uTv*5.3+ph*7.0)*k*0.45-gw*k*0.5;gk=gw*k;vSw=0.35+0.65*k;}
  vP=w.xyz;vN=(uM*vec4(aN,0.0)).xyz;vC=aC.rgb*(1.0+gk*0.3);gl_Position=uVP*w;}`;
@@ -9751,7 +9763,15 @@ precision highp float;
 #else
 precision mediump float;
 #endif
-varying vec3 vP;varying vec3 vN;varying vec3 vC;varying float vEm;varying float vWat;varying float vSw;${GL_COMMON}${SH_COMMON}
+varying vec3 vP;varying vec3 vN;varying vec3 vC;varying float vEm;varying float vWat;varying float vSw;varying float vMat;${GL_COMMON}${SH_COMMON}
+float mhs(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+vec3 matPat(float m,vec3 p,vec3 n,vec3 col){vec3 an=abs(n);vec2 uv=an.y>0.9?p.xz:(an.x>an.z?vec2(p.z,p.y):vec2(p.x,p.y));
+ if(m<1.5){vec2 q=uv/vec2(11.0,5.5);float row=floor(q.y);q.x+=mod(row,2.0)*0.5;vec2 f=fract(q),id=floor(q);
+  float e=min(min(f.x,1.0-f.x)*11.0,min(f.y,1.0-f.y)*5.5);return col*(0.86+0.22*mhs(id))*(1.0-0.34*(1.0-smoothstep(0.25,0.75,e)));}
+ if(m<2.5){float w=an.y>0.9?uv.y:uv.y;float r=floor(w/4.2),f=fract(w/4.2);float seam=1.0-smoothstep(0.0,0.07,min(f,1.0-f));
+  float gr=sin((uv.x+mhs(vec2(r,1.0))*40.0)*0.8+sin(uv.x*0.11+r)*3.0)*0.045;return col*(0.9+0.16*mhs(vec2(r,3.0))+gr)*(1.0-0.36*seam);}
+ vec2 h=normalize(n.xz+vec2(1e-4));float al=dot(p.xz,vec2(-h.y,h.x));float rw=p.y/2.7,rf=fract(rw),rid=floor(rw);float cl=al/4.2+mod(rid,2.0)*0.5,cf=fract(cl);
+ return col*mix(0.7,1.06,smoothstep(0.0,0.85,rf))*(1.0-0.2*(1.0-smoothstep(0.0,0.12,min(cf,1.0-cf))))*(0.92+0.14*mhs(vec2(floor(cl),rid)));}
 uniform vec4 uL[${nl}];uniform vec3 uLC[${nl}];uniform vec4 uFl;uniform vec3 uTint;uniform float uDi;uniform float uTr;uniform float uEG;uniform vec2 uFd;uniform float uAl;uniform sampler2D uDet;uniform float uDetK;uniform vec2 uNC;uniform float uTrS;
 void main(){
  vec3 V=uCam-vP;float dV=length(V);V/=dV;
@@ -9761,6 +9781,7 @@ void main(){
  vec3 n=normalize(vN);if(dot(n,V)<0.0)n=-n;
  float cs=cloudSh(vP)*shadowAt(vP,n);vec3 col=vC*uTint;vec3 c;
  if(uDetK>0.0&&vWat<0.5){vec3 an=abs(n);vec2 uv=an.y>max(an.x,an.z)?vP.xz:(an.x>an.z?vP.zy:vP.xy);float d1=texture2D(uDet,uv*0.13).r-0.5;float d2=texture2D(uCloud,uv*0.0061).r-0.5;col*=max(0.0,1.0+(d1*0.62+d2*0.72)*uDetK);}
+ if(vMat>0.5&&vWat<0.5){float pq=1.0-smoothstep(240.0,600.0,dV);if(pq>0.0)col=mix(col,matPat(vMat,vP,n,col),pq);}   // texturas pintadas (pedra, madeira, telha)
  if(vWat>0.5){c=waterShade(col,vP,V,cs);}
  else{
   float nd0=dot(n,uSun);float trK=uTr*max(-nd0,0.0)*0.55;float sunK=clamp(nd0*0.85+0.15,0.0,1.0)+trK;
@@ -9854,8 +9875,9 @@ void main(){vec3 c=(texture2D(uTex,vU+uPx*vec2(-1.0,-1.0)).rgb+texture2D(uTex,vU
  float l=max(c.r,max(c.g,c.b));gl_FragColor=vec4(c*smoothstep(uTh,uTh+0.22,l),1.0);}`;
 const FS_BLR=`precision mediump float;varying vec2 vU;uniform sampler2D uTex;uniform vec2 uD;
 void main(){vec3 c=texture2D(uTex,vU).rgb*0.2270;c+=(texture2D(uTex,vU+uD*1.3846).rgb+texture2D(uTex,vU-uD*1.3846).rgb)*0.3162;c+=(texture2D(uTex,vU+uD*3.2308).rgb+texture2D(uTex,vU-uD*3.2308).rgb)*0.0703;gl_FragColor=vec4(c,1.0);}`;
-const FS_CMP=`precision mediump float;varying vec2 vU;uniform sampler2D uTex;uniform sampler2D uBl;uniform float uBk;uniform vec4 uGr;uniform vec3 uWarm;uniform float uVig;uniform float uAsp;uniform vec4 uSun;uniform vec3 uSunC;
+const FS_CMP=`precision mediump float;varying vec2 vU;uniform sampler2D uTex;uniform sampler2D uBl;uniform sampler2D uDf;uniform float uDofK;uniform float uBk;uniform vec4 uGr;uniform vec3 uWarm;uniform float uVig;uniform float uAsp;uniform vec4 uSun;uniform vec3 uSunC;
 void main(){vec3 c=texture2D(uTex,vU).rgb;
+ if(uDofK>0.0){float dk=uDofK*smoothstep(0.54,0.86,vU.y);if(dk>0.0)c=mix(c,texture2D(uDf,vU).rgb,dk);}   // longe (alto da tela): desfoque leve
  if(uBk>0.0){vec3 b=texture2D(uBl,vU).rgb;c+=b*uBk*(1.0-c*0.45);}
  float l=dot(c,vec3(0.299,0.587,0.114));
  float s=max(c.r,max(c.g,c.b))-min(c.r,min(c.g,c.b));
@@ -10064,7 +10086,7 @@ function setup(){
  try{P.sh=program(VS_SH,FS_SH,['aP','aN','aC']);Object.assign(USH,uloc(P.sh,['uVP','uM','uTv','uWind','uPk']))}catch(e){console.error('H3 sombras',e&&e.message||e);P.sh=null}
  try{P.pix=program(VS_Q,FS_PIX,['aP']);Object.assign(UPX,uloc(P.pix,['uTex','uLv','uDt']))}catch(e){console.error('H3 pixels',e&&e.message||e);P.pix=null}
  try{P.rays=program(VS_Q,FS_RAYS,['aP']);Object.assign(URY,uloc(P.rays,['uOcc','uSunP','uCol','uK','uAsp']))}catch(e){console.error('H3 raios',e&&e.message||e);P.rays=null}
- try{P.cmp=program(VS_Q,FS_CMP,['aP']);UPP.c=uloc(P.cmp,['uTex','uBl','uBk','uGr','uWarm','uVig','uAsp','uSun','uSunC']);
+ try{P.cmp=program(VS_Q,FS_CMP,['aP']);UPP.c=uloc(P.cmp,['uTex','uBl','uDf','uDofK','uBk','uGr','uWarm','uVig','uAsp','uSun','uSunC']);
   P.brt=program(VS_Q,FS_BRT,['aP']);UPP.b=uloc(P.brt,['uTex','uPx','uTh']);P.blr=program(VS_Q,FS_BLR,['aP']);UPP.l=uloc(P.blr,['uTex','uD'])}catch(e){console.error('H3 pós',e&&e.message||e);if(!P.cmp)P.brt=P.blr=null}
  qbuf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,qbuf);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,1,1,-1,-1,1,1,-1,1]),gl.STATIC_DRAW);
  {const t=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,t);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,1,1,0,gl.RGBA,gl.UNSIGNED_BYTE,new Uint8Array([255,255,255,255]));shTex1=t}
@@ -10252,7 +10274,14 @@ H3.postFx=function(o){if(!o||!P.cmp||curFB||PIX||ISO||!gl||lost)return false;con
    gl.bindFramebuffer(gl.FRAMEBUFFER,RTS.ppB.fb);gl.bindTexture(gl.TEXTURE_2D,RTS.ppA.t);gl.uniform2f(UPP.l.uD,1.4/bw,0);quad();
    gl.bindFramebuffer(gl.FRAMEBUFFER,RTS.ppA.fb);gl.bindTexture(gl.TEXTURE_2D,RTS.ppB.t);gl.uniform2f(UPP.l.uD,0,1.4/bh);quad();
    bk=o.bloom}}
+ let dof=0;if(o.dof>0&&P.brt&&P.blr){RTS.ppC=rtMake(RTS.ppC,bw,bh,false,true);RTS.ppB=rtMake(RTS.ppB,bw,bh,false,true);
+  if(RTS.ppC&&RTS.ppB){gl.viewport(0,0,bw,bh);gl.activeTexture(gl.TEXTURE0);
+   gl.bindFramebuffer(gl.FRAMEBUFFER,RTS.ppC.fb);gl.useProgram(P.brt);gl.bindTexture(gl.TEXTURE_2D,PPT);gl.uniform1i(UPP.b.uTex,0);gl.uniform2f(UPP.b.uPx,1/w,1/h);gl.uniform1f(UPP.b.uTh,-2);quad();
+   gl.useProgram(P.blr);gl.uniform1i(UPP.l.uTex,0);
+   gl.bindFramebuffer(gl.FRAMEBUFFER,RTS.ppB.fb);gl.bindTexture(gl.TEXTURE_2D,RTS.ppC.t);gl.uniform2f(UPP.l.uD,1/bw,0);quad();
+   gl.bindFramebuffer(gl.FRAMEBUFFER,RTS.ppC.fb);gl.bindTexture(gl.TEXTURE_2D,RTS.ppB.t);gl.uniform2f(UPP.l.uD,0,1/bh);quad();dof=o.dof}}
  gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.viewport(0,0,w,h);gl.useProgram(P.cmp);
+ gl.activeTexture(gl.TEXTURE2);const t2=gl.getParameter(gl.TEXTURE_BINDING_2D);gl.bindTexture(gl.TEXTURE_2D,dof>0?RTS.ppC.t:PPT);gl.uniform1i(UPP.c.uDf,2);gl.uniform1f(UPP.c.uDofK,dof);
  gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,bk>0?RTS.ppA.t:PPT);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,PPT);
  const u=UPP.c,wm=o.warm||[.035,.012,-.03];gl.uniform1i(u.uTex,0);gl.uniform1i(u.uBl,1);gl.uniform1f(u.uBk,bk);
  gl.uniform4f(u.uGr,o.vib===undefined?.14:o.vib,o.tame===undefined?.2:o.tame,o.sc===undefined?.22:o.sc,o.split===undefined?1:o.split);gl.uniform3f(u.uWarm,wm[0],wm[1],wm[2]);gl.uniform1f(u.uVig,o.vig||0);gl.uniform1f(u.uAsp,w/h);
@@ -10261,7 +10290,7 @@ H3.postFx=function(o){if(!o||!P.cmp||curFB||PIX||ISO||!gl||lost)return false;con
    if(su>-.35&&su<1.35&&sv>-.35&&sv<1.35)sk=gk*Math.min(1,(SUN[1]+.05)/.2)}}
   gl.uniform4f(u.uSun,su,sv,sk,0);gl.uniform3f(u.uSunC,SUNC[0]*.62,SUNC[1]*.52,SUNC[2]*.36)}
  quad();
- gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,t1);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,t0);
+ gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,t2);gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,t1);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,t0);
  gl.enable(gl.DEPTH_TEST);gl.depthMask(true);PFR.out=PFR.ter=PFR.sky=-1;return true};
 // segundo passe com projeção própria (braço em primeira pessoa): limpa a profundidade e desenha com outro campo de visão e plano de corte bem perto
 H3.begin2=function(fov){gl.clear(gl.DEPTH_BUFFER_BIT);gl.disable(gl.BLEND);gl.depthMask(true);gl.useProgram(P.lit);const p=new Float32Array(16),v=new Float32Array(16);M4.persp(p,fov,W/Hh,.1,900);M4.mul(v,p,VM);gl.uniformMatrix4fv(U.uVP,false,v)};
@@ -12382,7 +12411,16 @@ function blob(mb,c,r,o){
    const hr=clp((q[1]-cc[1])/cr[1],-1,1),h=h2(round(q[0]*7),round(q[1]*7),sd+round(q[2]*7));
    const b=.3+bm+.3*n[1]+.2*hr+(nz3(q[0]*.09,q[1]*.09,q[2]*.09,sd+5)-.5)*.3+tj;
    cs.push(rampAt(ramp,b,[0,0,0]));es.push(clp(round(sw0+(h-.5)*2*swv),0,14)*2)}
-  mb.raw(p[0],p[1],p[2],nn[0],nn[1],nn[2],cs[0],cs[1],cs[2],es[0],es[1],es[2])}}
+  mb.raw(p[0],p[1],p[2],nn[0],nn[1],nn[2],cs[0],cs[1],cs[2],es[0],es[1],es[2])}
+ // folhas soltas: losangos saindo da superfície (mais em cima e dos lados), luz macia da copa, balançam mais que a bola
+ const nL=o.leaves|0;for(let i=0;i<nL;i++){const th=rnd()*TAU,cu=1-rnd()*1.7,sp=Math.sqrt(Math.max(0,1-cu*cu)),u=[sp*cos(th),cu,sp*sin(th)];if(u[1]<-.55)continue;
+  const q=pos(u),n0=nrm([u[0]/r[0],u[1]/r[1],u[2]/r[2]]),ref=Math.abs(n0[1])>.9?[1,0,0]:[0,1,0],t1=nrm([n0[1]*ref[2]-n0[2]*ref[1],n0[2]*ref[0]-n0[0]*ref[2],n0[0]*ref[1]-n0[1]*ref[0]]),
+   t2=[n0[1]*t1[2]-n0[2]*t1[1],n0[2]*t1[0]-n0[0]*t1[2],n0[0]*t1[1]-n0[1]*t1[0]],sz=(r[0]+r[1])*.5*(.17+rnd()*.12),tw=(rnd()-.5)*1.2;
+  const P=(a,b,c)=>[q[0]+n0[0]*a+t1[0]*b+t2[0]*c,q[1]+n0[1]*a+t1[1]*b+t2[1]*c,q[2]+n0[2]*a+t1[2]*b+t2[2]*c];
+  const base=P(-sz*.25,0,0),tip=P(sz*.95,tw*sz*.3,-sz*.35),L=P(sz*.35,sz*.42,tw*sz*.2),R=P(sz*.35,-sz*.42,-tw*sz*.2);
+  const nn2=nrm([n0[0]*(1-mx)+(q[0]-cc[0])/cr[0]*mx,n0[1]*(1-mx)+(q[1]-cc[1])/cr[1]*mx+bias,n0[2]*(1-mx)+(q[2]-cc[2])/cr[2]*mx]);
+  const hr=clp((q[1]-cc[1])/cr[1],-1,1),bb=.42+bm+.3*nn2[1]+.2*hr+(rnd()-.5)*.3,c0=rampAt(ramp,bb-.18,[0,0,0]),c1=rampAt(ramp,bb+.12,[0,0,0]),ew=clp(round(sw0+3+(rnd()-.5)*2*swv),0,14)*2;
+  mb.raw(base,L,tip,nn2,nn2,nn2,c0,c1,c1,ew,ew,ew);mb.raw(base,tip,R,nn2,nn2,nn2,c0,c1,c1,ew,ew,ew)}}
 NAT.blob=blob;
 
 // galho/tronco: tubo com cor que vai da rampa t0 até t1 ao longo do comprimento; sw = balanço dos vértices
@@ -12414,10 +12452,10 @@ function broadleaf(sp,R,seed,lod){
  // folhas
  const keep=S.keep,sd=seed*3+7;
  for(let i=0;i<bl.length;i++){if(i>0&&i<bl.length-1&&rnd()>keep)continue;const b=bl[i];
-  blob(mb,b.c,b.r,{lvl,seed:sd+i,ramp,cc,cr,sw:i===0?4:7,swv:2.4,amp:sparse?.28:.2,tj:sp==='a'?.3:.28,under:.7,bright:sp==='a'?.1:0})}
+  blob(mb,b.c,b.r,{lvl,seed:sd+i,ramp,cc,cr,sw:i===0?4:7,swv:2.4,amp:sparse?.28:.2,tj:sp==='a'?.3:.28,under:.7,bright:sp==='a'?.1:0,leaves:lod===0?(i===0?10:22):lod===1?8:0})}
  // tufos de folhas que quebram o contorno da copa
  if(lod<2&&!sparse){const nt=lod===0?6:3;for(let i=0;i<nt;i++){const a=rnd()*TAU,e=.1+rnd()*.9,rr=R*(.92+rnd()*.12);
-   blob(mb,[lx+cos(a)*cos(e)*rr,cy+sin(e)*rr*.82,lz+sin(a)*cos(e)*rr],[R*.26,R*.22,R*.26],{lvl:0,seed:sd+40+i,ramp,cc,cr,sw:9,swv:2,amp:.25,tj:.3,bright:.1})}}
+   blob(mb,[lx+cos(a)*cos(e)*rr,cy+sin(e)*rr*.82,lz+sin(a)*cos(e)*rr],[R*.26,R*.22,R*.26],{lvl:0,seed:sd+40+i,ramp,cc,cr,sw:9,swv:2,amp:.25,tj:.3,bright:.1,leaves:lod===0?7:0})}}
  // galhos secos que passam da copa (espécies doentes)
  if(S.bare&&lod<2){for(let k=0;k<S.bare;k++){const a=rnd()*TAU,hh=cy+R*(-.1+rnd()*.8),d0=R*.35,d1=R*(.95+rnd()*.35);
    limb(mb,[[lx+cos(a)*d0,hh-R*.2,lz+sin(a)*d0],[lx+cos(a)*(d0+d1)*.6,hh,lz+sin(a)*(d0+d1)*.6],[lx+cos(a)*d1,hh+R*(.1+rnd()*.3),lz+sin(a)*d1]],[R*.07,R*.045,R*.015],4,bark,2,.4,.9)}}
@@ -13637,9 +13675,9 @@ if(G3.sh===undefined){G3.sh=mob?1:3;G3.il=mob?2:3;G3.veg=mob?2:3}
 if(G3.pp===undefined){let v=2;try{const o=JSON.parse(localStorage.getItem('mp_3d')||'{}')||{};if(o.pp>=0&&o.pp<=2)v=o.pp|0}catch(e){}G3.pp=v}
 const save=()=>{try{localStorage.setItem('mp_3d',JSON.stringify({sh:G3.sh,il:G3.il,veg:G3.veg,pp:G3.pp,fov1:G3.fov1,fov3:G3.fov3}))}catch(e){}};
 // efeitos de tela por mundo (ver H3.postFx): bloom = força do brilho · th = a partir de que claridade brilha · tame = doma cor forte demais · warm = luz quente/sombra fria
-const PPB={bloom:.34,th:.86,vib:.1,tame:.26,sc:.26,split:1.2,warm:[.045,.02,-.03],vig:.17,glare:.6};
+const PPB={bloom:.34,th:.86,vib:.1,tame:.26,sc:.26,split:1.2,warm:[.045,.02,-.03],vig:.17,glare:.6,dof:.55};
 const PPS={field:{bloom:.3,th:.88},db:{bloom:.28,th:.9,warm:[.04,.018,-.025]},ninja:{bloom:.3,th:.86,tame:.2},ocean:{bloom:.3,th:.9,tame:.36,vib:.08},
- hal:{bloom:.75,th:.52,warm:[.01,0,.03],split:.8,glare:0},halIn:{bloom:.8,th:.5,glare:0},hall:{bloom:.85,th:.48,glare:0},ice:{bloom:.5,th:.7,warm:[-.01,.01,.03],glare:0},lich:{bloom:.75,th:.5,warm:[.01,0,.03],glare:0},raid:{glare:0}};
+ hal:{bloom:.75,th:.52,warm:[.01,0,.03],split:.8,glare:0},halIn:{bloom:.8,th:.5,glare:0,dof:0},hall:{bloom:.85,th:.48,glare:0,dof:0},ice:{bloom:.5,th:.7,warm:[-.01,.01,.03],glare:0},lich:{bloom:.75,th:.5,warm:[.01,0,.03],glare:0},raid:{glare:0}};
 const PPC={};H3.ppCfg=SC=>{const lv=G3.pp|0;if(!lv)return null;const id=(SC&&SC.id)||'',k=id+lv;let c=PPC[k];if(!c){c=PPC[k]=Object.assign({},PPB,PPS[id]||{});if(lv<2)c.bloom=0}return c};
 let CFG=null,CFGK='';
 const cur=()=>{const k=G3.sh+','+G3.il+','+G3.veg;if(k!==CFGK){CFGK=k;CFG=Object.assign({},VGT[G3.veg],SHT[G3.sh],ILT[G3.il])}return CFG};
@@ -14211,6 +14249,7 @@ function gable(m,w,d,y0,rh,ov,c0,c1){const x=w/2+ov,z=d/2+ov;
  m.quad([-x,y0,z],[x,y0,z],[x,y0+rh,0],[-x,y0+rh,0],c0,0);m.quad([x,y0,-z],[-x,y0,-z],[-x,y0+rh,0],[x,y0+rh,0],c1,0);
  m.quad([-x,y0-.8,z],[x,y0-.8,z],[x,y0,z],[-x,y0,z],sh(c0,.6),0);m.quad([x,y0-.8,-z],[-x,y0-.8,-z],[-x,y0,-z],[x,y0,-z],sh(c0,.6),0);
  m.push().T(0,y0+rh,0).box(w+ov*2+.6,1.2,1.4,sh(c0,.7),0).pop()}
+{{const _f=gable;gable=function(m){const p=m.mat;m.mat=3;try{return _f.apply(this,arguments)}finally{m.mat=p}}}}   // telhas pintadas (ver MB.pack)
 // telhado de telhas: fileiras com degrau (cada fileira cobre a de baixo), cores alternadas e algumas telhas faltando (buraco escuro)
 function shingles(m,w,d,y0,rh,ov,cA,cB,r,hip){const rows=max(4,round(rh/3.4)),x0=w/2+ov,z0=d/2+ov;
  for(const s of[1,-1]){for(let i=0;i<rows;i++){const t0=i/rows,t1=(i+1)/rows,ya=y0+rh*t0,yb=y0+rh*t1+.6,za=s*z0*(1-t0),zb=s*z0*(1-t1)-s*.4,xa=hip?x0*(1-t0*.55):x0,xb=hip?x0*(1-t1*.55):x0;
@@ -14414,6 +14453,7 @@ function roofS(m,a,b,c,d,cA,cB,n,sd,seam){const r=rng(sd),A=C3(cA),B=C3(cB),L=(p
 function roofT(m,a,b,ap,cA,cB,n,sd){const r=rng(sd),A=C3(cA),B=C3(cB),L=(p,q,t)=>[p[0]+(q[0]-p[0])*t,p[1]+(q[1]-p[1])*t,p[2]+(q[2]-p[2])*t];
  for(let i=0;i<n;i++){const t0=i/n,t1=(i+1)/n,f=r(),k=(i%2?.88:1)*(.92+r()*.16),col=[(A[0]+(B[0]-A[0])*f)*k,(A[1]+(B[1]-A[1])*f)*k,(A[2]+(B[2]-A[2])*f)*k];
   if(i===n-1)m.tri(L(a,ap,t0),L(b,ap,t0),ap,col,0);else m.quad(L(a,ap,t0),L(b,ap,t0),L(b,ap,t1),L(a,ap,t1),col,0)}}
+{{const _f=roofS;roofS=function(m){const p=m.mat;m.mat=3;try{return _f.apply(this,arguments)}finally{m.mat=p}}}{const _f=roofT;roofT=function(m){const p=m.mat;m.mat=3;try{return _f.apply(this,arguments)}finally{m.mat=p}}}}   // telhas pintadas (ver MB.pack)
 // balaustrada ao longo de um segmento (coordenadas locais da malha): corrimão, base e os balaústres
 function balusL(m,ax,az,bx,bz,y,st){const L=hypot(bx-ax,bz-az),a=atan2(bx-ax,bz-az),n=max(1,round(L/st));
  m.push().T((ax+bx)/2,y,(az+bz)/2).RY(a);
@@ -23670,7 +23710,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261104045151;
+const GAME_BUILD=20261104050123;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
@@ -24249,7 +24289,7 @@ function newChunkMB(seed){const mb=new MB(seed,{pk:true});mb.push().S(K,K,K);ret
 function* gen(gl){
  CGT=CG0;CG0.fill(0);LIGHTS=[];OBJ=[];ADDS=new Map();GONE=[];
  const r=rng(20261026);
- CH=[];for(let j=0;j<NCZ;j++)for(let i=0;i<NCX;i++)CH.push({i,j,g:new MB(100+j*NCX+i,{pk:true}),o:newChunkMB(500+j*NCX+i),gm:null,om:null,cx:(i+.5)*CS*K,cz:(j+.5)*CS*K});
+ CH=[];for(let j=0;j<NCZ;j++)for(let i=0;i<NCX;i++)CH.push({i,j,g:new MB(100+j*NCX+i,{pk:true,noMat:true}),o:newChunkMB(500+j*NCX+i),gm:null,om:null,cx:(i+.5)*CS*K,cz:(j+.5)*CS*K});
  DBW.pct=.02;yield;
  // bordas do mundo, penhasco e paredões da passagem
  rect(0,0,MW-1,44);rect(0,MH-45,MW-1,MH-1);rect(0,0,44,MH-1);rect(MW-45,0,MW-1,MH-1);
@@ -24846,6 +24886,7 @@ function hipRoof(mb,y,w,d,h,cols,up){const hw=w/2,hd=d/2,rl=max(0,(w-d)/2),n=3,P
  if(rl>0)mb.push().T(0,y+h,0).box(rl*2+3,2.6,3,'#3c3f45',0).pop();
  if(up)for(const sx of[-1,1])for(const sz of[-1,1])mb.push().T(sx*(hw-2),y+1.2,sz*(hd-2)).RY(atan2(sx,sz)).RX(-.42).box(3,2,10,cols[0],0).pop()}   // pontas levantadas
 
+{{const _f=roofGable;roofGable=function(m){const p=m.mat;m.mat=3;try{return _f.apply(this,arguments)}finally{m.mat=p}}}{const _f=hipRoof;hipRoof=function(m){const p=m.mat;m.mat=3;try{return _f.apply(this,arguments)}finally{m.mat=p}}}}   // telhas pintadas (ver MB.pack)
 // ---------- pinheiro gigante (unidades do mundo, base na origem): tronco alto e reto, copa em camadas que caem ----------
 const BARK=[[92,58,38],[78,48,31],[104,66,42],[68,42,28],[86,54,35]];
 const NEED=[[24,52,36],[34,68,44],[44,84,52],[58,100,58],[78,118,66]];
@@ -25167,7 +25208,7 @@ function addTree(kind,v,xd,zd,s,yaw,tint,colR){const x=xd*K,z=zd*K,y=floorW(x,z)
 function* gen(gl){
  CG.fill(0);LIGHTS=[];OBJ=[];GLOW=[];SHAFT=[];OCC.clear();PV=[];WFM=[];
  const r=rng(20261103);
- CH=[];for(let j=0;j<NCZ;j++)for(let i=0;i<NCX;i++){const o=new MB(500+j*NCX+i,{pk:true});o.push().S(K,K,K);CH.push({i,j,g:new MB(100+j*NCX+i,{pk:true}),o,gm:null,om:null,cx:(i+.5)*CS*K,cz:(j+.5)*CS*K})}
+ CH=[];for(let j=0;j<NCZ;j++)for(let i=0;i<NCX;i++){const o=new MB(500+j*NCX+i,{pk:true});o.push().S(K,K,K);CH.push({i,j,g:new MB(100+j*NCX+i,{pk:true,noMat:true}),o,gm:null,om:null,cx:(i+.5)*CS*K,cz:(j+.5)*CS*K})}
  {const e0=[BRG.x+BRS*BL,BRG.z+BRC*BL],e1=[BRG.x-BRS*BL,BRG.z-BRC*BL];BRB=max(baseH(e0[0],e0[1]),baseH(e1[0],e1[1]),-1)}
  WFZT=zbA(PCX)-CF+8;LIPW=baseH(PCX,WFZT)+3;
  NJW.pct=.02;yield;
@@ -25694,6 +25735,7 @@ function roofGable(mb,L,d,yE,yR,col,ov){const x0=-L/2-ov,x1=L/2+ov,c2=dk(col,.86
    qh(mb,[x0,y0,z0],[x1,y0,z0],[x1,y1,z1],[x0,y1,z1],i%2?c2:col,0,[0,1,sd]);mb.push().T(0,y1-.5,z1).box(L+ov*2,1,1.2,c2,0).pop()}
   qh(mb,[x0,yE-1,sd*d],[x1,yE-1,sd*d],[x1,yR-1.2,0],[x0,yR-1.2,0],'#5a4030',0,[0,-1,0])}
  mb.push().T(0,yR,0).box(L+ov*2+1,2.4,3.4,dk(col,.7),0).pop()}
+{{const _f=roofGable;roofGable=function(m){const p=m.mat;m.mat=3;try{return _f.apply(this,arguments)}finally{m.mat=p}}}}   // telhas pintadas (ver MB.pack)
 // letras 5 x 7
 const FONT={'2':'01110100010000100010001000100011111',M:'10001110111010110101100011000110001',U:'10001100011000110001100011000101110',N:'10001110011010110011100011000110001',D:'11110100011000110001100011000111110',
  O:'01110100011000110001100011000101110','1':'00100011000010000100001000010001110','4':'00010001100101010010111110001000010'};
@@ -26319,6 +26361,7 @@ function hipRoof5(mb,y,ax0,az0,ax1,az1,h,col,col2,tips){const y1=y+h;
  if(tips)for(const sx of[-1,1])for(const sz of[-1,1]){const cx=sx*ax0,cz=sz*az0,tx=sx*(ax0+tips*.6),ty=y+tips,tz=sz*(az0+tips*.6);
   th(mb,[cx-sx*tips*1.6,y,cz],[cx,y-.6,cz],[tx,ty,tz],col,0,[0,1,sz]);th(mb,[cx,y,cz-sz*tips*1.6],[tx,ty,tz],[cx,y-.6,cz],col2,0,[sx,1,0]);
   mb.push().T(tx,ty,tz).sph(tips*.22,2,5,GD5,.25).pop()}}
+{{const _f=hipRoof5;hipRoof5=function(m){const p=m.mat;m.mat=3;try{return _f.apply(this,arguments)}finally{m.mat=p}}}}   // telhas pintadas (ver MB.pack)
 // janela em arco (moldura branca) no plano z do sistema local
 function winA5(mb,x,y,z,w,h){panZ(mb,x,y,z,w,h,WIN5,.12,1);const r=w/2;for(let k=0;k<4;k++){const t0=k/4*PI,t1=(k+1)/4*PI;th(mb,[x,y+h,z],[x+cos(t0)*r,y+h+sin(t0)*r,z],[x+cos(t1)*r,y+h+sin(t1)*r,z],WIN5,.12,[0,0,1])}
  panZ(mb,x,y-1.3,z+.15,w+2.4,1.3,'#f4f1ea',0,1);for(const s of[-1,1])panZ(mb,x+s*(r+.55),y,z+.12,1.1,h,'#f4f1ea',0,1);
@@ -26499,7 +26542,7 @@ function paredaoZ(x,y){const g=abs(x-RMX),q=.3+.7*sm(RMW,RMW+160,g);let z=WALLZ+
 const WROWS=[-40,-10,10,30,55,85,120,160,205,255,310,370,440,520,610,710,820,940,1080,1240,1420,1620,1850,2100,2350,WTOP];
 function paredaoCol(x,y){const n=vn(x/60,y/45,83),st=.5+.5*sin(y/37+vn(x/300,y/200,84)*4);let c=mixc([168,90,78],[206,128,108],st*.7+n*.3);c=mixc(c,[150,76,66],sm(.62,.9,vn(x/18,y/140,85))*.6);
  if(y<480&&vn(x/50,y/50,86)>.68)c=mixc(c,[86,128,70],.8);c=mixc(c,[236,196,186],sm(700,1300,y)*.5);c=mixc(c,[238,236,242],sm(950,1750,y)*.9);return c}
-function paredaoMesh(x0,x1,N){const mb=new MB(9300+x0+(N?50:0),{pk:true}),step=20,cols=Math.ceil((x1-x0)/step),L=N?[-.42,.52,.74]:[-.42,.52,-.74],ll=hypot(L[0],L[1],L[2]),sg=N?-1:1;   // N: o paredão do norte (a face olha para +z)
+function paredaoMesh(x0,x1,N){const mb=new MB(9300+x0+(N?50:0),{pk:true,noMat:true}),step=20,cols=Math.ceil((x1-x0)/step),L=N?[-.42,.52,.74]:[-.42,.52,-.74],ll=hypot(L[0],L[1],L[2]),sg=N?-1:1;   // N: o paredão do norte (a face olha para +z)
  const P=(x,y)=>[x,y,N?paredaoZN(x,y):paredaoZ(x,y)];
  for(let i=0;i<cols;i++)for(let j=0;j<WROWS.length-1;j++){const xa=x0+i*step,xb=xa+step,ya=WROWS[j],yb=WROWS[j+1],a=P(xa,ya),b=P(xb,ya),c=P(xb,yb),d=P(xa,yb);
   const nx=sg*(b[2]-a[2])/step,ny=sg*(d[2]-a[2])/(yb-ya),nz=-sg,nl=hypot(nx,ny,nz),sh=.62+.48*max(0,(nx*L[0]+ny*L[1]+nz*L[2])/(nl*ll));
@@ -26749,7 +26792,7 @@ function addTree(key,xd,zd,s,yaw,col){const x=xd*K,z=zd*K,y=floorW(x,z)-1,v=TV[k
 function* gen(gl){
  CG.fill(0);LIGHTS=[];OBJ=[];GLOW=[];MILL.length=0;WHEELS=[];WALLM=[];CLW=[];RMS=null;RMSF=[];MIST=[];SEAO=null;CBM=null;FOAM=[];BOATS=[];CLOUD=[];PADS.length=0;CHIM.length=0;GULLS=[];
  const r=rng(20261103);
- CH=[];for(let j=0;j<NCZ;j++)for(let i=0;i<NCX;i++){const sd=i<8&&j<6?j*8+i:1000+j*NCX+i,o=new MB(600+sd,{pk:true});o.push().S(K,K,K);CH.push({i,j,g:new MB(200+sd,{pk:true}),o,gm:null,om:null,cx:(i+.5)*CS*K,cz:(j+.5)*CS*K})}
+ CH=[];for(let j=0;j<NCZ;j++)for(let i=0;i<NCX;i++){const sd=i<8&&j<6?j*8+i:1000+j*NCX+i,o=new MB(600+sd,{pk:true});o.push().S(K,K,K);CH.push({i,j,g:new MB(200+sd,{pk:true,noMat:true}),o,gm:null,om:null,cx:(i+.5)*CS*K,cz:(j+.5)*CS*K})}
  OCW.pct=.02;yield;
  // ---- 1) onde fica cada construção (o chão debaixo delas fica plano) ----
  const occ=[];const free=(x,z,R)=>{for(const o of occ)if(hypot(o[0]-x,o[1]-z)<o[2]+R)return false;if(roadD(x,z)<RHW+R*.7+4)return false;for(const Q of PAST)if(inRect(Q,x,z,R+8))return false;if(inRect(WHEAT,x,z,R+6))return false;
@@ -27251,6 +27294,10 @@ function frameFx(t,Cm){shadowTune();try{H3.clip(1.5,11000)}catch(e){}try{fogTick
  if(PB.on&&PB.mv>.6&&R()<.8){const bx=P.x+8-sin(PB.yaw)*58,bz=P.y+14-cos(PB.yaw)*58;FX.emit({x:bx+(R()-.5)*10,y:WL*K+.8,z:bz+(R()-.5)*10,vx:(R()-.5)*.2,vy:.02,vz:(R()-.5)*.2,g:0,life:1600+R()*800,s0:6,s1:18,c:[1,1,1],a:.55,add:false,tex:'glow',drag:.98});
   if(R()<.5)FX.emit({x:P.x+8+sin(PB.yaw)*62+(R()-.5)*14,y:WL*K+2,z:P.y+14+cos(PB.yaw)*62+(R()-.5)*14,vx:(R()-.5)*.6,vy:.5+R()*.4,vz:(R()-.5)*.6,g:.03,life:700,s0:3,s1:1,c:[1,1,1],a:.7,add:false,tex:'glow',drag:.98})}
  if(R()<.35&&hypot(Cm.x-BACK.x,Cm.z-BACK.z)<500)FX.emit({x:BACK.x+(R()-.5)*4,y:floorW(BACK.x,BACK.z)+8+R()*36,z:BACK.z+(R()-.5)*36,vx:0,vy:.25,vz:0,g:0,life:900,s0:2.4,s1:.4,c:[.4,.85,1],a:.9,tex:'dot'});
+ // peixes pulando: de vez em quando um peixe salta fora d'água perto da câmera (arco prateado e respingo na entrada e na saída)
+ if(R()<.012&&CB.st===0){const a=R()*TAU,rr=160+R()*500,x=Cm.x+cos(a)*rr,z=Cm.z+sin(a)*rr;if(baseH(x/K,z/K)<WL-8&&!blocked(x,z)){const W0=WL*K+.4,d=R()*TAU,sp=.8+R()*.6;
+   for(let i=0;i<8;i++){const b=R()*TAU;FX.emit({x,y:W0,z,vx:cos(b)*.5,vy:.6+R()*.8,vz:sin(b)*.5,g:.05,life:600+R()*300,s0:2.5,s1:6,c:[.95,.98,1],a:.7,add:false,tex:'dot',drag:.98})}
+   for(let k=0;k<3;k++)FX.emit({x:x+(k-1)*1.6*cos(d),y:W0+1,z:z+(k-1)*1.6*sin(d),vx:cos(d)*sp,vy:2.1,vz:sin(d)*sp,g:.075,life:950,s0:k===1?4.2:3,s1:k===1?4.2:3,c:[.72,.8,.86],a:.95,add:false,tex:'dot',drag:1})}}
  // rastro de espuma atrás do barco (dois sulcos que abrem em V), ondinha na proa e respingos quando vai rápido
  if(PB.on&&PB.k>.6&&PB.mv>.5&&typeof P!=='undefined'&&CB.st===0){const x=P.x+8,z=P.y+14,sy=sin(PB.yaw),cy=cos(PB.yaw),W0=WL*K+.6,sp=min(1,PB.mv/5);
   for(let i=0;i<2;i++){const sd=i?1:-1,bx=x-sy*50+cy*sd*11,bz=z-cy*50-sy*sd*11;FX.emit({x:bx+(R()-.5)*6,y:W0,z:bz+(R()-.5)*6,vx:cy*sd*.3*sp-sy*.08,vy:.01,vz:-sy*sd*.3*sp-cy*.08,g:0,life:1900+R()*900,s0:5,s1:17,c:[.95,.98,1],a:.45*sp,add:false,tex:'dot',drag:.985})}
@@ -27265,7 +27312,7 @@ function frameFx(t,Cm){shadowTune();try{H3.clip(1.5,11000)}catch(e){}try{fogTick
  if(FOUNT&&hypot(Cm.x-FOUNT[0],Cm.z-FOUNT[2])<700)for(let i=0;i<2;i++){const a=R()*TAU,v=.22+R()*.2;FX.emit({x:FOUNT[0]+cos(a)*2,y:FOUNT[1],z:FOUNT[2]+sin(a)*2,vx:cos(a)*v,vy:.75+R()*.35,vz:sin(a)*v,g:.04,life:1100,s0:2.4,s1:1.3,c:[.78,.92,1],a:.85,add:false,tex:'dot',drag:.99})}
  if(FIRE3&&hypot(Cm.x-FIRE3[0],Cm.z-FIRE3[2])<600){if(R()<.5)FX.emit({x:FIRE3[0]+(R()-.5)*4,y:FIRE3[1],z:FIRE3[2]+(R()-.5)*4,vx:(R()-.5)*.2,vy:.5+R()*.4,vz:(R()-.5)*.2,g:-.002,life:900+R()*500,s0:2.2,s1:.4,c:[1,.6+R()*.3,.2],a:.95,tex:'dot'});
   if(R()<.12)FX.emit({x:FIRE3[0],y:FIRE3[1]+8,z:FIRE3[2],vx:.1,vy:.35,vz:0,g:-.001,life:2600,s0:6,s1:26,c:[.7,.7,.72],a:.25,add:false,tex:'glow',drag:.995})}
- for(const c of CHIM)if(R()<.05&&hypot(Cm.x-c[0],Cm.z-c[2])<1100)FX.emit({x:c[0],y:c[1],z:c[2],vx:.12+R()*.1,vy:.35+R()*.15,vz:(R()-.5)*.1,g:-.001,life:3200+R()*1500,s0:8,s1:34,c:[.86,.86,.88],a:.3,add:false,tex:'glow',drag:.995});
+ for(const c of CHIM)if(R()<.13&&hypot(Cm.x-c[0],Cm.z-c[2])<1100)FX.emit({x:c[0],y:c[1],z:c[2],vx:.12+R()*.1,vy:.35+R()*.15,vz:(R()-.5)*.1,g:-.001,life:3200+R()*1500,s0:8,s1:34,c:[.86,.86,.88],a:.3,add:false,tex:'glow',drag:.995});
  if(R()<.12&&!PB.on){const a=R()*TAU,rr=40+R()*160,x=Cm.x+cos(a)*rr,z=Cm.z+sin(a)*rr;if(baseH(x/K,z/K)>6.5)FX.emit({x,y:floorW(x,z)+6+R()*10,z,vx:(R()-.5)*.5,vy:(R()-.3)*.15,vz:(R()-.5)*.5,g:0,life:2500,s0:2.2,s1:2.2,c:[[1,.85,.3],[1,1,1],[.7,.85,1],[1,.6,.8]][(R()*4)|0],a:.95,add:false,tex:'dot',drag:.995})}}
 
 // ---------- a cena 3D ----------
@@ -27367,7 +27414,17 @@ function bfTick(id,S){const L=BF[id],HS=H3.S;if(!L||!HS||HS.px===undefined)retur
   if(id==='ocean'?g>6*K&&!(window.OCW&&OCW.boat):true)L.push({x,z,y:g+6,h:5+rnd()*8,a:rnd()*TAU,v:.25+rnd()*.25,ph:rnd()*TAU,c:BFC[(rnd()*BFC.length)|0]})}}
 function bfDraw(id){const L=BF[id];if(!L||!L.length)return;const T=bfTex();if(!T)return;const t=performance.now();
  for(const b of L){const fl=Math.abs(Math.sin(t*.024+b.ph*7));H3.spr(T,b.x,b.y,b.z,1.6+7*fl,4.6,null,[b.c[0],b.c[1],b.c[2],1],false,0,true)}}
-for(const id of['field','db','ninja','ocean'])wrapFx(id,(t,C,S)=>{dust(id,S);if(BF[id])bfTick(id,S)});G.bf=BF;
+// pássaros em bando: um "V" de pássaros atravessa o céu de vez em quando (asas batendo)
+const BIRDS={field:[],db:[],ninja:[]};let BIT=null;
+function birdTex(){if(BIT)return BIT;try{const c=document.createElement('canvas');c.width=32;c.height=16;const x=c.getContext('2d');x.strokeStyle='rgba(30,26,34,.95)';x.lineWidth=2.4;x.lineCap='round';
+  x.beginPath();x.moveTo(2,5);x.quadraticCurveTo(9,1,16,9);x.quadraticCurveTo(23,1,30,5);x.stroke();BIT=H3.texNew(c,true)}catch(e){BIT=null}return BIT}
+function birdTick(id,C){const L=BIRDS[id];if(!L||!C)return;if(!L.length&&rnd()<.004){const a=rnd()*TAU,d=420,x=C.x-Math.cos(a)*d,z=C.z-Math.sin(a)*d,y=(C.y||0)+120+rnd()*90,n=5+((rnd()*5)|0);
+  for(let i=0;i<n;i++){const row=Math.ceil(i/2),sd=i%2?1:-1;L.push({x:x-Math.cos(a)*row*14+Math.cos(a+PI/2)*sd*row*12,y:y+(rnd()-.5)*4,z:z-Math.sin(a)*row*14+Math.sin(a+PI/2)*sd*row*12,vx:Math.cos(a)*1.25,vz:Math.sin(a)*1.25,ph:rnd()*TAU,t0:Date.now()})}}
+ for(let i=L.length-1;i>=0;i--){const b=L[i];b.x+=b.vx;b.z+=b.vz;if(Date.now()-b.t0>16000)L.splice(i,1)}}
+function birdDraw(id){const L=BIRDS[id];if(!L||!L.length)return;const T=birdTex();if(!T)return;const t=performance.now();
+ for(const b of L){const f=.35+.65*Math.abs(Math.sin(t*.012+b.ph));H3.spr(T,b.x,b.y,b.z,9,4.5*f,null,[1,1,1,1],false,0,true)}}
+for(const id of['field','db','ninja','ocean'])wrapFx(id,(t,C,S)=>{dust(id,S);if(BF[id])bfTick(id,S);if(BIRDS[id])birdTick(id,C)});
+for(const id of['field','db','ninja']){const S=H3.scenes&&H3.scenes[id];if(!S||!S.sprites)continue;const _s=S.sprites;S.sprites=function(){const r=_s.apply(this,arguments);try{if(G.on)birdDraw(id)}catch(e){}return r}}G.bf=BF;
 for(const id of['field','ninja','ocean']){const S=H3.scenes&&H3.scenes[id];if(!S||!S.sprites)continue;const _s=S.sprites;S.sprites=function(){const r=_s.apply(this,arguments);try{if(G.on)bfDraw(id)}catch(e){}return r}}
 // Halloween: vaga-lumes verde-amarelos perto do chão
 const halFF=(t,C,S)=>{const f=FX();if(!f||rnd()>.3)return;const a=rnd()*TAU,r=25+rnd()*150,x=C.x+cos(a)*r,z=C.z+sin(a)*r;
