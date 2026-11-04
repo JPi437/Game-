@@ -24285,7 +24285,7 @@ PT.forEach((p,i)=>{p.i=i;p.r=max(p.hx,p.hz)});
 const maxHp=(r,p)=>r==='s'?SEEK_HP:p>=0?PT[p].hp:PROP_HP;
 
 // ============================================================ mansão ============================================================
-const SOL=[],GRID=new Map(),GS=4,INST=[],LIGHTS=[],DECOR={};
+const SOL=[],GRID=new Map(),GS=4,INST=[],LIGHTS=[],DECOR={},KEEP=[];   // KEEP: áreas sem objetos (passagem das portas)
 const gk=(i,j)=>i*1000+j;
 function addS(b){b.id=SOL.length;SOL.push(b);for(let i=floor(b.x0/GS);i<=floor(b.x1/GS);i++)for(let j=floor(b.z0/GS);j<=floor(b.z1/GS);j++){const k=gk(i,j);let a=GRID.get(k);if(!a)GRID.set(k,a=[]);a.push(b)}return b}
 let WM=null,PM=[],SKY=null,GLASS=null,WATER=null,PROPM=null,PROPCPU=null;
@@ -24298,7 +24298,7 @@ const MAPS=[
  {nome:'🍕 Pizzaria',bars:[{x0:-1.82,x1:-1.38,y0:0,y1:3.2,z0:-.14,z1:1.54},{x0:1.38,x1:1.82,y0:0,y1:3.2,z0:-.14,z1:1.54}],signs:[[-1.6,1.3,.7],[1.6,1.3,.7]],seek:i=>[[-.6,2.2],[.6,2.2],[-.6,3.0],[.6,3.0]][i%4].concat([PI]),
   prop:k=>[[-2,-12],[2,-12],[-6,-12],[6,-12],[-8,-12],[8,-12],[-2,-17.5],[2,-17.5],[-6,-17.5],[6,-17.5]][k%10].concat([PI]),
   fog:[.05,.04,.06],fn:18,ff:55,amb:[.5,.47,.52],sunC:[.12,.11,.1],sky:0,bats:0,menu:{cx:0,cz:-13,r:6.5,y:3.1,ty:1.1,tx:0,tz:-14,sp:.06}}];
-function resetWorld(){SOL.length=0;GRID.clear();INST.length=0;LIGHTS.length=0;for(const m of[WM,PROPM,SKY,WATER,BARM])if(m&&m.vb)try{gl.deleteBuffer(m.vb)}catch(e){}WM=PROPM=SKY=WATER=BARM=null;PROPCPU=null;TGT=null}
+function resetWorld(){KEEP.length=0;SOL.length=0;GRID.clear();INST.length=0;LIGHTS.length=0;for(const m of[WM,PROPM,SKY,WATER,BARM])if(m&&m.vb)try{gl.deleteBuffer(m.vb)}catch(e){}WM=PROPM=SKY=WATER=BARM=null;PROPCPU=null;TGT=null}
 async function setMap(id){id=id===1?1:0;if(id===CURMAP)return;resetWorld();MAPID=id;MAPC=MAPS[id];buildMap();mkBar();CURMAP=id;FOGC[0]=MAPC.fog[0];FOGC[1]=MAPC.fog[1];FOGC[2]=MAPC.fog[2];FOGN=MAPC.fn;FOGF=MAPC.ff}
 function buildMap(){
  const W=new MB(),G=new MB(),SK=new MB(),WT=new MB(),PB=new MB();
@@ -24306,7 +24306,7 @@ function buildMap(){
  const rot=(cx,cz,hx,hz,ry)=>{const c=abs(cos(ry)),s=abs(sin(ry));return[c*hx+s*hz,s*hx+c*hz]};
  // móvel montado no lugar (caixas locais), com colisão pela caixa girada
  const furn=(x,y,z,ry,hx,hy,hz,f,noc)=>{W.at(x,y,z,ry);f(W);W.at();if(!noc){const e=rot(x,z,hx,hz,ry);addS({x0:x-e[0],y0:y,z0:z-e[1],x1:x+e[0],y1:y+hy,z1:z+e[1],p:-1})}};
- const prop=(t,x,y,z,ry,chk)=>{const P=PT[t],e=rot(x,z,P.hx,P.hz,ry||0);if(chk&&y>0){let top=y;for(const b of near(x,z,max(e[0],e[1])+.1))if(x+e[0]>b.x0&&x-e[0]<b.x1&&z+e[1]>b.z0&&z-e[1]<b.z1&&b.y1<=y+.12&&b.y1>top)top=b.y1;y=top}if(chk===1||chk===3){for(const b of near(x,z,max(e[0],e[1])+.1))if(x+e[0]>b.x0&&x-e[0]<b.x1&&z+e[1]>b.z0&&z-e[1]<b.z1&&y+P.hy>b.y0+.03&&y<b.y1-.03){if(chk===1)console.warn('esconde-esconde: objeto fora do lugar',P.n,x,z);return null}}
+ const prop=(t,x,y,z,ry,chk)=>{const P=PT[t],e=rot(x,z,P.hx,P.hz,ry||0);for(const k of KEEP)if(x+e[0]>k.x0&&x-e[0]<k.x1&&z+e[1]>k.z0&&z-e[1]<k.z1&&y>=k.y0-.1&&y<k.y1-.5)return null;if(chk&&y>0){let top=y;for(const b of near(x,z,max(e[0],e[1])+.1))if(x+e[0]>b.x0&&x-e[0]<b.x1&&z+e[1]>b.z0&&z-e[1]<b.z1&&b.y1<=y+.12&&b.y1>top)top=b.y1;y=top}if(chk===1||chk===3){for(const b of near(x,z,max(e[0],e[1])+.1))if(x+e[0]>b.x0&&x-e[0]<b.x1&&z+e[1]>b.z0&&z-e[1]<b.z1&&y+P.hy>b.y0+.03&&y<b.y1-.03){if(chk===1)console.warn('esconde-esconde: objeto fora do lugar',P.n,x,z);return null}}
   const v0=PB.n;PB.at(x,y,z,ry||0);P.b(PB);PB.at();const o={t,x,y,z,ry:ry||0,i:INST.length,v0,v1:PB.n};INST.push(o);
   o.b=addS({x0:x-e[0],y0:y,z0:z-e[1],x1:x+e[0],y1:y+P.hy,z1:z+e[1],p:o.i});return o};
  const light=(x,y,z,r,c,fl)=>LIGHTS.push({x,y,z,r,c,fl:fl||0});
@@ -24314,13 +24314,13 @@ function buildMap(){
  const PAP=(k,col)=>({hi:F_(col||'#ffffff',k,1.6),lo:F_('#7a4a2a',8,.8),tr:1}),STN={hi:F_('#ffffff',7,1.4),lo:F_('#d8d0c8',7,1.4)},PLAIN=F_('#d9d2c4',0);
  const WR=PAP(2),WG=PAP(3),WB=PAP(0,'#a9c4e6'),WT_=({hi:F_('#ffffff',15,.8),lo:F_('#ffffff',15,.8)}),WP=PAP(0,'#e9d9b4'),WK=PAP(0,'#b8d8b0');
  // parede ao longo de x (em z), A = lado -z, B = lado +z; buracos [centro, largura, altura]
- function wallX(z,x0,x1,y0,y1,A,B,holes,th){th=th||.3;const z0=z-th/2,z1=z+th/2;let cur=x0;const hs=(holes||[]).slice().sort((a,b)=>a[0]-b[0]);
+ function wallX(z,x0,x1,y0,y1,A,B,holes,th){th=th||.3;for(const h of holes||[])if(h[1]>.5)KEEP.push({x0:h[0]-h[1]/2-.2,x1:h[0]+h[1]/2+.2,z0:z-1.4,z1:z+1.4,y0,y1:y0+h[2]});const z0=z-th/2,z1=z+th/2;let cur=x0;const hs=(holes||[]).slice().sort((a,b)=>a[0]-b[0]);
   const seg=(a,b,ya,yb)=>{if(b-a<.01)return;const yl=min(yb,y0+1.05);
    if(ya<yl){W.box(a,ya,z0,b,yl,z1,[PLAIN,PLAIN,B.lo,A.lo,PLAIN,PLAIN]);if(A.tr)W.box(a,yl-.04,z0-.03,b,yl+.04,z0,F_('#5a3218'),0);if(B.tr)W.box(a,yl-.04,z1,b,yl+.04,z1+.03,F_('#5a3218'),0)}
    if(yb>max(ya,yl))W.box(a,max(ya,yl),z0,b,yb,z1,[PLAIN,PLAIN,B.hi,A.hi,PLAIN,PLAIN],abs(yb-4.3)<.01?1:0);addS({x0:a,y0:ya,z0,x1:b,y1:yb,z1,p:-1})};
   for(const h of hs){const a=h[0]-h[1]/2,b=h[0]+h[1]/2;seg(cur,a,y0,y1);seg(a,b,y0+h[2],y1);W.box(a,y0,z0-.06,a+.08,y0+h[2],z1+.06,F_('#5a3218'));W.box(b-.08,y0,z0-.06,b,y0+h[2],z1+.06,F_('#5a3218'));W.box(a,y0+h[2]-.08,z0-.06,b,y0+h[2],z1+.06,F_('#5a3218'));cur=b}
   seg(cur,x1,y0,y1)}
- function wallZ(x,z0,z1,y0,y1,A,B,holes,th){th=th||.3;const x0=x-th/2,x1=x+th/2;let cur=z0;const hs=(holes||[]).slice().sort((a,b)=>a[0]-b[0]);
+ function wallZ(x,z0,z1,y0,y1,A,B,holes,th){th=th||.3;for(const h of holes||[])if(h[1]>.5)KEEP.push({x0:x-1.4,x1:x+1.4,z0:h[0]-h[1]/2-.2,z1:h[0]+h[1]/2+.2,y0,y1:y0+h[2]});const x0=x-th/2,x1=x+th/2;let cur=z0;const hs=(holes||[]).slice().sort((a,b)=>a[0]-b[0]);
   const seg=(a,b,ya,yb)=>{if(b-a<.01)return;const yl=min(yb,y0+1.05);
    if(ya<yl){W.box(x0,ya,a,x1,yl,b,[PLAIN,PLAIN,PLAIN,PLAIN,A.lo,B.lo]);if(A.tr)W.box(x0-.03,yl-.04,a,x0,yl+.04,b,F_('#5a3218'));if(B.tr)W.box(x1,yl-.04,a,x1+.03,yl+.04,b,F_('#5a3218'))}
    if(yb>max(ya,yl))W.box(x0,max(ya,yl),a,x1,yb,b,[PLAIN,PLAIN,PLAIN,PLAIN,A.hi,B.hi],abs(yb-4.3)<.01?1:0);addS({x0,y0:ya,z0:a,x1,y1:yb,z1:b,p:-1})};
@@ -24440,15 +24440,16 @@ function buildMap(){
   for(const[x,z]of TB){for(let k=0;k<3;k++){const zz=z-1.2+k*1.2;prop(29,x-.98,0,zz,PI/2,1);prop(29,x+.98,0,zz,-PI/2,1)}
    for(let k=0;k<3;k++){const t=[30,31,32,33,30][floor(RR()*5)];prop(t,x+(RR()-.5)*.8,.8,z-1.2+k*1.2+(RR()-.5)*.3,RR()*6.28,2)}}
   for(let k=0;k<4;k++){const t=[30,32,33,31][k];prop(t,7.2+k*1.2,.8,-1+(RR()-.5)*.5,RR()*6,2)}for(const x of[7.4,9,10.6])prop(29,x,0,-1.95,0,1);
-  const fill=(x0,x1,z0,z1,n,T)=>{let got=0,tr=0;while(got<n&&tr<500){tr++;const t=T[floor(RR()*T.length)],x=x0+RR()*(x1-x0),z=z0+RR()*(z1-z0);if(INST.some(o=>hypot(o.x-x,o.z-z)<.85))continue;
+  const fill=(x0,x1,z0,z1,n,T,edge)=>{let got=0,tr=0;while(got<n&&tr<500){tr++;const t=T[floor(RR()*T.length)],x=x0+RR()*(x1-x0),z=z0+RR()*(z1-z0);if(INST.some(o=>hypot(o.x-x,o.z-z)<.85))continue;
+    if(edge){const P=PT[t],big=P.hy>.75||P.r>.27,dE=min(x-x0,x1-x,z-z0,z1-z);if(big&&dE>.9)continue;if(!big&&dE>.9&&RR()<.6)continue}
     const n0=INST.length;prop(t,x,0,z,t===21?RR()*6:[0,PI/2,PI,-PI/2][floor(RR()*4)],3);if(INST.length>n0)got++}};
-  fill(-9.4,9.4,-20.4,-6.6,26,[29,29,33,21,10,11,4,34,28,35,13,21,15,23,25]);
+  fill(-9.4,9.4,-20.4,-6.6,26,[29,29,33,21,10,11,4,34,28,35,13,21,15,23,25],1);
   for(const[x,z]of[[-5,-24.8],[-3.2,-25.2],[1.8,-25.3],[3.2,-23]])prop([10,33,30,21][floor(RR()*4)],x,.6,z,RR()*6,2);
   fill(-15.6,-10.5,-25.6,-14.5,14,[6,6,5,8,28,10,20,22,18,25,13,33,17]);fill(-15.6,-10.5,-13.6,-6.5,9,[21,10,33,13,29,4,26,30]);
   fill(-15.7,-10.5,-5.6,3.6,6,[8,35,11,28,15,4]);fill(10.5,13.7,-25.6,-14.5,9,[6,5,8,11,31,28,35,13]);fill(10.4,13.8,-10.8,-6.5,7,[34,34,34,21,33,13,10]);
-  fill(-9.6,-4.4,-5.6,3.6,10,[6,6,5,8,28,20,22,35,11,24]);fill(-3.8,-1.8,-5.6,3.6,5,[11,35,8,4,29]);fill(1.8,3.8,-5.6,3.6,5,[11,35,8,4,29]);
+  fill(-9.6,-4.4,-5.6,3.6,10,[6,6,5,8,28,20,22,35,11,24]);prop(11,-3.6,0,-5.1,0,1);prop(8,3.62,0,3.5,0,1);
   fill(-1.4,1.4,-5.6,-1.4,4,[6,8,28,5]);fill(4.5,13.6,-5.6,3.6,14,[29,33,21,10,32,30,4,34,25,13,23]);
-  prop(25,1.2,0,3.4,PI,1);prop(11,-1.2,0,3.5,0,1);
+  
  } else {
  // ---------- terreno e jardim ----------
  blk(-48,-.6,-48,48,0,44,[F_('#ffffff',6,3),PLAIN,PLAIN,PLAIN,PLAIN,PLAIN]);
