@@ -28133,6 +28133,243 @@ function notify(){const p=ST.p;if(lastP===null||PV>=2||off0){lastP=p;return}
 })();
 </script>
 <script>
+// ===================== SONS DO MUNDO: ambiente de cada lugar, passos, montarias, barco e interface (tudo gerado por código, sem arquivos) =====================
+// · Ambiente: folhas e vento na floresta, rio e lago (com sapos), corvos perto da Torre, fogo no Salão do Demônio, grilos/coruja/lobo/vento no Halloween,
+//   goteiras dentro da Catedral, vento uivando e gelo na Caverna, masmorra na Raid, cidade (carros voadores) e deserto (gavião) no Mundo 2,
+//   pinheiros, cachoeira e lago no Mundo 3, mar com ondas e gaivotas no Mundo 4 (mais forte no barco).
+//   Segue o ciclo de dia e noite: de noite os passarinhos dormem e entram grilos, coruja e mais sapos.
+// · Passos conforme o chão (grama, terra, pedra, madeira, neve, areia), galope do cavalo, zumbido da vassoura, água batendo no barco.
+// · Interface: clique nos botões, abrir/fechar janelas, avisos, mensagens do chat e o "vuuush" da troca de mundo.
+// · Volumes novos em Configurações: "Ambiente" (natureza + passos) e "Interface". Nos minigames (Pizzaria, Star Ops, Star Kart) fica tudo mudo.
+(function(){
+'use strict';
+if(typeof VOL==='undefined'||typeof vBus!=='function')return;
+const D=document,R=Math.random,abs=Math.abs,min=Math.min,max=Math.max,hyp=Math.hypot,floor=Math.floor;
+const clp=(v,a,b)=>v<a?a:v>b?b:v,sst=(a,b,v)=>{const t=clp((v-a)/(b-a),0,1);return t*t*(3-2*t)};
+
+// ---------- volumes novos ----------
+try{const v=JSON.parse(localStorage.getItem('mp_vol')||'{}');VOL.amb=typeof v.amb==='number'?clp(v.amb,0,1):.8;VOL.ui=typeof v.ui==='number'?clp(v.ui,0,1):.7}catch(e){VOL.amb=.8;VOL.ui=.7}
+
+// ---------- contexto de áudio (o mesmo do jogo) e as saídas ----------
+const live=()=>{try{return(typeof AC!=='undefined'&&AC&&AC.state==='running')?AC:null}catch(e){return null}};
+let B=null,BEDS={};
+function noises(a){const sr=a.sampleRate,n=sr*4,mk=()=>a.createBuffer(1,n,sr),w=mk(),p=mk(),b=mk(),W=w.getChannelData(0),Pk=p.getChannelData(0),Bn=b.getChannelData(0);
+ let b0=0,b1=0,b2=0,b3=0,b4=0,b5=0,b6=0,br=0;
+ for(let i=0;i<n;i++){const x=R()*2-1;W[i]=x;
+  b0=.99886*b0+x*.0555179;b1=.99332*b1+x*.0750759;b2=.969*b2+x*.153852;b3=.8665*b3+x*.3104856;b4=.55*b4+x*.5329522;b5=-.7616*b5-x*.016898;Pk[i]=(b0+b1+b2+b3+b4+b5+b6+x*.5362)*.11;b6=x*.115926;
+  br=(br+.02*x)/1.02;Bn[i]=br*3.5}
+ return{w,p,b}}
+function impulse(a,sec){const sr=a.sampleRate,n=floor(sr*sec),b=a.createBuffer(2,n,sr);for(let c=0;c<2;c++){const d=b.getChannelData(c);for(let i=0;i<n;i++)d[i]=(R()*2-1)*Math.pow(1-i/n,3)}return b}
+function bus(){const a=live();if(!a)return null;if(B&&B.a===a)return B;
+ const m=vBus('g');if(!m)return null;BEDS={};
+ const amb=a.createGain(),ui=a.createGain(),rvIn=a.createGain(),cv=a.createConvolver(),rvOut=a.createGain();
+ amb.gain.value=0;ui.gain.value=VOL.ui*VOL.ui;rvOut.gain.value=0;ui.connect(m);
+ const cp=a.createDynamicsCompressor();cp.threshold.value=-20;cp.knee.value=10;cp.ratio.value=4;cp.attack.value=.005;cp.release.value=.25;const pg=a.createGain();pg.gain.value=.42;amb.connect(cp);cp.connect(pg);pg.connect(m);   // segura picos (rio + sapos + passos juntos)
+ cv.buffer=impulse(a,1.8);rvIn.connect(cv);cv.connect(rvOut);rvOut.connect(amb);
+ B={a,amb,ui,rvIn,rvOut,nz:noises(a)};return B}
+
+// ---------- peças ----------
+function src(a,buf,loop){const s=a.createBufferSource();s.buffer=buf;s.loop=!!loop;return s}
+function fl(a,type,f,q){const b=a.createBiquadFilter();b.type=type;b.frequency.value=f;if(q!=null)b.Q.value=q;return b}
+function gn(a,v){const g=a.createGain();g.gain.value=v;return g}
+function pan(a,p,out){if(a.createStereoPanner){const s=a.createStereoPanner();s.pan.value=clp(p,-1,1);s.connect(out);return s}return out}
+// rajada de ruído filtrado
+function nz(out,t,dur,v,type,f1,f2,q,buf,att){const a=B.a,s=src(a,buf||B.nz.w),f=fl(a,type,f1,q),g=a.createGain();if(f2)f.frequency.exponentialRampToValueAtTime(f2,t+dur);
+ g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(v,t+(att||.004));g.gain.exponentialRampToValueAtTime(.0001,t+dur);s.connect(f);f.connect(g);g.connect(out);s.start(t,R()*3);s.stop(t+dur+.05)}
+// tom com envelope
+function tn(out,t,f1,f2,dur,v,type,att){const a=B.a,o=a.createOscillator(),g=a.createGain();o.type=type||'sine';o.frequency.setValueAtTime(f1,t);if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+dur);
+ g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(v,t+(att||.005));g.gain.exponentialRampToValueAtTime(.0001,t+dur);o.connect(g);g.connect(out);o.start(t);o.stop(t+dur+.05)}
+// tom áspero (dente de serra num filtro): corvo, lobo, gavião
+function rasp(out,t,pts,dur,v,bf,q,vib,type){const a=B.a,o=a.createOscillator(),f=fl(a,'bandpass',bf,q),g=a.createGain();o.type=type||'sawtooth';o.frequency.setValueAtTime(pts[0][1],t);
+ for(const[k,hz]of pts.slice(1))o.frequency.exponentialRampToValueAtTime(hz,t+k*dur);
+ if(vib){const l=a.createOscillator(),lg=a.createGain();l.frequency.value=vib[0];lg.gain.value=vib[1];l.connect(lg);lg.connect(o.frequency);l.start(t);l.stop(t+dur+.05)}
+ g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(v,t+min(.08,dur*.25));g.gain.setValueAtTime(v,t+dur*.6);g.gain.exponentialRampToValueAtTime(.0001,t+dur);o.connect(f);f.connect(g);g.connect(out);o.start(t);o.stop(t+dur+.05)}
+// saída de um som solto do ambiente: posição esquerda/direita e um pouco de eco (cavernas, salões)
+function evOut(p,wet){const a=B.a,g=a.createGain(),pn=pan(a,p||0,B.amb);g.connect(pn);if(wet>0){const w=gn(a,wet);g.connect(w);w.connect(B.rvIn)}return g}
+const rp=()=>R()*1.6-.8;
+
+// ---------- camadas contínuas (cada uma liga sozinha quando o lugar pede e desliga depois de 5 s em silêncio) ----------
+function windMk(f0,f1,q,base,howl){return(a,o)=>{const s=src(a,B.nz.p,1),bp=fl(a,'bandpass',f0,q),g=gn(a,base);s.connect(bp);bp.connect(g);g.connect(o);s.start(0,R()*3);
+ let hs=null,h=null,hg=null;if(howl){hs=src(a,B.nz.w,1);h=fl(a,'bandpass',(howl[0]+howl[1])/2,16);hg=gn(a,0);hs.connect(h);h.connect(hg);hg.connect(o);hs.start(0,R()*3)}
+ let nx=0;return{stop(){s.stop();if(hs)hs.stop()},upd(t){if(t<nx)return;const d=1.4+R()*3.4,k=R();
+  g.gain.setTargetAtTime(base*(.4+k*1.2),t,d*.45);bp.frequency.setTargetAtTime(f0+(f1-f0)*k,t,d*.5);
+  if(h){h.frequency.setTargetAtTime(howl[0]+(howl[1]-howl[0])*R(),t,d*.6);hg.gain.setTargetAtTime(k>.5?howl[2]*(k-.5)*2:.0001,t,d*.5)}nx=t+d}}}}
+const MK={
+ // folhas: chiado que sobe e desce com as rajadas + estalinhos de folha
+ leaves(a,o){const s=src(a,B.nz.w,1),hp=fl(a,'highpass',1500,.5),bp=fl(a,'bandpass',4000,.55),g=gn(a,.05);s.connect(hp);hp.connect(bp);bp.connect(g);g.connect(o);s.start(0,R()*3);
+  let nx=0,lv=.3;return{stop(){s.stop()},upd(t){if(t>=nx){lv=.12+R()*R()*1.1;const d=.7+R()*2.4;g.gain.setTargetAtTime(lv*.2,t,d*.4);bp.frequency.setTargetAtTime(2800+R()*2600,t,d*.5);nx=t+d}
+   const n=R()<lv*1.6?1+floor(R()*lv*5):0;for(let i=0;i<n;i++)nz(pan(a,rp(),o),t+R()*.1,.012+R()*.03,.05+lv*.12,'bandpass',2500+R()*4500,null,2.2,null,.002)}}},
+ breeze:windMk(280,750,.6,.55),
+ pines:windMk(200,560,.55,.8),
+ eerie:windMk(140,330,1.1,.7,[220,430,1.6]),
+ hallwind:windMk(230,600,.7,.45,[330,720,1.3]),
+ cave:windMk(180,480,.9,.55,[280,660,2.2]),
+ desert:windMk(650,1700,.8,.75,[900,1900,1.4]),
+ // água corrente: filtros estreitos pulando de frequência (borbulhar) + ronco grave + bolhas
+ stream(a,o){const s=src(a,B.nz.w,1),lp=fl(a,'lowpass',2800,.3);s.connect(lp);const bs=[];
+  for(let i=0;i<5;i++){const b=fl(a,'bandpass',600+R()*1500,6),g=gn(a,.8);lp.connect(b);b.connect(g);g.connect(o);bs.push(b)}
+  const r=src(a,B.nz.b,1),rl=fl(a,'lowpass',420,.5),rg=gn(a,.22);r.connect(rl);rl.connect(rg);rg.connect(o);s.start(0,R()*3);r.start(0,R()*3);
+  let nx=0;return{stop(){s.stop();r.stop()},upd(t,v){if(nx<t)nx=t;while(nx<t+.2){for(const b of bs)b.frequency.setTargetAtTime(350+R()*R()*2700,nx,.02+R()*.04);nx+=.035+R()*.05}
+   const n=R()<.55?1+floor(R()*2):0;for(let i=0;i<n;i++){const f=420+R()*800;tn(o,t+R()*.1,f,f*(1.6+R()),.04+R()*.04,.05+R()*.06,'sine',.003)}}}},
+ // mar: ondas que crescem, estouram (espuma) e voltam
+ sea(a,o){const s=src(a,B.nz.p,1),lp=fl(a,'lowpass',500,.4),g=gn(a,.2),w=src(a,B.nz.w,1),bp=fl(a,'bandpass',2000,.45),g2=gn(a,.0001),r=src(a,B.nz.b,1),rg=gn(a,.35);
+  s.connect(lp);lp.connect(g);g.connect(o);w.connect(bp);bp.connect(g2);g2.connect(o);r.connect(rg);rg.connect(o);[s,w,r].forEach(x=>x.start(0,R()*3));
+  let nx=0;return{stop(){s.stop();w.stop();r.stop()},upd(t){while(nx<t+.3){const T=max(nx,t),up=1.5+R()*1.5,pk=.35+R()*.65,dn=2.4+R()*2.6;
+   g.gain.setTargetAtTime(.15+.75*pk,T,up*.35);lp.frequency.setTargetAtTime(520+1500*pk,T,up*.35);g2.gain.setTargetAtTime(.0001+.22*pk,T+up*.8,.1);
+   g.gain.setTargetAtTime(.14,T+up,dn*.35);lp.frequency.setTargetAtTime(430,T+up,dn*.4);g2.gain.setTargetAtTime(.0001,T+up+.3,dn*.3);nx=T+up+dn*(.7+R()*.4)}}}},
+ // cachoeira: rugido largo e constante
+ fall(a,o){const s=src(a,B.nz.p,1),l=fl(a,'lowpass',1500,.5),g=gn(a,1),w=src(a,B.nz.w,1),b=fl(a,'bandpass',2600,.4),g2=gn(a,.12),r=src(a,B.nz.b,1),rg=gn(a,.6);
+  s.connect(l);l.connect(g);g.connect(o);w.connect(b);b.connect(g2);g2.connect(o);r.connect(rg);rg.connect(o);[s,w,r].forEach(x=>x.start(0,R()*3));
+  return{stop(){s.stop();w.stop();r.stop()},upd(t){l.frequency.setTargetAtTime(1300+R()*500,t,.3)}}},
+ // fogo: ronco que tremula + estalos
+ fire(a,o){const r=src(a,B.nz.b,1),l=fl(a,'lowpass',380,.6),g=gn(a,.8);r.connect(l);l.connect(g);g.connect(o);r.start(0,R()*3);
+  return{stop(){r.stop()},upd(t){g.gain.setTargetAtTime(.5+R()*.6,t,.08);const n=floor(R()*3);
+   for(let i=0;i<n;i++){const tt=t+R()*.1;if(R()<.75)nz(o,tt,.004+R()*.014,.06+R()*R()*.45,'highpass',1500+R()*3500,null,.7,null,.001);else nz(o,tt,.03,.25,'bandpass',500+R()*400,null,2,null,.002)}}}},
+ // zumbido grave de lugar fechado (salão, catedral, masmorra)
+ drone(a,o){const o1=a.createOscillator(),o2=a.createOscillator(),g=gn(a,.05),r=src(a,B.nz.b,1),rl=fl(a,'lowpass',200,.5),rg=gn(a,.3);o1.frequency.value=55;o2.frequency.value=82.6;
+  o1.connect(g);o2.connect(g);g.connect(o);r.connect(rl);rl.connect(rg);rg.connect(o);o1.start();o2.start();r.start(0,R()*3);
+  return{stop(){o1.stop();o2.stop();r.stop()},upd(t){g.gain.setTargetAtTime(.03+R()*.04,t,1.5)}}},
+ // grilos (3, cada um num canto)
+ crick(a,o){const c=[[4300,-.6],[4850,.55],[3950,.1]].map(([f,p])=>({f:f+R()*250,out:pan(a,p,o),nx:0}));
+  return{stop(){},upd(t){for(const k of c)while(k.nx<t+.3){const T=max(k.nx,t),n=3+floor(R()*2);for(let i=0;i<n;i++)tn(k.out,T+i*.034,k.f,null,.022,.05,'sine',.003);k.nx=T+.42+R()*.55+(R()<.1?2+R()*3:0)}}}},
+ // vassoura voadora: vento passando
+ broom(a,o){const s=src(a,B.nz.p,1),bp=fl(a,'bandpass',900,1.1),g=gn(a,.6),w=src(a,B.nz.w,1),hp=fl(a,'highpass',6500,.5),g2=gn(a,.03);s.connect(bp);bp.connect(g);g.connect(o);w.connect(hp);hp.connect(g2);g2.connect(o);s.start(0,R()*3);w.start(0,R()*3);
+  return{stop(){s.stop();w.stop()},upd(t,v){bp.frequency.setTargetAtTime(700+v*900,t,.3);g2.gain.setTargetAtTime(.02+.03*R(),t,.1)}}}
+};
+function bedSet(k,v){const a=B.a,t=a.currentTime;let b=BEDS[k];
+ if(!b){if(v<.003)return;const g=a.createGain();g.gain.value=.0001;g.connect(B.amb);b=BEDS[k]={g,n:MK[k](a,g),z:0}}
+ b.g.gain.setTargetAtTime(max(.0001,v),t,.8);try{if(b.n.upd)b.n.upd(t,v)}catch(e){}
+ if(v<.003){if(!b.z)b.z=t;else if(t-b.z>5){try{b.n.stop()}catch(e){}try{b.g.disconnect()}catch(e){}delete BEDS[k]}}else b.z=0}
+
+// ---------- sons soltos do ambiente ----------
+const ONE={
+ bird(t,w){const o=evOut(rp(),w),k=R();
+  if(k<.38){let tt=t;const f0=2600+R()*1800,n=3+floor(R()*6);for(let i=0;i<n;i++){const f=f0*(1+(R()-.5)*.25);tn(o,tt,f,f*(R()<.5?1.35:.72),.07,.045,'sine',.008);tt+=.08+R()*.06}}
+  else if(k<.62){const a=B.a,os=a.createOscillator(),m=a.createOscillator(),mg=a.createGain(),g=a.createGain(),f=3200+R()*1500,d=.45+R()*.6;os.frequency.value=f;m.frequency.value=20+R()*16;mg.gain.value=f*.12;m.connect(mg);mg.connect(os.frequency);
+   g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(.03,t+.05);g.gain.setValueAtTime(.03,t+d-.08);g.gain.exponentialRampToValueAtTime(.0001,t+d);os.connect(g);g.connect(o);os.start(t);m.start(t);os.stop(t+d+.05);m.stop(t+d+.05)}
+  else if(k<.86){const f=1800+R()*900;tn(o,t,f,f*1.06,.18,.045,'sine',.02);tn(o,t+.24,f*1.26,f*1.18,.14,.04,'sine',.02);if(R()<.6)tn(o,t+.42,f*.94,f*.88,.28,.04,'sine',.02)}
+  else for(let r=0;r<2;r++){tn(o,t+r*.9,690,680,.28,.035,'sine',.03);tn(o,t+r*.9+.32,560,550,.38,.035,'sine',.03)}},          // cuco, longe
+ wood(t,w){const o=evOut(rp(),w);for(let i=0;i<12+floor(R()*6);i++)nz(o,t+i*.046,.02,.13*(1-i/20),'bandpass',1100,null,4,null,.001)},   // pica-pau
+ crow(t,w){const o=evOut(rp(),w+.15),n=2+floor(R()*2);for(let i=0;i<n;i++){const tt=t+i*.38;rasp(o,tt,[[0,720],[.5,620],[1,500]],.26,.07,1300,2.5);nz(o,tt,.2,.03,'bandpass',1800,null,1.5)}},
+ owl(t,w){const o=evOut(rp(),w+.2);[[0,.3],[.45,.22],[.75,.55]].forEach(([d,l])=>{tn(o,t+d,410,370,l,.07,'sine',.07);nz(o,t+d,l,.012,'lowpass',500,null,.7,B.nz.p,.05)})},
+ wolf(t,w){const o=evOut(rp(),.5),d=2.8+R();rasp(o,t,[[0,360],[.3,640],[.75,580],[1,400]],d,.05,700,1.2,[5,9]);tn(o,t,360,400,d,.04,'sine',.3)},
+ frog(t,w){const o=evOut(rp(),w),n=2+floor(R()*3),f=110+R()*60;for(let i=0;i<n;i++)rasp(o,t+i*.3,[[0,f],[1,f*.85]],.18,.07,650,3,[32,f*.4],'square')},
+ gull(t,w){const o=evOut(rp(),w),n=2+floor(R()*3);for(let i=0;i<n;i++){const tt=t+i*(.35+R()*.15);tn(o,tt,1500,2200,.1,.05,'triangle',.01);rasp(o,tt+.1,[[0,2200],[1,1300]],.32,.05,1900,1.5,[18,60],'triangle')}},
+ hawk(t,w){const o=evOut(rp(),.4);rasp(o,t,[[0,2600],[.3,2700],[1,1700]],1,.05,2300,1.6,[12,40]);nz(o,t,.9,.02,'bandpass',2500,1800,2)},
+ drip(t,w){const o=evOut(rp(),w),f=700+R()*900;tn(o,t,f,f*2.3,.06,.09,'sine',.002);if(R()<.3)tn(o,t+.18+R()*.2,f*1.3,f*2.8,.05,.05,'sine',.002)},
+ ice(t,w){const o=evOut(rp(),w);nz(o,t,.35,.2,'lowpass',1500,180,.8,null,.002);tn(o,t,95,40,.4,.12,'sine',.003);for(let i=0;i<4;i++)nz(o,t+.05+i*.04+R()*.03,.02,.08,'highpass',3000,null,.7,null,.001)},
+ chain(t,w){const o=evOut(rp(),w);for(let i=0;i<5+floor(R()*4);i++){const tt=t+i*(.06+R()*.07),f=2000+R()*1600;tn(o,tt,f,f*.98,.12,.025,'triangle',.001);tn(o,tt,f*1.51,null,.07,.012,'sine',.001)}},
+ car(t,w){const a=B.a,d=3+R()*1.5,p0=R()<.5?-1:1,o=evOut(0,0);let pn=null;if(a.createStereoPanner){pn=a.createStereoPanner();pn.pan.setValueAtTime(p0,t);pn.pan.linearRampToValueAtTime(-p0,t+d);pn.connect(o)}const out=pn||o;
+  const h=a.createOscillator(),hl=fl(a,'lowpass',500,1),g=a.createGain();h.type='sawtooth';h.frequency.setValueAtTime(140,t);h.frequency.linearRampToValueAtTime(150,t+d*.5);h.frequency.linearRampToValueAtTime(115,t+d);
+  g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(.05,t+d*.5);g.gain.linearRampToValueAtTime(.0001,t+d);h.connect(hl);hl.connect(g);g.connect(out);h.start(t);h.stop(t+d+.05);
+  nz(out,t,d,.12,'bandpass',600,1400,1.2,B.nz.p,d*.5)},       // carro voador passando
+ bat(t,w){const o=evOut(rp(),w);for(let i=0;i<3;i++)tn(o,t+i*.07,5200+R()*1500,null,.03,.02,'sine',.002)}
+};
+const EVT={};
+function due(k,t,a,b){if(!(a>0)||!isFinite(a))return false;if(EVT[k]==null){EVT[k]=t+a*.4+R()*(b-a)*.6;return false}if(t>=EVT[k]){EVT[k]=t+a+R()*(b-a);return true}return false}
+
+// ---------- onde o jogador está ----------
+const vis=id=>{const e=D.getElementById(id);return!!(e&&e.style.display&&e.style.display!=='none')};
+function miniOpen(){return vis('pzM')||vis('soM')||vis('kM')||!!(window.STARKART&&STARKART.S&&STARKART.S.st&&STARKART.S.st!=='off')}
+// Mundo 1 (mesmas medidas do mapa: rio em anel em volta da praça, lago da nascente, pontes, torre)
+const ringQ=(x,y)=>{const qx=(x-488)/140,qy=(y-346)/(y>346?152:112);return Math.sqrt(qx*qx+qy*qy)};
+const onBr=(x,y)=>(abs(x-488)<34&&y>346)||abs(y-352)<34;
+const pondQ=(x,y)=>{const a=(x-488)/86,b=(y-194)/30;return a*a+b*b};
+// noite do ciclo de dia e noite (3D dos Mundos 1 a 4): 0 = dia, 1 = noite
+const nightK=()=>{try{const N=window.H3&&H3.DN;return N&&N.on?clp(+N.night||0,0,1):0}catch(e){return 0}};
+function night(c,E,k){const n=nightK();if(n<.05)return 1;c.beds.crick=max(c.beds.crick||0,n*k);E.owl=[22/n,50/n,.15];return 1-n*.92}   // de noite: grilos e coruja, quase sem passarinho
+function where(){const w=typeof world!=='undefined'?world:0,x=P.x+8,y=P.y+14,c={w,beds:{},wet:0,surf:'grass',ev:{}};const E=c.ev;
+ if(w===0){
+  if(x>1400){c.beds.fire=.6;c.beds.drone=.55;c.wet=.45;c.surf='stone';E.drip=[8,20,.5]}                     // Salão do Demônio
+  else{const dr=abs(ringQ(x,y)-1),river=1-sst(.08,.5,dr),pond=1-sst(1.2,5,pondQ(x,y)),dark=1-sst(140,430,hyp(x-1150,(y-852)*1.2));
+   c.beds.leaves=.9*(1-dark*.75);c.beds.breeze=.5*(1-dark*.6);c.beds.eerie=dark*.85;c.beds.stream=max(river*.9,pond*.55);
+   c.surf=dr<.25&&onBr(x,y)?'wood':'grass';const lv=(1-dark)*night(c,E,.8);
+   E.bird=[5/lv,14/lv,.05];E.wood=[45/lv,110/lv,.05];E.crow=[7/dark,16/dark,.1];const fq=max(pond,river*.4)*(1+nightK());E.frog=[5/fq,12/fq,.05]}}
+ else if(w===1){const H=window.HAL||{},z=H.inside?'inner':(H.zone||'grave');
+  if((window.LICH&&LICH.in)||z==='lich'){c.wet=.5;c.surf='stone'}                                            // a cripta do Lich tem o som dela
+  else if(z==='inner'){c.beds.drone=.5;c.beds.hallwind=.12;c.wet=.65;c.surf='stone';E.drip=[4,11,.6]}       // dentro da Catedral
+  else{c.beds.hallwind=.75;c.beds.crick=z==='town'?.45:.9;c.surf=(z==='town'||z==='cat')?'stone':'dirt';
+   E.owl=[18,40,.15];E.wolf=[45,100,.3];E.crow=z==='forest'?[10,24,.1]:[30,70,.1];E.bat=[12,30,.1]}}
+ else if(w===2){c.beds.cave=.95;c.wet=.6;c.surf='snow';E.drip=[2.5,7,.7];E.ice=[16,40,.6]}                  // Caverna de Gelo
+ else if(w===3){c.beds.drone=.55;c.beds.cave=.3;c.wet=.55;c.surf='stone';E.drip=[3,9,.6];E.chain=[20,45,.6]}  // Raid
+ else if(w===4){if(x>3336){c.beds.desert=.95;c.surf='sand';E.hawk=[22,50,.2]}                                // Mundo 2: deserto
+  else{c.beds.breeze=.8;c.beds.leaves=.55;c.surf='stone';const lv=night(c,E,.4);E.bird=[6/lv,15/lv,.05];E.car=[14/(.4+lv*.6),32/(.4+lv*.6),0]}}                  //          cidade
+ else if(w===5){const fall=1-sst(250,2600,hyp(x-3008,y-620)),lq=((x-3008)/680)**2+((y-1080)/400)**2,lake=1-sst(1,3,lq);   // Mundo 3: pinheiros
+  c.beds.pines=.8;c.beds.leaves=.3;c.beds.fall=fall*1.1;c.beds.stream=lake*.4;
+  const lv=(1-fall*.7)*night(c,E,.7*(1-fall*.6));E.bird=[5/lv,13/lv,.05];E.wood=[40/lv,90/lv,.05];E.frog=[6/max(.01,lake),14/max(.01,lake),.05]}
+ else if(w===6){const boat=!!(window.OCW&&OCW.boat);c.boat=boat;c.beds.sea=boat?1:.55;c.beds.breeze=.5;const lv=night(c,E,boat?0:.5);E.gull=[7/lv,18/lv,.05]}   // Mundo 4: mar
+ return c}
+
+// ---------- passos, cavalo, vassoura e barco ----------
+const pv={x:0,y:0,ok:false};let spd=0,nxStep=0,gal=0,nxSpl=0;
+function footstep(t,s,wet){const o=evOut((R()-.5)*.15,wet*.5),v=.8+R()*.25;
+ if(s==='grass'){nz(o,t,.09,.16*v,'bandpass',2300+R()*900,1400,.9,null,.012);nz(o,t,.06,.12*v,'lowpass',500,200,.7)}
+ else if(s==='dirt'){nz(o,t,.08,.2*v,'bandpass',900+R()*300,500,1.1,null,.006);tn(o,t,110,70,.06,.1*v)}
+ else if(s==='stone'){nz(o,t,.035,.22*v,'bandpass',1500+R()*700,null,2.2,null,.002);tn(o,t,150,90,.05,.1*v);nz(o,t+.02,.03,.07*v,'highpass',3500,null,.7,null,.002)}
+ else if(s==='wood'){tn(o,t,170+R()*30,105,.09,.22*v,'triangle',.003);nz(o,t,.07,.16*v,'bandpass',650,420,3,null,.003)}
+ else if(s==='snow'){for(let i=0;i<7;i++)nz(o,t+i*.016+R()*.01,.022,.1*v*(1-i/9),'bandpass',2200+R()*3000,null,1.4,null,.002);tn(o,t,90,60,.08,.06*v)}
+ else if(s==='sand'){nz(o,t,.14,.13*v,'bandpass',1500+R()*600,850,.7,null,.04)}}
+function hoof(t,s,v,wet){const o=evOut((R()-.5)*.2,wet*.5),hard=s==='stone'||s==='wood';
+ tn(o,t,hard?520:330,hard?260:150,.04,(hard?.2:.14)*v,'triangle',.001);nz(o,t,hard?.03:.06,(hard?.18:.13)*v,'bandpass',hard?1400:700,null,hard?3:1.2,null,.001)}
+function moveSnd(c,t){const x=P.x,y=P.y,d=hyp(x-pv.x,y-pv.y);const s=pv.ok&&d<80?d/.1:0;pv.x=x;pv.y=y;pv.ok=true;spd=spd*.4+s*.6;
+ const moving=!!P.moving&&spd>6,mt=(typeof mounted!=='undefined'&&mounted)?(typeof mountEq!=='undefined'?mountEq:''):'';
+ if(c.boat){if(moving&&t>nxSpl){nxSpl=t+.55+R()*.4;const o=evOut(rp()*.5,0);nz(o,t,.4,.22,'lowpass',1300,280,.6,B.nz.p,.06);if(R()<.15)rasp(o,t+.2,[[0,95],[1,70]],.5,.05,420,6)}nxStep=0;return}
+ if(mt==='vassoura'){c.beds.broom=moving?clp(spd/160,.35,1)*.5:.08;nxStep=0;return}
+ if(!moving){nxStep=0;return}
+ if(nxStep<t)nxStep=t+.03;
+ if(mt==='cavalo'){const per=clp(52/spd,.3,.5);while(nxStep<t+.15){[0,.075,.16].forEach((k,i)=>hoof(nxStep+k*per/.4,c.surf,i===2?1:.75,c.wet));nxStep+=per}return}
+ const per=clp(26/spd,.24,.55);while(nxStep<t+.15){footstep(nxStep,c.surf,c.wet);nxStep+=per}}
+
+// ---------- interface ----------
+let lastUi={};
+function ui(k){const b=bus();if(!b||miniOpen())return;const n=performance.now();if(n-(lastUi[k]||0)<(k==='toast'?350:70))return;lastUi[k]=n;const u=b.ui,t=b.a.currentTime+.005;
+ if(k==='click'){tn(u,t,1500,1250,.035,.1,'triangle',.001);nz(u,t,.012,.05,'highpass',4000,null,.7,null,.001)}
+ else if(k==='open'){nz(u,t,.2,.07,'bandpass',600,2400,1.2,null,.07);tn(u,t+.05,880,null,.12,.045);tn(u,t+.11,1320,null,.18,.04)}
+ else if(k==='close'){nz(u,t,.16,.06,'bandpass',2200,500,1.2,null,.03);tn(u,t,990,660,.1,.035)}
+ else if(k==='toast'){tn(u,t,1046,null,.07,.04);tn(u,t+.06,1568,null,.1,.035)}
+ else if(k==='chat'){tn(u,t,1318,null,.09,.05);tn(u,t+.09,1760,null,.16,.045)}}
+function portal(){const b=bus();if(!b)return;const a=b.a,t=a.currentTime+.02,o=vBus('fx')||b.ui;
+ nz(o,t,1.3,.18,'bandpass',300,3200,1.4,B.nz.p,.5);[523,659,784,1047,1319].forEach((f,i)=>tn(o,t+.12+i*.09,f,f*1.01,.5,.035,'sine',.02));tn(o,t,70,40,.9,.18,'sine',.02)}
+D.addEventListener('pointerdown',e=>{try{if(typeof ac==='function')ac()}catch(x){}
+ try{const el=e.target&&e.target.closest&&e.target.closest('button,.btn,.mi,a[href],select,label,input[type=checkbox],input[type=radio],.tab,.evC .pl,.soHb');
+  if(!el||el.disabled||el.classList.contains('dis'))return;ui('click')}catch(x){}},{capture:true,passive:true});
+// janelas abrindo e fechando
+const MST=new Map();
+setInterval(()=>{try{let op=0,cl=0;D.querySelectorAll('.modal').forEach(m=>{const v=m.style.display==='flex'||m.style.display==='block',was=MST.get(m);
+  if(was!==undefined&&v!==was){if(v){op++;if(m.id==='cfgM')cfgSync()}else cl++}MST.set(m,v)});if(op)ui('open');else if(cl)ui('close')}catch(e){}},120);
+// avisos
+{const _t=window.toast;if(typeof _t==='function')window.toast=function(){try{ui('toast')}catch(e){}return _t.apply(this,arguments)}}
+// mensagens novas no chat
+(function hook(n){const F=D.getElementById('chFeed');if(!F){if(n<60)setTimeout(()=>hook(n+1),2000);return}
+ new MutationObserver(ms=>{for(const m of ms)if(m.addedNodes.length){ui('chat');break}}).observe(F,{childList:true})})(0);
+
+// ---------- Configurações: "Ambiente" e "Interface" ----------
+function cfgSync(){for(const k of['amb','ui']){const i=D.getElementById('vol_'+k),p=D.getElementById('vp_'+k);if(i){const v=Math.round(VOL[k]*100);i.value=v;if(p)p.textContent=v+'%'}}}
+function cfgRows(){const M=D.getElementById('cfgM'),ref=D.getElementById('cfgLook');if(!M||!ref)return false;if(D.getElementById('vol_amb'))return true;
+ for(const[k,l]of[['amb','Ambiente'],['ui','Interface']]){const r=D.createElement('div');r.className='vRow';
+  r.innerHTML=`<span class="lb">${l}</span><input type="range" min="0" max="100" step="1" id="vol_${k}"><span class="pc" id="vp_${k}"></span>`;ref.parentNode.insertBefore(r,ref);
+  const i=r.querySelector('input');i.oninput=()=>{VOL[k]=i.value/100;r.querySelector('.pc').textContent=i.value+'%';try{ac()}catch(e){}};
+  i.onchange=()=>{try{vSave()}catch(e){}const b=bus();if(!b)return;if(k==='ui')ui('click');else{const t=b.a.currentTime+.02;footstep(t,'grass',0);footstep(t+.35,'grass',0);ONE.bird(t+.2,0)}}}
+ const nt=[...M.querySelectorAll('div')].find(d=>/Habilidades/.test(d.textContent)&&d.style.fontSize==='11px');
+ if(nt)nt.textContent+=' "Ambiente": natureza, água, vento, bichos e passos. "Interface": cliques, janelas, avisos e chat.';
+ cfgSync();return true}
+{let n=0;const iv=setInterval(()=>{n++;if(cfgRows()||n>120)clearInterval(iv)},500)}
+
+// ---------- a cada 0,1 s ----------
+let lastW=null;
+function tick(){const b=bus();if(!b)return;const t=b.a.currentTime,mini=miniOpen(),lk=typeof lock!=='undefined'&&lock;
+ b.amb.gain.setTargetAtTime(mini?0:VOL.amb*VOL.amb*(lk?.6:1),t,.3);b.ui.gain.setTargetAtTime(VOL.ui*VOL.ui,t,.05);
+ const w=typeof world!=='undefined'?world:0;if(lastW!==null&&w!==lastW&&!mini)portal();lastW=w;
+ if(mini||typeof P==='undefined'){for(const k in BEDS)bedSet(k,0);return}
+ const c=where();b.rvOut.gain.setTargetAtTime(c.wet,t,.6);
+ moveSnd(c,t);
+ for(const k in MK){const v=c.beds[k]||0;if(v>.003||BEDS[k])bedSet(k,v)}
+ if(!lk)for(const k in c.ev){const e=c.ev[k];if(due(k,t,e[0],e[1]))try{ONE[k](t+.05+R()*.2,e[2]+c.wet*.3)}catch(x){}}}
+setInterval(()=>{try{tick()}catch(e){}},100);
+window.SONS={where:()=>{try{return where()}catch(e){return null}},beds:()=>Object.keys(BEDS),ui,portal,ONE:k=>{const b=bus();if(b&&ONE[k])ONE[k](b.a.currentTime+.02,.2)}};
+})();
+</script>
+<script>
 if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 </script>
 </body></html>
