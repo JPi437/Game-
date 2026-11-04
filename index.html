@@ -24564,7 +24564,7 @@ function onHit(e){if(ME.role!=='p'||phase()!=='hunt')return;ME.hp-=e.d||HIT_D;S.
 function onEvent(e){const o=REM.get(e.u);
  if(e.k==='h'){if(e.to===myUid())onHit(e);else{const v=REM.get(e.to);if(v){v.hitT=.35;puff(v.x,v.y+.4,v.z,[255,90,60],10)}}}
  else if(e.k==='f'){feed((RD.nick[e.by]||'?')+' achou '+(RD.nick[e.u]||'?')+'!');snd('found2');if(o)puff(o.x,o.y+.5,o.z,[255,220,90],24)}
- else if(e.k==='w'){if(e.m!==undefined&&CLIPS.m[e.m])playAt(CLIPS.m[e.m],srcOf(e.u,e.x,e.y,e.z),.95,44,1);else if(e.x!==undefined)whistleAt(e.x,e.y,e.z)}
+ else if(e.k==='w'){if(e.m!==undefined&&CLIPS.m[e.m]){const L=playAt(CLIPS.m[e.m],srcOf(e.u,e.x,e.y,e.z),.95,44,1);if(L)L.who=e.u}else if(e.x!==undefined)whistleAt(e.x,e.y,e.z)}
  else if(e.k==='t'){if(CLIPS.t[e.i])playAt(CLIPS.t[e.i],srcOf(e.u,e.x,e.y,e.z),1,40,2)}
  else if(e.k==='s'){if(e.ex!==undefined)shotFx(e.x,e.y,e.z,e.ex,e.ey,e.ez,0);else{const d=hypot(e.x-ME.x,e.z-ME.z);if(d<14)snd('swing',max(.1,1-d/14))}}
  else if(e.k==='gt'){GRN.push({id:e.gid,own:0,x:e.x,y:e.y,z:e.z,vx:e.vx,vy:e.vy,vz:e.vz,t:0,rs:0});const d=hypot(e.x-ME.x,e.z-ME.z);snd('throw',clp(1-d/30,.1,1))}
@@ -24614,7 +24614,7 @@ const MUSN=['Extremely Loud Indian','Shimmy Shimmy Ay','Chinese Meme','Rap do Mi
 const srcMe=()=>()=>S.st==='game'?[ME.x,ME.y+myH()*.6,ME.z]:null,srcOf=(uid,x,y,z)=>()=>{const o=REM.get(uid);return o&&!o.gone?[o.x,o.y+.6,o.z]:[x||0,y||0,z||0]};
 // música de 7 s que entrega quem está escondido (sorteada, sem repetir a anterior)
 let lastMus=-1;
-function musicMe(){let i=floor(rnd()*MUSN.length);if(i===lastMus)i=(i+1)%MUSN.length;lastMus=i;const L=playAt(CLIPS.m[i],srcMe(),.95,44,1);if(!L)whistleAt(ME.x,ME.y+myH()*.5,ME.z);
+function musicMe(){let i=floor(rnd()*MUSN.length);if(i===lastMus)i=(i+1)%MUSN.length;lastMus=i;const L=playAt(CLIPS.m[i],srcMe(),.95,44,1);if(L)L.who='me';if(!L)whistleAt(ME.x,ME.y+myH()*.5,ME.z);
  netEv({k:'w',m:i,x:r2(ME.x),y:r2(ME.y+myH()*.5),z:r2(ME.z)});toast('♪ '+MUSN[i]+' — todo mundo está ouvindo você!')}
 // provocação: sorteia sem repetir até todas terem tocado
 let tauntEnd=0;
@@ -24758,6 +24758,11 @@ function drawHUD(dt){const c=hx,Wc=hcv.width,Hc=hcv.height,dp=Wc/W_;c.clearRect(
  // nomes
  for(const o of REM.values()){if(o.gone||o.r==='x')continue;const showN=o.r==='s'||ME.role!=='s';if(!showN)continue;const P=o.p>=0?PT[o.p]:null,p=proj(o.x,o.y+(P?P.hy:1.85)+.35,o.z);if(!p||p[2]>22)continue;
   c.font=F(11,1);const t=(o.r==='s'?'🔦 ':'')+(RD.nick[o.id]||'?'),w=c.measureText(t).width+10*dp;c.fillStyle=o.r==='s'?'rgba(140,20,20,.75)':'rgba(10,40,90,.7)';c.fillRect(p[0]-w/2,p[1]-9*dp,w,18*dp);c.fillStyle='#fff';c.fillText(t,p[0],p[1])}
+ // "!" vermelho em cima de quem está tocando a música (só a música, não a provocação); some atrás de parede
+ for(const L of LIVE){if(L.notes!==1||!L.who)continue;let x,y,z;if(L.who==='me'){if(ME.role!=='p')continue;x=ME.x;y=ME.y+myH();z=ME.z}else{const o=REM.get(L.who);if(!o||o.gone||o.r!=='p')continue;x=o.x;y=o.y+(o.p>=0?PT[o.p].hy:1.8);z=o.z}
+  const bob=sin(S.t*7)*.08,top=y+.55+bob,dx=x-CAM.x,dy=top-CAM.y,dz=z-CAM.z,dl=hypot(dx,dy,dz)||1;if(L.who!=='me'&&rayMap(CAM.x,CAM.y,CAM.z,dx/dl,dy/dl,dz/dl,dl,true).t<dl-.4)continue;
+  const p=proj(x,top,z);if(!p)continue;const sc=clp(9/p[2],.45,1.6)*dp,pu=1+.12*sin(S.t*12);c.save();c.translate(p[0],p[1]);c.scale(sc*pu,sc*pu);c.textAlign='center';c.textBaseline='middle';
+  c.font='900 46px "Courier New",monospace';c.lineWidth=7;c.strokeStyle='#fff';c.strokeText('!',0,0);c.fillStyle='#e8141c';c.fillText('!',0,0);c.restore()}
  // relógio e fase
  let lab='',tm=0;if(ph==='pre'){lab='PREPARANDO';tm=-e}else if(ph==='hide'){lab=ME.role==='s'?'CONTANDO':'ESCONDA-SE!';tm=HIDE-e}else if(ph==='hunt'){lab='CAÇADA';tm=HIDE+RD.hunt-e}else{lab='FIM';tm=0}
  const bw=150*dp,bh=46*dp,bx=Wc/2-bw/2,by=8*dp;c.fillStyle='rgba(8,10,24,.72)';rr(c,bx,by,bw,bh,10*dp);c.fill();c.fillStyle=ph==='hunt'&&tm<30?'#ff6a5a':'#ffd23f';c.font=F(11,1);c.fillText(lab,Wc/2,by+13*dp);c.fillStyle='#fff';c.font=F(22,1);c.fillText(fmtT(tm),Wc/2,by+32*dp);
