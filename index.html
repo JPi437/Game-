@@ -9460,7 +9460,9 @@ function apply(gl,p){const id=G.on?sceneId():'';if(id!==curId){curId=id;curV=(G.
  let L=LOC.get(p);if(!L){L={a:gl.getUniformLocation(p,'uGrA'),t:gl.getUniformLocation(p,'uGrT'),v:0};LOC.set(p,L)}
  if(!L.a||L.v===GV)return;L.v=GV;gl.uniform4f(L.a,curV[0],curV[1],0,0);if(L.t)gl.uniform3f(L.t,curV[2],curV[3],curV[4])}
 G.refresh=()=>{curId=null};
+window.ULN=window.ULN||new WeakMap();   // local de uniforme → nome (ver 'sombra de verdade dos personagens')
 window.GRADE_GL=function(gl){if(!gl||gl._gr2)return;gl._gr2=1;
+ {const gul=gl.getUniformLocation.bind(gl);gl.getUniformLocation=function(p,n){const l=gul(p,n);if(l)try{window.ULN.set(l,n)}catch(e){}return l}}
  const ss=gl.shaderSource.bind(gl),up=gl.useProgram.bind(gl);
  gl.shaderSource=function(sh,src){let s=src;try{s=patch(src)}catch(e){s=src}return ss(sh,s)};
  gl.useProgram=function(p){up(p);if(p)try{apply(gl,p)}catch(e){}}};
@@ -10192,6 +10194,7 @@ H3.shBegin=function(fx,fy,fz){
 H3.shVis=(x,y,z,r)=>{const A=SHS.ax,E=SHS.ext+r;return abs(A[0]*x+A[1]*z-SHS.a)<E&&abs(A[2]*x+A[3]*y+A[4]*z-SHS.b)<E};
 H3.shMesh=function(m,mt,pk){gl.uniformMatrix4fv(USH.uM,false,mt||IDM);gl.uniform1f(USH.uPk,pk?1:0);
  gl.bindBuffer(gl.ARRAY_BUFFER,m.vbo);gl.vertexAttribPointer(0,3,gl.FLOAT,false,28,0);gl.vertexAttribPointer(1,3,gl.FLOAT,false,28,12);gl.vertexAttribPointer(2,4,gl.UNSIGNED_BYTE,true,28,24);gl.drawArrays(gl.TRIANGLES,0,m.n)};
+H3.shMat=()=>SHS.mat;
 H3.shEnd=function(){gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.viewport(0,0,W,Hh);SHS.pend=true};
 // o sol bate neste ponto? (0 = sombra, 1 = sol) — lê o mapa de sombras no lugar (usado na luz dos personagens: jogador, outros jogadores, lutadores)
 // O ponto é levado um pouco na direção do sol para o próprio corpo não fazer sombra nele. Poucas leituras por quadro; o resto reaproveita a vizinhança.
@@ -11354,7 +11357,7 @@ function frame(){
  H3.setCut(0,0,0,false);if(C.iso)H3.setOcc(S.px,floorAt(S.px,S.pz)+S.jh,S.pz);else H3.setOcc(null);       // vista de cima: o que tapa o personagem fica meio transparente
  if(H3.setSquash)H3.setSquash(C.iso&&SC.isoSq?SC.isoSq[0]:1,SC.isoSq?SC.isoSq[1]:12);
  // sombras do sol: mapa de profundidade em volta do jogador, antes do quadro
- if(SC.shadow&&H3.shadowOn()){let ok=false;try{ok=H3.shBegin(F.x,F.y,F.z);if(ok)SC.shadow(t,F)}catch(e){console.error('H3 sombra',e)}finally{if(ok)H3.shEnd()}}
+ H3.realSh=false;if(SC.shadow&&H3.shadowOn()){let ok=false;try{ok=H3.shBegin(F.x,F.y,F.z);if(ok){SC.shadow(t,F);if(H3.chShadow)try{H3.realSh=H3.chShadow(H3C.list,t)}catch(e){console.error('H3 sombra dos personagens',e);H3.chShadow=null}}}catch(e){console.error('H3 sombra',e)}finally{if(ok)H3.shEnd()}}
  H3.focus(F.x,F.y,F.z);
  H3.begin(C.x,C.y,C.z,C.yaw,C.pitch,C.fov);
  SC.flicker(t);if(!C.iso)FX.light(C.x,C.y+3,C.z,60,SC.camLight,.3);
@@ -23663,7 +23666,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261104042234;
+const GAME_BUILD=20261104042936;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
@@ -27366,13 +27369,42 @@ const CAST={field:1,db:1,ninja:.85,ocean:1,hal:.42,ice:.22};
   let sc=null,id='';try{sc=H3.curSC&&H3.curSC();id=sc&&sc.id||''}catch(e){}
   // a altura recebida já tem a folga de quem chamou (+.25/.3): volta para os pés
   const y0=y-.28,R=Math.max(w,d)*.55;
-  const k=CAST[id]||0,S=k&&H3.sunDir&&H3.sunDir();let cast=null;
+  const RS=!!H3.realSh,k=RS?0:CAST[id]||0,S=k&&H3.sunDir&&H3.sunDir();let cast=null;
   if(S&&S[1]>.08){const hor=Math.hypot(S[0],S[2])||1e-3,dx=-S[0]/hor,dz=-S[2]/hor;let sv=1;try{const v=H3.sunVis&&H3.sunVis(x,y0+w*.5,z);if(v!==null&&v!==undefined)sv=v}catch(e){}
    if(sv>.05){const hgt=Math.max(w,d)*.95,L=hgt*Math.min(1.45,Math.max(.35,hor/S[1]))+w*.35;cast={dx,dz,L,sv,cx:x+dx*L*.42,cz:z+dz*L*.42}}}
   const yy=lift(sc,x,y0,z,R,cast?x+cast.dx*cast.L*.9:undefined,cast?z+cast.dz*cast.L*.9:undefined);
-  _fl(T.blob,x,yy,z,w*1.08,d*1.08,null,[1,1,1,a*.36],false,rot||0);                  // penumbra larga
-  _fl(T.blobC,x,yy+.03,z,w*.58,d*.58,null,[1,1,1,Math.min(1,a*1.05)],false,rot||0);  // contato
+  _fl(T.blob,x,yy,z,w*1.08,d*1.08,null,[1,1,1,a*(RS?.18:.36)],false,rot||0);                  // penumbra larga
+  _fl(T.blobC,x,yy+.03,z,w*(RS?.5:.58),d*(RS?.5:.58),null,[1,1,1,Math.min(1,a*(RS?.85:1.05))],false,rot||0);  // contato
   if(cast)_fl(T.blobS,cast.cx,yy+.05,cast.cz,w*.62,cast.L,null,[1,1,1,a*.8*k*cast.sv],false,Math.atan2(-cast.dx,cast.dz))};}
+// ---------- sombra de verdade dos personagens 3D: a silhueta do corpo (cabelo, roupa, capa, espada) no chão ----------
+// No passe de sombra do sol, os desenhistas dos personagens (HERO3, CH3, NAR3, SPR3, GUTS3) são chamados de novo com o WebGL "desviado": cada programa vira
+// um gêmeo que só grava a profundidade (o mesmo vertex shader, com os ossos e a pose do quadro), a câmera vira a do sol e nada mais acontece (sem sombra
+// redonda, sem luz, sem partículas). Custa um desenho a mais de cada personagem perto do jogador, só quando as sombras estão ligadas.
+{const FSD='#ifdef GL_FRAGMENT_PRECISION_HIGH\nprecision highp float;\n#else\nprecision mediump float;\n#endif\nvoid main(){vec4 e=fract(gl_FragCoord.z*vec4(1.0,255.0,65025.0,16581375.0));e-=e.yzww*vec4(1.0/255.0,1.0/255.0,1.0/255.0,0.0);gl_FragColor=e;}';
+ const TW=new WeakMap(),UFN=['uniform1f','uniform2f','uniform3f','uniform4f','uniform1i','uniform1fv','uniform2fv','uniform3fv','uniform4fv','uniformMatrix3fv','uniform1iv'];
+ function twin(gl,p){let t=TW.get(p);if(t!==undefined)return t;t=null;
+  try{let vs=null;for(const sh of gl.getAttachedShaders(p)||[])if(gl.getShaderParameter(sh,gl.SHADER_TYPE)===gl.VERTEX_SHADER)vs=sh;
+   if(vs){const v=gl.createShader(gl.VERTEX_SHADER);gl.shaderSource(v,gl.getShaderSource(vs));gl.compileShader(v);const f=gl.createShader(gl.FRAGMENT_SHADER);gl.shaderSource(f,FSD);gl.compileShader(f);
+    if(gl.getShaderParameter(v,gl.COMPILE_STATUS)&&gl.getShaderParameter(f,gl.COMPILE_STATUS)){const q=gl.createProgram();gl.attachShader(q,v);gl.attachShader(q,f);
+     const na=gl.getProgramParameter(p,gl.ACTIVE_ATTRIBUTES);for(let i=0;i<na;i++){const a=gl.getActiveAttrib(p,i);if(a)gl.bindAttribLocation(q,gl.getAttribLocation(p,a.name),a.name)}
+     gl.linkProgram(q);if(gl.getProgramParameter(q,gl.LINK_STATUS))t={p:q,loc:new Map()}}}}catch(e){t=null}
+  TW.set(p,t);return t}
+ const NOOP=()=>{},LA=(x,y,z,o)=>{o[0]=o[1]=o[2]=1;return o};
+ H3.chShadow=function(list,t){const gl=H3.gl&&H3.gl(),SM=H3.shMat&&H3.shMat();if(!gl||!SM||!list||!list.length||!window.ULN)return false;
+  const R=[window.HERO3,window.GUTS3,window.SPR3,window.NAR3,window.CH3].filter(r=>r&&!r.fail&&r.draw);if(!R.length)return false;
+  const ULN=window.ULN,O={},keys=UFN.concat(['useProgram','uniformMatrix4fv','drawElements','drawArrays']);for(const k of keys)O[k]=gl[k];
+  const gul=gl.getUniformLocation.bind(gl);let cur=null;
+  const tl=l=>{if(!cur||!l)return null;const n=ULN.get(l);if(!n)return null;let x=cur.loc.get(n);if(x===undefined){x=gul(cur.p,n);cur.loc.set(n,x)}return x};
+  const fl=H3.flat,sp=H3.spr,fx=H3.fx,em=fx&&fx.emit;let drew=false;
+  try{gl.useProgram=function(p){cur=p?twin(gl,p):null;O.useProgram.call(gl,cur?cur.p:null)};
+   for(const k of UFN){const f=O[k];gl[k]=function(l){const x=tl(l);if(!x)return;arguments[0]=x;f.apply(gl,arguments)}}
+   gl.uniformMatrix4fv=function(l,tr,v){const x=tl(l);if(!x)return;O.uniformMatrix4fv.call(gl,x,tr,ULN.get(l)==='uVP'?SM:v)};
+   gl.drawElements=function(){if(cur){drew=true;O.drawElements.apply(gl,arguments)}};gl.drawArrays=function(){if(cur){drew=true;O.drawArrays.apply(gl,arguments)}};
+   H3.flat=NOOP;H3.spr=NOOP;if(fx)fx.emit=NOOP;
+   const near=list.filter(A=>A&&H3.shVis(A.x,(A.y||0)+14,A.z,30));
+   if(near.length)for(const r of R)try{r.draw(near,LA,null,t)}catch(e){}
+  }finally{for(const k of keys)gl[k]=O[k];H3.flat=fl;H3.spr=sp;if(fx)fx.emit=em;try{gl.disableVertexAttribArray(3);gl.disableVertexAttribArray(4)}catch(e){}}
+  return drew}}
 // sombra nos cantos: liga o H3.aoOn enquanto cada cena se monta
 for(const k in (H3.scenes||{})){const S=H3.scenes[k];for(const f of['build','stepBuild']){const o=S[f];if(typeof o!=='function')continue;S[f]=function(){H3.aoOn=G.on;try{return o.apply(this,arguments)}finally{H3.aoOn=false}}}}
 })();
