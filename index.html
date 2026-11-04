@@ -24261,6 +24261,9 @@ PT.push(
  {n:'Saco de lixo',hx:.26,hy:.58,hz:.26,b(m){const k=hx2('#1c1c22');m.sph(0,.22,0,.25,4,8,k,.9);m.sph(.04,.38,.02,.18,3,7,k);m.cyl(0,.48,0,.05,.03,.06,6,k);m.sph(0,.55,0,.04,2,5,k);m.bx(0,.51,0,.06,.01,.06,F_('#e8c040'))}}
 );
 PT.forEach((p,i)=>{p.i=i;p.r=max(p.hx,p.hz)});
+// tamanho do objeto → vida e velocidade: grande = mais vida e mais lento; pequeno = menos vida e mais rápido
+{const V=PT.map(p=>Math.log(8*p.hx*p.hz*p.hy)),a=Math.min(...V),b=Math.max(...V);PT.forEach((p,i)=>{p.k=(V[i]-a)/(b-a);p.hp=Math.round((70+p.k*180)/5)*5;p.sp=Math.round((6.3-p.k*2.8)*10)/10})}
+const maxHp=(r,p)=>r==='s'?SEEK_HP:p>=0?PT[p].hp:PROP_HP;
 
 // ============================================================ mansão ============================================================
 const SOL=[],GRID=new Map(),GS=4,INST=[],LIGHTS=[],DECOR={};
@@ -24515,7 +24518,7 @@ const myR=()=>{const P=myP();return P?clp(min(P.hx,P.hz),.18,.45):.28},myH=()=>{
 function moveStep(dt){const ph=phase(),frozen=ph==='pre'||ME.role==='x'||ph==='end'||ME.stun>0||ME.sheep>0;
  let jx=IN.jx,jz=IN.jz;if(KEYS.KeyW||KEYS.ArrowUp)jz+=1;if(KEYS.KeyS||KEYS.ArrowDown)jz-=1;if(KEYS.KeyA||KEYS.ArrowLeft)jx-=1;if(KEYS.KeyD||KEYS.ArrowRight)jx+=1;
  const jl=hypot(jx,jz);if(jl>1){jx/=jl;jz/=jl}if(frozen){jx=jz=0}
- const sp=(ME.role==='s'?7.0:ME.prop>=0?4.7:5.0)*(ME.boost>0?1.5:1),fx=sin(ME.cy),fz=cos(ME.cy),rx=-cos(ME.cy),rz=sin(ME.cy);
+ const sp=(ME.role==='s'?7.0:ME.prop>=0?PT[ME.prop].sp:5.0)*(ME.boost>0?1.5:1),fx=sin(ME.cy),fz=cos(ME.cy),rx=-cos(ME.cy),rz=sin(ME.cy);
  const vx=(fx*jz+rx*jx)*sp,vz=(fz*jz+rz*jx)*sp;ME.spd=hypot(vx,vz);ME.mv=ME.spd>.3?1:0;
  const r=myR(),h=myH();
  const tryAx=(dx,dz)=>{const nx=ME.x+dx,nz=ME.z+dz;const b=hitAt(nx,ME.y,nz,r,h);if(!b){ME.x=nx;ME.z=nz;return}
@@ -24570,7 +24573,7 @@ function findTarget(){TGT=null;if(S.st!=='game'||ME.role!=='p')return;const ph=p
 function doTurn(){if(ME.role==='p'&&ME.turnCd>0){toast('Espere '+Math.ceil(ME.turnCd)+' s para virar de novo');snd('err');return}if(ME.role!=='p'||!TGT){if(ME.role==='p'){toast('Mire num objeto (ele fica brilhando) e toque VIRAR');snd('err')}return}
  const t=TGT.k==='i'?TGT.o.t:TGT.o.p,P=PT[t],r=clp(min(P.hx,P.hz),.18,.45);
  if(hitAt(ME.x,ME.y+.01,ME.z,r,P.hy)){toast('Sem espaço aqui para virar '+P.n);snd('err');return}
- ME.prop=t;ME.pyaw=TGT.k==='i'?TGT.o.ry:TGT.o.q||0;ME.lock=false;ME.turnCd=TURN_CD;puff(ME.x,ME.y+P.hy*.5,ME.z,[255,240,200],16);snd('poof');toast('Você virou: '+P.n);sendState(true)}
+ {const fr=clp(ME.hp/maxHp('p',ME.prop),0,1);ME.hp=max(1,Math.round(fr*P.hp))}ME.prop=t;ME.pyaw=TGT.k==='i'?TGT.o.ry:TGT.o.q||0;ME.lock=false;ME.turnCd=TURN_CD;puff(ME.x,ME.y+P.hy*.5,ME.z,[255,240,200],16);snd('poof');toast('Você virou: '+P.n+' · ❤ '+P.hp+' · '+(P.sp>=5.2?'⚡ rápido':P.sp>=4.3?'velocidade média':'🐢 lento'));sendState(true)}
 function doSwing(){doShoot()}
 function doLock(){if(ME.prop<0){toast('Primeiro vire um objeto');return}ME.lock=!ME.lock;snd('ui');updBtns();toast(ME.lock?'Objeto travado: não gira com a câmera':'Objeto destravado')}
 
@@ -24695,7 +24698,7 @@ function doShoot(){if(ME.role!=='s'||RD.ended)return;if(ME.sheep>0){toast('Ovelh
  if(tg){const o=tg.o,P=tg.k==='r'?(o.p>=0?PT[o.p]:{hy:1.7}):PT[o.t];ex=o.x;ey=o.y+P.hy*.55;ez=o.z}else{const t=min(h.t,RANGE+3);ex=R.ox+R.dx*t;ey=R.oy+R.dy*t;ez=R.oz+R.dz*t}
  const mz=muzzle('me')||[CAM.piv[0],CAM.piv[1],CAM.piv[2]];shotFx(mz[0],mz[1],mz[2],ex,ey,ez,1);
  netEv({k:'s',x:r2(mz[0]),y:r2(mz[1]),z:r2(mz[2]),ex:r2(ex),ey:r2(ey),ez:r2(ez)});
- if(tg&&tg.k==='r'){const o=tg.o,d=dist(o),dmg=d<=6?HIT_D:d<=11?35:25;netEv({k:'h',to:o.id,d:dmg});puff(ex,ey,ez,[255,90,60],20);snd('hit');o.hitT=.35;o.hitShow=3.2;o.hp=max(0,(o.hp||PROP_HP)-dmg);S.hm=.6;S.hmD=dmg;toast('ACERTOU! Era alguém escondido! (−'+dmg+')',1)}
+ if(tg&&tg.k==='r'){const o=tg.o,d=dist(o),dmg=d<=6?HIT_D:d<=11?35:25;netEv({k:'h',to:o.id,d:dmg});puff(ex,ey,ez,[255,90,60],20);snd('hit');o.hitT=.35;o.hitShow=3.2;o.hp=max(0,(o.hp||maxHp('p',o.p))-dmg);S.hm=.6;S.hmD=dmg;toast('ACERTOU! Era alguém escondido! (−'+dmg+')',1)}
  else if(tg){ME.hp=max(0,ME.hp-MISS_D);puff(ex,ey,ez,[200,200,200],10);snd('miss');flash(255,60,40,.22);toast('Era um objeto de verdade! −'+MISS_D+' de vida');
   if(ME.hp<=0){ME.role='x';updBtns();toast('Sua vida acabou: agora você só assiste',1);snd('lose');netEv({k:'o'})}sendState(true)}
  else if(h.b)puff(ex,ey,ez,[180,170,160],6)}
@@ -24796,7 +24799,7 @@ function drawHUD(dt){const c=hx,Wc=hcv.width,Hc=hcv.height,dp=Wc/W_;c.clearRect(
   const dx=o.x-CAM.x,dy=top-CAM.y,dz=o.z-CAM.z,dl=hypot(dx,dy,dz)||1;if(!enemyHit&&rayMap(CAM.x,CAM.y,CAM.z,dx/dl,dy/dl,dz/dl,dl,true).t<dl-.4)continue;
   const nm=RD.nick[o.id]||'?',a=enemyHit?clp(o.hitShow,0,1):1;c.globalAlpha=a;c.font=F(10,1);c.lineWidth=3*dp;c.strokeStyle='rgba(0,0,0,.75)';c.strokeText(nm,p[0],p[1]-7*dp);
   c.fillStyle=enemyHit?'#ff4a3a':o.r==='s'?'#ff8a7a':'#7fd0ff';c.fillText(nm,p[0],p[1]-7*dp);
-  const mx=o.r==='s'?SEEK_HP:PROP_HP,f=clp((o.hp||0)/mx,0,1),bw=40*dp;c.fillStyle='rgba(0,0,0,.6)';c.fillRect(p[0]-bw/2,p[1],bw,4*dp);c.fillStyle=enemyHit?'#ff3a2a':'#4ade5a';c.fillRect(p[0]-bw/2,p[1],bw*f,4*dp);c.globalAlpha=1;
+  const mx=maxHp(o.r,o.p),f=clp((o.hp||0)/mx,0,1),bw=40*dp;c.fillStyle='rgba(0,0,0,.6)';c.fillRect(p[0]-bw/2,p[1],bw,4*dp);c.fillStyle=enemyHit?'#ff3a2a':'#4ade5a';c.fillRect(p[0]-bw/2,p[1],bw*f,4*dp);c.globalAlpha=1;
   const em=EMO.find(q=>q.u===o.id&&q.t>0);if(em&&o.r==='s'){c.font=FS_(22);c.fillText(EMOJ[em.i],p[0],p[1]-24*dp)}}
  // emoji em cima de mim (só procurador: escondido não se entrega)
  {const em=EMO.find(q=>q.u==='me'&&q.t>0);if(em&&ME.role==='s'){const p=proj(ME.x,ME.y+2.2,ME.z);if(p){c.font=FS_(22);c.fillText(EMOJ[em.i],p[0],p[1])}}}
@@ -24825,11 +24828,11 @@ function drawHUD(dt){const c=hx,Wc=hcv.width,Hc=hcv.height,dp=Wc/W_;c.clearRect(
  // mira + marcador de acerto
  if(ME.role!=='x'&&(ph==='hunt'||(ph==='hide'&&ME.role==='p'))){c.strokeStyle=TGT?'#ffd23f':'rgba(255,255,255,.9)';c.lineWidth=2*dp;const r=(TGT?10:8)*dp;
   for(let i=0;i<4;i++){const a=i*PI/2+PI/4;c.beginPath();c.arc(cx,cy,r,a-.45,a+.45);c.stroke()}c.fillStyle=c.strokeStyle;c.fillRect(cx-1*dp,cy-1*dp,2*dp,2*dp);
-  if(TGT){c.textAlign='center';c.font=F(12,1);c.fillStyle='#ffd23f';c.fillText('VIRAR: '+PT[TGT.k==='i'?TGT.o.t:TGT.o.p].n,cx,cy+26*dp)}
+  if(TGT){c.textAlign='center';c.font=F(12,1);c.fillStyle='#ffd23f';{const P=PT[TGT.k==='i'?TGT.o.t:TGT.o.p];c.fillText('VIRAR: '+P.n,cx,cy+26*dp);c.font=F(10,1);c.fillStyle='#fff';c.fillText('❤ '+P.hp+'  ·  '+(P.sp>=5.2?'⚡ rápido':P.sp>=4.3?'médio':'🐢 lento'),cx,cy+40*dp)}}
   if(S.hm>0){S.hm-=dt;c.strokeStyle=`rgba(255,40,30,${clp(S.hm*3,0,1)})`;c.lineWidth=3*dp;for(const[a,b]of[[-1,-1],[1,-1],[-1,1],[1,1]]){c.beginPath();c.moveTo(cx+a*7*dp,cy+b*7*dp);c.lineTo(cx+a*15*dp,cy+b*15*dp);c.stroke()}
    c.textAlign='center';c.font=F(14,1);c.fillStyle=`rgba(255,80,60,${clp(S.hm*3,0,1)})`;c.fillText('−'+S.hmD,cx+28*dp,cy-22*dp-(1-S.hm/.6)*16*dp)}}
  // barra de baixo: vida + munição (procurador) ou tempo da música (escondido)
- if(ME.role!=='x'){const bw=86*dp,bx=cx-bw-8*dp,by=Hc-34*dp,mx=ME.role==='s'?SEEK_HP:PROP_HP,f=clp(ME.hp/mx,0,1);c.textAlign='left';c.font=F(12,1);c.fillStyle='#fff';
+ if(ME.role!=='x'){const bw=86*dp,bx=cx-bw-8*dp,by=Hc-34*dp,mx=maxHp(ME.role,ME.prop),f=clp(ME.hp/mx,0,1);c.textAlign='left';c.font=F(12,1);c.fillStyle='#fff';
   c.lineWidth=3*dp;c.strokeStyle='rgba(0,0,0,.6)';c.strokeText('❤ '+max(0,ME.hp|0),bx,by-10*dp);c.fillText('❤ '+max(0,ME.hp|0),bx,by-10*dp);
   c.fillStyle='rgba(0,0,0,.55)';c.fillRect(bx,by,bw,9*dp);c.fillStyle=f>.5?'#ffffff':f>.25?'#f5b400':'#ff4a3a';c.fillRect(bx,by,bw*f,9*dp);
   const rx=cx+8*dp;c.textAlign='right';
