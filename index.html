@@ -28136,7 +28136,7 @@ function notify(){const p=ST.p;if(lastP===null||PV>=2||off0){lastP=p;return}
 // ===================== SONS DO MUNDO: ambiente de cada lugar, passos, montarias, barco e interface (tudo gerado por código, sem arquivos) =====================
 // · Ambiente: folhas e vento na floresta, rio e lago (com sapos), corvos perto da Torre, fogo no Salão do Demônio, grilos/coruja/lobo/vento no Halloween,
 //   goteiras dentro da Catedral, vento uivando e gelo na Caverna, masmorra na Raid, cidade (carros voadores) e deserto (gavião) no Mundo 2,
-//   pinheiros, cachoeira e lago no Mundo 3, mar com ondas e gaivotas no Mundo 4 (mais forte no barco).
+//   pinheiros e cachoeira no Mundo 3 (o barulho de rio/lago foi tirado a pedido), mar com ondas e gaivotas no Mundo 4 (mais forte no barco).
 //   Segue o ciclo de dia e noite: de noite os passarinhos dormem e entram grilos, coruja e mais sapos.
 // · Passos conforme o chão (grama, terra, pedra, madeira, neve, areia), galope do cavalo, zumbido da vassoura, água batendo no barco.
 // · Interface: clique nos botões, abrir/fechar janelas, avisos, mensagens do chat e o "vuuush" da troca de mundo.
@@ -28282,7 +28282,7 @@ function where(){const w=typeof world!=='undefined'?world:0,x=P.x+8,y=P.y+14,c={
  if(w===0){
   if(x>1400){c.beds.fire=.6;c.beds.drone=.55;c.wet=.45;c.surf='stone';E.drip=[8,20,.5]}                     // Salão do Demônio
   else{const dr=abs(ringQ(x,y)-1),river=1-sst(.08,.5,dr),pond=1-sst(1.2,5,pondQ(x,y)),dark=1-sst(140,430,hyp(x-1150,(y-852)*1.2));
-   c.beds.leaves=.9*(1-dark*.75);c.beds.breeze=.5*(1-dark*.6);c.beds.eerie=dark*.85;c.beds.stream=max(river*.9,pond*.55);
+   c.beds.leaves=.9*(1-dark*.75);c.beds.breeze=.5*(1-dark*.6);c.beds.eerie=dark*.85;
    c.surf=dr<.25&&onBr(x,y)?'wood':'grass';const lv=(1-dark)*night(c,E,.8);
    E.bird=[5/lv,14/lv,.05];E.wood=[45/lv,110/lv,.05];E.crow=[7/dark,16/dark,.1];const fq=max(pond,river*.4)*(1+nightK());E.frog=[5/fq,12/fq,.05]}}
  else if(w===1){const H=window.HAL||{},z=H.inside?'inner':(H.zone||'grave');
@@ -28295,7 +28295,7 @@ function where(){const w=typeof world!=='undefined'?world:0,x=P.x+8,y=P.y+14,c={
  else if(w===4){if(x>3336){c.beds.desert=.95;c.surf='sand';E.hawk=[22,50,.2]}                                // Mundo 2: deserto
   else{c.beds.breeze=.8;c.beds.leaves=.55;c.surf='stone';const lv=night(c,E,.4);E.bird=[6/lv,15/lv,.05];E.car=[14/(.4+lv*.6),32/(.4+lv*.6),0]}}                  //          cidade
  else if(w===5){const fall=1-sst(250,2600,hyp(x-3008,y-620)),lq=((x-3008)/680)**2+((y-1080)/400)**2,lake=1-sst(1,3,lq);   // Mundo 3: pinheiros
-  c.beds.pines=.8;c.beds.leaves=.3;c.beds.fall=fall*1.1;c.beds.stream=lake*.4;
+  c.beds.pines=.8;c.beds.leaves=.3;c.beds.fall=fall*1.1;
   const lv=(1-fall*.7)*night(c,E,.7*(1-fall*.6));E.bird=[5/lv,13/lv,.05];E.wood=[40/lv,90/lv,.05];E.frog=[6/max(.01,lake),14/max(.01,lake),.05]}
  else if(w===6){const boat=!!(window.OCW&&OCW.boat);c.boat=boat;c.beds.sea=boat?1:.55;c.beds.breeze=.5;const lv=night(c,E,boat?0:.5);E.gull=[7/lv,18/lv,.05]}   // Mundo 4: mar
  return c}
