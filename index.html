@@ -9705,7 +9705,7 @@ void main(){vec4 t=texture2D(uTex,vT);float nf=vC.a<0.0?1.0:0.0;float a=t.a*abs(
 // textura do chão + cor de rocha/neve por vértice; a água é desenhada aqui mesmo, com ondas, reflexo do céu e brilho do sol) e "sky" (cúpula do céu com sol e nuvens).
 const NLO=4;let NLO_=NLO;               // luzes de ponto por desenho ao ar livre (menos em aparelho com poucos uniformes)
 const GL_COMMON=`uniform vec3 uCam;uniform vec3 uSun;uniform vec3 uSunC;uniform vec3 uSkyA;uniform vec3 uSkyB;uniform vec3 uGndA;uniform vec4 uFog;uniform float uT;uniform sampler2D uCloud;uniform float uFO;
-float cloudSh(vec3 p){float c=texture2D(uCloud,p.xz*0.00085+vec2(uT*0.0045,uT*0.0016)).r;return 1.0-0.36*smoothstep(0.5,0.8,c);}
+float cloudSh(vec3 p){float c=texture2D(uCloud,p.xz*0.00085+vec2(uT*0.0045,uT*0.0016)).r;return 1.0-0.46*smoothstep(0.5,0.8,c);}
 vec3 skyAt(vec3 d){float h=clamp(d.y,0.0,1.0);vec3 s=mix(uSkyB,uSkyA,pow(h,0.5));float sd=max(dot(d,uSun),0.0);return s+uSunC*(pow(sd,64.0)*0.5+pow(sd,6.0)*0.1+pow(sd,2.5)*vec3(0.09,0.06,0.025));}
 vec3 waterShade(vec3 base,vec3 p,vec3 V,float cs){
  float t=uT;vec2 q=p.xz;float fk=1.0/(1.0+length(uCam-p)*0.0045);
@@ -9741,17 +9741,17 @@ float shadowAt(vec3 p,vec3 n){
  else k=shTap(s.xy,z);
  return mix(k,1.0,fo);}
 `;
-const VS_OUT=`attribute vec3 aP;attribute vec3 aN;attribute vec4 aC;uniform mat4 uVP;uniform mat4 uM;uniform float uTv;uniform vec2 uWind;uniform vec2 uSq;varying vec3 vP;varying vec3 vN;varying vec3 vC;varying float vEm;varying float vWat;
-void main(){float b=floor(aC.a*255.0+0.5),sw=floor(b/16.0);vEm=(b-sw*16.0)/15.0;vWat=sw>14.5?1.0:0.0;vec4 w=uM*vec4(aP,1.0);
+const VS_OUT=`attribute vec3 aP;attribute vec3 aN;attribute vec4 aC;uniform mat4 uVP;uniform mat4 uM;uniform float uTv;uniform vec2 uWind;uniform vec2 uSq;varying vec3 vP;varying vec3 vN;varying vec3 vC;varying float vEm;varying float vWat;varying float vSw;
+void main(){float b=floor(aC.a*255.0+0.5),sw=floor(b/16.0);vEm=(b-sw*16.0)/15.0;vWat=sw>14.5?1.0:0.0;vSw=0.0;vec4 w=uM*vec4(aP,1.0);
  if(uSq.x<0.999){float h=w.y-uSq.y;if(h>0.0)w.y=uSq.y+h*uSq.x;}
- float gk=0.0;if(sw>0.5&&sw<14.5){float k=sw/14.0;k*=k;float ph=w.x*0.043+w.z*0.037;float s=sin(uTv*1.7+ph)*0.65+sin(uTv*3.1+ph*2.3)*0.35;float gw=sin(dot(w.xz,vec2(0.0105,0.0068))-uTv*1.35)*0.5+0.5;gw=gw*gw*gw;w.xz+=uWind*(k*(s*(1.0+gw)+gw*0.7));w.y+=sin(uTv*5.3+ph*7.0)*k*0.45-gw*k*0.5;gk=gw*k;}
+ float gk=0.0;if(sw>0.5&&sw<14.5){float k=sw/14.0;k*=k;float ph=w.x*0.043+w.z*0.037;float s=sin(uTv*1.7+ph)*0.65+sin(uTv*3.1+ph*2.3)*0.35;float gw=sin(dot(w.xz,vec2(0.0105,0.0068))-uTv*1.35)*0.5+0.5;gw=gw*gw*gw;w.xz+=uWind*(k*(s*(1.0+gw)+gw*0.7));w.y+=sin(uTv*5.3+ph*7.0)*k*0.45-gw*k*0.5;gk=gw*k;vSw=0.35+0.65*k;}
  vP=w.xyz;vN=(uM*vec4(aN,0.0)).xyz;vC=aC.rgb*(1.0+gk*0.3);gl_Position=uVP*w;}`;
 const FS_OUT=nl=>`#ifdef GL_FRAGMENT_PRECISION_HIGH
 precision highp float;
 #else
 precision mediump float;
 #endif
-varying vec3 vP;varying vec3 vN;varying vec3 vC;varying float vEm;varying float vWat;${GL_COMMON}${SH_COMMON}
+varying vec3 vP;varying vec3 vN;varying vec3 vC;varying float vEm;varying float vWat;varying float vSw;${GL_COMMON}${SH_COMMON}
 uniform vec4 uL[${nl}];uniform vec3 uLC[${nl}];uniform vec4 uFl;uniform vec3 uTint;uniform float uDi;uniform float uTr;uniform float uEG;uniform vec2 uFd;uniform float uAl;uniform sampler2D uDet;uniform float uDetK;uniform vec2 uNC;uniform float uTrS;
 void main(){
  vec3 V=uCam-vP;float dV=length(V);V/=dV;
@@ -9767,7 +9767,8 @@ void main(){
   vec3 lg=mix(uGndA,uSkyA,n.y*0.5+0.5)+uSunC*(sunK*cs+trK*uTrS);
   for(int i=0;i<${nl};i++){vec3 d=uL[i].xyz-vP;float d2=dot(d,d);float r=uL[i].w;float a=1.0-d2/(r*r);if(a<=0.0)continue;a*=a;
    float nd=dot(n,d*inversesqrt(d2+0.0001));nd=max(nd*0.62+0.38,0.0);lg+=uLC[i]*(a*nd);}
-  c=col*lg*(1.0-vEm)+col*(vEm*uEG);}
+  c=col*lg*(1.0-vEm)+col*(vEm*uEG);
+  if(vSw>0.0){float bl=pow(max(dot(-V,uSun),0.0),5.0);c+=col*uSunC*(bl*0.75*cs+0.04)*vSw;}}   // folhas e capim contra o sol: a luz atravessa
  c=c/(1.0+c*0.12);
  c=mix(c,uFl.rgb,uFl.a);
  float dF=max(dV-uFO,0.0);float f=1.0-exp(-dF*dF*uFog.a*uFog.a);c=mix(c,uFog.rgb,f);
@@ -9822,6 +9823,7 @@ void main(){
   float cov=smoothstep(0.50,0.80,c);float sh=clamp(0.62+(c2-c)*3.4,0.0,1.0);
   vec3 cc=mix(vec3(0.60,0.66,0.78),vec3(1.0,0.985,0.95),sh)*(0.82+0.18*uSkyA.b);
   float k=cov*0.94*smoothstep(0.0,0.22,d.y);sky=mix(sky,cc,k);op=1.0-k*0.8;
+  {vec2 u2=d.xz/(d.y+0.3)*0.16+vec2(uT*0.0011,-uT*0.0005);float ci=smoothstep(0.56,0.86,texture2D(uCloud,u2*vec2(1.0,3.2)).r)*smoothstep(0.06,0.45,d.y)*(1.0-k);sky=mix(sky,vec3(1.0,0.97,0.93)*(0.86+0.14*uSkyA.b)+uSunC*pow(sd,8.0)*0.25,ci*0.38);}   // nuvens altas e finas (passam devagar)
  }
  sky=mix(sky,uFog.rgb,smoothstep(0.20,0.0,d.y));
  gl_FragColor=vec4(sky,op*smoothstep(-0.02,0.06,d.y));}`;
@@ -11151,7 +11153,8 @@ function camRaw(){
  if(S.mode===1){const bob=S.moving&&jh<=0?sin(S.step*.55)*.75:0;S.step=P.step;S.foc={x,y:gy,z};zoomTick();return{x,y:gy+SC.eye+bob+jh-land,z,yaw:S.yaw,pitch:S.pitch-kick,fov:G3.fov1*DEG*S.zf}}
  S.foc={x,y:gy,z};
  zoomTick();
- const d=SC.camD*S.zs,cp=cos(S.pitch),fx0=sin(S.yaw)*cp,fy0=sin(S.pitch),fz0=-cos(S.yaw)*cp,ty=gy+24+jh*.7-land;
+ const bob3=S.moving&&jh<=0?sin(P.step*.55)*.42:0;   // passo: a câmera sobe e desce de leve
+ const d=SC.camD*S.zs,cp=cos(S.pitch),fx0=sin(S.yaw)*cp,fy0=sin(S.pitch),fz0=-cos(S.yaw)*cp,ty=gy+24+jh*.7-land+bob3;
  let cx=x-fx0*d,cy=ty-fy0*d,cz=z-fz0*d;
  // nada sólido entre o personagem e a câmera: anda do personagem até o ponto ideal (com uma folguinha dos lados) e para antes do primeiro obstáculo.
  // Chega perto na hora (nunca atravessa) e volta para longe devagar (sem tranco).
@@ -23666,7 +23669,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261104042936;
+const GAME_BUILD=20261104044047;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
@@ -27247,6 +27250,10 @@ function frameFx(t,Cm){shadowTune();try{H3.clip(1.5,11000)}catch(e){}try{fogTick
  if(PB.on&&PB.mv>.6&&R()<.8){const bx=P.x+8-sin(PB.yaw)*58,bz=P.y+14-cos(PB.yaw)*58;FX.emit({x:bx+(R()-.5)*10,y:WL*K+.8,z:bz+(R()-.5)*10,vx:(R()-.5)*.2,vy:.02,vz:(R()-.5)*.2,g:0,life:1600+R()*800,s0:6,s1:18,c:[1,1,1],a:.55,add:false,tex:'glow',drag:.98});
   if(R()<.5)FX.emit({x:P.x+8+sin(PB.yaw)*62+(R()-.5)*14,y:WL*K+2,z:P.y+14+cos(PB.yaw)*62+(R()-.5)*14,vx:(R()-.5)*.6,vy:.5+R()*.4,vz:(R()-.5)*.6,g:.03,life:700,s0:3,s1:1,c:[1,1,1],a:.7,add:false,tex:'glow',drag:.98})}
  if(R()<.35&&hypot(Cm.x-BACK.x,Cm.z-BACK.z)<500)FX.emit({x:BACK.x+(R()-.5)*4,y:floorW(BACK.x,BACK.z)+8+R()*36,z:BACK.z+(R()-.5)*36,vx:0,vy:.25,vz:0,g:0,life:900,s0:2.4,s1:.4,c:[.4,.85,1],a:.9,tex:'dot'});
+ // rastro de espuma atrás do barco (dois sulcos que abrem em V), ondinha na proa e respingos quando vai rápido
+ if(PB.on&&PB.k>.6&&PB.mv>.5&&typeof P!=='undefined'&&CB.st===0){const x=P.x+8,z=P.y+14,sy=sin(PB.yaw),cy=cos(PB.yaw),W0=WL*K+.6,sp=min(1,PB.mv/5);
+  for(let i=0;i<2;i++){const sd=i?1:-1,bx=x-sy*50+cy*sd*11,bz=z-cy*50-sy*sd*11;FX.emit({x:bx+(R()-.5)*6,y:W0,z:bz+(R()-.5)*6,vx:cy*sd*.3*sp-sy*.08,vy:.01,vz:-sy*sd*.3*sp-cy*.08,g:0,life:1900+R()*900,s0:5,s1:17,c:[.95,.98,1],a:.45*sp,add:false,tex:'dot',drag:.985})}
+  if(R()<.35+sp*.6){const sd=R()<.5?-1:1,fx=x+sy*56+cy*sd*9,fz=z+cy*56-sy*sd*9;FX.emit({x:fx,y:W0+1,z:fz,vx:cy*sd*(.5+R()*.6),vy:.35+R()*.7*sp,vz:-sy*sd*(.5+R()*.6),g:.045,life:650+R()*450,s0:3,s1:8,c:[.95,.98,1],a:.65,add:false,tex:'dot',drag:.98})}}
  // Calm Belt: bolhas, o mar abrindo quando o Rei do Mar sobe e o estouro de água no bote
  if(CB.st===1){const e=CB.e,W0=WL*K,mx=CB.bx+CB.ox*290,mz=CB.bz+20;
   if(e<1300)for(let i=0;i<3;i++){const a=R()*TAU,rr=R()*80;FX.emit({x:mx+cos(a)*rr,y:W0+.5,z:mz+sin(a)*rr,vx:0,vy:.2+R()*.3,vz:0,g:0,life:600+R()*400,s0:3+R()*3,s1:7,c:[.9,.97,1],a:.7,add:false,tex:'dot',drag:.98})}
@@ -27342,6 +27349,25 @@ wrapFx('db',(t,C,S)=>{const f=FX();if(!f)return;const now=Date.now(),DBW=window.
 // Mundo 1: sementes de dente-de-leão voando com o vento perto do jogador
 wrapFx('field',(t,C,S)=>{const f=FX();if(!f||rnd()>.22)return;const a=rnd()*TAU,r=30+rnd()*170,x=C.x+cos(a)*r,z=C.z+sin(a)*r;
  f.emit({x,y:fy(S,x,z)+3+rnd()*16,z,vx:.18+rnd()*.12,vy:.015+rnd()*.03,vz:(rnd()-.5)*.1,g:0,life:4500+rnd()*2500,s0:1.4,s1:1.1,c:[1,1,.94],a:.75,add:true,tex:'glow',drag:1})});
+// ---------- poeira dos pés ao andar e borboletas voando por cima do capim (mundos de dia) ----------
+const DUSTC={field:[.74,.66,.52],db:[.88,.74,.52],ninja:[.68,.62,.5],ocean:[.86,.8,.66]};let dustT=0;
+function dust(id,S){const f=FX(),HS=H3.S;if(!f||!HS||!HS.moving||(HS.jh||0)>0||HS.mode===3)return;if(id==='ocean'&&window.OCW&&OCW.boat)return;const now=Date.now();if(now<dustT)return;dustT=now+150;
+ const x=HS.px,z=HS.pz;if(x===undefined)return;const g=fy(S,x,z),c=DUSTC[id];for(let i=0;i<2;i++){const a=rnd()*TAU;f.emit({x:x+cos(a)*3,y:g+.6,z:z+sin(a)*3,vx:cos(a)*.18,vy:.12+rnd()*.12,vz:sin(a)*.18,g:-.002,life:650+rnd()*400,s0:2.5,s1:7,c,a:.22,add:false,tex:'dot',drag:.95})}}
+const BFC=[[1,.84,.28],[1,.56,.2],[.62,.82,1],[1,1,1],[.9,.6,1]],BF={field:[],ocean:[],ninja:[]};let BFT=null;
+function bfTex(){if(BFT)return BFT;try{const c=document.createElement('canvas');c.width=64;c.height=32;const x=c.getContext('2d');
+  for(const sd of[-1,1]){x.save();x.translate(32,16);x.scale(sd,1);x.fillStyle='rgba(255,255,255,.95)';x.strokeStyle='rgba(40,25,10,.9)';x.lineWidth=2;
+   x.beginPath();x.ellipse(13,-5,12,9,-.5,0,TAU);x.fill();x.stroke();x.beginPath();x.ellipse(10,7,8,6,.5,0,TAU);x.fill();x.stroke();
+   x.fillStyle='rgba(40,25,10,.55)';x.beginPath();x.arc(15,-6,3,0,TAU);x.fill();x.restore()}
+  x.fillStyle='#2a1a0a';x.fillRect(30,6,4,20);BFT=H3.texNew(c,true)}catch(e){BFT=null}return BFT}
+function bfTick(id,S){const L=BF[id],HS=H3.S;if(!L||!HS||HS.px===undefined)return;const px=HS.px,pz=HS.pz,t=Date.now()/1000,K=id==='ocean'?2:1;
+ for(let i=L.length-1;i>=0;i--){const b=L[i];if(Math.hypot(b.x-px,b.z-pz)>260){L.splice(i,1);continue}
+  b.a+=Math.sin(t*.9+b.ph)*.04;b.x+=Math.cos(b.a)*b.v;b.z+=Math.sin(b.a)*b.v;const g=fy(S,b.x,b.z);b.y+=(g+b.h+Math.sin(t*2.3+b.ph)*2.2-b.y)*.08}
+ if(L.length<6&&rnd()<.06){const a=rnd()*TAU,r=40+rnd()*120,x=px+Math.cos(a)*r,z=pz+Math.sin(a)*r,g=fy(S,x,z);
+  if(id==='ocean'?g>6*K&&!(window.OCW&&OCW.boat):true)L.push({x,z,y:g+6,h:5+rnd()*8,a:rnd()*TAU,v:.25+rnd()*.25,ph:rnd()*TAU,c:BFC[(rnd()*BFC.length)|0]})}}
+function bfDraw(id){const L=BF[id];if(!L||!L.length)return;const T=bfTex();if(!T)return;const t=performance.now();
+ for(const b of L){const fl=Math.abs(Math.sin(t*.024+b.ph*7));H3.spr(T,b.x,b.y,b.z,1.6+7*fl,4.6,null,[b.c[0],b.c[1],b.c[2],1],false,0,true)}}
+for(const id of['field','db','ninja','ocean'])wrapFx(id,(t,C,S)=>{dust(id,S);if(BF[id])bfTick(id,S)});G.bf=BF;
+for(const id of['field','ninja','ocean']){const S=H3.scenes&&H3.scenes[id];if(!S||!S.sprites)continue;const _s=S.sprites;S.sprites=function(){const r=_s.apply(this,arguments);try{if(G.on)bfDraw(id)}catch(e){}return r}}
 // Halloween: vaga-lumes verde-amarelos perto do chão
 const halFF=(t,C,S)=>{const f=FX();if(!f||rnd()>.3)return;const a=rnd()*TAU,r=25+rnd()*150,x=C.x+cos(a)*r,z=C.z+sin(a)*r;
  f.emit({x,y:fy(S,x,z)+2+rnd()*12,z,vx:(rnd()-.5)*.12,vy:(rnd()-.5)*.05,vz:(rnd()-.5)*.12,g:0,life:1800+rnd()*1800,s0:2.6,s1:1.6,c:[.75,1,.35],a:.95,add:true,tex:'glow',drag:.995})};
