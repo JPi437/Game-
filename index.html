@@ -9742,8 +9742,8 @@ float shadowAt(vec3 p,vec3 n){
 const VS_OUT=`attribute vec3 aP;attribute vec3 aN;attribute vec4 aC;uniform mat4 uVP;uniform mat4 uM;uniform float uTv;uniform vec2 uWind;uniform vec2 uSq;varying vec3 vP;varying vec3 vN;varying vec3 vC;varying float vEm;varying float vWat;
 void main(){float b=floor(aC.a*255.0+0.5),sw=floor(b/16.0);vEm=(b-sw*16.0)/15.0;vWat=sw>14.5?1.0:0.0;vec4 w=uM*vec4(aP,1.0);
  if(uSq.x<0.999){float h=w.y-uSq.y;if(h>0.0)w.y=uSq.y+h*uSq.x;}
- if(sw>0.5&&sw<14.5){float k=sw/14.0;k*=k;float ph=w.x*0.043+w.z*0.037;float s=sin(uTv*1.7+ph)*0.65+sin(uTv*3.1+ph*2.3)*0.35;w.xz+=uWind*(k*s);w.y+=sin(uTv*5.3+ph*7.0)*k*0.45;}
- vP=w.xyz;vN=(uM*vec4(aN,0.0)).xyz;vC=aC.rgb;gl_Position=uVP*w;}`;
+ float gk=0.0;if(sw>0.5&&sw<14.5){float k=sw/14.0;k*=k;float ph=w.x*0.043+w.z*0.037;float s=sin(uTv*1.7+ph)*0.65+sin(uTv*3.1+ph*2.3)*0.35;float gw=sin(dot(w.xz,vec2(0.0105,0.0068))-uTv*1.35)*0.5+0.5;gw=gw*gw*gw;w.xz+=uWind*(k*(s*(1.0+gw)+gw*0.7));w.y+=sin(uTv*5.3+ph*7.0)*k*0.45-gw*k*0.5;gk=gw*k;}
+ vP=w.xyz;vN=(uM*vec4(aN,0.0)).xyz;vC=aC.rgb*(1.0+gk*0.3);gl_Position=uVP*w;}`;
 const FS_OUT=nl=>`#ifdef GL_FRAGMENT_PRECISION_HIGH
 precision highp float;
 #else
@@ -9827,7 +9827,7 @@ void main(){
 const VS_SH=`attribute vec3 aP;attribute vec3 aN;attribute vec4 aC;uniform mat4 uVP;uniform mat4 uM;uniform float uTv;uniform vec2 uWind;uniform float uPk;
 void main(){vec4 w=uM*vec4(aP,1.0);
  if(uPk>0.5){float b=floor(aC.a*255.0+0.5),sw=floor(b/16.0);if(sw>14.5){gl_Position=vec4(9.0,9.0,9.0,1.0);return;}
-  if(sw>0.5){float k=sw/14.0;k*=k;float ph=w.x*0.043+w.z*0.037;float s=sin(uTv*1.7+ph)*0.65+sin(uTv*3.1+ph*2.3)*0.35;w.xz+=uWind*(k*s);w.y+=sin(uTv*5.3+ph*7.0)*k*0.45;}}
+  if(sw>0.5){float k=sw/14.0;k*=k;float ph=w.x*0.043+w.z*0.037;float s=sin(uTv*1.7+ph)*0.65+sin(uTv*3.1+ph*2.3)*0.35;float gw=sin(dot(w.xz,vec2(0.0105,0.0068))-uTv*1.35)*0.5+0.5;gw=gw*gw*gw;w.xz+=uWind*(k*(s*(1.0+gw)+gw*0.7));w.y+=sin(uTv*5.3+ph*7.0)*k*0.45-gw*k*0.5;}}
  gl_Position=uVP*w;}`;
 const FS_SH=`#ifdef GL_FRAGMENT_PRECISION_HIGH
 precision highp float;
@@ -12622,15 +12622,19 @@ function blade(mb,x,y,z,a,w,h,lean,c0,c1,sw,out){
  mb.raw([x-wx,y,z-wz],[x+wx,y,z+wz],p2,n,n,n,c0,c0,c1,0,0,sw*2);
  if(out){out[0]=p2[0];out[1]=p2[1];out[2]=p2[2]}}
 const TC=[0,0,0,0],T0=[0,0,0],T1=[0,0,0],TIP=[0,0,0];
-function tuft(mb,x,y,z,g,H,rnd,dry,q){
+const GOLD=[226,198,108];
+// mancha de campo maduro: 0 verde · ~0,6 dourado (manchas grandes e suaves, como nas fotos de referência)
+const goldAt=(x,z)=>sm(.52,.8,vn(x*.0062,z*.0062,91))*.62+sm(.6,.9,vn(x*.021,z*.021,92))*.18;
+function tuft(mb,x,y,z,g,H,rnd,dry,q){const gd=goldAt(x,z);
  // q: 0 normal · 1 caprichado (perto, gráfico Alto: mais lâminas, mais variação) · 2 longe (gráfico Alto: poucas lâminas largas)
  // longe (q=2): lâminas finas como as de perto e com a cor bem próxima à do chão, para o capim distante virar um tapete macio em vez de pontos claros piscando
  const n=q===1?6+((rnd()*4)|0):q===2?4+((rnd()*2)|0):4+((rnd()*3)|0),sp=q===2?1.7:1.3,wk=q===2?1.05:.85,far=q===2;
  for(let i=0;i<n;i++){const a=rnd()*TAU,dd=rnd()*sp,bx=x+cos(a)*dd,bz=z+sin(a)*dd,h=H*(.6+rnd()*.6)*(q===1&&rnd()<.12?1.25:1),lean=h*(.2+rnd()*.35),w=(.7+rnd()*.5)*wk,k=far?.94+rnd()*.12:.88+rnd()*.28;
   if(far){T0[0]=g[0]*.72*k;T0[1]=g[1]*.78*k;T0[2]=g[2]*.7*k;T1[0]=min(255,g[0]*1.02*k+5+dry*18);T1[1]=min(255,g[1]*1.16*k+7-dry*22);T1[2]=min(255,g[2]*.92*k+dry*4)}
-  else{T0[0]=g[0]*.55*k;T0[1]=g[1]*.6*k;T0[2]=g[2]*.5*k;
-  T1[0]=min(255,g[0]*1.06*k+12+dry*28);T1[1]=min(255,g[1]*1.32*k+15-dry*36);T1[2]=min(255,g[2]*.9*k+dry*6)}
-  blade(mb,bx,y-.25,bz,rnd()*TAU,w,h,lean,T0.slice(),T1.slice(),8+((rnd()*5)|0))}}
+  else{T0[0]=g[0]*.5*k;T0[1]=g[1]*.55*k;T0[2]=g[2]*.45*k;
+  T1[0]=min(255,g[0]*1.08*k+14+dry*28);T1[1]=min(255,g[1]*1.24*k+12-dry*36);T1[2]=min(255,g[2]*.86*k+dry*6)}
+  const gb=gd*(.75+rnd()*.5);if(gb>.02){for(let c=0;c<3;c++){T1[c]=T1[c]+(GOLD[c]*k-T1[c])*gb;T0[c]=T0[c]+(GOLD[c]*.52*k-T0[c])*gb*.6}}   // pontas douradas no campo maduro
+  blade(mb,bx,y-.25,bz,rnd()*TAU,w*1.18,h*.92,lean,T0.slice(),T1.slice(),8+((rnd()*5)|0))}}
 const FLC=['#ffffff','#ffd23f','#ff6f91','#b38cff','#7fd8ff'].map(C);
 function flower(mb,x,y,z,ci,rnd){
  const h=2.5+rnd()*1.9,a=rnd()*TAU,lean=(rnd()-.5)*1.1,tip=[0,0,0];
@@ -12647,7 +12651,7 @@ function reed(mb,x,y,z,rnd){
 
 // ============================================================ pedaços de capim ============================================================
 function chunkBuild(ci,cj,q){q=q||0;
- const cs=FL.cs,x0=ci*cs,z0=cj*cs,mb=new MB(((ci*7919)^(cj*104729))+11+q*7,{pk:true}),rnd=mb.r,GS=q===1?4.1:q===2?6.4:5.1,N=ceil(cs/GS),g=[0,0,0,0];
+ const cs=FL.cs,x0=ci*cs,z0=cj*cs,mb=new MB(((ci*7919)^(cj*104729))+11+q*7,{pk:true}),rnd=mb.r,GS=q===1?3.9:q===2?6.4:4.6,N=ceil(cs/GS),g=[0,0,0,0];
  for(let gz=0;gz<N;gz++)for(let gx=0;gx<N;gx++){
   const x=x0+(gx+rnd())*GS,z=z0+(gz+rnd())*GS,r1=rnd(),r2=rnd(),r3=rnd();
   if(x<6||z<6||x>MW-6||z>MH-6)continue;
@@ -23659,7 +23663,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261104041701;
+const GAME_BUILD=20261104042234;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
@@ -26669,7 +26673,7 @@ function gcol(x,z){const h=baseH(x,z);
  if(z<WALLN+460&&abs(x-RMX)<544){const sv=spurN(x,z);if(sv>WL+1&&sv>=h-.01)return mulc(mixc([150,96,84],[194,138,116],vn(x/30,z/30,77)),.9+vn(x/9,z/9,78)*.2)}
  if(z>WALLZ-380&&abs(x-RMX)<440){const sv=spurH(x,z);if(sv>WL+1&&sv>=h-.01)return mulc(mixc([166,92,80],[204,132,112],vn(x/30,z/30,72)),.9+vn(x/9,z/9,73)*.2)}
  if(h<3.5)return mixc(SAND2,SAND,vn(x/30,z/30,8));
- const n=vn(x/120,z/120,2),n2=vn(x/33,z/33,4);let c=mixc(GR0,GR1,n);c=mulc(c,.92+n2*.12);
+ const n=vn(x/120,z/120,2),n2=vn(x/33,z/33,4);let c=mixc(GR0,GR1,n);c=mulc(c,.92+n2*.12);{const gd=sm(.5,.78,vn(x*K*.0031,z*K*.0031,91))*.6;if(gd>.01)c=mixc(c,[150,140,78],gd*.7)}
  if(h<6.5)c=mixc(c,SAND,1-sm(3.5,6.5,h));
  for(const Q of PAST)if(inRect(Q,x,z,-2))c=mixc(c,[118,196,78],.5);
  if(inRect(WHEAT,x,z,4))c=mixc(c,[214,182,96],.85);
@@ -27147,8 +27151,11 @@ OCW.stats=()=>{let g=0,o=0;for(const c of CH){if(c.gm)g+=c.gm.n;if(c.om)o+=c.om.
 const GR={ch:new Map(),cs:64,tick:0};
 function blade(mb,x,y,z,a,w,h,lean,c0,c1,sw,out){const ca=cos(a),sa=sin(a),wx=ca*w*.5,wz=sa*w*.5,lx=-sa*lean,lz=ca*lean,p2=[x+lx,y+h,z+lz],n=[-sa*.34,.86,ca*.34];
  mb.raw([x-wx,y,z-wz],[x+wx,y,z+wz],p2,n,n,n,c0,c0,c1,0,0,sw*2);if(out){out[0]=p2[0];out[1]=p2[1];out[2]=p2[2]}}
-function tuft(mb,x,y,z,g,H,rnd){const n=4+((rnd()*3)|0);for(let i=0;i<n;i++){const a=rnd()*TAU,dd=rnd()*1.3,h=H*(.6+rnd()*.6),k=.88+rnd()*.28;
-  blade(mb,x+cos(a)*dd,y-.25,z+sin(a)*dd,rnd()*TAU,(.7+rnd()*.5)*.85,h,h*(.2+rnd()*.35),[g[0]*.55*k,g[1]*.6*k,g[2]*.5*k],[min(255,g[0]*1.06*k+12),min(255,g[1]*1.32*k+15),min(255,g[2]*.9*k)],8+((rnd()*5)|0))}}
+const GOLD4=[222,194,104],gold4=(x,z)=>sm(.5,.78,vn(x*.0031,z*.0031,91))*.6+sm(.6,.9,vn(x*.0105,z*.0105,92))*.18;   // manchas de capim maduro (dourado)
+function tuft(mb,x,y,z,g,H,rnd){const n=4+((rnd()*3)|0),gd=gold4(x,z);for(let i=0;i<n;i++){const a=rnd()*TAU,dd=rnd()*1.4,h=H*(.6+rnd()*.6)*.92,k=.86+rnd()*.3,gb=gd*(.75+rnd()*.5);
+  const c0=[g[0]*.48*k,g[1]*.54*k,g[2]*.44*k],c1=[min(255,g[0]*1.04*k+12),min(255,g[1]*1.16*k+10),min(255,g[2]*.84*k)];
+  if(gb>.02)for(let c=0;c<3;c++){c1[c]+=(GOLD4[c]*k-c1[c])*gb;c0[c]+=(GOLD4[c]*.5*k-c0[c])*gb*.6}
+  blade(mb,x+cos(a)*dd,y-.25,z+sin(a)*dd,rnd()*TAU,(.8+rnd()*.55)*.95,h,h*(.2+rnd()*.35),c0,c1,8+((rnd()*5)|0))}}
 const FLC=[[255,255,255],[255,210,63],[255,111,145],[179,140,255],[127,216,255]];
 function flower(mb,x,y,z,ci,rnd){const h=2.5+rnd()*1.9,a=rnd()*TAU,tip=[0,0,0];blade(mb,x,y-.2,z,a,.55,h,(rnd()-.5)*1.1,[34,96,36],[64,140,56],7,tip);
  const R=1.2+rnd()*.6,col=FLC[ci],cen=[255,226,122],ex=tip[0],ey=tip[1]+.05,ez=tip[2],nn=[0,1,0];
@@ -27159,7 +27166,7 @@ function grassy(x,z){const xd=x/K,zd=z/K;if(baseH(xd,zd)<6.5)return false;if(roa
  if(zd>WALLZ-400||(zd<WALLN+470&&abs(xd-RMX)<560))return false;if(near6(xd,zd)&&town6(xd,zd))return false;
  if(near5(xd,zd)){if(inR(xd,zd,TX0-14,TX1+14,TZ0-14,TZ1+14)||inR(xd,zd,PIER5.x0-12,PIER5.x1+12,PIER5.z0,PIER5.z1+14))return false;if(trail5D(xd,zd)<9)return false}
  return true}
-function grassChunk(ci,cj){const cs=GR.cs,x0=ci*cs,z0=cj*cs,mb=new MB(((ci*7919)^(cj*104729))+41,{pk:true}),rnd=mb.r,GS=5.1,N=Math.ceil(cs/GS);
+function grassChunk(ci,cj){const cs=GR.cs,x0=ci*cs,z0=cj*cs,mb=new MB(((ci*7919)^(cj*104729))+41,{pk:true}),rnd=mb.r,GS=4.2,N=Math.ceil(cs/GS);   // capim mais cheio (lâminas largas e baixas: cobre mais sem pesar)
  for(let gz=0;gz<N;gz++)for(let gx=0;gx<N;gx++){const x=x0+(gx+rnd())*GS,z=z0+(gz+rnd())*GS,r3=rnd();if(!grassy(x,z))continue;const g=gcol(x/K,z/K),y=floorW(x,z);
   const fz=vn(x*.0105,z*.0105,77),fi=floor(vn(x*.0065,z*.0065,79)*5);if(fz>.56&&r3<.14){flower(mb,x,y,z,fi%5,rnd);continue}tuft(mb,x,y,z,g,1.9+rnd()*1.4,rnd)}
  if(!mb.count)return null;const pk=mb.pack();return{m:H3.upload(H3.gl(),pk),cx:pk.cx,cy:pk.cy,cz:pk.cz,rad:pk.rad,ci,cj}}
@@ -27190,8 +27197,8 @@ function draw(t,dyn){H3.skyDraw();const F=H3.S.foc||H3.S.cam,s=t/1000;boatTick(t
   H3.lodDraw(v.m,d,LODT,o.m,LIGHTS,dyn,{di:H3.farFade(d,FART+o.rad),tint:o.tint,tr:.55,rad:o.rad,cx:o.wx,cy:o.wy,cz:o.wz})}
  if(SAILS)for(const w of MILL){if(hypot(w.x-F.x,w.z-F.z)>2400)continue;mYZ(w.m,w.x,w.y,w.z,w.yaw,w.ph+s*w.sp);if(H3.vis(w.x,w.y,w.z,110))H3.mesh(SAILS,w.m,LIGHTS,dyn,{rad:110,cx:w.x,cy:w.y,cz:w.z})}
  // o Paredão (não faz sombra; some na névoa: só aparece de perto), as nuvens grudadas nele e a Montanha Reversa
- for(const w of WALLM){if(abs(w.cx-F.x)>10000)continue;const fd=sm(3700,2400,abs(w.m.cz-F.z));if(fd<=0)continue;if(H3.vis(w.m.cx,w.m.cy,w.m.cz,w.m.rad))H3.mesh(w.m,null,null,dyn,{fog:1.15,di:fd})}   // longe: some aos poucos (senão vira um recorte cor de névoa no céu)
- const rmd=RMS?sm(3700,2400,abs(RMS.cz-F.z)):0;if(rmd>0&&H3.vis(RMS.cx,RMS.cy,RMS.cz,RMS.rad)){H3.mesh(RMS,null,null,dyn,{fog:1.15,di:rmd});const fm=RMSF[floor(s*10)%RMF];if(fm)H3.mesh(fm,null,null,dyn,{fog:1.15,di:rmd})}
+ for(const w of WALLM){if(abs(w.cx-F.x)>10000)continue;const fd=sm(3200,2200,abs(w.m.cz-F.z));if(fd<=0)continue;if(H3.vis(w.m.cx,w.m.cy,w.m.cz,w.m.rad))H3.mesh(w.m,null,null,dyn,{fog:1.15,di:fd})}   // longe: some aos poucos (senão vira um recorte cor de névoa no céu)
+ const rmd=RMS?sm(3200,2200,abs(RMS.cz-F.z)):0;if(rmd>0&&H3.vis(RMS.cx,RMS.cy,RMS.cz,RMS.rad)){H3.mesh(RMS,null,null,dyn,{fog:1.15,di:rmd});const fm=RMSF[floor(s*10)%RMF];if(fm)H3.mesh(fm,null,null,dyn,{fog:1.15,di:rmd})}
  for(const c of CLW){if(abs(c.cx-F.x)>10000)continue;const fd=sm(3100,2000,abs(c.m.cz-F.z));if(fd<=0)continue;if(H3.vis(c.m.cx,c.m.cy,c.m.cz,c.m.rad))H3.mesh(c.m,null,null,null,{fog:2.1,eg:1.05,di:fd})}
  // o Rei do Mar (só durante a cena do Calm Belt)
  if(CB.st===1&&CBM){const p=cbPose(CB.e);CB.pose=p;
