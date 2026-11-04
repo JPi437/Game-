@@ -11154,7 +11154,8 @@ function camRaw(){
 S.foc={x,y:gy,z};zoomTick();return{x,y:gy+SC.eye+bob+jh-land,z,yaw:S.yaw,pitch:S.pitch-kick,fov:G3.fov1*DEG*S.zf}}
  S.foc={x,y:gy,z};
  zoomTick();
- const d=SC.camD*S.zs,cp=cos(S.pitch),fx0=sin(S.yaw)*cp,fy0=sin(S.pitch),fz0=-cos(S.yaw)*cp,ty=gy+24+jh*.7-land;
+ {const nw=performance.now(),dg=min(.1,(nw-(S.cgT||nw))/1000);S.cgT=nw;if(S.cgy===undefined||S.cgSc!==SC||abs(gy-S.cgy)>40)S.cgy=gy;else S.cgy+=(gy-S.cgy)*min(1,dg*6);S.cgSc=SC}   // altura do chão suavizada: degraus e calombos não sacodem a câmera
+ const d=SC.camD*S.zs,cp=cos(S.pitch),fx0=sin(S.yaw)*cp,fy0=sin(S.pitch),fz0=-cos(S.yaw)*cp,ty=S.cgy+24+jh*.7-land;
  let cx=x-fx0*d,cy=ty-fy0*d,cz=z-fz0*d;
  // nada sólido entre o personagem e a câmera: anda do personagem até o ponto ideal (com uma folguinha dos lados) e para antes do primeiro obstáculo.
  // Chega perto na hora (nunca atravessa) e volta para longe devagar (sem tranco).
@@ -23669,7 +23670,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261104044931;
+const GAME_BUILD=20261104045151;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
