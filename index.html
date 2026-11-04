@@ -24297,7 +24297,7 @@ const MAPS=[
   fog:[.04,.055,.11],fn:26,ff:95,amb:[.3,.32,.42],sunC:[.2,.24,.36],sky:1,bats:1,menu:{cx:0,cz:-4,r:40,y:11,ty:4,tx:0,tz:-2,sp:.05}},
  {nome:'🍕 Pizzaria',bars:[{x0:-1.82,x1:-1.38,y0:0,y1:2.4,z0:.12,z1:1.28},{x0:1.38,x1:1.82,y0:0,y1:2.4,z0:.12,z1:1.28}],signs:[[-1.6,1.1,.7],[1.6,1.1,.7]],seek:i=>[[-.6,2.2],[.6,2.2],[-.6,3.0],[.6,3.0]][i%4].concat([PI]),
   prop:k=>[[-2,-12],[2,-12],[-6,-12],[6,-12],[-8,-12],[8,-12],[-2,-17.5],[2,-17.5],[-6,-17.5],[6,-17.5]][k%10].concat([PI]),
-  fog:[.03,.026,.04],fn:12,ff:40,amb:[.4,.37,.44],sunC:[.06,.06,.08],sky:0,bats:0,menu:{cx:0,cz:-13,r:6,y:2.3,ty:1.1,tx:0,tz:-14,sp:.06}}];
+  fog:[.05,.04,.06],fn:18,ff:55,amb:[.5,.47,.52],sunC:[.12,.11,.1],sky:0,bats:0,menu:{cx:0,cz:-13,r:6.5,y:3.1,ty:1.1,tx:0,tz:-14,sp:.06}}];
 function resetWorld(){SOL.length=0;GRID.clear();INST.length=0;LIGHTS.length=0;for(const m of[WM,PROPM,SKY,WATER,BARM])if(m&&m.vb)try{gl.deleteBuffer(m.vb)}catch(e){}WM=PROPM=SKY=WATER=BARM=null;PROPCPU=null;TGT=null}
 async function setMap(id){id=id===1?1:0;if(id===CURMAP)return;resetWorld();MAPID=id;MAPC=MAPS[id];buildMap();mkBar();CURMAP=id;FOGC[0]=MAPC.fog[0];FOGC[1]=MAPC.fog[1];FOGC[2]=MAPC.fog[2];FOGN=MAPC.fn;FOGF=MAPC.ff}
 function buildMap(){
@@ -24346,7 +24346,7 @@ function buildMap(){
   // ---------- PIZZARIA DO PIXEL (mapa próprio, no estilo do jogo): salão com palco, bastidores, teatrinho, banheiros, cozinha, fliperamas,
   //            dois corredores até a sala de segurança, depósito e sala de festa. Pé-direito de 3 m. Tudo feito de caixas, como a mansão.
   let sd=20261104;const RR=()=>{sd=(sd*1103515245+12345)&0x7fffffff;return sd/0x7fffffff};   // sorteio igual em todos os aparelhos
-  const HT=3,WL=(hi,lo)=>({hi,lo,tr:1}),CRM=F_('#e8d8b0',0),CHK=F_('#ffffff',4,.5),CHKR=F_('#ff8a8a',4,.5);
+  const HT=4.2,WL=(hi,lo)=>({hi,lo,tr:1}),CRM=F_('#e8d8b0',0),CHK=F_('#ffffff',4,.5),CHKR=F_('#ff8a8a',4,.5);
   const WD_=WL(CRM,CHKR),WH_=WL(F_('#a8b4c8',0),CHK),WK_=WL(F_('#ffffff',15,.8),F_('#ffffff',15,.8)),WB_=WL(F_('#b8a898',7,1.2),F_('#9a8a7a',7,1.2)),WO_=WL(F_('#7a8a9a',0),F_('#5a3a22',8,.6)),
    WP_=WL(F_('#c8b0e8',0),CHK),WT_2=WL(F_('#3a2a5a',0),F_('#2a1a40',8,.6)),WS_=WL(F_('#8a8070',0),F_('#6a6050',8,.6)),WA_=WL(F_('#2a2a48',0),F_('#1a1a30',0));
   // chão, teto e limites
@@ -24369,26 +24369,28 @@ function buildMap(){
   wallZ(-4,-6,4,0,HT,WS_,WH_,[[-2,1.2,2.2]]);wallZ(4,-6,4,0,HT,WH_,WP_,[[-2,1.4,2.2]]);
   wallZ(-1.6,-6,4,0,HT,WH_,WO_,[[-3.5,1,2.1],[.7,1.05,2.2]]);wallZ(1.6,-6,4,0,HT,WO_,WH_,[[.7,1.05,2.2]]);wallX(-1,-1.6,1.6,0,HT,WS_,WO_,[]);
   // lâmpada de teto (cúpula pendurada) + luz
-  const lamp=(x,z,r,c)=>{W.cyl(x,2.62,z,.012,.012,.38,3,hx2('#222'));W.cyl(x,2.42,z,.32,.06,.2,10,hx2('#2a6a4a'),1);W.cyl(x,2.42,z,.3,.3,.005,10,GLO('#fff2c8',10)[0],2);light(x,2.3,z,r,c||[1,.85,.6])};
-  for(const x of[-6,0,6])for(const z of[-17.5,-10])lamp(x,z,7.5);
+  const lamp=(x,z,r,c)=>{const y=HT-1.05;W.cyl(x,y+.25,z,.012,.012,HT-y-.25,3,hx2('#222'));W.cyl(x,y,z,.42,.07,.25,12,hx2('#2a6a4a'),1);W.cyl(x,y,z,.4,.4,.005,12,GLO('#fff2c8',0)[0],2);W.sph(x,y+.02,z,.1,2,6,GLO('#fff8e0',0)[0]);light(x,y-.1,z,r,c||[1,.86,.62])};
+  // painéis de luz no teto (corredores e salas)
+  const panel=(x,z,w,d,r,c)=>{W.box(x-w,HT-.03,z-d,x+w,HT,z+d,GLO('#f4f0e0',0));light(x,HT-.35,z,r,c||[.95,.95,1])};
+  for(const x of[-6,0,6])for(const z of[-18,-10.5])lamp(x,z,9.5);
   // ---------- palco ----------
   blk(-6,0,-25.9,4,.6,-21,[F_('#ffffff',1,1.2),PLAIN,F_('#5a2a1a',8,.6),F_('#5a2a1a',8,.6),F_('#5a2a1a',8,.6),F_('#5a2a1a',8,.6)]);
   blk(-2,0,-21,0,.2,-20.6,F_('#7a4a2a',8,.6));blk(-2,0,-21,0,.4,-20.8,F_('#7a4a2a',8,.6));
-  for(let i=0;i<14;i++){const x=-5.8+i*.7;W.box(x,.6,-26,x+.36,2.95,-25.85,F_(i%2?'#a01828':'#c8202e',9,.3));W.box(x+.36,.6,-25.98,x+.7,2.95,-25.88,F_('#8a1420',9,.3))}
-  for(const s of[-1,1]){const x=s>0?4.2:-6.2;W.box(x-.3,0,-25.9,x+.3,2.95,-21.2,F_('#a01828',9,.3));addS({x0:x-.3,y0:0,z0:-25.9,x1:x+.3,y1:2.95,z1:-21.2,p:-1})}
-  W.box(-6,2.7,-21.4,4,2.95,-21.1,F_('#c8a040',8,.4));for(let i=0;i<20;i++)W.sph(-5.8+i*.52,2.62,-21.12,.05,2,4,GLO(i%2?'#ffd23f':'#ff6a3a',0)[0]);
+  for(let i=0;i<14;i++){const x=-5.8+i*.7;W.box(x,.6,-26,x+.36,HT-.05,-25.85,F_(i%2?'#a01828':'#c8202e',9,.3));W.box(x+.36,.6,-25.98,x+.7,HT-.05,-25.88,F_('#8a1420',9,.3))}
+  for(const s of[-1,1]){const x=s>0?4.2:-6.2;W.box(x-.3,0,-25.9,x+.3,HT-.05,-21.2,F_('#a01828',9,.3));addS({x0:x-.3,y0:0,z0:-25.9,x1:x+.3,y1:HT-.05,z1:-21.2,p:-1})}
+  W.box(-6,HT-.6,-21.4,4,HT-.05,-21.1,F_('#c8a040',8,.4));for(let i=0;i<20;i++)W.sph(-5.8+i*.52,HT-.68,-21.12,.05,2,4,GLO(i%2?'#ffd23f':'#ff6a3a',0)[0]);
   // letreiro "pizza" em cima do palco (fatia gigante com bolinhas de luz)
-  W.box(-2.6,1.8,-25.84,1.6,2.75,-25.8,F_('#1a1028',0));W.tri([-2.3,2.65,-25.79],[1.3,2.65,-25.79],[-.5,1.9,-25.79],hx2('#e8a040'));W.tri([-2.1,2.58,-25.78],[1.1,2.58,-25.78],[-.5,1.98,-25.78],hx2('#ffd860'));
-  for(const[a,b]of[[-1.2,2.45],[0,2.4],[-.5,2.2],[.3,2.5]])W.sph(a,b,-25.77,.07,2,6,hx2('#c0282a'),.4);for(let i=0;i<12;i++){const a=i/12;W.sph(-2.5+a*4,1.85,-25.78,.035,2,4,GLO('#fff2a0',0)[0])}
+  W.box(-2.6,2.3,-25.84,1.6,3.25,-25.8,F_('#1a1028',0));W.tri([-2.3,3.15,-25.79],[1.3,3.15,-25.79],[-.5,2.4,-25.79],hx2('#e8a040'));W.tri([-2.1,3.08,-25.78],[1.1,3.08,-25.78],[-.5,2.48,-25.78],hx2('#ffd860'));
+  for(const[a,b]of[[-1.2,2.95],[0,2.9],[-.5,2.7],[.3,3.0]])W.sph(a,b,-25.77,.07,2,6,hx2('#c0282a'),.4);for(let i=0;i<12;i++){const a=i/12;W.sph(-2.5+a*4,2.35,-25.78,.035,2,4,GLO('#fff2a0',0)[0])}
   for(const x of[-5.3,3.3]){furn(x,.6,-24.8,0,.35,1.1,.3,m=>{m.bx(0,.55,0,.35,.55,.3,F_('#1a1a1e'));m.cyl(0,.75,.3,.18,.18,.01,10,hx2('#3a3a40'),1);m.cyl(0,.3,.3,.12,.12,.01,10,hx2('#3a3a40'),1)})}
-  for(const x of[-4,-.5,2.5]){W.cyl(x,2.75,-21.25,.08,.11,.2,8,hx2('#1a1a1e'),2);W.cyl(x,2.75,-21.25,.1,.1,.005,8,GLO('#ffffff',0)[0],2)}
-  light(-3,2.3,-23,6,[1,.45,.85]);light(1.8,2.3,-23,6,[.45,.65,1.3]);
+  for(const x of[-4,-.5,2.5]){W.cyl(x,HT-.85,-21.25,.08,.11,.2,8,hx2('#1a1a1e'),2);W.cyl(x,HT-.85,-21.25,.1,.1,.005,8,GLO('#ffffff',0)[0],2)}
+  light(-3.2,2.9,-23.2,7.5,[1.2,.5,1]);light(1.8,2.9,-23.2,7.5,[.5,.7,1.4]);light(-.7,3.4,-20.5,7,[1,.92,.75]);
   // bandeirinhas nas paredes do salão
   const flags=(x0,z0,x1,z1)=>{const L=hypot(x1-x0,z1-z0),n=floor(L/.45),C=['#e53935','#ffd23f','#1e88e5','#43a047','#ff7ac8'];for(let i=0;i<n;i++){const t=i/n,t2=(i+.8)/n,x=lerp(x0,x1,t),z=lerp(z0,z1,t),xb=lerp(x0,x1,t2),zb=lerp(z0,z1,t2),sg=.12*sin(t*PI*3);
-   const c=hx2(C[i%5]);W.tri([x,2.6-sg,z],[xb,2.6-sg,zb],[(x+xb)/2,2.35-sg,(z+zb)/2],c);W.tri([xb,2.6-sg,zb],[x,2.6-sg,z],[(x+xb)/2,2.35-sg,(z+zb)/2],c)}};
+   const c=hx2(C[i%5]);const Y=HT-.55;W.tri([x,Y-sg,z],[xb,Y-sg,zb],[(x+xb)/2,Y-.25-sg,(z+zb)/2],c);W.tri([xb,Y-sg,zb],[x,Y-sg,z],[(x+xb)/2,Y-.25-sg,(z+zb)/2],c)}};
   flags(-9.8,-6.2,-9.8,-25.8);flags(9.8,-25.8,9.8,-6.2);flags(-9.7,-6.25,-4,-6.25);flags(4,-6.25,9.7,-6.25);
   // cartazes de pizza nas paredes
-  const pzPost=(x,y,z,ry,c)=>{W.at(x,y,z,ry);W.bx(0,0,0,.45,.6,.02,F_(c||'#3a1060'));W.tri([-.3,.38,.025],[.3,.38,.025],[0,-.35,.025],hx2('#e8a040'));W.tri([-.25,.32,.03],[.25,.32,.03],[0,-.27,.03],hx2('#ffd860'));
+  const pzPost=(x,y,z,ry,c)=>{y+=.3;W.at(x,y,z,ry);W.bx(0,0,0,.45,.6,.02,F_(c||'#3a1060'));W.tri([-.3,.38,.025],[.3,.38,.025],[0,-.35,.025],hx2('#e8a040'));W.tri([-.25,.32,.03],[.25,.32,.03],[0,-.27,.03],hx2('#ffd860'));
    W.bx(-.08,.15,.035,.05,.05,.003,F_('#c0282a'));W.bx(.08,.05,.035,.05,.05,.003,F_('#c0282a'));W.bx(0,-.5,.03,.38,.06,.003,F_('#ffd23f'));W.at()};
   pzPost(-9.84,1.8,-14,PI/2);pzPost(-9.84,1.8,-22.5,PI/2,'#0a3a5a');pzPost(9.84,1.8,-14,-PI/2,'#5a1a1a');pzPost(9.84,1.8,-22,-PI/2);pzPost(-6,1.8,-6.16,PI,'#1a4a2a');pzPost(6,1.8,-6.16,PI,'#3a1060');
   // mesas compridas de festa
@@ -24399,41 +24401,41 @@ function buildMap(){
   furn(-13,0,-13.4,0,2,1.9,.4,m=>{m.bx(0,.5,0,1.9,.5,.4,F_('#5a3218',8,.5));m.bx(-1.75,1.4,0,.15,.9,.35,F_('#5a3218',8,.5));m.bx(1.75,1.4,0,.15,.9,.35,F_('#5a3218',8,.5));m.bx(0,2.2,0,1.9,.2,.4,F_('#5a3218',8,.5));
    for(let i=0;i<10;i++)m.bx(-1.55+i*.345,1.42,.1,.16,.8,.04,F_(i%2?'#6a2a9a':'#7a3aaa',9,.3));for(let i=0;i<8;i++)m.sph(-1.6+i*.46,2.32,.42,.05,2,4,GLO('#ffd23f',0)[0])});
   for(const z of[-10.5,-8.5])furn(-13,0,z,0,1.4,.45,.22,m=>{m.bx(0,.42,0,1.4,.04,.22,F_('#ffffff',8,.5));for(const a of[-1,1])m.bx(a*1.2,.2,0,.06,.2,.18,F_('#3a2a1a'))});
-  light(-13,2.4,-11,6,[.8,.5,1]);
+  light(-13,3.4,-11,8,[.95,.6,1.15]);panel(-13,-8,.5,.5,6,[.9,.8,1]);
   // bastidores (depósito do palco)
   const shelf=(x,z,ry,w)=>furn(x,0,z,ry,w,2.2,.3,m=>{for(let k=0;k<4;k++)m.bx(0,.15+k*.6,0,w,.025,.3,F_('#8a8a90'));for(const a of[-1,1])for(const c of[-1,1])m.bx(a*(w-.03),1.1,c*.27,.025,1.1,.025,F_('#6a6a70'));
    for(let k=0;k<3;k++)for(let i=0;i<floor(w*2);i++)if((i*7+k*3)%4)m.bx(-w+.25+i*.5,.35+k*.6,0,.18,.18,.2,F_(['#c89a6a','#a07a52','#d8b48a'][(i+k)%3],8,.3))});
   shelf(-15.6,-21,PI/2,2);shelf(-15.6,-17,PI/2,1.6);shelf(-12.5,-25.6,0,1.8);
   furn(-12.5,0,-16,0,1,.9,.5,m=>{m.bx(0,.85,0,1,.05,.5,F_('#ffffff',8,.5));for(const a of[-1,1])for(const c of[-1,1])m.bx(a*.9,.42,c*.42,.05,.42,.05,F_('#3a3a40'))});
-  light(-13,2.4,-20,6.5,[.85,.75,.6]);light(-13,2.4,-15.5,5,[.8,.7,.6]);
+  panel(-13,-20.5,.5,.8,8,[1,.9,.75]);panel(-13,-16,.5,.8,7,[1,.9,.75]);
   // banheiros (cabines e pias)
   for(const z of[-5,-3,-1]){blk(-16,0,z+.95,-14.2,2.1,z+1.05,F_('#7aa0c8'));W.cyl(-15.6,0,z+.1,.18,.22,.42,8,hx2('#f4f6f8'),1);addS({x0:-15.85,y0:0,z0:z-.15,x1:-15.35,y1:.45,z1:z+.35,p:-1})}
   blk(-14.2,0,-5.95,-14.1,2.1,.05,F_('#7aa0c8'));for(const z of[-5,-3,-1])W.box(-14.22,0,z-.8,-14.08,2.0,z+.8,F_('#5a80a8'));
   furn(-10.45,0,2.5,-PI/2,1.4,.9,.3,m=>{m.bx(0,.85,0,1.4,.05,.3,F_('#ffffff',13,.6));for(const a of[-.8,0,.8]){m.cyl(a,.86,0,.16,.12,.05,8,hx2('#f4f6f8'),1);m.bx(a,1.6,-.25,.3,.35,.02,GLO('#9ab8d0',140))}m.bx(0,.42,0,1.35,.42,.25,F_('#e8e8ec'))});
-  light(-13,2.4,-1,6,[.75,.8,.85]);
+  panel(-13,-3,.4,.7,7);panel(-13,1.6,.4,.7,6.5);
   // cozinha (forno de pizza, balcões, geladeira)
   furn(13.5,0,-24,-PI/2,1.4,2.2,.5,m=>{m.bx(0,.5,0,1.4,.5,.5,F_('#ffffff',7,1));m.sph(0,1.1,0,1.1,4,10,hx2('#b05a3a'),.9,7);m.bx(0,1.1,.75,.4,.28,.08,F_('#140c08'));m.bx(0,1.0,.6,.32,.08,.2,GLO('#ff7a1a',30));m.cyl(0,1.9,-.2,.15,.15,1,6,hx2('#6a6a70'))});
   light(12.5,1.2,-24,5,[1,.5,.2]);LIGHTS[LIGHTS.length-1].fl=1;
   furn(10.45,0,-22,PI/2,2.5,.95,.35,m=>{m.bx(0,.45,0,2.5,.45,.33,F_('#c8c8d0'));m.bx(0,.92,0,2.55,.03,.36,F_('#ffffff',13,.8))});
   furn(13.5,0,-16,-PI/2,.6,2,.6,m=>{m.bx(0,1,0,.6,1,.6,F_('#eaf0f2'));m.bx(.45,1.1,.61,.03,.3,.02,F_('#a0a8b0'))});
   furn(12,0,-19,0,1.2,.95,.5,m=>{m.bx(0,.45,0,1.2,.45,.5,F_('#c8c8d0'));m.bx(0,.92,0,1.25,.03,.55,F_('#ffffff',13,.8))});
-  light(12,2.4,-19,6,[.85,.88,.95]);
+  panel(12,-23,.5,.8,7.5);panel(12,-17.5,.5,.8,7.5);
   // sala dos fliperamas (escura, com luzes coloridas) e piscina de bolinhas
   blk(11.4,0,-13.6,13.8,.5,-11.2,[F_('#1e88e5'),PLAIN,F_('#1e88e5'),F_('#1e88e5'),F_('#1e88e5'),F_('#1e88e5')]);
   {const C=['#e53935','#ffd23f','#1e88e5','#43a047','#ff7ac8'];for(let i=0;i<70;i++){const x=11.55+RR()*2.1,z=-13.45+RR()*2.1;W.sph(x,.5+RR()*.06,z,.09,2,5,hx2(C[i%5]))}}
-  light(12,2.3,-12.4,5,[.6,.4,1.1]);light(12,2.3,-8,5,[1,.4,.6]);
+  light(12,3.2,-12.4,7,[.75,.5,1.4]);light(12,3.2,-8,7,[1.3,.5,.75]);
   // depósito
-  shelf(-9.6,-3,-PI/2,1.6);shelf(-7,3.6,PI,1.6);furn(-5,0,3.5,PI,.8,1,.4,m=>{m.bx(0,.5,0,.8,.5,.4,F_('#6a6a70'))});light(-7,2.4,-1,6,[.8,.78,.7]);
+  shelf(-9.6,-3,-PI/2,1.6);shelf(-7,3.6,PI,1.6);furn(-5,0,3.5,PI,.8,1,.4,m=>{m.bx(0,.5,0,.8,.5,.4,F_('#6a6a70'))});panel(-7,-3,.6,.6,7.5);panel(-7,1.8,.6,.6,6.5);
   // corredores
-  light(-2.8,2.5,-3.5,5,[.6,.65,.8]);light(-2.8,2.5,2,4.5,[.55,.6,.75]);light(2.8,2.5,-3.5,5,[.6,.65,.8]);light(2.8,2.5,2,4.5,[.55,.6,.75]);
+  panel(-2.8,-3.5,.4,.9,6.5,[.85,.9,1]);panel(-2.8,2,.4,.9,6,[.85,.9,1]);panel(2.8,-3.5,.4,.9,6.5,[.85,.9,1]);panel(2.8,2,.4,.9,6,[.85,.9,1]);
   pzPost(-3.98,1.6,0,PI/2,'#5a1a1a');pzPost(3.98,1.6,-3,-PI/2,'#0a3a5a');
   // sala de segurança (mesa com telas, ventilador de mesa)
   furn(0,0,-.65,0,1.5,.85,.32,m=>{m.bx(0,.78,0,1.5,.04,.32,F_('#5a5a60'));m.bx(0,.38,-.1,1.45,.38,.2,F_('#3a3a40'));for(const a of[-.9,0,.9]){m.bx(a,1.08,-.12,.28,.2,.12,F_('#2a2a2e'));m.bx(a,1.08,-.005,.24,.16,.004,GLO('#3a8ac0',90))}});
-  W.box(-1.4,1.3,-.86,1.4,2.3,-.84,GLO('#0a1424',150));light(0,2.4,1.6,4.5,[1,.9,.7]);
+  W.box(-1.4,1.4,-.86,1.4,2.6,-.84,GLO('#0a1424',150));lamp(0,1.8,5.5,[1,.9,.72]);light(0,1.1,-.3,3,[.4,.7,1.2]);
   // sala de festa (mesa comprida, balões)
   furn(9,0,-1,0,2.6,.8,.6,m=>{m.bx(0,.76,0,2.6,.03,.6,F_('#ffffff',8,.5));m.bx(0,.792,0,2.64,.005,.64,F_('#ffffff',9,.4));for(const a of[-1,1])for(const c of[-1,1])m.bx(a*2.45,.37,c*.5,.04,.37,.04,F_('#c0c0c8'))});
-  {const C=['#e53935','#ffd23f','#1e88e5','#43a047','#ff7ac8'];for(let i=0;i<9;i++){const x=5+RR()*8.5,z=-5.4+RR()*9,y=2.3+RR()*.4;W.sph(x,y,z,.18,4,8,hx2(C[i%5]),1.2);W.cyl(x,.9,z,.004,.004,y-1.1,3,hx2('#ddd'))}}
-  light(7,2.4,-2.5,6.5,[1,.8,.9]);light(11.5,2.4,1.5,5,[1,.85,.7]);
+  {const C=['#e53935','#ffd23f','#1e88e5','#43a047','#ff7ac8'];for(let i=0;i<9;i++){const x=5+RR()*8.5,z=-5.4+RR()*9,y=3.0+RR()*.6;W.sph(x,y,z,.18,4,8,hx2(C[i%5]),1.2);W.cyl(x,.9,z,.004,.004,y-1.1,3,hx2('#ddd'))}}
+  lamp(6.5,-2.5,8,[1.1,.85,.95]);lamp(11.5,1.2,7,[1.1,.88,.75]);
   // ---------- objetos de esconder (posições sorteadas com semente fixa: iguais para todo mundo) ----------
   for(const[x,z]of TB){for(let k=0;k<3;k++){const zz=z-1.2+k*1.2;prop(29,x-.98,0,zz,PI/2,1);prop(29,x+.98,0,zz,-PI/2,1)}
    for(let k=0;k<3;k++){const t=[30,31,32,33,30][floor(RR()*5)];prop(t,x+(RR()-.5)*.8,.8,z-1.2+k*1.2+(RR()-.5)*.3,RR()*6.28,2)}}
@@ -24682,6 +24684,7 @@ let W_=1,H_=1,qScale=1;
 function camUpdate(dt){
  if(S.st!=='game'){const mc=MAPC.menu,t=S.t*mc.sp+2.2;CAM.x=mc.cx+sin(t)*mc.r;CAM.z=mc.cz+cos(t)*mc.r;CAM.y=mc.y+sin(t*1.7)*(MAPID?0.15:2);const tx=mc.tx,ty=mc.ty,tz=mc.tz;M4.persp(PJ,1.0,W_/H_,.1,180);M4.look(VW,CAM.x,CAM.y,CAM.z,tx,ty,tz);M4.mul(VP,PJ,VW);
   const l=hypot(tx-CAM.x,ty-CAM.y,tz-CAM.z);CAM.dx=(tx-CAM.x)/l;CAM.dy=(ty-CAM.y)/l;CAM.dz=(tz-CAM.z)/l;return}
+ if(window.PH_CAMFIX){const f=window.PH_CAMFIX;CAM.x=f[0];CAM.y=f[1];CAM.z=f[2];const l=hypot(f[3]-f[0],f[4]-f[1],f[5]-f[2]);CAM.dx=(f[3]-f[0])/l;CAM.dy=(f[4]-f[1])/l;CAM.dz=(f[5]-f[2])/l;CAM.piv=[f[0],f[1],f[2]];M4.persp(PJ,1.15,W_/H_,.12,130);M4.look(VW,f[0],f[1],f[2],f[3],f[4],f[5]);M4.mul(VP,PJ,VW);return}
  let tx=ME.x,tz=ME.z,ty=ME.y;let spec=null;if(ME.role==='x'){spec=specTarget();if(spec){tx=spec.x;ty=spec.y;tz=spec.z}}
  const h=spec?1.6:min(1.6,myH()*.9+.25),dist=ME.role==='s'?3.1:ME.prop>=0?2.4+myH()*.9:3.0;
  const cp=ME.cp,cy=ME.cy,dx=sin(cy)*cos(cp),dy=sin(cp),dz=cos(cy)*cos(cp);
