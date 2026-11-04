@@ -5474,7 +5474,7 @@ function vis(id){const e=$h(id);if(!e)return null;const cs=getComputedStyle(e);i
 function lay(force){try{own();icons();news();
  const H=innerHeight,W=innerWidth,B=document.body,md=B.classList.contains('mdOpen');
  const sm=$h('startM'),hide=(sm&&sm.style.display==='flex')||!!vis('rot');B.classList.toggle('dkHide',hide);if(hide)return;
- const ds=Math.max(32,Math.min(46,Math.round(Math.min(H*.11,W*.06)))),gap=6,step=ds+gap;
+ const ds=Math.max(30,Math.min(42,Math.round(Math.min(H*.095,W*.052)))),gap=6,step=ds+gap;
  // esquerda: embaixo do dinheiro/missão, sem chegar no joystick
  let top=10;if(!md){const h=vis('hud'),q=vis('quest');top=(h?h.bottom:40)+8;if(q&&$h('quest').textContent.trim())top=Math.max(top,q.bottom+8)}
  const qm=vis('qMt'),botL=md?10:(qm?H-qm.top+8:Math.max(158,H-(vis('joy')||{top:H-150}).top+10));
@@ -9430,7 +9430,7 @@ const SHEET={
 'use strict';
 const PI=Math.PI,TAU=PI*2,sin=Math.sin,cos=Math.cos,hypot=Math.hypot,min=Math.min,max=Math.max,rnd=Math.random;
 // ---------- cor de cada mundo (desvios: 0 = sem mudança) · sat, contraste, tom r/g/b ----------
-const GR={field:[.12,.06,.03,.01,-.03],db:[.10,.08,.05,.01,-.06],hal:[.06,.04,-.03,-.05,.05],halIn:[.05,.04,.03,-.03,0],ice:[-.05,.06,-.05,0,.06],hall:[.06,.06,.05,-.02,-.04],lich:[0,.04,-.02,.03,-.02],raid:[.05,.05,0,0,0]};
+const GR={ocean:[-.06,.06,.02,.01,-.02],ninja:[.04,.05,.02,0,-.02],field:[.12,.06,.03,.01,-.03],db:[.10,.08,.05,.01,-.06],hal:[.06,.04,-.03,-.05,.05],halIn:[.05,.04,.03,-.03,0],ice:[-.05,.06,-.05,0,.06],hall:[.06,.06,.05,-.02,-.04],lich:[0,.04,-.02,.03,-.02],raid:[.05,.05,0,0,0]};
 const Z=[0,0,0,0,0];
 const G=window.GFX2={on:true,GR};
 try{if(localStorage.getItem('mp_fx2')==='0')G.on=false}catch(e){}
@@ -9656,8 +9656,8 @@ H3.lodDraw=(ms,d,edges,mt,lights,dyn,o)=>{const BF=.16;let l=0;while(l<edges.len
  mesh(A,mt,lights,dyn,Object.assign({},o,{di:1-t}));mesh(B,mt,lights,dyn,Object.assign({},o,{di:-t}))};
 // some/aparece suave perto do limite de distância (em vez de sumir de uma vez)
 H3.farFade=(d,far)=>{const k=far*.12;return d<far-k?1:max(0,(far-d)/k)};
-const P={lit:null,spr:null,out:null,ter:null,sky:null,sh:null,pix:null,rays:null},U={},UO={},UT={},US={},USH={},UPX={},URY={},tex={};
-const RTS={main:null,sh:null,occ:null};let qbuf=null,shTex1=null,MAXT=2048;      // alvos de desenho fora da tela (filtro de pixels, sombras, raios de sol)
+const P={lit:null,spr:null,out:null,ter:null,sky:null,sh:null,pix:null,rays:null,brt:null,blr:null,cmp:null},U={},UO={},UT={},US={},USH={},UPX={},URY={},UPP={b:{},l:{},c:{}},tex={};
+const RTS={main:null,sh:null,occ:null,ppA:null,ppB:null};let PPT=null,PPW=0,PPH=0;let qbuf=null,shTex1=null,MAXT=2048;      // alvos de desenho fora da tela (filtro de pixels, sombras, raios de sol)
 const VS_LIT=`attribute vec3 aP;attribute vec3 aN;attribute vec4 aC;uniform mat4 uVP;uniform mat4 uM;varying vec3 vP;varying vec3 vN;varying vec4 vC;
 void main(){vec4 w=uM*vec4(aP,1.0);vP=w.xyz;vN=(uM*vec4(aN,0.0)).xyz;vC=aC;gl_Position=uVP*w;}`;
 const FS_LIT=nl=>`#ifdef GL_FRAGMENT_PRECISION_HIGH
@@ -9706,18 +9706,19 @@ const GL_COMMON=`uniform vec3 uCam;uniform vec3 uSun;uniform vec3 uSunC;uniform 
 float cloudSh(vec3 p){float c=texture2D(uCloud,p.xz*0.00085+vec2(uT*0.0045,uT*0.0016)).r;return 1.0-0.36*smoothstep(0.5,0.8,c);}
 vec3 skyAt(vec3 d){float h=clamp(d.y,0.0,1.0);vec3 s=mix(uSkyB,uSkyA,pow(h,0.5));float sd=max(dot(d,uSun),0.0);return s+uSunC*(pow(sd,64.0)*0.5+pow(sd,6.0)*0.1);}
 vec3 waterShade(vec3 base,vec3 p,vec3 V,float cs){
- float t=uT;vec2 q=p.xz;
+ float t=uT;vec2 q=p.xz;float fk=1.0/(1.0+length(uCam-p)*0.0045);
  float a=sin(q.x*0.31+t*1.3+sin(q.y*0.17+t*0.5)*1.7);
  float b=sin(q.y*0.27-t*1.1+sin(q.x*0.21-t*0.4)*1.5);
  float c=sin((q.x+q.y)*0.53+t*1.9);
- vec3 n=normalize(vec3(a*0.10+c*0.06,1.0,b*0.10+c*0.06));
+ float s1=sin(q.x*0.023+q.y*0.011+t*0.62),s2=sin(q.y*0.019-q.x*0.008-t*0.47);
+ vec3 n=normalize(vec3((a*0.10+c*0.06)*fk+s1*0.045,1.0,(b*0.10+c*0.06)*fk+s2*0.045));
  float fr=0.10+0.90*pow(1.0-max(dot(n,V),0.0),4.0);
  vec3 R=reflect(-V,n);vec3 refl=skyAt(vec3(R.x,abs(R.y)+0.02,R.z));
  float sd=max(dot(R,uSun),0.0);float gl=pow(sd,110.0)*1.8+pow(sd,14.0)*0.14;
  vec3 lg=mix(uGndA,uSkyA,0.75)+uSunC*(uSun.y*0.8)*cs;
  vec3 col=base*lg*(0.9+0.1*a*b);
  float sp=pow(max(sin(q.x*1.9+t*2.7+a*2.0)*sin(q.y*1.7-t*2.2+b*2.0),0.0),90.0)*smoothstep(0.0,0.3,uSun.y);
- return mix(col,refl,fr*0.72)+uSunC*(gl+sp*(0.12+fr*0.45))*cs;}
+ return mix(col,refl,fr*0.72)+uSunC*(gl+sp*fk*fk*(0.12+fr*0.45))*cs;}
 `;
 // sombras do sol (mapa de profundidade visto do sol, em volta do jogador): uSh = [0 desligado · 1 simples · 2 suave (PCF), deslocamento pela normal, início e fim do sumiço]
 const SH_COMMON=`uniform sampler2D uShT;uniform mat4 uSM;uniform vec4 uSh;uniform vec2 uShR;uniform vec3 uFoc;uniform vec4 uCut;
@@ -9841,6 +9842,25 @@ float m2(vec2 p){return mod(2.0*p.x+3.0*p.y,4.0);}
 void main(){vec3 c=texture2D(uTex,vU).rgb;
  vec2 p=floor(mod(gl_FragCoord.xy,4.0));float b=(4.0*m2(mod(p,2.0))+m2(floor(p/2.0))+0.5)/16.0-0.5;
  c=floor(c*uLv+0.5+b*uDt)/uLv;gl_FragColor=vec4(c,1.0);}`;
+// pós-processamento (efeitos de tela): a imagem pronta é copiada (já com o antisserrilhado), as partes claras viram um brilho borrado em 1/4 do tamanho
+// e tudo volta para a tela com uma curva de cor de cinema: meios-tons com mais contraste, cores fortes demais domadas, cores apagadas mais vivas,
+// luzes um pouco quentes e sombras um pouco frias. Não muda nada no jeito de desenhar a cena.
+const FS_BRT=`precision mediump float;varying vec2 vU;uniform sampler2D uTex;uniform vec2 uPx;uniform float uTh;
+void main(){vec3 c=(texture2D(uTex,vU+uPx*vec2(-1.0,-1.0)).rgb+texture2D(uTex,vU+uPx*vec2(1.0,-1.0)).rgb+texture2D(uTex,vU+uPx*vec2(-1.0,1.0)).rgb+texture2D(uTex,vU+uPx*vec2(1.0,1.0)).rgb)*0.25;
+ float l=max(c.r,max(c.g,c.b));gl_FragColor=vec4(c*smoothstep(uTh,uTh+0.22,l),1.0);}`;
+const FS_BLR=`precision mediump float;varying vec2 vU;uniform sampler2D uTex;uniform vec2 uD;
+void main(){vec3 c=texture2D(uTex,vU).rgb*0.2270;c+=(texture2D(uTex,vU+uD*1.3846).rgb+texture2D(uTex,vU-uD*1.3846).rgb)*0.3162;c+=(texture2D(uTex,vU+uD*3.2308).rgb+texture2D(uTex,vU-uD*3.2308).rgb)*0.0703;gl_FragColor=vec4(c,1.0);}`;
+const FS_CMP=`precision mediump float;varying vec2 vU;uniform sampler2D uTex;uniform sampler2D uBl;uniform float uBk;uniform vec4 uGr;uniform vec3 uWarm;uniform float uVig;uniform float uAsp;
+void main(){vec3 c=texture2D(uTex,vU).rgb;
+ if(uBk>0.0){vec3 b=texture2D(uBl,vU).rgb;c+=b*uBk*(1.0-c*0.45);}
+ float l=dot(c,vec3(0.299,0.587,0.114));
+ float s=max(c.r,max(c.g,c.b))-min(c.r,min(c.g,c.b));
+ c=mix(vec3(l),c,1.0+uGr.x*(1.0-s)-uGr.y*s*s);
+ c=mix(c,c*c*(3.0-2.0*c),uGr.z);
+ l=dot(c,vec3(0.299,0.587,0.114));
+ c+=uGr.w*(uWarm*smoothstep(0.45,1.0,l)-vec3(uWarm.b,uWarm.g*0.3,uWarm.r)*0.6*(1.0-smoothstep(0.0,0.35,l)));
+ if(uVig>0.0){vec2 d=(vU-0.5)*vec2(uAsp,1.0);c*=1.0-uVig*smoothstep(0.45,1.15,length(d));}
+ gl_FragColor=vec4(clamp(c,0.0,1.0),1.0);}`;
 const FS_RAYS=`#ifdef GL_FRAGMENT_PRECISION_HIGH
 precision highp float;
 #else
@@ -10033,10 +10053,12 @@ function setup(){
   gl.useProgram(P.ter);gl.uniformMatrix4fv(UT.uM,false,IDM);gl.uniform2f(UT.uSq,1,0);gl.useProgram(P.out);gl.uniform2f(UO.uSq,1,0);gl.useProgram(P.ter);
   skyMesh();H3.outOK=true}catch(e){console.error('H3 ao ar livre',e&&e.message||e);P.out=P.ter=P.sky=null;H3.outOK=false}
  // extras (cada um é opcional: se o aparelho não compilar, só aquele recurso fica desligado)
- P.sh=P.pix=P.rays=null;RTS.main=RTS.sh=RTS.occ=null;qbuf=null;shTex1=null;
+ P.sh=P.pix=P.rays=P.brt=P.blr=P.cmp=null;RTS.main=RTS.sh=RTS.occ=RTS.ppA=RTS.ppB=null;PPT=null;PPW=PPH=0;qbuf=null;shTex1=null;
  try{P.sh=program(VS_SH,FS_SH,['aP','aN','aC']);Object.assign(USH,uloc(P.sh,['uVP','uM','uTv','uWind','uPk']))}catch(e){console.error('H3 sombras',e&&e.message||e);P.sh=null}
  try{P.pix=program(VS_Q,FS_PIX,['aP']);Object.assign(UPX,uloc(P.pix,['uTex','uLv','uDt']))}catch(e){console.error('H3 pixels',e&&e.message||e);P.pix=null}
  try{P.rays=program(VS_Q,FS_RAYS,['aP']);Object.assign(URY,uloc(P.rays,['uOcc','uSunP','uCol','uK','uAsp']))}catch(e){console.error('H3 raios',e&&e.message||e);P.rays=null}
+ try{P.cmp=program(VS_Q,FS_CMP,['aP']);UPP.c=uloc(P.cmp,['uTex','uBl','uBk','uGr','uWarm','uVig','uAsp']);
+  P.brt=program(VS_Q,FS_BRT,['aP']);UPP.b=uloc(P.brt,['uTex','uPx','uTh']);P.blr=program(VS_Q,FS_BLR,['aP']);UPP.l=uloc(P.blr,['uTex','uD'])}catch(e){console.error('H3 pós',e&&e.message||e);if(!P.cmp)P.brt=P.blr=null}
  qbuf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,qbuf);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,1,1,-1,-1,1,1,-1,1]),gl.STATIC_DRAW);
  {const t=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,t);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,1,1,0,gl.RGBA,gl.UNSIGNED_BYTE,new Uint8Array([255,255,255,255]));shTex1=t}
  MAXT=Math.min(gl.getParameter(gl.MAX_TEXTURE_SIZE)||2048,gl.getParameter(gl.MAX_RENDERBUFFER_SIZE)||2048);
@@ -10207,6 +10229,27 @@ H3.sunScreen=function(){const d=600,x=camP[0]+SUN[0]*d,y=camP[1]+SUN[1]*d,z=camP
 H3.post=function(){if(!curFB||!PIX||!RTS.main)return;gl.bindFramebuffer(gl.FRAMEBUFFER,null);curFB=null;gl.viewport(0,0,W,Hh);
  gl.disable(gl.DEPTH_TEST);gl.disable(gl.BLEND);gl.useProgram(P.pix);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,RTS.main.t);gl.uniform1i(UPX.uTex,0);
  gl.uniform1f(UPX.uLv,PIX.lv||31);gl.uniform1f(UPX.uDt,PIX.dt===undefined?1:PIX.dt);quad();gl.enable(gl.DEPTH_TEST)};
+// ---------- pós-processamento (efeitos de tela) no fim do quadro: o = {bloom, th, vib, tame, sc, split, warm:[r,g,b], vig} ----------
+H3.postFx=function(o){if(!o||!P.cmp||curFB||PIX||ISO||!gl||lost)return false;const w=W,h=Hh;
+ gl.activeTexture(gl.TEXTURE1);const t1=gl.getParameter(gl.TEXTURE_BINDING_2D);gl.activeTexture(gl.TEXTURE0);const t0=gl.getParameter(gl.TEXTURE_BINDING_2D);
+ if(!PPT||PPW!==w||PPH!==h){if(!PPT)PPT=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,PPT);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGB,w,h,0,gl.RGB,gl.UNSIGNED_BYTE,null);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);PPW=w;PPH=h}
+ gl.bindTexture(gl.TEXTURE_2D,PPT);gl.copyTexSubImage2D(gl.TEXTURE_2D,0,0,0,0,0,w,h);
+ gl.disable(gl.DEPTH_TEST);gl.disable(gl.BLEND);gl.depthMask(false);
+ let bk=0;const bw=max(1,w>>2),bh=max(1,h>>2);
+ if(o.bloom>0&&P.brt&&P.blr){RTS.ppA=rtMake(RTS.ppA,bw,bh,false,true);RTS.ppB=rtMake(RTS.ppB,bw,bh,false,true);
+  if(RTS.ppA&&RTS.ppB){gl.viewport(0,0,bw,bh);
+   gl.bindFramebuffer(gl.FRAMEBUFFER,RTS.ppA.fb);gl.useProgram(P.brt);gl.bindTexture(gl.TEXTURE_2D,PPT);gl.uniform1i(UPP.b.uTex,0);gl.uniform2f(UPP.b.uPx,1/w,1/h);gl.uniform1f(UPP.b.uTh,o.th||.75);quad();
+   gl.useProgram(P.blr);gl.uniform1i(UPP.l.uTex,0);
+   gl.bindFramebuffer(gl.FRAMEBUFFER,RTS.ppB.fb);gl.bindTexture(gl.TEXTURE_2D,RTS.ppA.t);gl.uniform2f(UPP.l.uD,1.4/bw,0);quad();
+   gl.bindFramebuffer(gl.FRAMEBUFFER,RTS.ppA.fb);gl.bindTexture(gl.TEXTURE_2D,RTS.ppB.t);gl.uniform2f(UPP.l.uD,0,1.4/bh);quad();
+   bk=o.bloom}}
+ gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.viewport(0,0,w,h);gl.useProgram(P.cmp);
+ gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,bk>0?RTS.ppA.t:PPT);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,PPT);
+ const u=UPP.c,wm=o.warm||[.035,.012,-.03];gl.uniform1i(u.uTex,0);gl.uniform1i(u.uBl,1);gl.uniform1f(u.uBk,bk);
+ gl.uniform4f(u.uGr,o.vib===undefined?.14:o.vib,o.tame===undefined?.2:o.tame,o.sc===undefined?.22:o.sc,o.split===undefined?1:o.split);gl.uniform3f(u.uWarm,wm[0],wm[1],wm[2]);gl.uniform1f(u.uVig,o.vig||0);gl.uniform1f(u.uAsp,w/h);quad();
+ gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,t1);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,t0);
+ gl.enable(gl.DEPTH_TEST);gl.depthMask(true);PFR.out=PFR.ter=PFR.sky=-1;return true};
 // segundo passe com projeção própria (braço em primeira pessoa): limpa a profundidade e desenha com outro campo de visão e plano de corte bem perto
 H3.begin2=function(fov){gl.clear(gl.DEPTH_BUFFER_BIT);gl.disable(gl.BLEND);gl.depthMask(true);gl.useProgram(P.lit);const p=new Float32Array(16),v=new Float32Array(16);M4.persp(p,fov,W/Hh,.1,900);M4.mul(v,p,VM);gl.uniformMatrix4fv(U.uVP,false,v)};
 // matriz que leva coordenadas "da câmera" (x direita, y cima, z para trás) para o mundo: serve para pendurar o braço na frente do olho
@@ -10877,6 +10920,17 @@ body.h3on #c{visibility:hidden}body.h3on #h3gl,body.h3on #h3ov{display:block}
  border:3px solid #fff;background:radial-gradient(circle at 35% 28%,#7fe0ff,#1565c0 72%);box-shadow:0 4px 0 #0008,0 0 12px #4fc3f799;color:#fff;font:900 11px/1 system-ui,sans-serif;letter-spacing:.3px;touch-action:none;user-select:none;-webkit-user-select:none}
 #jumpBtn svg{display:block;width:26px;height:26px;margin:0 auto 1px;fill:#fff;filter:drop-shadow(0 1px 0 #0008)}#jumpBtn:active,#jumpBtn.on{transform:scale(.9);filter:brightness(1.15)}
 body.h3on.h3j #jumpBtn{display:block}
+/* interface mais leve no 3D: vidro escuro meio transparente com só um anel fino na cor do HUD (a cena aparece mais que os botões) */
+body.h3on .dk .mi b{background:rgba(12,14,22,.36)!important;border:2px solid var(--hc1,#42a5f5)!important;box-shadow:0 2px 8px #0005!important}
+body.h3on .dk .mi b::after{background:radial-gradient(circle at 50% 25%,#ffffff1a,#0000 70%)!important;box-shadow:none!important}
+body.h3on .dk .mi b::before{background:radial-gradient(circle at 30% 12%,#ffffff2a,transparent 36%)!important}
+body.h3on .dk .mi b svg{width:52%;height:52%;filter:drop-shadow(0 1px 2px #000a)}
+body.h3on .dkT{background:rgba(12,14,22,.4)!important;border:2px solid var(--hc1,#42a5f5)!important;box-shadow:none!important;opacity:.85}
+body.h3on #hud{background:rgba(12,14,22,.42)!important;border:2px solid var(--hc1,#42a5f5)!important;box-shadow:0 2px 10px #0005!important;height:30px}
+body.h3on #persBtn{background:rgba(12,14,22,.42)!important;border:2px solid #ffffff60!important;box-shadow:none!important;min-width:88px;padding:4px 10px}
+body.h3on #persBtn b{font-size:13px}
+body.h3on #jumpBtn{width:56px;height:56px;background:rgba(12,14,22,.32)!important;border:2px solid #ffffffb0!important;box-shadow:0 2px 10px #0005!important}
+body.h3on #joy{background:radial-gradient(circle,#ffffff08,#ffffff18)!important;border:2px solid #ffffff55!important;box-shadow:none!important}
 #h3gl.pix{image-rendering:pixelated;image-rendering:crisp-edges}`;document.head.appendChild(st)}
 function mkBtn(){if(btn)return;css();btn=document.createElement('button');btn.className='btn';btn.id='persBtn';btn.innerHTML='<small>Perspectiva</small><b>2D</b>';document.body.appendChild(btn);
  btn.addEventListener('click',e=>{e.preventDefault();toMode((S.mode+1)%nModes())});
@@ -11318,6 +11372,7 @@ function frame(){
  // raios de sol (gráfico Alto, olhando para o lado do sol)
  if(!C.iso&&SC.rays)try{SC.rays(t,C)}catch(e){console.error('H3 raios',e);SC.rays=null}
  H3.post();
+ try{const pc=H3.ppCfg&&H3.ppCfg(SC);if(pc)H3.postFx(pc)}catch(e){console.error('H3 pós',e);H3.ppCfg=null}   // efeitos de tela (brilho e cor)
  if(S.mode===1&&!S.ctrOn){const pp=S.punchT?(t-S.punchT)/260:1;MOD.drawArm({ex:C.x,ey:C.y,ez:C.z,yaw:C.yaw,pitch:C.pitch,t,mv:S.moving&&S.jair<=0?1:0,pu:pp<1?pp:0,fov:1.15,jv:S.jv,jh:S.jair},SC.lights,FX.L)}
  overlay(t,C);blend2D();
  // 4) qualidade: se o aparelho está lento, desenha o 3D em menos pixels (a vista de cima já usa a resolução do 2D)
@@ -13560,7 +13615,13 @@ try{const o=JSON.parse(localStorage.getItem('mp_3d')||'{}')||{};
  if(ckS(o.sh)!==null&&ck(o.il)!==null&&ck(o.veg)!==null){G3.sh=o.sh|0;G3.il=o.il|0;G3.veg=o.veg|0}
  else if(o.lvl>=0&&o.lvl<=2){const l=o.lvl|0;G3.sh=[0,2,3][l];G3.il=[1,2,3][l];G3.veg=[0,2,3][l]}}catch(e){}       // versão antiga: um nível só
 if(G3.sh===undefined){G3.sh=mob?1:3;G3.il=mob?2:3;G3.veg=mob?2:3}
-const save=()=>{try{localStorage.setItem('mp_3d',JSON.stringify({sh:G3.sh,il:G3.il,veg:G3.veg,fov1:G3.fov1,fov3:G3.fov3}))}catch(e){}};
+if(G3.pp===undefined){let v=2;try{const o=JSON.parse(localStorage.getItem('mp_3d')||'{}')||{};if(o.pp>=0&&o.pp<=2)v=o.pp|0}catch(e){}G3.pp=v}
+const save=()=>{try{localStorage.setItem('mp_3d',JSON.stringify({sh:G3.sh,il:G3.il,veg:G3.veg,pp:G3.pp,fov1:G3.fov1,fov3:G3.fov3}))}catch(e){}};
+// efeitos de tela por mundo (ver H3.postFx): bloom = força do brilho · th = a partir de que claridade brilha · tame = doma cor forte demais · warm = luz quente/sombra fria
+const PPB={bloom:.32,th:.88,vib:.12,tame:.24,sc:.2,split:1,warm:[.03,.01,-.025],vig:0};
+const PPS={field:{bloom:.3,th:.88},db:{bloom:.28,th:.9,warm:[.04,.018,-.025]},ninja:{bloom:.3,th:.86,tame:.2},ocean:{bloom:.3,th:.9,tame:.36,vib:.08},
+ hal:{bloom:.75,th:.52,warm:[.01,0,.03],split:.8},halIn:{bloom:.8,th:.5},hall:{bloom:.85,th:.48},ice:{bloom:.5,th:.7,warm:[-.01,.01,.03]},lich:{bloom:.75,th:.5,warm:[.01,0,.03]}};
+const PPC={};H3.ppCfg=SC=>{const lv=G3.pp|0;if(!lv)return null;const id=(SC&&SC.id)||'',k=id+lv;let c=PPC[k];if(!c){c=PPC[k]=Object.assign({},PPB,PPS[id]||{});if(lv<2)c.bloom=0}return c};
 let CFG=null,CFGK='';
 const cur=()=>{const k=G3.sh+','+G3.il+','+G3.veg;if(k!==CFGK){CFGK=k;CFG=Object.assign({},VGT[G3.veg],SHT[G3.sh],ILT[G3.il])}return CFG};
 
@@ -13636,9 +13697,12 @@ SCN.field.rays=function(t,C){const L=cur();if(!L.rays||!H3.raysOk())return;
  H3.raysApply(sp[0],sp[1],look,SUNC)};
 
 // ---------- tela de configurações: Gráficos 3D ----------
+const PPN=['Desligado','Só cor','Cor + brilho'];
 const ROWS=[['sh','Sombras',['Sem sombras de verdade: o chão usa as sombras pintadas do 2D.','Sombras duras, só bem perto do personagem.','Sombras suaves em volta do personagem.','Sombras suaves e longas, até longe.','Como o Alto e mais: os personagens ficam claros no sol e escuros na sombra de árvores e casas. É o mais pesado.']],
  ['il','Iluminação',['Só o sol e o céu, sem tochas nem chamas iluminando.','Uma luz de tocha/chama por objeto.','Tochas, lava e chamas iluminando em volta, pólen brilhando.','Todas as luzes e raios de sol ao olhar para o céu.']],
- ['veg','Vegetação',['Sem capim, sem arbustos e sem folhas caindo; vista curta.','Capim só bem perto, poucas folhas caindo.','Capim em volta do personagem, folhas caindo.','Capim caprichado até onde a vista alcança, vista longa.']]];
+ ['veg','Vegetação',['Sem capim, sem arbustos e sem folhas caindo; vista curta.','Capim só bem perto, poucas folhas caindo.','Capim em volta do personagem, folhas caindo.','Capim caprichado até onde a vista alcança, vista longa.']],
+ ['pp','Efeitos de tela',['Imagem crua, sem ajuste de cor nem brilho (o mais leve).','Cor de cinema: contraste nos meios-tons, cores fortes domadas, luz quente e sombra fria.','Cor de cinema + brilho suave em volta do sol, das luzes, do fogo e da água.']]];
+const LVN=k=>k==='sh'?NM.concat(['Ultra']):k==='pp'?PPN:NM;
 function ui(){const box=document.querySelector('#cfgM .box');if(!box||document.getElementById('g3Sec'))return;
  const st=document.createElement('style');st.textContent=`
 #g3Sec{margin:12px 0 4px;padding:10px 10px 8px;border-radius:12px;background:#ffffff12}
@@ -13651,11 +13715,11 @@ function ui(){const box=document.querySelector('#cfgM .box');if(!box||document.g
 .g3D{font-size:10.5px;opacity:.72;margin:5px 2px 0;min-height:14px}
 #g3Sec .vRow{margin:6px 0;background:#00000030}`;document.head.appendChild(st);
  const sec=document.createElement('div');sec.id='g3Sec';
- sec.innerHTML=`<h3>Gráficos 3D</h3>${ROWS.map(([k,l])=>`<div class="g3Row" data-k="${k}"><div class="g3T">${l}<i></i></div><div class="g3Lv">${(k==='sh'?NM.concat(['Ultra']):NM).map((n,i)=>`<button data-l="${i}">${n}</button>`).join('')}</div><div class="g3D"></div></div>`).join('')}
+ sec.innerHTML=`<h3>Gráficos 3D</h3>${ROWS.map(([k,l])=>`<div class="g3Row" data-k="${k}"><div class="g3T">${l}<i></i></div><div class="g3Lv">${LVN(k).map((n,i)=>`<button data-l="${i}">${n}</button>`).join('')}</div><div class="g3D"></div></div>`).join('')}
 <div class="vRow"><span class="lb">FOV 1ª pessoa</span><input type="range" min="45" max="110" step="1" id="g3F1"><span class="pc" id="g3F1v"></span></div>
 <div class="vRow"><span class="lb">FOV 3ª pessoa</span><input type="range" min="45" max="110" step="1" id="g3F3"><span class="pc" id="g3F3v"></span></div>`;
  const tip=box.querySelector('div[style*="font-size:11px"]');if(tip)box.insertBefore(sec,tip);else box.appendChild(sec);
- const sync=()=>{for(const[k,,ds]of ROWS){const r=sec.querySelector('.g3Row[data-k="'+k+'"]'),v=G3[k];r.querySelectorAll('button').forEach(b=>b.classList.toggle('on',+b.dataset.l===v));r.querySelector('.g3D').textContent=ds[v];r.querySelector('.g3T i').textContent=(k==='sh'?NM.concat(['Ultra']):NM)[v]}
+ const sync=()=>{for(const[k,,ds]of ROWS){const r=sec.querySelector('.g3Row[data-k="'+k+'"]'),v=G3[k];r.querySelectorAll('button').forEach(b=>b.classList.toggle('on',+b.dataset.l===v));r.querySelector('.g3D').textContent=ds[v];r.querySelector('.g3T i').textContent=LVN(k)[v]}
   const f1=sec.querySelector('#g3F1'),f3=sec.querySelector('#g3F3');f1.value=G3.fov1;f3.value=G3.fov3;sec.querySelector('#g3F1v').textContent=G3.fov1+'°';sec.querySelector('#g3F3v').textContent=G3.fov3+'°'};
  for(const[k]of ROWS)sec.querySelectorAll('.g3Row[data-k="'+k+'"] button').forEach(b=>b.onclick=()=>{G3[k]=+b.dataset.l;save();sync();try{if(H3.S&&H3.S.mode)apply(true)}catch(e){console.error('H3 gfx',e)}});
  const f1=sec.querySelector('#g3F1'),f3=sec.querySelector('#g3F3');
@@ -23587,7 +23651,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261103215453;
+const GAME_BUILD=20261104035711;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
@@ -26466,7 +26530,7 @@ function spurMeshN(){const mb=new MB(9660,{pk:true}),st=8,X0=RMX-544,Z0=WALLN-24
  return mb}
 // o mar de fora (além das bordas do mapa, nas duas laterais): água parada do Calm Belt até o horizonte
 let SEAO=null;
-function outerSea(){const mb=new MB(9900,{pk:true}),y=WL*K,G=600,c=mixc([28,92,170],[30,78,104],.62);
+function outerSea(){const mb=new MB(9900,{pk:true}),y=WL*K,G=600,c=mixc([24,80,134],[30,78,104],.62);mb.sw=15;
  for(const[x0,x1]of[[-6000,0],[MW,MW+6000]])for(let z=-600;z<MH+600;z+=G)for(let x=x0;x<x1;x+=G){const q=(a,b)=>[a*K,y,b*K];mb.wt(q(x,z),q(x,z+G),q(x+G,z+G),c,c,c,.06);mb.wt(q(x,z),q(x+G,z+G),q(x+G,z),c,c,c,.06)}
  return mb}
 Object.assign(FONT,{C:'01110100011000010000100001000101110',B:'11110100011000111110100011000111110',G:'01110100011000010111100011000101111','!':'00100001000010000100001000000000100'});
@@ -26591,8 +26655,8 @@ function boatMB(seed,small){const mb=new MB(seed||555,{pk:true});mb.jit=.03;cons
 
 // ---------- oceano e espuma da praia ----------
 const CS=600,NCX=MW/CS,NCZ=MH/CS,GC=20,WS=40;
-const SAND=[236,214,160],SAND2=[222,196,140],GR0=[84,164,58],GR1=[112,184,70],ROADC=[192,162,112];
-function waterCol(x,z){const h=baseH(x,z);const deep=clp((WL-h)/40,0,1);let c=mixc([96,214,206],[28,92,170],sm(0,.9,deep));const cb=calmK(x);if(cb>0)c=mixc(c,[30,78,104],cb*.62);return c}   // Calm Belt: água parada, mais escura
+const SAND=[230,210,162],SAND2=[214,190,138],GR0=[70,138,52],GR1=[100,158,62],ROADC=[186,158,112];   // paleta do Mundo 4: verde mais fundo (menos limão), areia e estrada mais quentes
+function waterCol(x,z){const h=baseH(x,z);const deep=clp((WL-h)/40,0,1);let c=mixc([84,200,190],[24,80,134],sm(0,.9,deep));const cb=calmK(x);if(cb>0)c=mixc(c,[30,78,104],cb*.62);return c}   // Calm Belt: água parada, mais escura
 function gcol(x,z){const h=baseH(x,z);
  if(z<WALLN+460&&abs(x-RMX)<544){const sv=spurN(x,z);if(sv>WL+1&&sv>=h-.01)return mulc(mixc([150,96,84],[194,138,116],vn(x/30,z/30,77)),.9+vn(x/9,z/9,78)*.2)}
  if(z>WALLZ-380&&abs(x-RMX)<440){const sv=spurH(x,z);if(sv>WL+1&&sv>=h-.01)return mulc(mixc([166,92,80],[204,132,112],vn(x/30,z/30,72)),.9+vn(x/9,z/9,73)*.2)}
@@ -26625,7 +26689,7 @@ function water(mb,cx,cz){const x0=cx*CS,z0=cz*CS,x1=x0+CS,z1=z0+CS,y=WL*K,mx=x0+
  let ws=150;for(const I of ISL)if(I.on&&hypot(mx-I.x,mz-I.z)<I.R*1.6+CS)ws=WS;   // mar aberto, longe das ilhas: quadrados maiores (a cor é a mesma)
  if(z0>WALLZ+60||z0+CS<WALLN-60)return;
  for(let z=z0;z<z1;z+=ws)for(let x=x0;x<x1;x+=ws){const WS=ws;if(z>WALLZ+40||z+WS<WALLN-40)continue;const a=[x,z],b=[x+WS,z],c=[x+WS,z+WS],d=[x,z+WS];if(min(baseH(x,z),baseH(x+WS,z),baseH(x+WS,z+WS),baseH(x,z+WS))>WL+1)continue;
-  const q=(P)=>[P[0]*K,y,P[1]*K],col=P=>waterCol(P[0],P[1]);mb.wt(q(a),q(d),q(c),col(a),col(d),col(c),.06);mb.wt(q(a),q(c),q(b),col(a),col(c),col(b),.06)}}
+  const q=(P)=>[P[0]*K,y,P[1]*K],col=P=>waterCol(P[0],P[1]);const sw0=mb.sw;mb.sw=15;mb.wt(q(a),q(d),q(c),col(a),col(d),col(c),.06);mb.wt(q(a),q(c),q(b),col(a),col(c),col(b),.06);mb.sw=sw0}}   // sw 15 = água: reflexo do céu, ondas e brilho do sol no shader
 // espuma da beira (quadros: a faixa branca sai da areia e se desfaz no mar)
 const FOAMF=6;let FOAM=[];
 function foamMB(f){const mb=new MB(700+f,{pk:true}),ph=f/FOAMF,y=(WL+.25)*K;for(const I of ISL){if(!I.on||I.ship)continue;const n=I===I1?160:220;
@@ -27153,7 +27217,7 @@ let shKey='';
 function shadowTune(){let lv=1;try{lv=H3.G3&&H3.G3.sh!==undefined?H3.G3.sh|0:1}catch(e){}const c=SHW[lv],k=lv+'';if(k===shKey)return;shKey=k;if(c)H3.shadowCfg(Object.assign({},c));else H3.shadowCfg({on:0,D:0})}
 let FOGK=-1;   // quanto da névoa pesada das paredes está valendo (0 no meio do mar · 1 no pé do paredão)
 function fogTick(Cm){const cz=Cm.z/K,d=max(0,min(cz-WALLN,WALLZ-cz)),k=Math.round(sm(2100,350,d)*200)/200;if(k===FOGK)return;FOGK=k;
- H3.env({fog:[lerp(.76,.62,k),lerp(.87,.66,k),lerp(.97,.72,k),lerp(.00032,.00078,k)]})}
+ H3.env({fog:[lerp(.8,.62,k),lerp(.87,.66,k),lerp(.93,.72,k),lerp(.00032,.00078,k)]})}
 function frameFx(t,Cm){shadowTune();try{H3.clip(1.5,11000)}catch(e){}try{fogTick(Cm)}catch(e){}
  // a correnteza da Montanha Reversa empurra o barco de volta (ninguém sobe, por enquanto)
  if(typeof P!=='undefined'&&P&&typeof world!=='undefined'&&world===WID&&OCW.ready){const px=(P.x+8)/K,pz=(P.y+14)/K;
@@ -27178,7 +27242,7 @@ function frameFx(t,Cm){shadowTune();try{H3.clip(1.5,11000)}catch(e){}try{fogTick
  if(R()<.12&&!PB.on){const a=R()*TAU,rr=40+R()*160,x=Cm.x+cos(a)*rr,z=Cm.z+sin(a)*rr;if(baseH(x/K,z/K)>6.5)FX.emit({x,y:floorW(x,z)+6+R()*10,z,vx:(R()-.5)*.5,vy:(R()-.3)*.15,vz:(R()-.5)*.5,g:0,life:2500,s0:2.2,s1:2.2,c:[[1,.85,.3],[1,1,1],[.7,.85,1],[1,.6,.8]][(R()*4)|0],a:.95,add:false,tex:'dot',drag:.995})}}
 
 // ---------- a cena 3D ----------
-const SUN=[-.5,.66,.55],SUNC=[1.16,1.05,.88],SKYA=[.28,.56,.96],SKYB=[.72,.86,.99],GNDA=[.4,.42,.34];
+const SUN=[-.5,.66,.55],SUNC=[1.16,1.05,.88],SKYA=[.34,.58,.88],SKYB=[.8,.88,.95],GNDA=[.4,.42,.34];
 const SCN=H3.scenes=H3.scenes||{};
 SCN.ocean={id:'ocean',K:1,OX:0,OY:0,eye:25,camD:92,p3:-.18,pl:[[-.95,.85],[-1.0,.4]],amb:[1.08,1.06,1.0],camLight:[0,0,0],iso:false,
  get fx(){return typeof fight!=='undefined'&&fight?fight.x+8:0},get fz(){return typeof fight!=='undefined'&&fight?fight.y+14:0},
@@ -27188,7 +27252,7 @@ SCN.ocean={id:'ocean',K:1,OX:0,OY:0,eye:25,camD:92,p3:-.18,pl:[[-.95,.85],[-1.0,
  build:gl=>{while(!step(50)){}},
  stepBuild:ms=>{try{return step(max(ms,14))}catch(e){console.error('OCW',e);return true}},progress:()=>OCW.pct,
  free:()=>freeAll(),
- env:()=>{H3.env({fog:[.76,.87,.97,.00032],ambT:[1.1,1.08,1.02],ambB:[.6,.62,.58],sun:SUN,sunC:SUNC,skyA:SKYA,skyB:SKYB,gndA:GNDA,wind:[1.4,.6],gscale:[1/WW,1/WH],detk:0,lmk:0,fogOff:0,trs:0,detkL:0,moonL:[0,0,0]});try{if(H3.fogOff)H3.fogOff(0);if(H3.tex)H3.tex.lm=null}catch(e){}},
+ env:()=>{H3.env({fog:[.8,.87,.93,.00032],ambT:[1.1,1.08,1.02],ambB:[.6,.62,.58],sun:SUN,sunC:SUNC,skyA:SKYA,skyB:SKYB,gndA:GNDA,wind:[1.4,.6],gscale:[1/WW,1/WH],detk:0,lmk:0,fogOff:0,trs:0,detkL:0,moonL:[0,0,0]});try{if(H3.fogOff)H3.fogOff(0);if(H3.tex)H3.tex.lm=null}catch(e){}},
  floorY:(x,z)=>floorW(x,z),
  // no barco anda BOOST vezes mais rápido; cais, casas, cercas e borda do mapa bloqueiam
  step:o=>{if(CB.st===1){o.x=o.ox;o.z=o.oz;return}   // Calm Belt: o barco parou de vez
