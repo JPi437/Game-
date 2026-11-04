@@ -9696,7 +9696,7 @@ void main(){
  if(uGx.x>0.0&&dV<260.0&&vC.a<0.5){vec3 an=abs(n);vec2 uv;vec3 tu,tv;if(an.y>max(an.x,an.z)){uv=vP.xz;tu=vec3(1.0,0.0,0.0);tv=vec3(0.0,0.0,1.0);}else if(an.x>an.z){uv=vP.zy;tu=vec3(0.0,0.0,1.0);tv=vec3(0.0,1.0,0.0);}else{uv=vP.xy;tu=vec3(1.0,0.0,0.0);tv=vec3(0.0,1.0,0.0);}
   float h0=texture2D(uDetL,uv*0.13).r,hx=texture2D(uDetL,(uv+vec2(0.45,0.0))*0.13).r,hy=texture2D(uDetL,(uv+vec2(0.0,0.45))*0.13).r;n=normalize(n+(tu*(h0-hx)+tv*(h0-hy))*uGx.x*2.6*(1.0-smoothstep(120.0,260.0,dV)));}   // relevo falso
  vec3 lg=mix(uAB,uAT,n.y*0.5+0.5);
- if(uDLK>0.0&&vC.a<0.5){vec3 an=abs(n);vec2 uv=an.y>max(an.x,an.z)?vP.xz:(an.x>an.z?vP.zy:vP.xy);float d1=texture2D(uDetL,uv*0.13).r-0.5;float d2=texture2D(uDetL,uv*0.021).r-0.5;col*=max(0.0,1.0+(d1*0.55+d2*0.6)*uDLK);}
+ if(uDLK>0.0&&vC.a<0.5){vec3 an=abs(n);vec2 uv=an.y>max(an.x,an.z)?vP.xz:(an.x>an.z?vP.zy:vP.xy);float d1=texture2D(uDetL,uv*0.13).r-0.5;float d2=texture2D(uDetL,uv*0.021).r-0.5;col*=max(0.0,1.0+(d1*0.1+d2*0.22)*uDLK);}
  lg+=uMoL*max(dot(n,uMoD),0.0);
  // sol: no claro fica mais iluminado, na sombra (de árvore, casa, morro) fica só com a luz do céu, mais escuro
  if(uSunL.w>0.5){float sd=max(dot(n,uSunL.xyz),0.0)*0.8+0.2;float sh=shadowAt(vP,n);lg=lg*0.6+uSunCL*(sd*0.8*sh);}
@@ -9797,7 +9797,7 @@ void main(){
  if(dd<1.0){float b=fract(52.9829189*fract(dot(gl_FragCoord.xy,vec2(0.06711056,0.00583715))));if(dd>=0.0?b>dd:b<=1.0+dd)discard;}
  vec3 n=normalize(vN);if(dot(n,V)<0.0)n=-n;
  float cs=cloudSh(vP)*shadowAt(vP,n);vec3 col=vC*uTint;vec3 c;
- if(uDetK>0.0&&vWat<0.5){vec3 an=abs(n);vec2 uv=an.y>max(an.x,an.z)?vP.xz:(an.x>an.z?vP.zy:vP.xy);float d1=texture2D(uDet,uv*0.13).r-0.5;float d2=texture2D(uCloud,uv*0.0061).r-0.5;col*=max(0.0,1.0+(d1*0.62+d2*0.72)*uDetK);}
+ if(uDetK>0.0&&vWat<0.5){vec3 an=abs(n);vec2 uv=an.y>max(an.x,an.z)?vP.xz:(an.x>an.z?vP.zy:vP.xy);float d1=texture2D(uDet,uv*0.13).r-0.5;float d2=texture2D(uCloud,uv*0.0061).r-0.5;col*=max(0.0,1.0+(d1*0.1+d2*0.3)*uDetK);}
  if(vMat>0.5&&vWat<0.5){float pq=1.0-smoothstep(240.0,600.0,dV);if(pq>0.0)col=mix(col,matPat(vMat,vP,n,col),pq);}   // texturas pintadas (pedra, madeira, telha)
  if(uGx.x>0.0&&vWat<0.5&&vSw<0.01&&dV<280.0){vec3 an=abs(n);vec3 tu,tv;vec2 uv;if(an.y>max(an.x,an.z)){uv=vP.xz;tu=vec3(1.0,0.0,0.0);tv=vec3(0.0,0.0,1.0);}else if(an.x>an.z){uv=vP.zy;tu=vec3(0.0,0.0,1.0);tv=vec3(0.0,1.0,0.0);}else{uv=vP.xy;tu=vec3(1.0,0.0,0.0);tv=vec3(0.0,1.0,0.0);}   // relevo falso
   float bk=uGx.x*(1.0-smoothstep(130.0,280.0,dV));vec3 gr;
@@ -9840,7 +9840,7 @@ void main(){
  vec3 alb=mix(g.rgb,vC.rgb,rock);
  float det=texture2D(uDet,vP.xz*0.16).r-0.5;float dn=1.0-smoothstep(70.0,280.0,length(vP-uFoc));
  bool wat=g.a>0.5&&rock<0.4;
- if(!wat)alb*=1.0+det*0.55*dn*(1.0-rock*0.5);
+ if(!wat)alb*=1.0+det*0.16*dn*(1.0-rock*0.5);
  vec3 nb=n;float wetK=0.0;vec3 nw=n;
  if(!wat){
   // relevo falso (grão do chão)
@@ -23815,7 +23815,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261104050124;
+const GAME_BUILD=20261104135900;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
@@ -27757,7 +27757,7 @@ const hexc=h=>{if(Array.isArray(h))return h;h=(h||'#ffffff').replace('#','');if(
 let FLA=[0,0,0,0];
 function tick(){const sc=SC_(),id=sc&&sc.id||'',d=G3.det|0,a=G3.amb|0;
  // superfícies
- GX.bump=L4([0,0,.7,1],d);GX.shine=L4([0,.55,.85,1],d);GX.det=L4([0,.6,.85,1],d)*(DETW[id]||0);GX.slope=L4([0,0,.75,1],d)*(SLP[id]||0);GX.foam=L4([0,.55,.9,1],d)*(FOAM[id]||0);
+ GX.bump=0;GX.shine=L4([0,.55,.85,1],d);GX.det=L4([0,.6,.85,1],d)*(DETW[id]||0);GX.slope=L4([0,0,.75,1],d)*(SLP[id]||0);GX.foam=L4([0,.55,.9,1],d)*(FOAM[id]||0);
  GX.wet=id==='hal'?L4([0,.55,.8,1],d):0;
  const lf=LEAF[id];if(lf&&d>0){GX.leaf[0]=lf[0];GX.leaf[1]=lf[1];GX.leaf[2]=lf[2];GX.leaf[3]=lf[3]*L4([0,.6,.85,1],d)}else GX.leaf[3]=0;
  // ambiente
