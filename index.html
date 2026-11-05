@@ -24906,8 +24906,8 @@ function onPoly(e){polyFx(e.x,e.y+.5,e.z);if(e.u)kf([{s:RD.nick[e.u]||'?',c:kcol
 
 const HND=new Float32Array(6),GM_=new Float32Array(16);
 function drawActor(id,x,y,z,yaw,spd,lk,dt,gun){if(ACT===null){try{ACT=window.HERO3&&HERO3.actor?HERO3.actor(gl):false}catch(e){ACT=false}if(!ACT)ACT=false}
- let hx_=null;if(ACT&&ACT.ready()){try{ACT.draw({id,VP,cam:[CAM.x,CAM.y,CAM.z],x,y,z,yaw,spd,h:1.78,lk,dt,fog:FOGC,fn:FOGN,ff:FOGF,lt:[.95,.9,.85],pose:gun!==undefined?'gun':null,pp:window.PH_PP,hand:gun!==undefined?HND:null});bindMine();if(gun!==undefined)hx_=[HND[0],HND[1],HND[2]]}catch(e){console.error('esconde-esconde boneco',e);ACT=false;bindMine()}}
- if(!hx_){M4.ty(MM,x,y,z,yaw,1);drawMesh(DECOR.hum,MM);if(gun!==undefined)hx_=[x+sin(yaw)*.35-cos(yaw)*.2,y+1.2,z+cos(yaw)*.35+sin(yaw)*.2]}
+ let hx_=null,drawn=false;if(ACT&&ACT.ready()){try{ACT.draw({id,VP,cam:[CAM.x,CAM.y,CAM.z],x,y,z,yaw,spd,h:1.78,lk,dt,fog:FOGC,fn:FOGN,ff:FOGF,lt:[.95,.9,.85],pose:gun!==undefined?'gun':null,pp:window.PH_PP,hand:gun!==undefined?HND:null});bindMine();drawn=true;if(gun!==undefined)hx_=[HND[0],HND[1],HND[2]]}catch(e){console.error('esconde-esconde boneco',e);ACT=false;bindMine()}}
+ if(!drawn){M4.ty(MM,x,y,z,yaw,1);drawMesh(DECOR.hum,MM)}if(!hx_){if(gun!==undefined)hx_=[x+sin(yaw)*.35-cos(yaw)*.2,y+1.2,z+cos(yaw)*.35+sin(yaw)*.2]}
  if(gun!==undefined&&GUNM){const p=clp(gun,-.9,.9);basisM(GM_,hx_[0],hx_[1],hx_[2],yaw,p);drawMesh(GUNM,GM_);const f=[sin(yaw)*cos(p),sin(p),cos(yaw)*cos(p)],u=[-sin(yaw)*sin(p),cos(p),-cos(yaw)*sin(p)];
   GUNAT[id]=[hx_[0]+f[0]*.7+u[0]*.12,hx_[1]+f[1]*.7+u[1]*.12,hx_[2]+f[2]*.7+u[2]*.12]}}
 const FOGC=[.04,.055,.11];let FOGN=26,FOGF=95;
