@@ -25760,6 +25760,12 @@ const css=D.createElement('style');css.textContent=`
 #pvPan .op button{flex:1 1 30%;padding:9px 6px;border-radius:9px;border:2px solid #6a5a3a;background:#2a2218;color:#f2e6c8;font:800 12px/1.1 "Courier New",monospace}
 #pvPan .op button.on{background:#c9a040;color:#1a1208;border-color:#ffd77a}
 #pvPan .bt{display:block;width:100%;margin-top:10px;padding:11px;border-radius:10px;border:2px solid #000;background:linear-gradient(#ffe066,#f5b400);font:900 16px/1 "Courier New",monospace;color:#111}
+#pvSc{position:absolute;left:50%;top:max(40px,calc(env(safe-area-inset-top) + 34px));transform:translateX(-50%);font:900 15px/1 "Courier New",monospace;text-shadow:0 2px 0 #000;pointer-events:none;display:none;white-space:nowrap}
+#pvToast{position:absolute;left:50%;top:38%;transform:translateX(-50%);background:#000c;border:2px solid #c9a040;border-radius:10px;padding:9px 14px;font:900 14px/1.2 "Courier New",monospace;color:#ffe9b0;pointer-events:none;display:none;text-align:center;z-index:6;max-width:80vw}
+#pvPan .rm{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 10px;margin:5px 0;border-radius:9px;background:#2a2218;border:2px solid #6a5a3a;font-size:12px;color:#f2e6c8}
+#pvPan input{width:100%;box-sizing:border-box;padding:10px;border-radius:9px;border:2px solid #6a5a3a;background:#0c0a08;color:#fff;font:900 18px/1 "Courier New",monospace;text-align:center;letter-spacing:4px;text-transform:uppercase}
+#pvPan .er{color:#ff9a8a;font-size:12px;min-height:14px;margin:4px 0}
+#pvPan pre{white-space:pre-wrap;background:#0c0a08;border:1px solid #6a5a3a;border-radius:8px;padding:8px;font-size:10px;color:#cfe;user-select:text;-webkit-user-select:text}
 #pvPan table{width:100%;font-size:11px;border-collapse:collapse;color:#e8dcc0}#pvPan td{padding:2px 4px;border-bottom:1px solid #ffffff14}
 `;D.head.appendChild(css);
 const M=D.createElement('div');M.id='pvM';
@@ -25769,7 +25775,7 @@ M.innerHTML=`<canvas id="pvG"></canvas><canvas id="pvO"></canvas>
 <div id="pvCtl"><div id="pvJz"><div id="pvJb"><div id="pvJk"></div></div></div>
 <button class="pvB" id="pvBl"><i>🛡</i>BLOQ</button><button class="pvB" id="pvPa"><i>✋</i>APARAR</button><button class="pvB" id="pvH"><i>⚔</i>FORTE</button><button class="pvB" id="pvA"><i>🗡</i>ATAQUE</button>
 <button class="pvB" id="pvR"><i>🌀</i>ROLAR</button><button class="pvB" id="pvSk"><i>✦</i>POSTURA</button><button class="pvB" id="pvLk"><i>🎯</i>TRAVAR</button><button class="pvB" id="pvJp"><i>⤒</i>PULAR</button><button class="pvB" id="pvFk"><i>🧪</i>FRASCO<b id="pvFkN">3</b></button></div>
-<div id="pvTop"><button id="pvCfg">⚙ BONECO</button><button id="pvX">✕</button></div><div id="pvPan"><div class="bx" id="pvPb"></div></div>`;
+<div id="pvTop"><button id="pvOn" style="border-color:#7ad0ff;color:#bfe8ff">🌐 ONLINE</button><button id="pvCfg">⚙ BONECO</button><button id="pvX">✕</button></div><div id="pvSc"></div><div id="pvToast"></div><div id="pvPan"><div class="bx" id="pvPb"></div></div>`;
 D.body.appendChild(M);
 cv=$('pvG');hcv=$('pvO');hx=hcv.getContext('2d');
 let RS=1;function resize(){const dpr=min(window.devicePixelRatio||1,mob?1.3:2)*RS;W_=innerWidth;H_=innerHeight;cv.width=max(1,W_*dpr|0);cv.height=max(1,H_*dpr|0);
@@ -25891,7 +25897,7 @@ function tryCrit(f,foe){if(!foe||foe.dead||foe.state==='crit'||foe.state==='crit
  const back=dot<-.55&&d<1.5&&face>.4&&foe.state!=='roll'&&foe.state!=='down'&&!iframe(foe),rip=(foe.state==='parried'||foe.state==='gbreak')&&dot>.2;
  if(!back&&!rip)return false;faceTo(f,foe);setS(f,'crit');f.crit={foe,dmg:(back?K.BS:K.RIP)*f.W.crit,done:false,back};setS(foe,'critd');foe.vx=foe.vz=0;
  if(back)foe.yaw=f.yaw;else foe.yaw=atan2(f.x-foe.x,f.z-foe.z);const k=back?.75:.9;foe.x=f.x+sin(f.yaw)*k;foe.z=f.z+cos(f.yaw)*k;
- txtFloat(foe,back?'PELAS COSTAS!':'CONTRA-ATAQUE CRÍTICO!','#ffd23f',1);snd('crit');return true}
+ txtFloat(foe,back?'PELAS COSTAS!':'CONTRA-ATAQUE CRÍTICO!','#ffd23f',1);snd('crit');if(foe.remote&&window.__PVN)__PVN.crit(f,foe);return true}
 function tryAttack(f,foe,kind){if(!canAct(f))return false;
  if(kind==='L'){if(tryCrit(f,foe))return true;let k='L1';if(f.state==='atk'&&f.mv.nx)k=f.mv.nx;else if(f.state==='sprint')k='RUN';else if(f.rollEnd<.32)k='RA';return startAtk(f,k,foe)}
  if(kind==='H'){if(f.blockT<.45&&(f.state==='block'||f.state==='idle'||f.state==='move'))return startAtk(f,'GC',foe);if(f.st<=0)return false;setS(f,'charge');f.chg=0;f.mv=null;faceToLock(f,foe);return true}
@@ -25922,7 +25928,7 @@ function hit(att,def,m,mult){if(def.dead)return;
  if(!hyper(def)&&def.state!=='crit'&&def.state!=='critd'){setS(def,'flinch');def.mv=null;def.vx=-tx*1.8;def.vz=-tz*1.8}}
 function num(f,v,c,tag){G.nums.push({x:f.x+rr(-.3,.3),y:1.9,z:f.z,s:String(Math.round(v))+(tag||''),c,t:1})}
 function spark(x,y,z,c,n){burst(x,y,z,n,c,5,.4,.05)}
-function checkDead(def,att){if(def.hp>0)return false;def.hp=0;def.dead=true;setS(def,'dead');def.mv=null;snd('die');txtFloat(def,def===G.me?'VOCÊ MORREU':'DERROTADO','#ff4040',1);G.respawn=2.5;return true}
+function checkDead(def,att){if(def.hp>0)return false;def.hp=0;def.dead=true;setS(def,'dead');def.mv=null;snd('die');txtFloat(def,def===G.me?'VOCÊ MORREU':'DERROTADO','#ff4040',1);G.respawn=2.5;if(G.on&&def===G.me&&window.__PVN)__PVN.died();return true}
 
 // ---------- passo de um lutador ----------
 function stepF(f,dt,inp,foe){f.t+=dt;f.rollEnd+=dt;f.blockT+=dt;f.lastHit+=dt;f.paT+=dt;if(f.paT>4)f.pa=max(0,f.pa-dt*25);
@@ -25959,7 +25965,7 @@ function stepF(f,dt,inp,foe){f.t+=dt;f.rollEnd+=dt;f.blockT+=dt;f.lastHit+=dt;f.
   // direção do golpe: no preparo, o joystick vira o corte (até ~60° para cada lado)
   if(f.t<m.a[0]){if(ml>.35){const want=atan2(mx,mz),lim=1.05,base=f.lockOn&&foe?atan2(foe.x-f.x,foe.z-f.z):f.ay,tgt=base+clp(angd(base,want),-lim,lim);f.yaw+=clp(angd(f.yaw,tgt),-9*dt,9*dt)}else if(foe&&f.lockOn)faceTo(f,foe,5,dt)}
   const fw=fwd(f),ln=m.ln;let v=f.t>=ln[0]&&f.t<=ln[1]?ln[2]:0;if(m.stopNear&&foe){const d=dist(f,foe);if(d<1.3)v=0}if(f.W===WPN.dg&&f.mk==='SK'&&foe&&dist(f,foe)<1.1)v*=.2;f.vx=fw[0]*v;f.vz=fw[1]*v;if(f.air){f.vx=f.jv[0]*.8;f.vz=f.jv[1]*.8}if(f.dlg){f.vx=0;f.vz=0}
-  const WS=m.hits||[m.a];if(foe&&!foe.dead)for(let wi=0;wi<WS.length;wi++){const w=WS[wi];if(f.hd[wi]||f.t<w[0]-.02||f.t>w[1]+.03)continue;
+  const WS=m.hits||[m.a];if(foe&&!foe.dead&&!foe.remote)for(let wi=0;wi<WS.length;wi++){const w=WS[wi];if(f.hd[wi]||f.t<w[0]-.02||f.t>w[1]+.03)continue;
    const d=dist(f,foe),ad=abs(angd(f.yaw,atan2(foe.x-f.x,foe.z-f.z))),bh=bladeHits(f,foe),cone=f.t>=w[0]&&f.t<=w[1]&&d<m.rg+.35&&ad<m.arc/2+.25;
    if(bh===null?cone:(bh&&d<m.rg+.7)||(cone&&f.t>=w[1]-.01&&d<m.rg-.2)){f.hd[wi]=1;f.hitDone=f.hd.filter(Boolean).length>=WS.length;const cm=(f.mk==='HC'?1+f.chg*.5:1)*(m.hm?m.hm[wi]:1);hit(f,foe,m,cm)}break}
   f.cn=!!(m.cw&&f.t>=m.cw[0]);if(f.t>=m.d||(inp.block&&canCancel(f))||(ml>.5&&canCancel(f)&&f.t>=m.d*.9)){setS(f,ml>.3?'move':'idle');f.mv=null}}
@@ -25969,7 +25975,8 @@ function stepF(f,dt,inp,foe){f.t+=dt;f.rollEnd+=dt;f.blockT+=dt;f.lastHit+=dt;f.
  else if(st==='parry'){f.vx*=.7;f.vz*=.7;if(f.t>=K.PARRY.d)setS(f,'idle')}
  else if(st==='stance'){f.vx=mx*1;f.vz=mz*1;if(f.lockOn)faceTo(f,foe,6,dt);else if(ml>.1)face=atan2(mx,mz);f.st-=4*dt;f.stamDelay=.3;if(f.t>2.6||f.st<=0)setS(f,'idle')}
  else{const dur={flinch:.3,stagger:.85,gbreak:1.15,parried:1.45,down:1.35,critd:1.6,crit:1.45}[st]||.3;f.vx*=.85;f.vz*=.85;
-  if(st==='crit'&&f.crit&&!f.crit.done&&f.t>.48){f.crit.done=true;const v=f.crit.foe;v.hp-=f.crit.dmg;num(v,f.crit.dmg,'#ff8a2a',' CRÍTICO');G.hs=.2;G.shk=.25;sparks(v.x,1.2,v.z,20,0xff5030,6);blood(v.x,v.z);burst(v.x,1.2,v.z,26,0x8a0a0a,5,.8,.06);snd('hit');G.flash=.2;checkDead(v,f)}
+  if(st==='crit'&&f.crit&&!f.crit.done&&f.t>.48){f.crit.done=true;const v=f.crit.foe;if(!v.remote)v.hp-=f.crit.dmg;num(v,f.crit.dmg,'#ff8a2a',' CRÍTICO');G.hs=.2;G.shk=.25;sparks(v.x,1.2,v.z,20,0xff5030,6);blood(v.x,v.z);burst(v.x,1.2,v.z,26,0x8a0a0a,5,.8,.06);snd('hit');G.flash=.2;if(!v.remote)checkDead(v,f)}
+  if(st==='critd'&&f.cpd&&!f.cpd.done&&f.t>.48){f.cpd.done=true;f.hp-=f.cpd.dmg;num(f,f.cpd.dmg,'#ff8a2a',' CRÍTICO');G.hs=.2;G.shk=.25;sparks(f.x,1.2,f.z,20,0xff5030,6);blood(f.x,f.z);burst(f.x,1.2,f.z,26,0x8a0a0a,5,.8,.06);snd('hit');G.flash=.2;checkDead(f,null)}
   if(f.t>=dur){if(st==='critd'&&!f.dead){setS(f,'down');f.t=.35}else setS(f,'idle')}}
  const y0=f.yaw;if(face!==null){const d=angd(f.yaw,face);f.yaw+=d*min(1,dt*(abs(d)>2?22:14))}
  f.tr=lerp(f.tr||0,dt>0?angd(f.py===undefined?f.yaw:f.py,f.yaw)/dt:0,min(1,dt*10));f.py=f.yaw;
@@ -26260,9 +26267,9 @@ function hud(dt){const me=G.me,du=G.du;me.hpLag=me.hpLag>me.hp?max(me.hp,me.hpLa
  if(G.cmb&&G.cmb.t>0){G.cmb.t-=dt;txt('combo: '+Math.round(G.cmb.sum)+' de dano',W_/2,58,13,'#ffd77a')}
  if(G.dbg)for(const f of[me,du]){const s=proj(f.x,2.35,f.z);if(!s)continue;const tag=iframe(f)?' · INVENCÍVEL':f.state==='parry'&&f.t>=K.PARRY.w[0]&&f.t<=K.PARRY.w[1]?' · JANELA DE APARAR':hyper(f)?' · SUPERARMADURA':'';
   txt(f.state+(f.mv?' ('+f.mv.n+')':'')+tag,s[0],s[1],11,tag?'#ffe066':'#aaa')}
- const ds=proj(du.x,2.3,du.z);if(ds&&!G.dbg)txt(G.MODES[G.mode],ds[0],ds[1],10,'#ff9a8a');
+ const ds=proj(du.x,2.3,du.z);if(ds&&!G.dbg&&!G.on)txt(G.MODES[G.mode],ds[0],ds[1],10,'#ff9a8a');
  if(G.flash>0){G.flash-=dt;hx.fillStyle=`rgba(255,255,255,${G.flash})`;hx.fillRect(0,0,W_,H_)}
- if(G.respawn>0){G.respawn-=dt;if(G.respawn<=0)reset(me.dead)}
+ if(G.respawn>0){G.respawn-=dt;if(G.respawn<=0){if(G.on&&window.__PVN)__PVN.respawn();else reset(me.dead)}}
  $('pvLk').classList.toggle('on',G.lock);$('pvFkN').textContent=me.fl;$('pvFk').classList.toggle('off',me.fl<=0);$('pvEq').textContent=me.eq.n;G.stF=max(0,(G.stF||0)-dt);const sb=$('pvSt').parentElement;sb.style.borderColor=G.stF>0&&floor(G.stF*10)%2?'#ff3030':me.st<K.ROLL.st?'#ff8040':'#ffffff55';sb.style.boxShadow=me.st<K.ROLL.st?'0 0 6px #ff6030':'none';$('pvSk').classList.toggle('off',me.fp<14&&me.state!=='stance')}
 
 // ============================================================ laço ============================================================
@@ -26282,10 +26289,10 @@ dt=clp(dt||0,0,.05);S.gt+=dt;hx.clearRect(0,0,W_,H_);if(!gl)return;
   if(IN.jp){BUF.j=.25;IN.jp=0}if(IN.fk){BUF.f=.35;IN.fk=0}
   const inp={lightHeld:IN.aH,jump:BUF.j>0,flask:BUF.f>0,mx,mz,light:BUF.l>0,heavy:BUF.h>0,heavyHeld:IN.h,roll:BUF.r>0,block:IN.bl,parry:BUF.p>0,skill:BUF.s>0,sprint:IN.r&&IN.rT>=.3,lock:G.lock};
   const ps=me.state,pt=me.t;if(sdt>0)stepF(me,sdt,inp,du);if(me.state!==ps||me.t<pt)for(const k in BUF)BUF[k]=0;for(const k in BUF)BUF[k]=max(0,BUF[k]-dt);
-  const hpB=du.hp;if(sdt>0){const ai=aiInput(du,me,sdt);stepF(du,sdt,ai,me)}if(du.hp<hpB){if(!G.cmb||G.cmb.t<=0||G.cmb.end)G.cmb={sum:0,t:0};G.cmb.sum+=hpB-du.hp;G.cmb.t=2.2}
-  if(G.inf&&du.hp<K.HP&&du.lastHit>2.2&&!du.dead)du.hp=K.HP;
+  const hpB=du.hp;if(G.on){if(window.__PVN)__PVN.tick(sdt,dt)}else if(sdt>0){const ai=aiInput(du,me,sdt);stepF(du,sdt,ai,me)}if(du.hp<hpB){if(!G.cmb||G.cmb.t<=0||G.cmb.end)G.cmb={sum:0,t:0};G.cmb.sum+=hpB-du.hp;G.cmb.t=2.2}
+  if(!G.on&&G.inf&&du.hp<K.HP&&du.lastHit>2.2&&!du.dead)du.hp=K.HP;
   // os dois não se atravessam
-  if(!me.dead&&!du.dead&&me.state!=='crit'&&du.state!=='critd'){const dx=du.x-me.x,dz=du.z-me.z,d=hypot(dx,dz);if(d<.8&&d>1e-4){const k=(.8-d)/2/d;me.x-=dx*k;me.z-=dz*k;du.x+=dx*k;du.z+=dz*k}}
+  if(!me.dead&&!du.dead&&me.state!=='crit'&&du.state!=='critd'){const dx=du.x-me.x,dz=du.z-me.z,d=hypot(dx,dz);if(d<.8&&d>1e-4){const k=(.8-d)/2/d;if(G.on){me.x-=dx*k*2;me.z-=dz*k*2}else{me.x-=dx*k;me.z-=dz*k;du.x+=dx*k;du.z+=dz*k}}}
  }
  tickFX(S.st==='play'&&!pan?sdt:0);if(G.lost){txt('recarregando os gráficos...',W_/2,H_/2,18,'#fff');return}try{render(pan?0:sdt)}catch(e){G.err='câmera: '+e.message;console.error('arena',e)}try{hud(pan?0:dt)}catch(e){G.err='tela: '+e.message}
  if(G.err)txt('⚠ '+G.err.slice(0,80),W_/2,H_-12,10,'#ff9a8a')}
@@ -26333,7 +26340,7 @@ function open(fromStarOps){if(S.st!=='off')return;fromSO=!!fromStarOps;M.style.d
  const lk=myLook();G.me=fighter(0,myName(),lk,'#ffd23f',0,4,PI,G.eqMe,G.wpMe);G.du=fighter(1,'Boneco de treino',{s:3,o:8|16,a:2,hc:2,k:0,w:0},'#ff6a5a',0,0,0,G.eqDu,G.wpDu);setSkBtn();G.lock=false;G.cy=PI;G.cp=.18;G.nums.length=0;
  $('pvMyN').textContent=G.me.name;S.st='play';clearIn();clearFX();last=performance.now();cancelAnimationFrame(raf);raf=requestAnimationFrame(frame)}
 function restoreOut(){try{lock=false}catch(e){}try{if(musWas&&window.MUSapi&&!MUSapi.on)MUSapi.toggle()}catch(e){}try{if(h3Was&&window.H3&&H3.setModeQ)setTimeout(()=>H3.setModeQ(h3Was),80)}catch(e){}}
-function close(){if(S.st==='off')return;S.st='off';cancelAnimationFrame(raf);clearIn();$('pvPan').style.display='none';M.style.display='none';restoreOut();
+function close(){if(S.st==='off')return;try{if(window.__PVN)__PVN.leave(true)}catch(e){}S.st='off';cancelAnimationFrame(raf);clearIn();$('pvPan').style.display='none';M.style.display='none';restoreOut();
  if(fromSO&&window.STAROPS)setTimeout(()=>{try{STAROPS.open()}catch(e){}},80)}
 try{if(typeof closeTop==='function'){const _ct=closeTop;closeTop=function(){if(S.st!=='off'){if($('pvPan').style.display==='flex'){$('pvPan').style.display='none';clearIn()}else{clearIn();panel();$('pvPan').style.display='flex'}return true}return _ct.apply(this,arguments)}}}catch(e){}
 D.addEventListener('visibilitychange',()=>{if(D.hidden&&S.st==='play')clearIn()});
@@ -26346,6 +26353,153 @@ window.ARENA={open,close,G,K,MV,IN,PS,WPN,_reset:reset,_render:render,_gl:()=>gl
 (function hook(){const row=D.querySelector('#soStart .soRow');if(!row||$('soPvp'))return;const b=D.createElement('button');b.className='soBtn';b.id='soPvp';b.textContent='⚔ ARENA PvP';
  b.style.background='linear-gradient(#ff8a6a,#d8402a)';b.style.boxShadow='0 4px 0 #6a1a0a,0 0 20px #ff5a3a66';row.insertBefore(b,row.lastElementChild);
  b.onclick=e=>{e.stopPropagation();try{STAROPS.close()}catch(_){}setTimeout(()=>open(true),90)}})();
+
+// ============================================================ DUELO ONLINE (1x1 pelo Firebase: arena/rooms, arena/st, arena/ev) ============================================================
+// Quem APANHA decide se o golpe acertou (no aparelho dele): assim a esquiva e o aparar valem do jeito que a pessoa viu na tela.
+// O outro jogador aparece como um "fantasma" que copia o estado enviado ~15 vezes por segundo.
+const NB_=()=>{const m=window.MP;return(m&&m.db&&m.uid&&!m.offline)?m.db:null};
+const uid_=()=>window.MP&&MP.uid;
+const AR_='arena/rooms/',AS_='arena/st/',AE_='arena/ev/',TS_=()=>firebase.database.ServerValue.TIMESTAMP;
+const CODE_='ABCDEFGHJKLMNPQRSTUVWXYZ23456789',rcode_=()=>{let s='';for(let i=0;i<5;i++)s+=CODE_[(rnd()*CODE_.length)|0];return s};
+const esc_=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const WIN=3;   // vitórias para ganhar o duelo
+const N={code:'',room:null,rr:null,rcb:null,sref:null,oref:null,ocb:null,eref:null,ecb:null,lref:null,lcb:null,list:null,off:0,send:0,aid:0,pS:'',pM:'',pT:0,last:null,lastRx:0,
+ host:false,opp:'',oppN:'',score:[0,0],started:false,busy:false,view:'',hold:0,over:false};
+const SPAWN=h=>h?[0,4,PI]:[0,-4,0];
+const RULES=`"arena": {
+  "rooms": { ".read": "auth != null",
+    "$code": { ".write": "auth != null" } },
+  "st": { "$code": { ".read": "auth != null",
+    "$uid": { ".write": "auth != null && auth.uid === $uid" } } },
+  "ev": { "$code": { "$uid": {
+    ".read": "auth != null && auth.uid === $uid",
+    ".write": "auth != null" } } }
+}`;
+let toastT=0;
+function toast(s,t){const e=$('pvToast');e.innerHTML=s;e.style.display='block';clearTimeout(toastT);toastT=setTimeout(()=>e.style.display='none',(t||2.2)*1000)}
+function packLook(){try{const l=myLook();return l&&typeof LKE!=='undefined'?LKE.pack(l):null}catch(e){return null}}
+function unpackLook(v){try{return v&&typeof LKE!=='undefined'?LKE.unpack(v):null}catch(e){return null}}
+function netErr(e){const c=e&&(e.code||e.message)||'';return/PERMISSION/i.test(c)?'perm':'net'}
+
+// ---------- painel online ----------
+function onlinePanel(view,err){N.view=view;const P_=$('pvPb'),db=NB_();stopList();
+ if(view==='rules'){P_.innerHTML=`<h2>🌐 DUELO ONLINE</h2><p>O Firebase ainda não deixa o jogo usar as salas da Arena. No console do Firebase (Realtime Database → Regras), coloque este bloco dentro de <b>"rules"</b>, ao lado de "kart" e "ph", e publique:</p><pre>${esc_(RULES)}</pre><button class="bt" id="pvNb">VOLTAR</button>`;
+  $('pvNb').onclick=()=>onlinePanel('menu');return}
+ if(view==='wait'){P_.innerHTML=`<h2>🌐 SALA ${N.code}</h2><p>Esperando um oponente entrar...</p><p>Passe o código <b style="font-size:20px;letter-spacing:3px;color:#ffd77a">${N.code}</b> para um amigo, ou espere alguém achar a sua sala na lista.</p><p class="sm" style="font-size:11px;opacity:.8">Duelo 1x1, ganha quem vencer ${WIN} rodadas. Cada um usa a arma e o equipamento que escolheu em ⚙ BONECO.</p><button class="bt" style="background:#90a4ae" id="pvNc">CANCELAR</button>`;
+  $('pvNc').onclick=()=>{leave(false,true);onlinePanel('menu')};return}
+ const W=WPN[G.wpMe],E=EQ[G.eqMe];
+ P_.innerHTML=`<h2>🌐 DUELO ONLINE (1x1)</h2>${db?`<p>Você luta com <b>${W.n}</b> · equipamento <b>${E.n}</b> (troque em ⚙ BONECO antes de entrar).</p>
+ <div class="op"><button data-a="new">⚔ CRIAR SALA</button></div>
+ <p>Entrar com código:</p><input id="pvJc" maxlength="5" autocomplete="off"><div class="op"><button data-a="join">ENTRAR</button></div>
+ <div class="er" id="pvNe">${err||''}</div><p>Salas esperando oponente:</p><div id="pvRl"><p style="opacity:.7">Carregando...</p></div>`:`<p>Entre na sua conta do jogo (online) para duelar com outras pessoas.</p>`}
+ <button class="bt" id="pvNb">VOLTAR AO TREINO</button>`;
+ $('pvNb').onclick=()=>{stopList();$('pvPan').style.display='none';clearIn()};
+ if(!db)return;
+ const jc=$('pvJc');jc.oninput=()=>{jc.value=jc.value.toUpperCase().replace(/[^A-Z0-9]/g,'')};
+ P_.querySelector('[data-a=new]').onclick=createRoom;P_.querySelector('[data-a=join]').onclick=()=>joinRoom(jc.value);
+ N.lref=db.ref('arena/rooms').limitToLast(40);N.lcb=N.lref.on('value',s=>{N.list=s.val()||{};renderList()},e=>{if(netErr(e)==='perm')onlinePanel('rules')})}
+function stopList(){if(N.lref&&N.lcb)try{N.lref.off('value',N.lcb)}catch(e){}N.lref=N.lcb=null}
+function renderList(){const el=$('pvRl');if(!el)return;const L=N.list||{},now=Date.now()+N.off,me=uid_(),rows=[];
+ for(const c in L){const r=L[c];if(!r||!r.pl||r.st!=='w')continue;const ks=Object.keys(r.pl);if(ks.length!==1||ks[0]===me)continue;if(r.c&&now-r.c>3600e3)continue;rows.push([c,r])}
+ rows.sort((a,b)=>(b[1].c||0)-(a[1].c||0));
+ if(!rows.length){el.innerHTML='<p style="opacity:.7">Nenhuma sala aberta agora. Crie a sua!</p>';return}
+ el.innerHTML='';for(const[c,r]of rows){const d=D.createElement('div');d.className='rm';d.innerHTML=`<span>⚔ <b>${esc_(r.hn||'?')}</b><br><span style="opacity:.7;font-size:11px">${esc_((WPN[r.wp]||WPN.ls).n)}</span></span><b style="color:#ffd77a">ENTRAR</b>`;d.onclick=()=>joinRoom(c);el.appendChild(d)}}
+function err_(m){const e=$('pvNe');if(e)e.textContent=m;else toast(m)}
+async function createRoom(){const db=NB_();if(!db||N.busy)return;N.busy=true;err_('Abrindo sala...');const me=uid_();
+ try{let ok=false;for(let i=0;i<8&&!ok;i++){const code=rcode_();
+   const room={hn:myName().slice(0,18),h:me,st:'w',c:TS_(),wp:G.wpMe,pl:{[me]:{n:myName().slice(0,18),t:TS_()}}};const lv=packLook();if(lv)room.pl[me].v=lv;
+   const r=await db.ref(AR_+code).transaction(cur=>cur===null?room:undefined);if(r.committed){ok=true;await enter(code)}}
+  if(!ok)err_('Não deu para criar. Tente de novo.')}catch(e){if(netErr(e)==='perm')onlinePanel('rules');else err_('Sem conexão. Tente de novo.')}
+ N.busy=false}
+async function joinRoom(code){const db=NB_();if(!db||N.busy)return;code=String(code||'').toUpperCase().trim();if(code.length!==5){err_('Código inválido');return}
+ N.busy=true;err_('Entrando...');const me=uid_();
+ try{const lv=packLook();const res=await db.ref(AR_+code).transaction(cur=>{if(!cur||!cur.pl)return;if(cur.pl[me])return cur;if(cur.st!=='w'||Object.keys(cur.pl).length>=2)return;cur.pl[me]={n:myName().slice(0,18),t:Date.now()};if(lv)cur.pl[me].v=lv;cur.st='p';return cur});
+  if(!res.committed){const r=res.snapshot&&res.snapshot.val();err_(!r?'Sala não encontrada':'Sala cheia ou o duelo já começou');N.busy=false;return}
+  await enter(code)}catch(e){if(netErr(e)==='perm')onlinePanel('rules');else err_('Sem conexão. Tente de novo.')}
+ N.busy=false}
+async function enter(code){const db=NB_(),me=uid_();stopList();N.code=code;N.started=false;N.room=null;
+ try{const s=await db.ref('.info/serverTimeOffset').once('value');N.off=+s.val()||0}catch(e){}
+ try{const od=db.ref(AR_+code+'/pl/'+me);od.onDisconnect().remove()}catch(e){}
+ N.rr=db.ref(AR_+code);N.rcb=N.rr.on('value',onRoom,e=>{toast('Perdi a conexão com a sala');leave(false,true)});
+ onlinePanel('wait')}
+function onRoom(s){const r=s.val(),me=uid_();N.room=r;if(!N.code)return;
+ if(!r||!r.pl||!r.pl[me]){const was=N.started;leave(false,true);if(was)toast('O duelo foi encerrado');else if(N.view==='wait')onlinePanel('menu','A sala foi fechada');return}
+ const others=Object.keys(r.pl).filter(u=>u!==me);
+ if(N.started&&!others.includes(N.opp)){toast('<b>'+esc_(N.oppN)+'</b> saiu do duelo',3);leave(false,true);return}
+ if(!N.started&&r.st==='p'&&others.length===1)startDuel(r,others[0])}
+
+// ---------- duelo ----------
+function startDuel(r,opp){const db=NB_(),me=uid_(),po=r.pl[opp]||{};N.started=true;N.opp=opp;N.oppN=po.n||'Oponente';N.host=r.h===me;N.score=[0,0];N.aid=0;N.last=null;N.lastRx=performance.now();N.stale=0;N.hold=0;N.over=false;
+ const sp=SPAWN(N.host),so=SPAWN(!N.host);
+ Object.assign(G.me,fighter(0,myName(),myLook(),'#ffd23f',sp[0],sp[1],sp[2],G.eqMe,G.wpMe));G.me.remote=false;G.me.cpd=null;
+ Object.assign(G.du,fighter(1,N.oppN,unpackLook(po.v)||{s:3,o:8|16,a:2,hc:2,k:0,w:0},'#6ad0ff',so[0],so[1],so[2],'medio','ls'));G.du.remote=true;G.du.aid=-1;G.du.cpd=null;
+ G.on=true;G.lock=true;G.cy=sp[2];setSkBtn();$('pvMyN').textContent=G.me.name;setSkBtn();$('pvMyN').textContent=G.me.name;G.fx=G.fz=undefined;G.nums.length=0;G.respawn=0;clearFX();
+ N.sref=db.ref(AS_+N.code+'/'+me);try{N.sref.onDisconnect().remove()}catch(e){}
+ N.oref=db.ref(AS_+N.code+'/'+opp);N.ocb=N.oref.on('value',s=>{const v=s.val();if(v){N.last=v;N.lastRx=performance.now();N.stale=0}});
+ N.eref=db.ref(AE_+N.code+'/'+me);N.eref.remove().catch(()=>{});N.ecb=N.eref.on('child_added',s=>{const v=s.val();try{s.ref.remove()}catch(e){}if(v)onEv(v)});
+ $('pvTN').textContent=N.oppN;$('pvOn').textContent='🚪 SAIR';$('pvCfg').style.display='none';$('pvPan').style.display='none';clearIn();score();
+ toast('⚔ DUELO contra <b>'+esc_(N.oppN)+'</b><br><span style="font-size:12px">quem vencer '+WIN+' rodadas ganha</span>',2.6);snd('gb')}
+function score(){const e=$('pvSc');if(!G.on){e.style.display='none';return}e.style.display='block';e.innerHTML=`<span style="color:#ffd23f">VOCÊ ${N.score[0]}</span> <span style="opacity:.6">x</span> <span style="color:#6ad0ff">${N.score[1]} ${esc_(N.oppN)}</span>`}
+function sendEv(o){const db=NB_();if(!db||!N.code||!N.opp)return;o.ts=TS_();db.ref(AE_+N.code+'/'+N.opp).push(o).catch(()=>{})}
+function leave(closing,quiet){const db=NB_(),me=uid_(),code=N.code;stopList();
+ try{if(N.rr&&N.rcb)N.rr.off('value',N.rcb)}catch(e){}try{if(N.oref&&N.ocb)N.oref.off('value',N.ocb)}catch(e){}try{if(N.eref&&N.ecb)N.eref.off('child_added',N.ecb)}catch(e){}
+ if(db&&code){const room=N.room;try{if(room&&room.pl&&Object.keys(room.pl).length<=1)db.ref(AR_+code).remove().catch(()=>{});else db.ref(AR_+code+'/pl/'+me).remove().catch(()=>{})}catch(e){}
+  try{db.ref(AS_+code+'/'+me).remove().catch(()=>{});db.ref(AE_+code+'/'+me).remove().catch(()=>{})}catch(e){}
+  try{db.ref(AR_+code+'/pl/'+me).onDisconnect().cancel();if(N.sref)N.sref.onDisconnect().cancel()}catch(e){}}
+ const was=G.on;Object.assign(N,{code:'',room:null,rr:null,rcb:null,sref:null,oref:null,ocb:null,eref:null,ecb:null,started:false,opp:'',last:null,view:''});G.on=false;
+ $('pvOn').textContent='🌐 ONLINE';$('pvCfg').style.display='';score();
+ if(was&&!closing){G.du.remote=false;$('pvTN').textContent='Boneco de treino';G.lock=false;reset(true);G.fx=G.fz=undefined}}
+// o que o outro aparelho avisa
+function onEv(v){const me=G.me,du=G.du;if(!G.on)return;
+ if(v.k==='r'){   // resultado de um golpe MEU no oponente
+  const hx_=(me.x+du.x)/2,hz=(me.z+du.z)/2;
+  if(v.r==='p'){if(!me.dead){setS(me,'parried');me.mv=null;me.air=false}sparks(hx_,1.3,hz,26,0xffffff,7);G.rings.push({x:hx_,y:1.3,z:hz,ry:G.cy,t:0,c:0xffffff});txtFloat(du,'APAROU!','#ffffff',1);snd('parry');G.flash=.12;G.hs=.16;G.shk=.12}
+  else if(v.r==='dg')txtFloat(du,'ESQUIVOU','#9ad0ff');
+  else if(v.r==='b'||v.r==='gb'){sparks(hx_,1.25,hz,18,0xffc050,6);snd('clang');G.hs=.05;if(v.d>=1)num(du,v.d,'#c8c8c8');if(v.r==='gb'){txtFloat(du,'GUARDA QUEBRADA!','#ffb030',1);snd('gb')}}
+  else{num(du,v.d||0,'#ffd23f',v.c?' CONTRA':'');sparks(hx_,1.3,hz,12,0xff6a3a,5);burst(hx_,1.3,hz,10,0x9a0a0a,3.5,.6,.05);blood(du.x,du.z);snd('hit');G.hs=v.pd>=30?.12:.07;G.shk=max(G.shk||0,v.pd>=30?.16:.07)}}
+ else if(v.k==='c'){   // levei um crítico
+  if(me.dead)return;setS(me,'critd');me.mv=null;me.vx=me.vz=0;me.air=false;me.y=0;if(isFinite(v.x)){me.x=v.x;me.z=v.z;me.yaw=v.yw}me.cpd={dmg:+v.d||0,done:false};txtFloat(me,v.b?'PELAS COSTAS!':'CONTRA-ATAQUE CRÍTICO!','#ffd23f',1);snd('crit')}
+ else if(v.k==='d'){   // o oponente morreu: ponto meu
+  N.score[0]++;score();txtFloat(du,'DERROTADO','#ff4040',1);snd('die');G.respawn=2.5;matchCheck()}}
+function matchCheck(){if(N.score[0]>=WIN||N.score[1]>=WIN){N.over=true;const w=N.score[0]>=WIN;toast(w?'🏆 VOCÊ VENCEU O DUELO!':'💀 '+esc_(N.oppN)+' venceu o duelo',3);snd(w?'crit':'die')}}
+// hooks chamados pelo combate
+window.__PVN={_N:N,
+ crit(f,foe){N.hold=.6;sendEv({k:'c',d:Math.round(f.crit.dmg),b:f.crit.back?1:0,x:+foe.x.toFixed(2),z:+foe.z.toFixed(2),yw:+foe.yaw.toFixed(3)})},
+ died(){N.score[1]++;score();sendEv({k:'d'});matchCheck()},
+ respawn(){const sp=SPAWN(N.host);Object.assign(G.me,fighter(0,G.me.name,G.me.lk,'#ffd23f',sp[0],sp[1],sp[2],G.eqMe,G.wpMe));G.me.cpd=null;G.cy=sp[2];G.fx=G.fz=undefined;clearFX();
+  if(N.over){N.over=false;N.score=[0,0];score();toast('Nova partida! Primeiro a '+WIN+' vitórias',2)}},
+ leave(closing){if(N.code)leave(closing,true)},
+ tick(sdt,dt){const me=G.me,du=G.du,now=performance.now();
+  // 1) mando o meu estado
+  if(me.state==='atk'&&(N.pS!=='atk'||me.mk!==N.pM||me.t<N.pT-1e-4))N.aid++;N.pS=me.state;N.pM=me.mk;N.pT=me.t;
+  if(N.sref&&now-N.send>66){N.send=now;const r2=x=>Math.round((x||0)*100)/100;
+   N.sref.set({x:r2(me.x),z:r2(me.z),y:r2(me.y),yw:Math.round(me.yaw*1000)/1000,s:me.state,mk:me.mk||'',t:Math.round(me.t*1000)/1000,hp:Math.round(me.hp),st:Math.round(me.st),fp:Math.round(me.fp),
+    wp:me.wp,ek:me.ek,cg:r2(me.chg),ai:N.aid,fl:me.fl,air:me.air?1:0,lo:me.lockOn?1:0,vx:r2(me.vx),vz:r2(me.vz),dl:r2(me.dlT),dg:me.dlg?1:0,bk:r2(max(0,me.bk||0)),ts:TS_()}).catch(()=>{})}
+  // 2) o fantasma do oponente
+  const v=N.last;if(!v){du.hidden=false;return}
+  N.stale=(N.stale||0)+dt;if(N.stale>12){toast('A conexão de <b>'+esc_(N.oppN)+'</b> caiu',3);leave(false,true);return}
+  N.hold=max(0,N.hold-dt);
+  if(v.wp&&WPN[v.wp]&&du.wp!==v.wp){du.wp=v.wp;du.W=WPN[v.wp]}if(v.ek&&EQ[v.ek]){du.eq=EQ[v.ek];du.ek=v.ek}
+  du.hp=+v.hp;du.st=+v.st;du.fp=+v.fp;du.fl=v.fl;du.chg=+v.cg||0;du.dlT=+v.dl||0;du.bk=+v.bk||0;du.lockOn=!!v.lo;du.air=!!v.air;
+  const held=N.hold>0&&(du.state==='critd'||du.state==='parried');
+  if(!held){const newA=v.ai!==du.aid;
+   if(v.s!==du.state||(v.mk||'')!==(du.mk||'')||newA){if(newA){du.hd=[];du.hitDone=false;du.aid=v.ai}du.state=v.s;du.mk=v.mk||null;du.t=+v.t||0}
+   else if(!v.dg)du.t+=sdt;
+   if(abs(du.t-v.t)>.35)du.t=+v.t||0;
+   du.mv=du.state==='atk'?wmv(du,du.mk):null;du.dead=v.s==='dead';
+   const tx=+v.x,tz=+v.z;if(isFinite(tx)&&isFinite(tz)){if(hypot(du.x-tx,du.z-tz)>3){du.x=tx;du.z=tz}else{const k=min(1,dt*12);du.x+=(tx-du.x)*k;du.z+=(tz-du.z)*k}}
+   if(isFinite(v.yw))du.yaw+=angd(du.yaw,v.yw)*min(1,dt*16);du.y=+v.y||0;du.vx=+v.vx||0;du.vz=+v.vz||0}
+  du.spd=hypot(du.vx,du.vz);du.ph=(du.ph||0)+du.spd*dt*2.7;du.tr=lerp(du.tr||0,dt>0?angd(du.py===undefined?du.yaw:du.py,du.yaw)/dt:0,min(1,dt*10));du.py=du.yaw;
+  // 3) o golpe dele me acertou? (decidido aqui, no meu aparelho)
+  if(du.state==='atk'&&du.mv&&!me.dead&&!du.dead&&sdt>0){const m=du.mv,WS=m.hits||[m.a];
+   for(let wi=0;wi<WS.length;wi++){const w=WS[wi];if(du.hd[wi]||du.t<w[0]-.02||du.t>w[1]+.1)continue;
+    const d=dist(du,me),ad=abs(angd(du.yaw,atan2(me.x-du.x,me.z-du.z))),bh=bladeHits(du,me),cone=du.t>=w[0]&&du.t<=w[1]&&d<m.rg+.35&&ad<m.arc/2+.25;
+    if(bh===null?cone:(bh&&d<m.rg+.7)||(du.t>=w[1]-.01&&d<m.rg-.2&&ad<m.arc/2+.25)){du.hd[wi]=1;const cm=(du.mk==='HC'?1+du.chg*.5:1)*(m.hm?m.hm[wi]:1);
+     const hp0=me.hp,st0=me.state,dodge=iframe(me),cnt=me.state==='atk'&&me.mv&&me.t<me.mv.a[0];const bt0=me.blockT;
+     hit(du,me,m,cm);let r='h';if(dodge)r='dg';else if(du.state==='parried'){r='p';N.hold=.6}else if(st0==="block"&&me.blockT===0)r=me.state==='gbreak'?'gb':'b';
+     sendEv({k:'r',r,d:Math.round(max(0,hp0-me.hp)),pd:m.pd,c:cnt&&r==='h'?1:0})}
+    break}}}};
+$('pvOn').onclick=e=>{e.stopPropagation();if(G.on){leave(false,true);toast('Você saiu do duelo');return}clearIn();onlinePanel(N.code?'wait':'menu');$('pvPan').style.display='flex'};
 })();
 </script>
 <script>
@@ -26381,7 +26535,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261105103950;
+const GAME_BUILD=20261105110702;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
