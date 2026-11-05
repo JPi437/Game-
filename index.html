@@ -25993,6 +25993,14 @@ function shoot(f,foe,m,cm){const P=m.pr,fw=fwd(f),tg=foe&&!foe.dead?foe:null,vis
  for(const q of L)spawnProj(f,tg,m,cm,q,vis);
  if(vis&&window.__PVN)__PVN.proj(f,cm,L);
  snd(P.k==='ar'?'swing':'parry',P.k==='ar'?.7:.35);if(P.k!=='ar'&&!P.rain){const h=f.bm&&f.bm.hand_r;sparks(h?h[12]:f.x,h?h[13]:1.4,h?h[14]:f.z,8,P.k==='fb'?0xff9030:0x8ad0ff,3)}}
+// aparar projétil: flecha (e balas, no futuro: tipo 'bl') voltam para quem atirou
+const PARRYP={ar:1,bl:1};
+function canParryP(p,T){if(!PARRYP[p.k]||T.state!=='parry'||!T.W.parry)return false;if(T.t<T.W.pw[0]-.03||T.t>T.W.pw[1]+.06)return false;const v=hypot(p.vx,p.vz)||1;return(sin(T.yaw)*-p.vx+cos(T.yaw)*-p.vz)/v>.2}
+function deflect(p,T){const o=p.o,ox=T.x+sin(T.yaw)*.6,oz=T.z+cos(T.yaw)*.6,oy=max(1,min(1.6,p.y)),sp=max(30,hypot(p.vx,p.vy,p.vz))*1.1;
+ let dx=o.x-ox,dy=1.15-oy,dz=o.z-oz;const l=hypot(dx,dy,dz)||1;dx/=l;dy/=l;dz/=l;
+ const m={n:'Reflexo',dmg:Math.round((p.m.dmg||50)*1.2),pd:(p.m.pd||10)+10,np:1,pr:{k:p.k},a:[0,0]},r2=x=>Math.round(x*100)/100,q={k:p.k,x:r2(ox),y:r2(oy),z:r2(oz),vx:r2(dx*sp),vy:r2(dy*sp),vz:r2(dz*sp),g:0,hm:.8,big:p.big||0,life:1.4};
+ spawnProj(T,o,m,p.cm,q,!!o.remote);if(o.remote&&window.__PVN)__PVN.projM(p.cm,[q],m);
+ sparks(p.x,p.y,p.z,22,0xffffff,7);G.rings.push({x:p.x,y:p.y,z:p.z,ry:G.cy,t:0,c:0xffffff});txtFloat(T,'APAROU A FLECHA!','#ffffff',1);snd('parry');T.t=K.PARRY.d-.15;G.hs=.1;G.shk=max(G.shk||0,.08);G.flash=max(G.flash||0,.08)}
 function projHit(p,T){if(T===G.me&&p.o.remote&&window.__PVN){__PVN.res(p.o,p.m,p.cm);return}hit(p.o,T,p.m,p.cm)}
 function boom(p,r,k){const c=k==='fb'?0xff7a20:0x9ad8ff;G.rings.push({x:p.x,y:max(.1,p.y),z:p.z,ry:0,t:0,c,flat:1,r});burst(p.x,max(.2,p.y),p.z,k==='fb'?22:14,k==='fb'?0xff9a30:0xcfe8ff,5,.6,.08);sparks(p.x,max(.3,p.y),p.z,14,c,6);
  G.shk=max(G.shk||0,k==='lt'?.2:.12);snd(k==='lt'?'crit':'hit',.7);if(k==='lt'){G.bolts.push({x:p.x,z:p.z,t:0});G.flash=max(G.flash||0,.12)}
@@ -26007,6 +26015,7 @@ function tickProj(dt){for(let i=G.proj.length-1;i>=0;i--){const p=G.proj[i];if(p
   let dead=p.t>p.life||hypot(p.x,p.z)>G.AR+3;
   if(!dead&&T&&!T.dead&&p.y>-.1&&p.y<2.05+(T.y||0)&&p.y>(T.y||0)-.1&&hypot(p.x-T.x,p.z-T.z)<(p.big?.62:.5)){
    if(p.aoe){boom(p,p.aoe,p.k);dead=true}
+   else if(!p.vis&&canParryP(p,T)){dead=true;deflect(p,T)}
    else if(!p.vis&&iframe(T)){if(!p.dg){p.dg=1;txtFloat(T,'ESQUIVOU','#9ad0ff')}}
    else{dead=true;if(p.vis)sparks(p.x,p.y,p.z,6,0xffe0a0,3);else projHit(p,T)}}
   if(!dead&&p.y<=.04){dead=true;if(p.aoe)boom(p,p.aoe,p.k);else{burst(p.x,.05,p.z,4,0x6a6056,1.5,.3,.04);if(p.k==='ar'){G.stuck.push({x:p.x,z:p.z,ry:atan2(p.vx,p.vz),rx:-Math.asin(clp(p.vy/(hypot(p.vx,p.vy,p.vz)||1),-1,1)),t:0});if(G.stuck.length>30)G.stuck.shift()}}}
@@ -26522,7 +26531,7 @@ function panel(){const P_=$('pvPb'),o=(k,v,cur)=>`<button data-k="${k}" data-v="
  <tr><td>ROLAR</td><td>toque = rolamento (invencível no começo) · parado = passo para trás · <b>segure para correr</b></td></tr>
  <tr><td>BLOQ</td><td>segure: reduz o dano mas gasta estamina; sem estamina a guarda quebra</td></tr>
  <tr><td>APARAR</td><td>no tempo exato do golpe: o inimigo fica aberto → ATAQUE para o <b>crítico</b></td></tr>
- <tr><td>HABILIDADE</td><td>gasta foco. <b>Espada longa — Postura:</b> depois ATAQUE = corte rápido de longe, FORTE = corte ascendente (derruba) · <b>Adagas — Dança das Lâminas:</b> avança girando com 5 cortes, o último mais forte · <b>Espadão — Giro Devastador:</b> gira 360° com o espadão, não é interrompido e derruba · <b>Foice — Dança da Ceifadora:</b> avança com dois giros, o segundo derruba · <b>Arco — Rasteira:</b> desliza no chão para onde você aponta (passa invulnerável no começo), derruba quem for atingido — serve para fugir ou fechar distância · <b>Cajado — Fúria do Trovão:</b> um raio cai no alvo e derruba</td></tr>
+ <tr><td>HABILIDADE</td><td>gasta foco. <b>Espada longa — Postura:</b> depois ATAQUE = corte rápido de longe, FORTE = corte ascendente (derruba) · <b>Adagas — Dança das Lâminas:</b> avança girando com 5 cortes, o último mais forte · <b>Espadão — Giro Devastador:</b> gira 360° com o espadão, não é interrompido e derruba · <b>Foice — Dança da Ceifadora:</b> avança com dois giros, o segundo derruba · <b>Aparar flechas:</b> com espada longa, adagas ou foice, APARAR na hora certa devolve a flecha para quem atirou (magia e bola de fogo não dá) · <b>Arco — Rasteira:</b> desliza no chão para onde você aponta (passa invulnerável no começo), derruba quem for atingido — serve para fugir ou fechar distância · <b>Cajado — Fúria do Trovão:</b> um raio cai no alvo e derruba</td></tr>
  <tr><td>PULAR</td><td>pulo; no ar, ATAQUE ou FORTE = <b>ataque pulando</b> (quebra guarda; o forte quase quebra de uma vez)</td></tr>
  <tr><td>🧪 FRASCO</td><td>3 por luta: cura 400 de vida; beber deixa você lento e, se levar golpe antes de terminar, perde a cura</td></tr>
  <tr><td>TRAVAR</td><td>trava a câmera no inimigo</td></tr>
@@ -26670,7 +26679,7 @@ function onEv(v){const me=G.me,du=G.du;if(!G.on)return;
   else{num(du,v.d||0,'#ffd23f',v.c?' CONTRA':'');sparks(hx_,1.3,hz,12,0xff6a3a,5);burst(hx_,1.3,hz,10,0x9a0a0a,3.5,.6,.05);blood(du.x,du.z);snd('hit');G.hs=v.pd>=30?.12:.07;G.shk=max(G.shk||0,v.pd>=30?.16:.07)}}
  else if(v.k==='c'){   // levei um crítico
   if(me.dead)return;setS(me,'critd');me.mv=null;me.vx=me.vz=0;me.air=false;me.y=0;if(isFinite(v.x)){me.x=v.x;me.z=v.z;me.yaw=v.yw}me.cpd={dmg:+v.d||0,done:false};G.zoom=1;txtFloat(me,v.b?'PELAS COSTAS!':'CONTRA-ATAQUE CRÍTICO!','#ffd23f',1);snd('crit')}
- else if(v.k==='pj'){const m=wmv(du,v.mk);if(!m||!m.pr||!Array.isArray(v.l))return;for(const q of v.l.slice(0,12))spawnProj(du,me,m,+v.cm||1,q,false)}
+ else if(v.k==='pj'){const m=v.m?{n:'Reflexo',dmg:+v.m.dmg||0,pd:+v.m.pd||0,np:1,pr:{k:v.m.k==='bl'?'bl':'ar'},a:[0,0]}:wmv(du,v.mk);if(!m||!m.pr||!Array.isArray(v.l))return;for(const q of v.l.slice(0,12))spawnProj(du,me,m,+v.cm||1,q,false)}
  else if(v.k==='d'){   // o oponente morreu: ponto meu
   N.score[0]++;score();txtFloat(du,'DERROTADO','#ff4040',1);snd('die');G.respawn=2.5;matchCheck()}}
 function matchCheck(){if(N.score[0]>=WIN||N.score[1]>=WIN){N.over=true;const w=N.score[0]>=WIN;toast(w?'🏆 VOCÊ VENCEU O DUELO!':'💀 '+esc_(N.oppN)+' venceu o duelo',3);snd(w?'crit':'die')}}
@@ -26687,6 +26696,7 @@ window.__PVN={_N:N,
  leave(closing){if(N.code)leave(closing,true)},
  res(att,m,cm){resolveMe(att,m,cm)},
  proj(f,cm,L){sendEv({k:'pj',mk:f.mk||'',cm:Math.round(cm*100)/100,l:L})},
+ projM(cm,L,m){sendEv({k:'pj',m:{dmg:m.dmg,pd:m.pd,k:m.pr.k},cm:Math.round(cm*100)/100,l:L})},
  tick(sdt,dt){const me=G.me,du=G.du,now=performance.now();
   // 1) mando o meu estado
   if(me.state==='atk'&&(N.pS!=='atk'||me.mk!==N.pM||me.t<N.pT-1e-4))N.aid++;N.pS=me.state;N.pM=me.mk;N.pT=me.t;
@@ -26751,7 +26761,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261105180955;
+const GAME_BUILD=20261105182119;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
