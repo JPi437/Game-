@@ -25799,13 +25799,13 @@ function clearIn(){Object.assign(IN,{aH:false,jp:0,fk:0,jx:0,jz:0,a:0,h:false,hP
 // tempos em segundos: d = duração, a = janela de acerto, cw = janela para encadear o próximo golpe, ln = avanço [início, fim, velocidade],
 // ha = superarmadura (não é interrompido), pd = dano de equilíbrio, rg = alcance, arc = ângulo (rad) total do corte
 const MV={
- L1:{n:'Leve 1',d:.53,a:[.16,.25],st:14,dmg:90,pd:14,rg:2.45,arc:2,ln:[.05,.23,2.9],nx:'L2',cw:[.28,.53],ps:'sR',dly:1},
- L2:{n:'Leve 2',d:.52,a:[.15,.24],st:14,dmg:95,pd:14,rg:2.45,arc:2,ln:[.05,.22,2.7],nx:'L3',cw:[.27,.52],ps:'sL',dly:1},
- L3:{n:'Leve 3',d:.71,a:[.25,.35],st:17,dmg:125,pd:22,rg:2.55,arc:1.3,ln:[.11,.32,3.3],ps:'ov',dly:1},
+ L1:{n:'Leve 1',d:.62,a:[.2,.3],st:14,dmg:90,pd:14,rg:2.45,arc:2,ln:[.06,.28,2.6],nx:'L2',cw:[.34,.62],ps:'sR',dly:1},
+ L2:{n:'Leve 2',d:.6,a:[.19,.29],st:14,dmg:95,pd:14,rg:2.45,arc:2,ln:[.06,.26,2.4],nx:'L3',cw:[.33,.6],ps:'sL',dly:1},
+ L3:{n:'Leve 3',d:.82,a:[.3,.42],st:17,dmg:125,pd:22,rg:2.55,arc:1.3,ln:[.14,.38,3],ps:'ov',dly:1},
  H:{n:'Forte',d:1.02,a:[.44,.58],st:26,dmg:175,pd:34,rg:2.65,arc:1.5,ln:[.3,.5,3],ps:'ov',ha:[.06,.58]},
  HC:{n:'Forte carregado',d:.86,a:[.12,.28],st:0,dmg:270,pd:62,rg:2.75,arc:1.5,ln:[.04,.26,4.2],ps:'ov',ha:[0,.28],gb:1.6},
- RUN:{n:'Estocada correndo',d:.69,a:[.17,.31],st:16,dmg:115,pd:22,rg:2.7,arc:.8,ln:[0,.31,7],ps:'th'},
- RA:{n:'Corte após rolar',d:.49,a:[.12,.2],st:13,dmg:85,pd:12,rg:2.35,arc:1.8,ln:[.04,.18,3],ps:'sR',dly:1},
+ RUN:{n:'Estocada correndo',d:.78,a:[.2,.36],st:16,dmg:115,pd:22,rg:2.7,arc:.8,ln:[0,.36,6.5],ps:'th'},
+ RA:{n:'Corte após rolar',d:.56,a:[.14,.24],st:13,dmg:85,pd:12,rg:2.35,arc:1.8,ln:[.04,.2,2.6],ps:'sR',dly:1},
  GC:{n:'Contra-ataque de guarda',d:.72,a:[.16,.3],st:18,dmg:150,pd:58,rg:2.55,arc:1.7,ln:[.04,.26,2.6],ps:'sL',ha:[0,.3]},
  SQ:{n:'Postura: corte rápido',d:.58,a:[.1,.22],st:10,fp:14,dmg:165,pd:30,rg:3.5,arc:.9,ln:[.03,.2,9],ps:'th'},
  JL:{n:'Ataque pulando',d:.6,a:[.2,.34],st:14,dmg:125,pd:34,rg:2.3,arc:1.7,ln:[0,0,0],ps:'ov',gb:1.6},
@@ -26020,13 +26020,13 @@ const P_={
  SP:{'upperarm_r:0':.35,'lowerarm_r:0':-.6,'spine_02:0':.3,ln:.25}};
 // trilhas dos golpes: [tempo (s), pose, curva] — curva: 0 suave, 1 rápida (o corte), 2 lenta
 const TR={
- L1:[[0,{},0],[0.108,P_.W1,0],[0.145,O(P_.W1,{'upperarm_r:2':-1.3}),2],[0.241,P_.E1,1],[0.361,P_.E1,0],[0.53,{},0]],
- L2:[[0,P_.E1,0],[0.097,P_.W2,0],[0.133,P_.W2,2],[0.23,P_.E2,1],[0.351,P_.E2,0],[0.52,{},0]],
- L3:[[0,P_.E2,0],[0.177,P_.WO,0],[0.225,O(P_.WO,{yo:.07}),2],[0.331,P_.EO,1],[0.497,P_.EO,0],[0.71,{},0]],
+ L1:[[0,{},0],[0.126,P_.W1,0],[0.17,O(P_.W1,{'upperarm_r:2':-1.3}),2],[0.282,P_.E1,1],[0.422,P_.E1,0],[0.62,{},0]],
+ L2:[[0,P_.E1,0],[0.112,P_.W2,0],[0.153,P_.W2,2],[0.265,P_.E2,1],[0.405,P_.E2,0],[0.6,{},0]],
+ L3:[[0,P_.E2,0],[0.204,P_.WO,0],[0.26,O(P_.WO,{yo:.07}),2],[0.382,P_.EO,1],[0.574,P_.EO,0],[0.82,{},0]],
  H:[[0,{},0],[.3,P_.WH,0],[.44,O(P_.WH,{'spine_02:0':-.45,tw:-.55}),2],[.58,P_.EH,1],[.8,P_.EH,0],[1.02,{},0]],
  HC:[[0,O(P_.WH,{'spine_02:0':-.5,tw:-.6}),0],[.12,O(P_.WH,{'spine_02:0':-.5,tw:-.6}),2],[.28,O(P_.EH,{stp:1.5}),1],[.58,P_.EH,0],[.86,{},0]],
- RUN:[[0,P_.WT,0],[0.161,O(P_.WT,{ln:.1}),2],[0.31,P_.ET,1],[0.483,P_.ET,0],[0.69,{},0]],
- RA:[[0,P_.WL,0],[0.117,P_.WL,2],[0.198,P_.EL,1],[0.315,P_.EL,0],[0.49,{},0]],
+ RUN:[[0,P_.WT,0],[0.182,O(P_.WT,{ln:.1}),2],[0.35,P_.ET,1],[0.546,P_.ET,0],[0.78,{},0]],
+ RA:[[0,P_.WL,0],[0.134,P_.WL,2],[0.226,P_.EL,1],[0.36,P_.EL,0],[0.56,{},0]],
  GC:[[0,P_.BL,0],[.12,P_.W2,0],[.16,P_.W2,2],[.3,O(P_.E2,{stp:1.3}),1],[.45,P_.E2,0],[.72,{},0]],
  SQ:[[0,P_.ST,0],[.08,O(P_.WT,{sq:.9}),2],[.22,O(P_.ET,{stp:1.6,ln:.5}),1],[.38,P_.ET,0],[.58,{},0]],
  JL:[[0,{'thigh_l:0':-.9,'calf_l:0':1.2,'thigh_r:0':-.3,'calf_r:0':.9},0],[.14,O(P_.WO,{'thigh_l:0':-.9,'calf_l:0':1.2}),0],[.2,O(P_.WO,{'spine_02:0':-.45}),2],[.34,O(P_.EO,{stp:.6,sq:1}),1],[.45,O(P_.EO,{sq:1}),0],[.6,{},0]],
@@ -26243,7 +26243,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261105042233;
+const GAME_BUILD=20261105042443;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
