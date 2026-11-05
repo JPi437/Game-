@@ -25772,7 +25772,7 @@ M.innerHTML=`<canvas id="pvG"></canvas><canvas id="pvO"></canvas>
 <div id="pvTop"><button id="pvCfg">⚙ BONECO</button><button id="pvX">✕</button></div><div id="pvPan"><div class="bx" id="pvPb"></div></div>`;
 D.body.appendChild(M);
 cv=$('pvG');hcv=$('pvO');hx=hcv.getContext('2d');
-let RS=1;function resize(){const dpr=min(window.devicePixelRatio||1,mob?1.5:2)*RS;W_=innerWidth;H_=innerHeight;cv.width=max(1,W_*dpr|0);cv.height=max(1,H_*dpr|0);
+let RS=1;function resize(){const dpr=min(window.devicePixelRatio||1,mob?1.3:2)*RS;W_=innerWidth;H_=innerHeight;cv.width=max(1,W_*dpr|0);cv.height=max(1,H_*dpr|0);
  const hd=min(window.devicePixelRatio||1,2);hcv.width=max(1,W_*hd|0);hcv.height=max(1,H_*hd|0);hx.setTransform(hd,0,0,hd,0,0)}
 
 // ---------- entrada ----------
@@ -26131,10 +26131,11 @@ function render(dt){const me=G.me,du=G.du;
  // câmera em 3ª pessoa: travada fica atrás do jogador olhando o alvo
  const fk=min(1,(dt||0)*11);G.fx=G.fx===undefined?me.x:lerp(G.fx,me.x,fk);G.fz=G.fz===undefined?me.z:lerp(G.fz,me.z,fk);const cx=G.fx,cz=G.fz;
  if(G.lock&&du&&!du.dead){const px=du.x+du.vx*.25,pz=du.z+du.vz*.25,ty=atan2(px-cx,pz-cz),d=angd(G.cy,ty);G.cyv=lerp(G.cyv||0,d*5,min(1,(dt||0)*8));G.cy+=G.cyv*(dt||0)}else G.cyv=0;
+ if(!isFinite(G.cy)||!isFinite(G.fx)||!isFinite(G.fz)||!isFinite(G.cyv||0)){G.cy=PI;G.fx=me.x;G.fz=me.z;G.cyv=0;G.lx=G.lz=undefined}if(!isFinite(G.shk||0))G.shk=0;
  const cy=G.cy,fx=sin(cy),fz=cos(cy),dd=4.4,ex=cx-fx*dd,ez=cz-fz*dd,ey=2.75+G.cp*3;
  let tx=cx+fx*4,tz=cz+fz*4,ty=.9-G.cp*1.5;if(G.lock&&du&&!du.dead){G.lx=lerp(G.lx===undefined?du.x:G.lx,du.x,fk*.7);G.lz=lerp(G.lz===undefined?du.z:G.lz,du.z,fk*.7);tx=lerp(cx,G.lx,.6);tz=lerp(cz,G.lz,.6);ty=.8}
  const sk=G.shk||0,j=()=>(rnd()-.5)*sk;camSet(ex+(-cos(cy))*.45+j(),ey+j(),ez+sin(cy)*.45+j(),tx+j()*.5,ty+j()*.5,tz+j()*.5,.95);G.shk=max(0,sk-dt*1.2);
- beginFrame();drawMesh(ARM,M4.ty(MM,0,0,0,0));drawFighter(du,dt);drawFighter(me,dt);drawFX();drawSparks(dt)}
+ beginFrame();drawMesh(ARM,M4.ty(MM,0,0,0,0));for(const f of[du,me]){try{drawFighter(f,dt)}catch(e){G.err='desenho: '+e.message;console.error('arena lutador',e);blend(false);bindMine()}}try{drawFX();drawSparks(dt)}catch(e){G.err='efeitos: '+e.message;blend(false)}}
 function bar(id,v,mx,lagId,lag){$(id).style.width=clp(v/mx*100,0,100)+'%';if(lagId)$(lagId).style.width=clp(lag/mx*100,0,100)+'%'}
 function hud(dt){const me=G.me,du=G.du;me.hpLag=me.hpLag>me.hp?max(me.hp,me.hpLag-K.HP*.35*dt):me.hp;du.hpLag=du.hpLag>du.hp?max(du.hp,du.hpLag-K.HP*.35*dt):du.hp;
  bar('pvHp',me.hp,K.HP,'pvHpL',me.hpLag);bar('pvFp',me.fp,K.FP);bar('pvSt',max(0,me.st),K.ST);bar('pvTHp',du.hp,K.HP,'pvTHpL',du.hpLag);
@@ -26153,7 +26154,7 @@ function hud(dt){const me=G.me,du=G.du;me.hpLag=me.hpLag>me.hp?max(me.hp,me.hpLa
 const BUF={l:0,h:0,r:0,p:0,s:0,j:0,f:0};
 const PF={a:16,t:0};
 function frame(t){raf=requestAnimationFrame(frame);let dt=(t-last)/1000;last=t;
- PF.a=lerp(PF.a,dt*1000,.05);PF.t+=dt;if(PF.t>1.5){PF.t=0;const nr=PF.a>21?max(.55,RS-.15):PF.a<14.5?min(1,RS+.1):RS;if(nr!==RS){RS=nr;resize()}}dt=clp(dt||0,0,.05);S.gt+=dt;hx.clearRect(0,0,W_,H_);if(!gl)return;
+dt=clp(dt||0,0,.05);S.gt+=dt;hx.clearRect(0,0,W_,H_);if(!gl)return;
  const me=G.me,du=G.du,pan=$('pvPan').style.display==='flex';
  let sdt=dt;if(G.hs>0){G.hs-=dt;sdt=0}
  if(S.st==='play'&&!pan){
@@ -26171,7 +26172,8 @@ function frame(t){raf=requestAnimationFrame(frame);let dt=(t-last)/1000;last=t;
   // os dois não se atravessam
   if(!me.dead&&!du.dead&&me.state!=='crit'&&du.state!=='critd'){const dx=du.x-me.x,dz=du.z-me.z,d=hypot(dx,dz);if(d<.8&&d>1e-4){const k=(.8-d)/2/d;me.x-=dx*k;me.z-=dz*k;du.x+=dx*k;du.z+=dz*k}}
  }
- tickFX(S.st==='play'&&!pan?sdt:0);try{render(pan?0:sdt);hud(pan?0:dt)}catch(e){console.error('arena',e)}}
+ tickFX(S.st==='play'&&!pan?sdt:0);if(G.lost){txt('recarregando os gráficos...',W_/2,H_/2,18,'#fff');return}try{render(pan?0:sdt)}catch(e){G.err='câmera: '+e.message;console.error('arena',e)}try{hud(pan?0:dt)}catch(e){G.err='tela: '+e.message}
+ if(G.err)txt('⚠ '+G.err.slice(0,80),W_/2,H_-12,10,'#ff9a8a')}
 function reset(all){const me=G.me,du=G.du;Object.assign(du,fighter(1,'Boneco de treino',du.lk,'#ff6a5a',0,0,0,G.eqDu));du.ai={};if(all){Object.assign(me,fighter(0,me.name,me.lk,'#ffd23f',0,4,PI,G.eqMe));G.cy=PI}clearFX()}
 
 // ============================================================ painel do boneco ============================================================
@@ -26217,6 +26219,8 @@ function close(){if(S.st==='off')return;S.st='off';cancelAnimationFrame(raf);cle
 try{if(typeof closeTop==='function'){const _ct=closeTop;closeTop=function(){if(S.st!=='off'){if($('pvPan').style.display==='flex'){$('pvPan').style.display='none';clearIn()}else{clearIn();panel();$('pvPan').style.display='flex'}return true}return _ct.apply(this,arguments)}}}catch(e){}
 D.addEventListener('visibilitychange',()=>{if(D.hidden&&S.st==='play')clearIn()});
 addEventListener('resize',()=>{if(S.st!=='off'&&booted)resize()});
+cv.addEventListener('webglcontextlost',e=>{e.preventDefault();G.lost=true},false);
+cv.addEventListener('webglcontextrestored',()=>{try{gl=null;for(const k in MS)delete MS[k];ACT=null;TB=null;if(glInit()){commonMeshes();ARM=buildArena();buildGear();buildArmor();booted=true}G.lost=false}catch(e){G.err='gráficos: '+e.message}},false);
 window.ARENA={open,close,G,K,MV,IN,PS,_step:(sec,fn)=>{const d=1/30;for(let t=0;t<sec;t+=d){fn&&fn(t);const me=G.me,du=G.du;stepF(me,d,fn&&fn.inp||{mx:0,mz:0},du);stepF(du,d,aiInput(du,me,d),me);tickFX(d)}}};
 
 // ---------- botão na tela inicial do Star Ops ----------
@@ -26258,7 +26262,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261105042936;
+const GAME_BUILD=20261105084506;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
