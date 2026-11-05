@@ -25795,13 +25795,13 @@ function clearIn(){Object.assign(IN,{jx:0,jz:0,a:0,h:false,hP:0,hR:0,r:false,rP:
 // tempos em segundos: d = duração, a = janela de acerto, cw = janela para encadear o próximo golpe, ln = avanço [início, fim, velocidade],
 // ha = superarmadura (não é interrompido), pd = dano de equilíbrio, rg = alcance, arc = ângulo (rad) total do corte
 const MV={
- L1:{n:'Leve 1',d:.62,a:[.2,.3],st:14,dmg:90,pd:14,rg:2.45,arc:2,ln:[.06,.28,2.6],nx:'L2',cw:[.34,.62],ps:'sR'},
- L2:{n:'Leve 2',d:.6,a:[.19,.29],st:14,dmg:95,pd:14,rg:2.45,arc:2,ln:[.06,.26,2.4],nx:'L3',cw:[.33,.6],ps:'sL'},
- L3:{n:'Leve 3',d:.82,a:[.3,.42],st:17,dmg:125,pd:22,rg:2.55,arc:1.3,ln:[.14,.38,3],ps:'ov'},
+ L1:{n:'Leve 1',d:.44,a:[.12,.2],st:14,dmg:90,pd:14,rg:2.45,arc:2,ln:[.04,.19,3.2],nx:'L2',cw:[.22,.44],ps:'sR'},
+ L2:{n:'Leve 2',d:.43,a:[.11,.19],st:14,dmg:95,pd:14,rg:2.45,arc:2,ln:[.04,.18,3],nx:'L3',cw:[.21,.43],ps:'sL'},
+ L3:{n:'Leve 3',d:.6,a:[.19,.28],st:17,dmg:125,pd:22,rg:2.55,arc:1.3,ln:[.08,.26,3.6],ps:'ov'},
  H:{n:'Forte',d:1.02,a:[.44,.58],st:26,dmg:175,pd:34,rg:2.65,arc:1.5,ln:[.3,.5,3],ps:'ov',ha:[.06,.58]},
  HC:{n:'Forte carregado',d:.86,a:[.12,.28],st:0,dmg:270,pd:62,rg:2.75,arc:1.5,ln:[.04,.26,4.2],ps:'ov',ha:[0,.28],gb:1.6},
- RUN:{n:'Estocada correndo',d:.78,a:[.2,.36],st:16,dmg:115,pd:22,rg:2.7,arc:.8,ln:[0,.36,6.5],ps:'th'},
- RA:{n:'Corte após rolar',d:.56,a:[.14,.24],st:13,dmg:85,pd:12,rg:2.35,arc:1.8,ln:[.04,.2,2.6],ps:'sR'},
+ RUN:{n:'Estocada correndo',d:.6,a:[.14,.27],st:16,dmg:115,pd:22,rg:2.7,arc:.8,ln:[0,.27,7.5],ps:'th'},
+ RA:{n:'Corte após rolar',d:.42,a:[.1,.17],st:13,dmg:85,pd:12,rg:2.35,arc:1.8,ln:[.03,.15,3.2],ps:'sR'},
  GC:{n:'Contra-ataque de guarda',d:.72,a:[.16,.3],st:18,dmg:150,pd:58,rg:2.55,arc:1.7,ln:[.04,.26,2.6],ps:'sL',ha:[0,.3]},
  SQ:{n:'Postura: corte rápido',d:.58,a:[.1,.22],st:10,fp:14,dmg:165,pd:30,rg:3.5,arc:.9,ln:[.03,.2,9],ps:'th'},
  SU:{n:'Postura: corte ascendente',d:.88,a:[.18,.34],st:14,fp:14,dmg:210,pd:70,rg:2.6,arc:1.7,ln:[.04,.2,2],ps:'up',kd:1,ha:[0,.34]}};
@@ -25996,8 +25996,8 @@ let ARM=null;
 function render(dt){const me=G.me,du=G.du;
  // câmera em 3ª pessoa: travada fica atrás do jogador olhando o alvo
  if(G.lock&&du&&!du.dead){const ty=atan2(du.x-me.x,du.z-me.z);G.cy+=angd(G.cy,ty)*min(1,dt*6||1)}
- const cy=G.cy,fx=sin(cy),fz=cos(cy),dd=3.7,ex=me.x-fx*dd+cos(cy)*.0,ez=me.z-fz*dd,ey=1.85+G.cp*3;
- let tx=me.x+fx*4,tz=me.z+fz*4,ty=1.15-G.cp*1.5;if(G.lock&&du&&!du.dead){tx=lerp(me.x,du.x,.6);tz=lerp(me.z,du.z,.6);ty=1}
+ const cy=G.cy,fx=sin(cy),fz=cos(cy),dd=4.4,ex=me.x-fx*dd,ez=me.z-fz*dd,ey=2.75+G.cp*3;
+ let tx=me.x+fx*4,tz=me.z+fz*4,ty=.9-G.cp*1.5;if(G.lock&&du&&!du.dead){tx=lerp(me.x,du.x,.6);tz=lerp(me.z,du.z,.6);ty=.8}
  const rx=-fz*.0,rz=fx*.0;camSet(ex+(-cos(cy))*.45,ey,ez+sin(cy)*.45,tx,ty,tz,.95);
  beginFrame();drawMesh(ARM,M4.ty(MM,0,0,0,0));drawFighter(du,dt);drawFighter(me,dt);drawFX()}
 function bar(id,v,mx,lagId,lag){$(id).style.width=clp(v/mx*100,0,100)+'%';if(lagId)$(lagId).style.width=clp(lag/mx*100,0,100)+'%'}
@@ -26113,7 +26113,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261105024230;
+const GAME_BUILD=20261105025322;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
