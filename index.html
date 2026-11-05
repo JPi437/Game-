@@ -26017,11 +26017,11 @@ function aiInput(f,foe,dt){const o={lightHeld:false,mx:0,mz:0,light:0,heavy:0,he
  return o}
 
 // ============================================================ cenário ============================================================
-function buildArena(){const m=MB(),R=G.AR;m.disc(0,0,0,R+.4,40,0x4a453e);for(let i=0;i<5;i++)m.ring(0,.004,0,i*2.6+1,i*2.6+1.12,40,0x3a3630);
+function buildArena(){const m=MB(),R=G.AR;G.obs=[];m.disc(0,0,0,R+.4,40,0x4a453e);for(let i=0;i<5;i++)m.ring(0,.004,0,i*2.6+1,i*2.6+1.12,40,0x3a3630);
  for(let i=0;i<60;i++){const a=rnd()*TAU,r=rnd()*R;m.bx(sin(a)*r,.004,cos(a)*r,rr(.2,.7),.004,rr(.2,.7),pick([0x3e3a34,0x55504a,0x46423c]),0,rnd()*3)}
- for(let i=0;i<16;i++){const a=i/16*TAU,x=sin(a)*(R+1.2),z=cos(a)*(R+1.2),h=i%3===1?rr(1.2,2.5):rr(4,6.5);m.bx(x,h/2,z,.65,h/2,.65,0x6a645a,0,a);m.bx(x,.25,z,.85,.25,.85,0x5a554c,0,a);
+ for(let i=0;i<16;i++){const a=i/16*TAU,x=sin(a)*(R+1.2),z=cos(a)*(R+1.2),h=i%3===1?rr(1.2,2.5):rr(4,6.5);m.bx(x,h/2,z,.65,h/2,.65,0x6a645a,0,a);G.obs.push([x,z,1.25]);m.bx(x,.25,z,.85,.25,.85,0x5a554c,0,a);
   if(h>3){m.bx(x,h+.15,z,.8,.15,.8,0x5a554c,0,a)}if(i%4===0){m.cyl(x*.95,2.2,z*.95,.05,.05,.6,6,0x2a2a2a);m.sph(x*.95,2.9,z*.95,.16,0xffa040,1)}}
- m.disc(0,-.02,0,60,24,0x1c1a18);for(let i=0;i<40;i++){const a=rnd()*TAU,r=rr(R+4,40),h=rr(3,14);m.bx(sin(a)*r,h/2,cos(a)*r,rr(1,3),h/2,rr(1,3),0x2a2826,0,rnd()*3)}
+ m.disc(0,-.02,0,60,24,0x1c1a18);for(let i=0;i<40;i++){const a=rnd()*TAU,r=rr(R+4,40),h=rr(3,14),sx=rr(1,3),sz=rr(1,3);m.bx(sin(a)*r,h/2,cos(a)*r,sx,h/2,sz,0x2a2826,0,rnd()*3);G.obs.push([sin(a)*r,cos(a)*r,hypot(sx,sz)+.35])}
  m.ring(0,.006,0,1.4,1.55,30,0xc9a040,.2);return fin(m)}
 function buildGear(){const dg=MB();dg.bx(0,0,.24,.02,.007,.18,0xd8dee4);dg.tri([.02,0,.42],[-.02,0,.42],[0,0,.5],0xe8ecf0);dg.bx(0,0,.05,.06,.014,.014,0x8a6a30);dg.bx(0,0,-.03,.016,.016,.07,0x2a1a10);G.DG=fin(dg);const sw=MB();sw.bx(0,0,.62,.025,.012,.56,0xd0d6dc);sw.bx(0,0,1.19,.012,.01,.04,0xe8ecf0);sw.bx(0,0,.04,.17,.025,.025,0xa08040);sw.bx(0,0,-.07,.02,.02,.1,0x3a2416);sw.sph(0,0,-.18,.035,0xa08040);
  G.SW=fin(sw);const sh=MB();sh.cyl(0,-.03,0,.24,.22,.05,16,0x7a5a32);sh.cyl(0,.02,0,.08,.05,.05,10,0xb8a060);sh.ring(0,.021,0,.21,.24,20,0xb8a060);G.SH=fin(sh)}
@@ -26238,9 +26238,18 @@ function render(dt){const me=G.me,du=G.du;
  const fk=min(1,(dt||0)*11);G.fx=G.fx===undefined?me.x:lerp(G.fx,me.x,fk);G.fz=G.fz===undefined?me.z:lerp(G.fz,me.z,fk);const cx=G.fx,cz=G.fz;
  if(G.lock&&du&&!du.dead){const px=du.x+du.vx*.25,pz=du.z+du.vz*.25,ty=atan2(px-cx,pz-cz),d=angd(G.cy,ty);G.cyv=lerp(G.cyv||0,d*5,min(1,(dt||0)*8));G.cy+=G.cyv*(dt||0)}else G.cyv=0;
  if(!isFinite(G.cy)||!isFinite(G.fx)||!isFinite(G.fz)||!isFinite(G.cyv||0)){G.cy=PI;G.fx=me.x;G.fz=me.z;G.cyv=0;G.lx=G.lz=undefined}if(!isFinite(G.shk||0))G.shk=0;
- const cy=G.cy,fx=sin(cy),fz=cos(cy),dd=4.4,ex=cx-fx*dd,ez=cz-fz*dd,ey=2.75+G.cp*3;
- let tx=cx+fx*4,tz=cz+fz*4,ty=.9-G.cp*1.5;if(G.lock&&du&&!du.dead){G.lx=lerp(G.lx===undefined?du.x:G.lx,du.x,fk*.7);G.lz=lerp(G.lz===undefined?du.z:G.lz,du.z,fk*.7);tx=lerp(cx,G.lx,.6);tz=lerp(cz,G.lz,.6);ty=.8}
- const sk=G.shk||0,j=()=>(rnd()-.5)*sk;camSet(ex+(-cos(cy))*.45+j(),ey+j(),ez+sin(cy)*.45+j(),tx+j()*.5,ty+j()*.5,tz+j()*.5,.95);G.shk=max(0,sk-dt*1.2);
+ const cy=G.cy,fx=sin(cy),fz=cos(cy);
+ // colisão da câmera: perto da borda a câmera se aproxima do jogador em vez de entrar nas pedras/pilares (tela cinza)
+ const near=(G.obs||[]).filter(o=>hypot(o[0]-cx,o[1]-cz)<o[2]+6.5),blk=(x,z)=>{if(hypot(x,z)>G.AR+5)return true;for(const o of near){const dx=x-o[0],dz=z-o[1];if(dx*dx+dz*dz<o[2]*o[2])return true}return false};
+ // a câmera precisa ficar fora das pedras E enxergar o jogador (nada no caminho entre os dois)
+ const ray=sd=>{const sx=-cos(cy)*sd,sz=sin(cy)*sd;for(let t=.3;t<=4.6;t+=.15){const ex_=cx+sx-fx*t,ez_=cz+sz-fz*t;let b_=blk(ex_,ez_);for(let k=1;k<6&&!b_;k++)b_=blk(cx+(ex_-cx)*k/6,cz+(ez_-cz)*k/6);if(b_)return t-.15}return 4.6};
+ // se um pilar tapa a câmera, ela desliza para o lado (onde houver espaço) antes de se aproximar
+ let best=.45,tmax=ray(.45);if(tmax<4.3)for(const sd of[1.2,-.4,1.9,-1.1,2.6,-1.8]){const t=ray(sd);if(t>tmax+.3){tmax=t;best=sd}if(tmax>=4.3)break}
+ G.cs=!isFinite(G.cs)?best:lerp(G.cs,best,min(1,(dt||0)*4));tmax=min(tmax,ray(G.cs));const cs=G.cs;
+ const want=clp(tmax-.2,.5,4.4);
+ G.cd=!isFinite(G.cd)?want:want<G.cd?want:lerp(G.cd,want,min(1,(dt||0)*3));const dd=G.cd,ex=cx-fx*dd,ez=cz-fz*dd,ck=(4.4-dd)/3.9,ey=2.75+G.cp*3+ck*1.3;
+ let tx=cx+fx*4-cos(cy)*(cs-.45)*.5,tz=cz+fz*4+sin(cy)*(cs-.45)*.5,ty=.9-G.cp*1.5;if(G.lock&&du&&!du.dead){G.lx=lerp(G.lx===undefined?du.x:G.lx,du.x,fk*.7);G.lz=lerp(G.lz===undefined?du.z:G.lz,du.z,fk*.7);tx=lerp(cx,G.lx,.6);tz=lerp(cz,G.lz,.6);ty=.8}
+ const sk=G.shk||0,j=()=>(rnd()-.5)*sk;camSet(ex+(-cos(cy))*cs+j(),ey+j(),ez+sin(cy)*cs+j(),tx+j()*.5,ty+j()*.5,tz+j()*.5,.95);G.shk=max(0,sk-dt*1.2);
  beginFrame();drawMesh(ARM,M4.ty(MM,0,0,0,0));for(const f of[du,me]){try{drawFighter(f,dt)}catch(e){G.err='desenho: '+e.message;console.error('arena lutador',e);blend(false);bindMine()}}try{drawFX();drawSparks(dt)}catch(e){G.err='efeitos: '+e.message;blend(false)}}
 function bar(id,v,mx,lagId,lag){$(id).style.width=clp(v/mx*100,0,100)+'%';if(lagId)$(lagId).style.width=clp(lag/mx*100,0,100)+'%'}
 function hud(dt){const me=G.me,du=G.du;me.hpLag=me.hpLag>me.hp?max(me.hp,me.hpLag-K.HP*.35*dt):me.hp;du.hpLag=du.hpLag>du.hp?max(du.hp,du.hpLag-K.HP*.35*dt):du.hp;
@@ -26331,7 +26340,7 @@ D.addEventListener('visibilitychange',()=>{if(D.hidden&&S.st==='play')clearIn()}
 addEventListener('resize',()=>{if(S.st!=='off'&&booted)resize()});
 cv.addEventListener('webglcontextlost',e=>{e.preventDefault();G.lost=true},false);
 cv.addEventListener('webglcontextrestored',()=>{try{gl=null;for(const k in MS)delete MS[k];ACT=null;TB=null;if(glInit()){commonMeshes();ARM=buildArena();buildGear();buildArmor();gsBuild();booted=true}G.lost=false}catch(e){G.err='gráficos: '+e.message}},false);
-window.ARENA={open,close,G,K,MV,IN,PS,WPN,_step:(sec,fn)=>{const d=1/30;for(let t=0;t<sec;t+=d){fn&&fn(t);const me=G.me,du=G.du;stepF(me,d,fn&&fn.inp||{mx:0,mz:0},du);stepF(du,d,aiInput(du,me,d),me);tickFX(d)}}};
+window.ARENA={open,close,G,K,MV,IN,PS,WPN,_reset:reset,_render:render,_gl:()=>gl,_step:(sec,fn)=>{const d=1/30;for(let t=0;t<sec;t+=d){fn&&fn(t);const me=G.me,du=G.du;stepF(me,d,fn&&fn.inp||{mx:0,mz:0},du);stepF(du,d,aiInput(du,me,d),me);tickFX(d)}}};
 
 // ---------- botão na tela inicial do Star Ops ----------
 (function hook(){const row=D.querySelector('#soStart .soRow');if(!row||$('soPvp'))return;const b=D.createElement('button');b.className='soBtn';b.id='soPvp';b.textContent='⚔ ARENA PvP';
@@ -26372,7 +26381,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261105090350;
+const GAME_BUILD=20261105103950;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
