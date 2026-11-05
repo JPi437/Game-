@@ -25835,7 +25835,7 @@ function spend(f,n){f.st-=n;f.stamDelay=.55}
 function setS(f,s){f.state=s;f.t=0}
 function faceTo(f,t,rate,dt){const ty=atan2(t.x-f.x,t.z-f.z);if(rate===undefined)f.yaw=ty;else f.yaw+=clp(angd(f.yaw,ty),-rate*dt,rate*dt)}
 function startAtk(f,k,foe){const m=MV[k];if(m.fp&&f.fp<m.fp){if(f===G.me)txtFloat(f,'sem foco','#6aa0ff');return false}
- if(f.st<=0){if(f===G.me)txtFloat(f,'sem estamina','#5ec95e');return false}
+ if(f.st<=0){if(f===G.me){txtFloat(f,'sem estamina','#5ec95e');G.stF=.6}return false}
  spend(f,m.st);if(m.fp)f.fp-=m.fp;f.mv=m;f.mk=k;f.hitDone=false;f.cn=false;setS(f,'atk');
  // mira: travado vira para o alvo; senão ajuda um pouco se o inimigo estiver perto e na frente
  if(foe&&!foe.dead){const d=dist(f,foe),ad=abs(angd(f.yaw,atan2(foe.x-f.x,foe.z-f.z)));if(f.lockOn||(d<5&&ad<1.2))faceTo(f,foe)}
@@ -25853,7 +25853,7 @@ function tryAttack(f,foe,kind){if(!canAct(f))return false;
  if(kind==='H'){if(f.blockT<.45&&(f.state==='block'||f.state==='idle'||f.state==='move'))return startAtk(f,'GC',foe);if(f.st<=0)return false;setS(f,'charge');f.chg=0;f.mv=null;faceToLock(f,foe);return true}
  return false}
 function faceToLock(f,foe){if(f.lockOn&&foe&&!foe.dead)faceTo(f,foe)}
-function tryRoll(f,dx,dz){if(!canAct(f)&&!(f.state==='stance'))return false;if(f.st<=0)return false;
+function tryRoll(f,dx,dz){if(!canAct(f)&&!(f.state==='stance'))return false;if(f.st<=0){if(f===G.me){G.stF=.6;txtFloat(f,'sem estamina','#5ec95e')}return false}
  if(hypot(dx,dz)<.2){spend(f,K.BACK.st);setS(f,'back');f.rd=[-sin(f.yaw),-cos(f.yaw)];snd('roll',.6);return true}
  const l=hypot(dx,dz);spend(f,K.ROLL.st);setS(f,'roll');f.rd=[dx/l,dz/l];f.yaw=atan2(dx,dz);snd('roll',.8);return true}
 function tryParry(f){if(!canAct(f)||f.st<=0)return false;spend(f,K.PARRY.st);setS(f,'parry');return true}
@@ -25864,11 +25864,11 @@ function txtFloat(f,s,c,big){G.nums.push({x:f.x+rr(-.2,.2),y:2.1+(big?.3:0),z:f.
 function hit(att,def,m,mult){if(def.dead)return;
  const d=dist(att,def)||1,tx=(att.x-def.x)/d,tz=(att.z-def.z)/d,front=sin(def.yaw)*tx+cos(def.yaw)*tz>.15,hx_=(att.x+def.x)/2,hz=(att.z+def.z)/2;
  if(iframe(def)){txtFloat(def,'ESQUIVOU','#9ad0ff');return}
- if(def.state==='parry'&&def.t>=K.PARRY.w[0]&&def.t<=K.PARRY.w[1]&&front&&!m.kd){setS(att,'parried');att.mv=null;spark(hx_,1.3,hz,0xffffff,22);txtFloat(def,'APAROU!','#ffffff',1);snd('parry');def.t=K.PARRY.d-.15;G.flash=.25;return}
- if(def.state==='block'&&front){const sd=22+m.pd*.5*(m.gb||1);def.st-=sd;def.stamDelay=.7;const chip=m.dmg*.12;def.hp-=chip;def.blockT=0;spark(hx_,1.25,hz,0xffb040,14);snd('clang');
+ if(def.state==='parry'&&def.t>=K.PARRY.w[0]&&def.t<=K.PARRY.w[1]&&front&&!m.kd){setS(att,'parried');att.mv=null;sparks(hx_,1.3,hz,26,0xffffff,7);G.rings.push({x:hx_,y:1.3,z:hz,ry:G.cy,t:0,c:0xffffff});txtFloat(def,'APAROU!','#ffffff',1);snd('parry');def.t=K.PARRY.d-.15;G.flash=.12;G.hs=.16;G.shk=.12;return}
+ if(def.state==='block'&&front){const sd=22+m.pd*.5*(m.gb||1);def.st-=sd;def.stamDelay=.7;const chip=m.dmg*.12;def.hp-=chip;def.blockT=0;def.bk=.25;sparks(hx_,1.25,hz,18,0xffc050,6);G.rings.push({x:hx_,y:1.25,z:hz,ry:G.cy,t:.12,c:0xffa030});snd('clang');G.hs=.05;G.shk=max(G.shk||0,.05);
   def.vx-=tx*2.2;def.vz-=tz*2.2;num(def,chip,'#c8c8c8');if(def.st<0){def.st=0;setS(def,'gbreak');txtFloat(def,'GUARDA QUEBRADA!','#ffb030',1);snd('gb')}checkDead(def,att);return}
  let dmg=m.dmg*(mult||1),tag='';if(def.state==='atk'&&def.mv&&def.t<def.mv.a[0]){dmg*=1.15;tag=' CONTRA'}
- def.hp-=dmg;def.pa+=m.pd;def.paT=0;num(def,dmg,'#ffd23f',tag);spark(hx_,1.3,hz,0xff3a2a,12);blood(def.x,def.z);snd('hit');def.lastHit=0;
+ def.hp-=dmg;def.pa+=m.pd;def.paT=0;num(def,dmg,'#ffd23f',tag);sparks(hx_,1.3,hz,12,0xff6a3a,5);burst(hx_,1.3,hz,10,0x9a0a0a,3.5,.6,.05);blood(def.x,def.z);snd('hit');def.lastHit=0;G.hs=m.pd>=30?.12:.07;G.shk=max(G.shk||0,m.pd>=30?.16:.07);
  if(checkDead(def,att))return;
  if(m.kd){setS(def,'down');def.vx=-tx*4;def.vz=-tz*4;def.mv=null;txtFloat(def,'DERRUBADO','#ffb030');return}
  if(def.pa>=K.POISE){def.pa=0;setS(def,'stagger');def.mv=null;def.vx=-tx*2.5;def.vz=-tz*2.5;txtFloat(def,'CAMBALEOU','#ffb030');return}
@@ -25879,7 +25879,7 @@ function checkDead(def,att){if(def.hp>0)return false;def.hp=0;def.dead=true;setS
 
 // ---------- passo de um lutador ----------
 function stepF(f,dt,inp,foe){f.t+=dt;f.rollEnd+=dt;f.blockT+=dt;f.lastHit+=dt;f.paT+=dt;if(f.paT>4)f.pa=max(0,f.pa-dt*25);
- f.stamDelay-=dt;const regen=f.state==='block'?16:(f.state==='idle'||f.state==='move')?52:f.state==='sprint'?0:30;if(f.stamDelay<=0&&f.state!=='sprint')f.st=min(K.ST,f.st+regen*dt);f.fp=min(K.FP,f.fp+2.2*dt);
+ f.stamDelay-=dt;if(f.bk>0)f.bk-=dt;const regen=f.state==='block'?16:(f.state==='idle'||f.state==='move')?52:f.state==='sprint'?0:30;if(f.stamDelay<=0&&f.state!=='sprint')f.st=min(K.ST,f.st+regen*dt);f.fp=min(K.FP,f.fp+2.2*dt);
  f.lockOn=inp.lock&&foe&&!foe.dead;f.inD=[inp.mx,inp.mz];
  if(f.dead){f.vx*=.9;f.vz*=.9;return}
  const s=f.state;let mx=inp.mx,mz=inp.mz,ml=hypot(mx,mz);if(ml>1){mx/=ml;mz/=ml;ml=1}
@@ -25899,7 +25899,7 @@ function stepF(f,dt,inp,foe){f.t+=dt;f.rollEnd+=dt;f.blockT+=dt;f.lastHit+=dt;f.
   f.vx+=(mx*speed-f.vx)*min(1,dt*12);f.vz+=(mz*speed-f.vz)*min(1,dt*12)}
  else if(st==='atk'){const m=f.mv;if(f.t<m.a[0]&&foe&&f.lockOn)faceTo(f,foe,5,dt);
   const fw=fwd(f),ln=m.ln;let v=f.t>=ln[0]&&f.t<=ln[1]?ln[2]:0;if(m===MV.SQ&&foe){const d=dist(f,foe);if(d<1.3)v=0}f.vx=fw[0]*v;f.vz=fw[1]*v;
-  if(!f.hitDone&&f.t>=m.a[0]&&f.t<=m.a[1]&&foe&&!foe.dead){const d=dist(f,foe),ad=abs(angd(f.yaw,atan2(foe.x-f.x,foe.z-f.z)));if(d<m.rg+.35&&ad<m.arc/2+.25){f.hitDone=true;const cm=f.mk==='HC'?1+f.chg*.5:1;hit(f,foe,m,cm)}}
+  if(!f.hitDone&&f.t>=m.a[0]-.02&&f.t<=m.a[1]+.03&&foe&&!foe.dead){const d=dist(f,foe),ad=abs(angd(f.yaw,atan2(foe.x-f.x,foe.z-f.z))),bh=bladeHits(f,foe),cone=f.t>=m.a[0]&&f.t<=m.a[1]&&d<m.rg+.35&&ad<m.arc/2+.25;if(bh===null?cone:(bh&&d<m.rg+.7)||(cone&&f.t>=m.a[1]-.01&&d<m.rg-.2)){f.hitDone=true;const cm=f.mk==='HC'?1+f.chg*.5:1;hit(f,foe,m,cm)}}
   f.cn=!!(m.cw&&f.t>=m.cw[0]);if(f.t>=m.d){setS(f,'idle');f.mv=null}}
  else if(st==='charge'){f.chg=min(1,f.t/.9);if(foe&&f.lockOn)faceTo(f,foe,6,dt);f.vx*=.8;f.vz*=.8;
   if(!inp.heavyHeld||f.t>=1.1){const ct=f.t,k=ct<.3?'H':'HC';spend(f,26);f.mv=MV[k];f.mk=k;f.hitDone=false;f.cn=false;setS(f,'atk');if(k==='H')f.t=min(ct,.3);snd('swing')}}
@@ -25907,7 +25907,7 @@ function stepF(f,dt,inp,foe){f.t+=dt;f.rollEnd+=dt;f.blockT+=dt;f.lastHit+=dt;f.
  else if(st==='parry'){f.vx*=.7;f.vz*=.7;if(f.t>=K.PARRY.d)setS(f,'idle')}
  else if(st==='stance'){f.vx=mx*1;f.vz=mz*1;if(f.lockOn)faceTo(f,foe,6,dt);else if(ml>.1)face=atan2(mx,mz);f.st-=4*dt;f.stamDelay=.3;if(f.t>2.6||f.st<=0)setS(f,'idle')}
  else{const dur={flinch:.3,stagger:.85,gbreak:1.15,parried:1.45,down:1.35,critd:1.6,crit:1.45}[st]||.3;f.vx*=.85;f.vz*=.85;
-  if(st==='crit'&&f.crit&&!f.crit.done&&f.t>.48){f.crit.done=true;const v=f.crit.foe;v.hp-=f.crit.dmg;num(v,f.crit.dmg,'#ff8a2a',' CRÍTICO');blood(v.x,v.z);burst(v.x,1.2,v.z,26,0x8a0a0a,5,.8,.06);snd('hit');G.flash=.2;checkDead(v,f)}
+  if(st==='crit'&&f.crit&&!f.crit.done&&f.t>.48){f.crit.done=true;const v=f.crit.foe;v.hp-=f.crit.dmg;num(v,f.crit.dmg,'#ff8a2a',' CRÍTICO');G.hs=.2;G.shk=.25;sparks(v.x,1.2,v.z,20,0xff5030,6);blood(v.x,v.z);burst(v.x,1.2,v.z,26,0x8a0a0a,5,.8,.06);snd('hit');G.flash=.2;checkDead(v,f)}
   if(f.t>=dur){if(st==='critd'&&!f.dead){setS(f,'down');f.t=.35}else setS(f,'idle')}}
  if(face!==null)f.yaw+=angd(f.yaw,face)*min(1,dt*14);
  f.x+=f.vx*dt;f.z+=f.vz*dt;f.spd=hypot(f.vx,f.vz);const r=hypot(f.x,f.z),R=G.AR-.5;if(r>R){f.x*=R/r;f.z*=R/r}}
@@ -25918,7 +25918,7 @@ function aiInput(f,foe,dt){const o={mx:0,mz:0,light:0,heavy:0,heavyHeld:false,ro
  if(md==='idle'){o.lock=false;return o}
  if(md==='block'){o.block=true;return o}
  if(md==='roll'){if(foe.state==='atk'&&foe.t<.25&&d<3.2&&!a.r){a.r=1;o.roll=1;const s=rnd()<.5?1:-1;o.mx=-tz*s;o.mz=tx*s}if(foe.state!=='atk')a.r=0;return o}
- if(md==='attack'){if(d>2.3){o.mx=tx*.6;o.mz=tz*.6}else if(a.t<=0){o.heavy=1;a.t=rr(2,3)}a.hold=(a.hold||0);return o}
+ if(md==='attack'){if(d>1.9){o.mx=tx*.6;o.mz=tz*.6}else if(a.t<=0){o.heavy=1;a.t=rr(2,3)}a.hold=(a.hold||0);return o}
  // bot completo
  const sk=G.diff;if(a.react===undefined)a.react=0;
  // reagir ao golpe do jogador
@@ -25932,15 +25932,15 @@ function aiInput(f,foe,dt){const o={mx:0,mz:0,light:0,heavy:0,heavyHeld:false,ro
  const rec=foe.state==='atk'&&foe.t>foe.mv.a[1]+.05||foe.state==='flinch'||foe.state==='stagger';
  if(f.state==='atk'&&f.cn&&f.mv.nx&&foe.state==='flinch'&&rnd()<.75*sk)o.light=1;
  if(a.t<=0&&canAct(f)&&!o.block){
-  if(rec&&d<2.7&&f.st>15){o.light=1;a.t=rr(.2,.4)}
+  if(rec&&d<2.3&&f.st>15){o.light=1;a.t=rr(.2,.4)}
   else if(f.st<28){a.back=rr(.8,1.5);a.t=a.back}
-  else if(d<2.4&&rnd()<.5){const r=rnd();if(r<.55)o.light=1;else if(r<.8){o.heavy=1;a.hh=rr(.1,.9)}else if(f.fp>=14){o.skill=1;a.sq=rr(.2,.5)}a.t=rr(.6,1.4)/(.7+.4*sk)}
+  else if(d<2.05&&rnd()<.5){const r=rnd();if(r<.55)o.light=1;else if(r<.8){o.heavy=1;a.hh=rr(.1,.9)}else if(f.fp>=14){o.skill=1;a.sq=rr(.2,.5)}a.t=rr(.6,1.4)/(.7+.4*sk)}
   else if(d>3.4&&d<4.6&&rnd()<.2&&f.fp>=14){o.skill=1;a.sq=.2;a.t=1}
   else a.t=rr(.2,.5)}
  if(a.hh>0){a.hh-=dt;o.heavyHeld=true}
  if(f.state==='stance'){a.sq=(a.sq||0)-dt;if(a.sq<=0){if(d>2.6)o.light=1;else o.heavy=1}}
  // movimento: rodear a ~3 m, chegar perto quando tem estamina
- const want=a.back>0?5:f.st>40?2.1:3.2;if(a.back>0)a.back-=dt;if(!a.sd||rnd()<dt*.4)a.sd=rnd()<.5?1:-1;
+ const want=a.back>0?5:f.st>40?1.75:3;if(a.back>0)a.back-=dt;if(!a.sd||rnd()<dt*.4)a.sd=rnd()<.5?1:-1;
  const rad=(d-want)*.9;o.mx=tx*rad+(-tz)*a.sd*.55;o.mz=tz*rad+tx*a.sd*.55;
  // tentar ir pelas costas
  if(rnd()<.3*sk&&d<2.2&&foe.state==='atk'){o.mx+=(-tz)*a.sd;o.mz+=tx*a.sd}
@@ -25957,40 +25957,112 @@ function buildGear(){const sw=MB();sw.bx(0,0,.62,.025,.012,.56,0xd0d6dc);sw.bx(0
  G.SW=fin(sw);const sh=MB();sh.cyl(0,-.03,0,.24,.22,.05,16,0x7a5a32);sh.cyl(0,.02,0,.08,.05,.05,10,0xb8a060);sh.ring(0,.021,0,.21,.24,20,0xb8a060);G.SH=fin(sh)}
 
 // ============================================================ desenho ============================================================
-const REST=PS.rest;
-function full(p){const o=REST.filter(r=>!p.find(q=>q[0]===r[0]&&q[1]===r[1]));return o.concat(p)}
-function poseOf(f){let ov=REST,rx=0,y=0,x=f.x,z=f.z,spd=0;const s=f.state,t=f.t;
- if(s==='idle'||s==='move'||s==='sprint'){spd=f.spd;if(s==='sprint')ov=full([['upperarm_r',0,.3],['lowerarm_r',0,-.6],['spine_02',0,.25]])}
- else if(s==='block'){ov=full(PS.block);spd=f.spd*1.4}
- else if(s==='atk'||s==='crit'){const m=s==='crit'?{a:[.35,.5],d:1.45,ps:'th'}:f.mv,P2=PS[m.ps],W=full(P2[0]),E=full(P2[1]),t0=m.a[0]*.75;
-  if(t<t0)ov=lerpPose(REST,W,ease(t/t0));else if(t<m.a[1])ov=lerpPose(W,E,ease((t-t0)/(m.a[1]-t0)));else if(t<m.d*.82)ov=E;else ov=lerpPose(E,REST,clp((t-m.d*.82)/(m.d*.18),0,1));
-  if(m.ps==='th'&&t>t0&&t<m.a[1]+.1)ov=ov.concat([['thigh_l',0,-.5],['calf_l',0,.5],['thigh_r',0,.35]])}
- else if(s==='charge'){const W=full(PS.ov[0]);ov=lerpPose(REST,W,min(1,t/.3)).concat([['spine_02',1,sin(S.gt*40)*.02*f.chg]])}
- else if(s==='roll'){const k=clp(t/(K.ROLL.d*.75),0,1),th=k*TAU,hip=lerp(.95,.55,sin(k*PI));ov=k<1?full(PS.tuck):REST;rx=k<1?th:0;y=hip-.95*cos(rx);x-=sin(f.yaw)*.95*sin(rx);z-=cos(f.yaw)*.95*sin(rx);if(k>=1)y=0}
- else if(s==='back'){rx=-.25*sin(clp(t/K.BACK.d,0,1)*PI);ov=full(PS.block)}
- else if(s==='parry'){const w=K.PARRY.w,u=t<w[0]?t/w[0]:t<w[1]?1:max(0,1-(t-w[1])/.3);ov=lerpPose(REST,full(PS.parry),ease(clp(u,0,1)))}
- else if(s==='stance'){ov=full(PS.stance)}
- else if(s==='flinch'){ov=full(PS.flinch);rx=-.12*sin(clp(t/.3,0,1)*PI)}
- else if(s==='stagger'||s==='gbreak'){ov=full(PS.flinch.concat([['upperarm_l',2,1],['upperarm_r',2,-1]]));rx=-.2+sin(t*14)*.06}
- else if(s==='parried'){ov=full([['upperarm_r',0,-2.6],['upperarm_r',2,-.9],['lowerarm_r',0,-.3],['spine_02',0,-.4],['Head',0,-.4]]);rx=-.18}
- else if(s==='critd'){const k=clp((t-.45)/.5,0,1);ov=full(PS.flinch);rx=-1.5*k;y=.2*k}
- else if(s==='down'){const k=t<1?1:max(0,1-(t-1)/.35);rx=-1.5*k;y=.18*k}
- else if(s==='dead'){rx=-1.5;y=.18}
- return{ov,rx,y,x,z,spd}}
-const HB={};
-function drawFighter(f,dt){const p=poseOf(f);if(!f.bm)f.bm={hand_r:null,hand_l:null};f.bm.hand_r=f.bm.hand_l=null;
- actor(f,dt,{x:p.x,y:p.y,z:p.z,spd:p.spd,ovs:p.ov,rx:p.rx,bm:f.bm,h:f.h});
- const hr=f.bm.hand_r,hl=f.bm.hand_l;
- if(hr){gear(hr,G.SW,G.swr);if(f.state==='atk'&&f.t>=f.mv.a[0]-.05&&f.t<=f.mv.a[1]+.04){const tip=[MM[12]+MM[8]*1.2,MM[13]+MM[9]*1.2,MM[14]+MM[10]*1.2];(f.trail=f.trail||[]).push({p:tip,b:[MM[12]+MM[8]*.3,MM[13]+MM[9]*.3,MM[14]+MM[10]*.3],t:.14})}}
- else{M4.trs(MM,f.x+cos(f.yaw)*.35,1,f.z-sin(f.yaw)*.35,f.yaw,0,0);drawMesh(G.SW,MM)}
+// ---------- animação de combate: poses por quadro-chave (ossos + giro do corpo + passo + agachar) ----------
+// chaves: 'osso:eixo' = ângulo; tw = giro do corpo (rad), yo = sobe/desce (m), stp = passo à frente (0..1), sq = agachar (0..1), ln = inclinar o tronco
+const RB={'upperarm_r:0':-.55,'upperarm_r:2':-.3,'lowerarm_r:0':-1.05,'upperarm_l:0':-.55,'upperarm_l:2':-.15,'lowerarm_l:2':-1.25};
+const RL={'thigh_l:0':-.22,'thigh_r:0':.12,'calf_l:0':.3,'calf_r:0':.28,'spine_02:0':.1};   // base de luta (joelhos dobrados) quando parado
+const O=(...a)=>Object.assign({},...a);
+const P_={
+ W1:{'upperarm_r:0':-1.15,'upperarm_r:2':-1.2,'lowerarm_r:0':-1.4,'spine_03:1':-.65,tw:-.5,sq:.25},
+ E1:{'upperarm_r:0':-1.35,'upperarm_r:2':.65,'lowerarm_r:0':-.15,'spine_03:1':.7,tw:.55,stp:1,ln:.22,sq:.3},
+ W2:{'upperarm_r:0':-1.45,'upperarm_r:2':.55,'lowerarm_r:0':-1.65,'spine_03:1':.65,tw:.55,sq:.25},
+ E2:{'upperarm_r:0':-1.2,'upperarm_r:2':-1.25,'lowerarm_r:0':-.15,'spine_03:1':-.7,tw:-.55,stp:1,ln:.22,sq:.3},
+ WO:{'upperarm_r:0':-2.95,'upperarm_r:2':-.25,'lowerarm_r:0':-1.45,'spine_02:0':-.3,'upperarm_l:0':-1.1,tw:-.25,yo:.04},
+ EO:{'upperarm_r:0':-.65,'upperarm_r:2':-.1,'lowerarm_r:0':-.05,'spine_02:0':.55,'upperarm_l:0':-.3,tw:.15,stp:1.1,sq:.7,ln:.2},
+ WH:{'upperarm_r:0':-3.05,'upperarm_r:2':-.55,'lowerarm_r:0':-1.6,'spine_03:1':-.55,'spine_02:0':-.38,'upperarm_l:0':-1.2,'upperarm_l:2':.4,tw:-.45,sq:.2},
+ EH:{'upperarm_r:0':-.55,'upperarm_r:2':-.05,'lowerarm_r:0':0,'spine_02:0':.65,'spine_03:1':.25,'upperarm_l:0':-.2,tw:.25,stp:1.25,sq:.85,ln:.25},
+ WT:{'upperarm_r:0':-.3,'upperarm_r:2':-.6,'lowerarm_r:0':-2.05,'spine_03:1':-.65,tw:-.65,sq:.35,ln:-.05},
+ ET:{'upperarm_r:0':-1.55,'upperarm_r:2':-.05,'lowerarm_r:0':-.05,'spine_03:1':.35,'upperarm_l:0':-.2,'upperarm_l:2':.8,tw:.3,stp:1.4,ln:.4,sq:.45},
+ WL:{'upperarm_r:0':-.9,'upperarm_r:2':-1.25,'lowerarm_r:0':-1.1,'spine_03:1':-.6,tw:-.55,sq:.9,ln:.35},
+ EL:{'upperarm_r:0':-1.1,'upperarm_r:2':.7,'lowerarm_r:0':-.1,'spine_03:1':.65,tw:.55,sq:.8,stp:.8,ln:.4},
+ WU:{'upperarm_r:0':-.1,'upperarm_r:2':-.5,'lowerarm_r:0':-.3,'spine_02:0':.55,'spine_03:1':-.4,tw:-.4,sq:1,ln:.3},
+ EU:{'upperarm_r:0':-3.05,'upperarm_r:2':-.3,'lowerarm_r:0':-.35,'spine_02:0':-.35,'spine_03:1':.3,'upperarm_l:0':-.2,'upperarm_l:2':.9,tw:.3,yo:.32,stp:.4},
+ BL:{'upperarm_l:0':-.95,'upperarm_l:2':-.3,'lowerarm_l:2':-1.45,'upperarm_r:0':-.7,'upperarm_r:2':-.4,'lowerarm_r:0':-1.2,sq:.35,ln:.12},
+ PA:{'upperarm_l:0':-1.25,'upperarm_l:2':.75,'lowerarm_l:2':-.45,'spine_03:1':.45,tw:.3,sq:.3},
+ ST:{'upperarm_r:0':-.3,'upperarm_r:2':-.75,'lowerarm_r:0':-.55,'spine_03:1':-.7,'upperarm_l:0':-.9,'upperarm_l:2':.2,tw:-.6,sq:.8,stp:.6,ln:.25},
+ FL:{'spine_02:0':-.4,'Head:0':-.4,'upperarm_r:2':-.7,'upperarm_l:2':.5,ln:-.2},
+ TU:{'thigh_l:0':-1.7,'thigh_r:0':-1.7,'calf_l:0':2.1,'calf_r:0':2.1,'spine_02:0':.7,'upperarm_l:0':-1,'upperarm_r:0':-1,'lowerarm_r:0':-1.5,'lowerarm_l:2':-1.3},
+ PR:{'upperarm_r:0':-2.7,'upperarm_r:2':-1,'lowerarm_r:0':-.3,'upperarm_l:2':1.1,'spine_02:0':-.45,'Head:0':-.4,ln:-.3},
+ SP:{'upperarm_r:0':.35,'lowerarm_r:0':-.6,'spine_02:0':.3,ln:.25}};
+// trilhas dos golpes: [tempo (s), pose, curva] — curva: 0 suave, 1 rápida (o corte), 2 lenta
+const TR={
+ L1:[[0,{},0],[.09,P_.W1,0],[.12,O(P_.W1,{'upperarm_r:2':-1.3}),2],[.2,P_.E1,1],[.3,P_.E1,0],[.44,{},0]],
+ L2:[[0,P_.E1,0],[.08,P_.W2,0],[.11,P_.W2,2],[.19,P_.E2,1],[.29,P_.E2,0],[.43,{},0]],
+ L3:[[0,P_.E2,0],[.15,P_.WO,0],[.19,O(P_.WO,{yo:.07}),2],[.28,P_.EO,1],[.42,P_.EO,0],[.6,{},0]],
+ H:[[0,{},0],[.3,P_.WH,0],[.44,O(P_.WH,{'spine_02:0':-.45,tw:-.55}),2],[.58,P_.EH,1],[.8,P_.EH,0],[1.02,{},0]],
+ HC:[[0,O(P_.WH,{'spine_02:0':-.5,tw:-.6}),0],[.12,O(P_.WH,{'spine_02:0':-.5,tw:-.6}),2],[.28,O(P_.EH,{stp:1.5}),1],[.58,P_.EH,0],[.86,{},0]],
+ RUN:[[0,P_.WT,0],[.14,O(P_.WT,{ln:.1}),2],[.27,P_.ET,1],[.42,P_.ET,0],[.6,{},0]],
+ RA:[[0,P_.WL,0],[.1,P_.WL,2],[.17,P_.EL,1],[.27,P_.EL,0],[.42,{},0]],
+ GC:[[0,P_.BL,0],[.12,P_.W2,0],[.16,P_.W2,2],[.3,O(P_.E2,{stp:1.3}),1],[.45,P_.E2,0],[.72,{},0]],
+ SQ:[[0,P_.ST,0],[.08,O(P_.WT,{sq:.9}),2],[.22,O(P_.ET,{stp:1.6,ln:.5}),1],[.38,P_.ET,0],[.58,{},0]],
+ SU:[[0,P_.ST,0],[.14,P_.WU,0],[.18,P_.WU,2],[.34,P_.EU,1],[.55,O(P_.EU,{yo:.1}),0],[.88,{},0]],
+ crit:[[0,{},0],[.28,P_.WT,0],[.4,P_.WT,2],[.5,O(P_.ET,{stp:1.2}),1],[1,O(P_.ET,{stp:1.2,'lowerarm_r:0':-.3}),0],[1.2,O(P_.WT,{tw:-.3}),1],[1.45,{},0]]};
+const EZ=[t=>t*t*(3-2*t),t=>1-Math.pow(1-t,4),t=>t];
+function sampleTr(tr,t){let i=0;while(i<tr.length-1&&tr[i+1][0]<=t)i++;if(i>=tr.length-1)return tr[tr.length-1][1];const a=tr[i],b=tr[i+1],u=clp((t-a[0])/(b[0]-a[0]),0,1);return mixP(a[1],b[1],EZ[b[2]](u))}
+const BV=k=>k in RB?RB[k]:0;
+function mixP(a,b,u){const o={};for(const k in a)o[k]=a[k]*(1-u)+(k in b?b[k]:BV(k))*u;for(const k in b)if(!(k in a))o[k]=BV(k)*(1-u)+b[k]*u;return o}
+// pose final -> lista de ossos + extras
+function build(p,legs){const o=O(RB,legs?RL:{}),ov=[];let tw=0,yo=0,stp=0,sq=0,ln=0;
+ for(const k in p){if(k==='tw')tw=p[k];else if(k==='yo')yo=p[k];else if(k==='stp')stp=p[k];else if(k==='sq')sq=p[k];else if(k==='ln')ln=p[k];else o[k]=(k in RB||k in RL&&legs)&&!(k in p&&p.__abs)?p[k]:p[k]}
+ if(stp){o['thigh_l:0']=(o['thigh_l:0']||0)-.75*stp;o['calf_l:0']=(o['calf_l:0']||0)+.6*stp;o['thigh_r:0']=(o['thigh_r:0']||0)+.45*stp;o['calf_r:0']=(o['calf_r:0']||0)+.4*stp}
+ if(sq){for(const s of['l','r']){o['thigh_'+s+':0']=(o['thigh_'+s+':0']||0)-.45*sq;o['calf_'+s+':0']=(o['calf_'+s+':0']||0)+.85*sq}yo-=.13*sq}
+ if(ln)o['spine_02:0']=(o['spine_02:0']||0)+ln;
+ for(const k in o){const i=k.indexOf(':');ov.push([k.slice(0,i),+k.slice(i+1),o[k]])}return{ov,tw,yo}}
+function poseOf(f){const s=f.state,t=f.t,idle=s==='idle'&&f.spd<.6;let p={},rx=0,y=0,x=f.x,z=f.z,spd=0,legs=false;
+ if(s==='idle'||s==='move'){spd=f.spd;legs=f.spd<.6;if(legs){const b=sin(S.gt*2.2+f.id)*.03;p={'spine_02:0':b,'upperarm_r:0':-.55+b}}}
+ else if(s==='sprint'){spd=f.spd;p={'upperarm_r:0':.4,'upperarm_r:2':-.35,'lowerarm_r:0':-.5,'upperarm_l:0':.3,ln:.3}}
+ else if(s==='block'){spd=f.spd*1.4;legs=f.spd<.6;p=O(P_.BL);if(f.bk>0){const k=f.bk/.25;p['upperarm_l:0']+=.5*k;p.tw=-.25*k;p.ln=-.15*k}}
+ else if(s==='atk'){p=sampleTr(TR[f.mk],t);legs=true}
+ else if(s==='crit'){p=sampleTr(TR.crit,t);legs=true}
+ else if(s==='charge'){const k=min(1,t/.3);p=mixP({},O(P_.WH,{'spine_02:0':-.45-.1*f.chg,tw:-.5-.15*f.chg}),EZ[0](k));p.tw+=sin(S.gt*45)*.02*f.chg;legs=true}
+ else if(s==='roll'){const k=clp(t/(K.ROLL.d*.75),0,1);if(k<1){p=mixP(P_.TU,P_.TU,0);const th=k*TAU,hip=lerp(.95,.5,sin(k*PI));rx=th;y=hip-.95*cos(th);x-=sin(f.yaw)*.95*sin(th);z-=cos(f.yaw)*.95*sin(th)}else{p=mixP(P_.TU,{},clp((t-K.ROLL.d*.75)/(K.ROLL.d*.25),0,1));legs=true}}
+ else if(s==='back'){const k=sin(clp(t/K.BACK.d,0,1)*PI);p=O(P_.BL,{ln:-.3*k,stp:-.5*k});rx=-.12*k;legs=true}
+ else if(s==='parry'){const w=K.PARRY.w,u=t<w[0]?t/w[0]:t<w[1]?1:max(0,1-(t-w[1])/.3);p=mixP({},P_.PA,EZ[1](clp(u,0,1)));legs=true}
+ else if(s==='stance'){p=O(P_.ST,{tw:-.6+sin(S.gt*3)*.03});legs=true}
+ else if(s==='flinch'){const k=sin(clp(t/.3,0,1)*PI);p=mixP({},P_.FL,k);rx=-.1*k;legs=true}
+ else if(s==='stagger'||s==='gbreak'){const k=min(1,t/.15)*(1-max(0,t-.6)/.5);p=mixP({},O(P_.FL,{'upperarm_l:2':1.1,'upperarm_r:2':-1.1,tw:sin(t*12)*.2}),k);rx=(-.22+sin(t*13)*.07)*k;legs=true}
+ else if(s==='parried'){const k=min(1,t/.12)*(1-max(0,t-1.1)/.35);p=mixP({},P_.PR,k);rx=-.2*k;legs=true}
+ else if(s==='critd'){const k=clp((t-.48)/.45,0,1);p=mixP(P_.FL,{},k);rx=-1.52*EZ[0](k);y=.18*k}
+ else if(s==='down'){if(t<1){rx=-1.52;y=.18;p={'upperarm_l:2':.6,'upperarm_r:2':-.6}}else{const k=clp((t-1)/.35,0,1);rx=-1.52*(1-EZ[0](k));y=.18*(1-k);p=mixP(P_.TU,{},k)}}
+ else if(s==='dead'){rx=-1.52;y=.18;p={'upperarm_l:2':.9,'upperarm_r:2':-.9,'Head:1':.5}}
+ const b=build(p,legs);return{ov:b.ov,rx,y:y+b.yo,x,z,spd,tw:b.tw}}
+
+// ---------- espada, escudo, rastro e brilhos ----------
+const GL_=new Float32Array(16),GN=new Float32Array(16),TIP=[0,0,0],BASE=[0,0,0];
+function gear(bm,mesh,r,tint,em){GN.set(bm);for(let c=0;c<3;c++){const l=hypot(GN[c*4],GN[c*4+1],GN[c*4+2])||1;GN[c*4]/=l;GN[c*4+1]/=l;GN[c*4+2]/=l}
+ M4.trs(GL_,r[3],r[4],r[5],r[0],r[1],r[2]);M4.mul(MM,GN,GL_);drawMesh(mesh,MM,tint,em)}
+function swordPts(){TIP[0]=MM[12]+MM[8]*1.2;TIP[1]=MM[13]+MM[9]*1.2;TIP[2]=MM[14]+MM[10]*1.2;BASE[0]=MM[12]+MM[8]*.12;BASE[1]=MM[13]+MM[9]*.12;BASE[2]=MM[14]+MM[10]*.12}
+let TB=null;
+function drawFighter(f,dt){f.bladePrev=f.blade;const p=poseOf(f);if(!f.bm)f.bm={hand_r:null,hand_l:null};f.bm.hand_r=f.bm.hand_l=null;
+ const yaw0=f.yaw;f.yaw=yaw0+p.tw;actor(f,dt,{x:p.x,y:p.y,z:p.z,spd:p.spd,ovs:p.ov,rx:p.rx,bm:f.bm,h:f.h});f.yaw=yaw0;
+ const hr=f.bm.hand_r,hl=f.bm.hand_l,sw=f.state==='atk'&&f.t>=f.mv.a[0]-.07&&f.t<=f.mv.a[1]+.05||f.state==='crit'&&f.t>.38&&f.t<.55;
+ const glow=f.state==='charge'?f.chg:f.state==='stance'?.6:0;
+ if(hr){gear(hr,G.SW,G.swr,glow?tcol(f.state==='stance'?0x9ad0ff:0xffb060):null,glow*.7);swordPts();f.blade={b:BASE.slice(),t:TIP.slice(),at:S.gt};
+  if(sw)(f.trail=f.trail||[]).push({b:BASE.slice(),t:TIP.slice(),a:0});
+  // aviso: brilho na ponta da espada antes do golpe forte (para dar para reagir)
+  const warn=f.state==='charge'||(f.state==='atk'&&(f.mk==='H'||f.mk==='SU'||f.mk==='HC')&&f.t<f.mv.a[0]&&f.t>f.mv.a[0]-.3);
+  if(warn||glow){blend(true);gl.blendFunc(gl.SRC_ALPHA,gl.ONE);const k=warn?.6+.4*sin(S.gt*30):glow;ball(TIP[0],TIP[1],TIP[2],.12+.12*k,f.state==='stance'?0x6ab0ff:0xffd080,1,.8*k);ball(TIP[0],TIP[1],TIP[2],.05,0xffffff,1,1);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);blend(false)}}
+ else{M4.trs(MM,f.x+cos(f.yaw)*.35,1,f.z-sin(f.yaw)*.35,f.yaw,0,0);drawMesh(G.SW,MM);swordPts();f.blade=null}
  if(hl)gear(hl,G.SH,G.shr);
- if(f.trail){blend(true);for(let i=f.trail.length-1;i>=0;i--){const q=f.trail[i];q.t-=dt;if(q.t<=0){f.trail.splice(i,1);continue}
-   const a=q.p,b=q.b,dx=a[0]-b[0],dy=a[1]-b[1],dz=a[2]-b[2],l=hypot(dx,dy,dz)||1;box((a[0]+b[0])/2,(a[1]+b[1])/2,(a[2]+b[2])/2,.05,.05,l,0xfff0c8,1,atan2(dx,dz),-Math.asin(dy/l),0,q.t*3)}blend(false)}}
-// arma presa no osso da mão: matriz do osso (sem escala) * ajuste local
-const GL_=new Float32Array(16),GN=new Float32Array(16);
-function gear(bm,mesh,r){GN.set(bm);for(let c=0;c<3;c++){const l=hypot(GN[c*4],GN[c*4+1],GN[c*4+2])||1;GN[c*4]/=l;GN[c*4+1]/=l;GN[c*4+2]/=l}
- M4.trs(GL_,r[3],r[4],r[5],r[0],r[1],r[2]);M4.mul(MM,GN,GL_);drawMesh(mesh,MM)}
-G.swr=[0,-1.45,0,0,0,0];G.shr=[0,0,-1.57,0,0,0];
+ // rastro da lâmina (fita que some)
+ if(f.trail&&f.trail.length){for(const q of f.trail)q.a+=dt;while(f.trail.length&&f.trail[0].a>.16)f.trail.shift();
+  if(f.trail.length>1){const v=[];for(let i=1;i<f.trail.length;i++){const a=f.trail[i-1],b=f.trail[i],ka=max(0,1-a.a/.16),kb=max(0,1-b.a/.16),ca=[ka,ka*.92,ka*.75],cb=[kb,kb*.92,kb*.75];
+    const V=(p,c)=>v.push(p[0],p[1],p[2],0,1,0,c[0],c[1],c[2],0);V(a.b,ca.map(x=>x*.2));V(a.t,ca);V(b.t,cb);V(a.b,ca.map(x=>x*.2));V(b.t,cb);V(b.b,cb.map(x=>x*.2))}
+   if(!TB)TB=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,TB);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(v),gl.DYNAMIC_DRAW);
+   blend(true);gl.blendFunc(gl.SRC_ALPHA,gl.ONE);M4.ty(MM,0,0,0,0);drawMesh({vb:TB,n:v.length/10},MM,[1,1,1,.85],1);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);blend(false)}}}
+// faíscas em risco (alongadas na direção em que voam) e anel do aparar
+function sparks(x,y,z,n,c,sp){for(let i=0;i<n;i++){const a=rnd()*TAU,u=rr(.3,1);G.sp.push({x,y,z,vx:cos(a)*sp*u,vy:rr(-.2,1)*sp*.8,vz:sin(a)*sp*u,l:rr(.15,.35),c})}}
+function drawSparks(dt){if(!G.sp.length&&!G.rings.length)return;blend(true);gl.blendFunc(gl.SRC_ALPHA,gl.ONE);
+ for(let i=G.sp.length-1;i>=0;i--){const s=G.sp[i];s.l-=dt;if(s.l<=0){G.sp.splice(i,1);continue}s.vy-=9*dt;s.x+=s.vx*dt;s.y+=s.vy*dt;s.z+=s.vz*dt;
+  const v=hypot(s.vx,s.vy,s.vz)||1;box(s.x,s.y,s.z,.025,.025,min(.5,v*.045),s.c,1,atan2(s.vx,s.vz),-Math.asin(clp(s.vy/v,-1,1)),0,min(1,s.l*5))}
+ for(let i=G.rings.length-1;i>=0;i--){const r=G.rings[i];r.t+=dt;if(r.t>.35){G.rings.splice(i,1);continue}const k=r.t/.35;M4.trs(MM,r.x,r.y,r.z,r.ry,PI/2,0,.3+k*1.6,1,.3+k*1.6);drawMesh(MS.ring,MM,tcol(r.c,1-k),1)}
+ gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);blend(false)}
+G.sp=[];G.rings=[];G.swr=[0,-1.45,0,0,0,0];G.shr=[0,0,-1.57,0,0,0];
+// acerto pela lâmina: o segmento da espada (deste quadro e do anterior) contra o corpo do alvo (cilindro)
+function bladeHits(f,foe){const b=f.blade;if(!b||S.gt-b.at>.12)return null;const pv=f.bladePrev||b;let hit=false;
+ for(let i=0;i<=6&&!hit;i++){const u=.15+i/6*.85;for(const w of[0,.5,1]){const px=lerp(lerp(pv.b[0],pv.t[0],u),lerp(b.b[0],b.t[0],u),w),py=lerp(lerp(pv.b[1],pv.t[1],u),lerp(b.b[1],b.t[1],u),w),pz=lerp(lerp(pv.b[2],pv.t[2],u),lerp(b.b[2],b.t[2],u),w);
+   if(py>-.1&&py<1.95&&hypot(px-foe.x,pz-foe.z)<.55){hit=true;break}}}
+ return hit}
 
 let ARM=null;
 function render(dt){const me=G.me,du=G.du;
@@ -25998,8 +26070,8 @@ function render(dt){const me=G.me,du=G.du;
  if(G.lock&&du&&!du.dead){const ty=atan2(du.x-me.x,du.z-me.z);G.cy+=angd(G.cy,ty)*min(1,dt*6||1)}
  const cy=G.cy,fx=sin(cy),fz=cos(cy),dd=4.4,ex=me.x-fx*dd,ez=me.z-fz*dd,ey=2.75+G.cp*3;
  let tx=me.x+fx*4,tz=me.z+fz*4,ty=.9-G.cp*1.5;if(G.lock&&du&&!du.dead){tx=lerp(me.x,du.x,.6);tz=lerp(me.z,du.z,.6);ty=.8}
- const rx=-fz*.0,rz=fx*.0;camSet(ex+(-cos(cy))*.45,ey,ez+sin(cy)*.45,tx,ty,tz,.95);
- beginFrame();drawMesh(ARM,M4.ty(MM,0,0,0,0));drawFighter(du,dt);drawFighter(me,dt);drawFX()}
+ const sk=G.shk||0,j=()=>(rnd()-.5)*sk;camSet(ex+(-cos(cy))*.45+j(),ey+j(),ez+sin(cy)*.45+j(),tx+j()*.5,ty+j()*.5,tz+j()*.5,.95);G.shk=max(0,sk-dt*1.2);
+ beginFrame();drawMesh(ARM,M4.ty(MM,0,0,0,0));drawFighter(du,dt);drawFighter(me,dt);drawFX();drawSparks(dt)}
 function bar(id,v,mx,lagId,lag){$(id).style.width=clp(v/mx*100,0,100)+'%';if(lagId)$(lagId).style.width=clp(lag/mx*100,0,100)+'%'}
 function hud(dt){const me=G.me,du=G.du;me.hpLag=me.hpLag>me.hp?max(me.hp,me.hpLag-K.HP*.35*dt):me.hp;du.hpLag=du.hpLag>du.hp?max(du.hp,du.hpLag-K.HP*.35*dt):du.hp;
  bar('pvHp',me.hp,K.HP,'pvHpL',me.hpLag);bar('pvFp',me.fp,K.FP);bar('pvSt',max(0,me.st),K.ST);bar('pvTHp',du.hp,K.HP,'pvTHpL',du.hpLag);
@@ -26012,12 +26084,13 @@ function hud(dt){const me=G.me,du=G.du;me.hpLag=me.hpLag>me.hp?max(me.hp,me.hpLa
  const ds=proj(du.x,2.3,du.z);if(ds&&!G.dbg)txt(G.MODES[G.mode],ds[0],ds[1],10,'#ff9a8a');
  if(G.flash>0){G.flash-=dt;hx.fillStyle=`rgba(255,255,255,${G.flash})`;hx.fillRect(0,0,W_,H_)}
  if(G.respawn>0){G.respawn-=dt;if(G.respawn<=0)reset(me.dead)}
- $('pvLk').classList.toggle('on',G.lock);$('pvSk').classList.toggle('off',me.fp<14&&me.state!=='stance')}
+ $('pvLk').classList.toggle('on',G.lock);G.stF=max(0,(G.stF||0)-dt);const sb=$('pvSt').parentElement;sb.style.borderColor=G.stF>0&&floor(G.stF*10)%2?'#ff3030':me.st<K.ROLL.st?'#ff8040':'#ffffff55';sb.style.boxShadow=me.st<K.ROLL.st?'0 0 6px #ff6030':'none';$('pvSk').classList.toggle('off',me.fp<14&&me.state!=='stance')}
 
 // ============================================================ laço ============================================================
 const BUF={l:0,h:0,r:0,p:0,s:0};
-function frame(t){raf=requestAnimationFrame(frame);let dt=(t-last)/1000;last=t;dt=clp(dt||0,0,.05);hx.clearRect(0,0,W_,H_);if(!gl)return;
+function frame(t){raf=requestAnimationFrame(frame);let dt=(t-last)/1000;last=t;dt=clp(dt||0,0,.05);S.gt+=dt;hx.clearRect(0,0,W_,H_);if(!gl)return;
  const me=G.me,du=G.du,pan=$('pvPan').style.display==='flex';
+ let sdt=dt;if(G.hs>0){G.hs-=dt;sdt=0}
  if(S.st==='play'&&!pan){
   // entrada do jogador (relativa à câmera)
   let jx=IN.jx,jzz=IN.jz;if(KEYS.l)jx-=1;if(KEYS.r)jx+=1;if(KEYS.u)jzz-=1;if(KEYS.d)jzz+=1;if(KEYS.cl)G.cy+=dt*2.2;if(KEYS.cr)G.cy-=dt*2.2;
@@ -26026,13 +26099,13 @@ function frame(t){raf=requestAnimationFrame(frame);let dt=(t-last)/1000;last=t;d
   if(IN.rP){IN.rT=0;IN.rP=0}if(IN.r)IN.rT+=dt;if(IN.rR){if(IN.rT<.3)BUF.r=.28;IN.rR=0}
   if(IN.lk){G.lock=!G.lock&&!du.dead;IN.lk=0;snd('tick')}
   const inp={mx,mz,light:BUF.l>0,heavy:BUF.h>0,heavyHeld:IN.h,roll:BUF.r>0,block:IN.bl,parry:BUF.p>0,skill:BUF.s>0,sprint:IN.r&&IN.rT>=.3,lock:G.lock};
-  const ps=me.state,pt=me.t;stepF(me,dt,inp,du);if(me.state!==ps||me.t<pt)for(const k in BUF)BUF[k]=0;for(const k in BUF)BUF[k]=max(0,BUF[k]-dt);
-  const ai=aiInput(du,me,dt);const hpB=du.hp;stepF(du,dt,ai,me);if(du.hp<hpB){if(!G.cmb||G.cmb.t<=0||G.cmb.end)G.cmb={sum:0,t:0};G.cmb.sum+=hpB-du.hp;G.cmb.t=2.2}
+  const ps=me.state,pt=me.t;if(sdt>0)stepF(me,sdt,inp,du);if(me.state!==ps||me.t<pt)for(const k in BUF)BUF[k]=0;for(const k in BUF)BUF[k]=max(0,BUF[k]-dt);
+  const hpB=du.hp;if(sdt>0){const ai=aiInput(du,me,sdt);stepF(du,sdt,ai,me)}if(du.hp<hpB){if(!G.cmb||G.cmb.t<=0||G.cmb.end)G.cmb={sum:0,t:0};G.cmb.sum+=hpB-du.hp;G.cmb.t=2.2}
   if(G.inf&&du.hp<K.HP&&du.lastHit>2.2&&!du.dead)du.hp=K.HP;
   // os dois não se atravessam
   if(!me.dead&&!du.dead&&me.state!=='crit'&&du.state!=='critd'){const dx=du.x-me.x,dz=du.z-me.z,d=hypot(dx,dz);if(d<.8&&d>1e-4){const k=(.8-d)/2/d;me.x-=dx*k;me.z-=dz*k;du.x+=dx*k;du.z+=dz*k}}
  }
- tickFX(S.st==='play'&&!pan?dt:0);try{render(pan?0:dt);hud(pan?0:dt)}catch(e){console.error('arena',e)}}
+ tickFX(S.st==='play'&&!pan?sdt:0);try{render(pan?0:sdt);hud(pan?0:dt)}catch(e){console.error('arena',e)}}
 function reset(all){const me=G.me,du=G.du;Object.assign(du,fighter(1,'Boneco de treino',du.lk,'#ff6a5a',0,0,0));du.ai={};if(all){Object.assign(me,fighter(0,me.name,me.lk,'#ffd23f',0,4,PI));G.cy=PI}clearFX()}
 
 // ============================================================ painel do boneco ============================================================
@@ -26113,7 +26186,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261105025322;
+const GAME_BUILD=20261105034808;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
