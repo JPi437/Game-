@@ -7873,18 +7873,18 @@ function loadScreen1(){const t=Date.now(),p=HAL.loadN/Math.max(1,HAL.loadT);
  g.fillStyle='#000';g.fillRect(VW/2-61,VH/2+3,122,8);g.fillStyle='#2a1c52';g.fillRect(VW/2-60,VH/2+4,120,6);g.fillStyle='#8a6cf0';g.fillRect(VW/2-60,VH/2+4,Math.round(120*p),6);g.fillStyle='#d4c4ff';g.fillRect(VW/2-60,VH/2+4,Math.round(120*p),2)}
 
 // ---------- portas: catedral, criptas, zonas do mapa ----------
-const ZN={grave:'Cemitério da Chegada',old:'Cemitério Antigo',forest:'Floresta Sombria',cat:'Praça da Catedral',town:'Cidade Abandonada',inner:'Catedral',lich:'Cripta do Lich'};
+const ZN={grave:'Cemitério da Chegada',old:'Cemitério Antigo',forest:'Floresta Sombria',cat:'Praça da Catedral',town:'Cidade Abandonada',inner:'Catedral',lich:'Cripta do Lich',crypt:'Cripta Assombrada'};
 const hintT={};
 function startTr(dir){if(HAL.tr)return;HAL.tr={t0:Date.now(),dir,done:false};window.HALF=1;jx=jy=0;P.moving=false}
 HAL.go=startTr;
 HAL.frame=function(f,t){
  if(HAL.tr){stepTr(t);return}
- if(window.LICH&&LICH.in){if(HAL.zone!=='lich'){HAL.zone='lich';HAL.zt=t}return}
+ if(window.LICH&&LICH.in){const zn=LICH.mode&&LICH.mode!=='lich'?'crypt':'lich';if(HAL.zone!==zn){HAL.zone=zn;HAL.zt=t}return}
  const fx_=P.x+8,fy_=P.y+15;
  if(!HAL.inside){
   const C=HAL.cath;if(C&&!C.door)cathSpr();
   if(C&&C.door&&Math.abs(fx_-C.x)<26&&fy_<C.y-14&&fy_>C.y-78)startTr('in');
-  for(const cr of HAL.M.extra.crypts){if(cr.i===0&&window.LICH&&LICH.door){if(Math.abs(fx_-cr.x)<16&&fy_<cr.y+3&&fy_>cr.y-16)LICH.door(cr);continue}if(Math.abs(fx_-cr.x)<26&&fy_<cr.y+14&&fy_>cr.y-16&&!(t-(hintT[cr.i]||0)<5000)){hintT[cr.i]=t;fx.push({x:P.x-14,y:P.y-18,t,s:'Trancada',c:'#e6d8ff',lbl:1})}}
+  for(const cr of HAL.M.extra.crypts){if(window.HQD&&HQD(cr,fx_,fy_,t))continue;if(cr.i===0&&window.LICH&&LICH.door){if(Math.abs(fx_-cr.x)<16&&fy_<cr.y+3&&fy_>cr.y-16)LICH.door(cr);continue}if(Math.abs(fx_-cr.x)<26&&fy_<cr.y+14&&fy_>cr.y-16&&!(t-(hintT[cr.i]||0)<5000)){hintT[cr.i]=t;fx.push({x:P.x-14,y:P.y-18,t,s:'Trancada',c:'#e6d8ff',lbl:1})}}
   const z=HM.zoneAt(P.x+8,P.y+15);if(z!==HAL.zone){HAL.zone=z;HAL.zt=t}}
  else{const m=HAL.IM;if(m&&fy_>=IY0+m.FB+8&&fx_>IX0+206&&fx_<IX0+274)startTr('out');
   if(HAL.zone!=='inner'){HAL.zone='inner';HAL.zt=t}}};
@@ -7930,7 +7930,7 @@ const hs=A.hs;
 const NIGHT={amb:'rgb(126,102,192)',haze:'rgba(58,32,118,0.11)',glow:.5,vig:.62};
 const CAVE={amb:'rgb(124,126,150)',vig:.68};
 const LC={wm:[255,184,104],gl:[150,255,120],lp:[196,120,255],or:[255,148,56],cy:[86,228,255],pk:[255,104,214],v:[158,118,255],vi:[136,116,255],cr:[150,176,255],rd:[255,70,54],yl:[255,214,110]};   // rd e yl: olhos e aura dos monstros (js/29-hal-mon.js)
-const ZN={grave:'Cemitério da Chegada',old:'Cemitério Antigo',forest:'Floresta Sombria',cat:'Praça da Catedral',town:'Cidade Abandonada',inner:'Catedral',lich:'Cripta do Lich'};
+const ZN={grave:'Cemitério da Chegada',old:'Cemitério Antigo',forest:'Floresta Sombria',cat:'Praça da Catedral',town:'Cidade Abandonada',inner:'Catedral',lich:'Cripta do Lich',crypt:'Cripta Assombrada'};
 
 // ---------- sprites de luz (gradiente redondo) ----------
 const LS={};
@@ -15609,7 +15609,7 @@ const PIL=[];for(let k=0;k<12;k++)PIL.push(PI/2+PI/12+k*PI/6);     // 12 pilastr
 const NHW=19,NY0=18,NY1=52,NDP=17;                                 // nicho: meia-largura, base, topo, fundo
 const TEST={x:274,y:1654};                                         // portal de teste (pés do jogador), na praça de chegada do Halloween
 
-const LICH=window.LICH={in:false,armed:false,t0:0,ret:null,prev:0,want3:0,pend2:false,cool:0,OX,OY,X0,TEST,ready:false};
+const LICH=window.LICH={in:false,armed:false,t0:0,ret:null,prev:0,want3:0,pend2:false,cool:0,OX,OY,X0,TEST,ready:false,mode:'lich'};
 
 // ============================================================ chão, colisão e câmera ============================================================
 function stairY(z){return STH*clp((z-STZ0+RUN*.5)/(STZ1-STZ0),0,1)}
@@ -16214,12 +16214,13 @@ function stunTick(){const on=LICH.stunned();
   if((ST.fs||'')!==f&&(f===''||Date.now()-(ST.fT||0)>70)){cv.style.filter=f;ST.fs=f;ST.fT=Date.now()}}
  if(!on&&ST.prev){const S=H3.S;if(S&&S.mode===1&&H3.setModeQ&&LICH.in)H3.setModeQ(ST.prev);ST.prev=0}}
 function bossTick(){
+ if(LICH.in&&LICH.mode!=='lich'){mkEN();if(LE.lich){LE.lich.dead=true;LE.lich.back=Infinity}for(const e of LE.sk){e.dead=true;e.back=Infinity}if(fight&&fight.lk)stopFight();try{stunTick()}catch(e){}return}
  if(LICH.in)netStart();else if(NET.ref&&Date.now()-NET.leftT>15000)netStop();
  try{stunTick()}catch(e){}
  const st=cur(),now=nowB(),pv=BS.pv;BS.st=st;BS.sn=now;
  if(st.ep!==MY.ep){MY.ep=st.ep;MY.d=0;MY.sk.fill(0)}
  if(pv&&LICH.in){
-  if(!pv.k&&st.k){LV.dieT=Date.now();LV.riseT=0;sfxDie();if(MY.d>0){try{giveDrop(LE.lich,Date.now());questKill(LE.lich);bossDrop(LE.lich,Date.now())}catch(e){}MY.d=0;hint('O LICH FOI DERROTADO!')}}
+  if(!pv.k&&st.k){LV.dieT=Date.now();LV.riseT=0;sfxDie();if(MY.d>0){try{giveDrop(LE.lich,Date.now());questKill(LE.lich);bossDrop(LE.lich,Date.now())}catch(e){}try{window.HQL&&HQL()}catch(e){}MY.d=0;hint('O LICH FOI DERROTADO!')}}
   if(pv.k&&!st.k){LV.dieT=0;LV.riseT=Date.now();sfxRise()}
   if(!pv.c0&&st.c0){SV.c0=st.c0;SV.endT=0;SV.tgT=0;SV.fired={};SV.kbDone=0;for(const v of SKV)v.die=0}
   if(pv.c0&&!st.c0&&!st.k){SV.endT=Date.now();sfxSplash(.45)}
@@ -16686,7 +16687,7 @@ const SC=SCN.lich={id:'lich',K:1,OX,OY,eye:25,camD:70,p3:-.08,pl:[[-.95,1.1],[-1
  enter(){envOn();A.last=0;A.pulse.t0=-99;A.pulse.next=(performance.now()/1000)+9;LICH.t0=Date.now();document.body.classList.add('h3lich')},
  leave(){envOff();document.body.classList.remove('h3lich')},clear(){},
  boss:()=>null,isTgt:e=>!!(e&&e.lk),tgt:lichTgt,ghR:e=>e&&e.lk==='lich'?62:0,
- bossPlan:(t)=>{anim(performance.now());return()=>drawBoss(t)},numPos,
+ bossPlan:(t)=>{if(LICH.mode!=='lich')return()=>{};anim(performance.now());return()=>drawBoss(t)},numPos,
  flicker,draw:drawRoom,sprites,frameFx:t=>{try{mistLights(t);blastLights(t)}catch(e){}},shake:t=>{const el=A.el,su=el>=BO.PULL&&el<BO.PULL+700?1-(el-BO.PULL)/700:0,dk=LV.dieT?max(0,1-(Date.now()-LV.dieT)/3200):0,me=A.mel,mb=me>=MS.WARN&&me<MS.WARN+600?(1-(me-MS.WARN)/600)*1.8:me>=MS.WARN-400&&me<MS.WARN?.35:0,
   xb=XV.shT&&Date.now()-XV.shT<450?(1-(Date.now()-XV.shT)/450)*2.2*XV.shK:0,p=max(A.pin||0,su*2.2,dk*1.4,(A.wHeal||0)*.15,mb,xb);
   let o=null;if(p>=.05){const k=p*.35;o=[(Math.random()-.5)*k,(Math.random()-.5)*k,(Math.random()-.5)*k,0,0]}
@@ -16694,7 +16695,7 @@ const SC=SCN.lich={id:'lich',K:1,OX,OY,eye:25,camD:70,p3:-.08,pl:[[-.95,1.1],[-1
   if(LICH.stunned()){const e0=(Date.now()-ST.t0)/1000,k=min(1,e0/.5)*min(1,(ST.until-Date.now())/700),br=TAU*(.85-.25*min(1,e0/10));o=o||[0,0,0,0,0];
    o[1]+=sin(e0*br)*1.1*k;o[4]+=(sin(e0*br+.7)*.045-.06)*k;o[3]+=sin(e0*1.3)*.03*k;o[0]+=sin(e0*.9)*.5*k}
   return o},
- flash:()=>0,fbPos:()=>null,overlayExtra:overlay};
+ flash:()=>0,fbPos:()=>null,overlayExtra:function(){if(LICH.mode!=='lich')return;return overlay.apply(this,arguments)}};
 {const st=document.createElement('style');st.textContent='body.h3lich #h3ov{background:radial-gradient(ellipse at 50% 46%,rgba(0,0,0,0) 48%,rgba(2,10,4,.42) 80%,rgba(0,4,1,.72) 100%)}';document.head.appendChild(st)}
 
 // ============================================================ integração com o mapa do Halloween ============================================================
@@ -16708,8 +16709,9 @@ function bg2D(){g.fillStyle='#020503';g.fillRect(0,0,VW,VH);const cx=OX-cam.x,cy
 // portas: a cripta 0 (lanternas verdes) e o portal de teste; quem chama é HAL.frame (porta) e o tick (portal)
 function cryptDoor(){const M=HAL.M;return M&&M.extra&&M.extra.crypts?M.extra.crypts.find(c=>c.i===0):null}
 function goIn(ret){if(LICH.in||HAL.tr||Date.now()<LICH.cool||world!==1)return;LICH.ret=ret;LICH.prev=H3.S?H3.S.mode|0:0;loadImg();HAL.go('lich')}
-LICH.door=cr=>goIn({x:cr.x-8,y:cr.y+6,dir:2});
-LICH.enterTest=()=>goIn({x:TEST.x-8,y:TEST.y+6,dir:2});
+LICH.door=cr=>{LICH.mode='lich';goIn({x:cr.x-8,y:cr.y+6,dir:2})};
+LICH.doorC=(cr,k)=>{if(LICH.in||HAL.tr)return;LICH.mode='c'+k;goIn({x:cr.x-8,y:cr.y+6,dir:2})};
+LICH.enterTest=()=>{LICH.mode='lich';goIn({x:TEST.x-8,y:TEST.y+6,dir:2})};
 LICH.tp=function(dir){
  if(dir==='lich'){LICH.in=true;LICH.armed=false;LICH.t0=Date.now();P.x=SPAWN[0]-8+OX;P.y=SPAWN[1]-14+OY;P.dir=0;P.moving=false;if(!(H3.S&&H3.S.mode))LICH.want3=Date.now()}
  else{LICH.in=false;const r=LICH.ret||(()=>{const c=cryptDoor();return c?{x:c.x-8,y:c.y+6,dir:2}:{x:TEST.x-8,y:TEST.y+6,dir:2}})();P.x=r.x;P.y=r.y;P.dir=r.dir||2;P.moving=false;
@@ -16727,7 +16729,7 @@ function lichTick(){
  if(LICH.pend2&&!LICH.in){LICH.pend2=false;if(H3.S&&H3.S.mode&&H3.setMode)H3.setMode(0)}
  if(world!==1||!HAL.ready)return;
  try{bossTick()}catch(e){console.error('Lich luta',e)}
- if(!LICH.in){if(!HAL.inside&&!HAL.tr&&Date.now()>LICH.cool){const d=hypot(P.x+8-TEST.x,(P.y+14-TEST.y)*1.25);if(d<12)LICH.enterTest()}return}
+ if(!LICH.in){if(!HAL.inside&&!HAL.tr&&Date.now()>LICH.cool){const d=hypot(P.x+8-TEST.x,(P.y+14-TEST.y)*1.25);if(d<12&&(!window.HQOK||HQOK()))LICH.enterTest()}return}
  const X=P.x+8-OX,Z=P.y+14-OY;if(Date.now()-LICH.t0>1500)LICH.armed=true;if(LICH.armed&&Z>CZ1-28&&!HAL.tr)goOut();
  // dentro da cripta e ainda no 2D: liga o 3D (se não der, volta para fora)
  const S=H3.S;if(S&&!S.mode&&!S.ld&&!HAL.tr&&H3.setMode){if(LICH.want3||Date.now()-LICH.t0>700){LICH.want3=0;try{H3.setMode(2)}catch(e){console.error('Lich 3D',e)}
@@ -16910,7 +16912,7 @@ const H3=window.H3,DATA=window.HMON_DATA;
 if(!H3||!DATA||!H3.scenes||!H3.scenes.hal||!H3.M4){console.warn('HM3: faltam módulos do 3D');return}
 let SC=H3.scenes.hal;const M4=H3.M4,IOX=2464;
 // a cena atual: o cemitério (hal) ou o interior da Catedral (halIn, x ≥ 2464); cada monstro aparece só na cena em que está
-const OXs=()=>SC.OX||0,inHere=e=>(e.x>=IOX-8)===(SC.id==='halIn');
+const OXs=()=>SC.OX||0,OZs=()=>SC.OY||0,inHere=e=>SC.id==='lich'?e.x>=3092:(e.x>=IOX-8&&e.x<3092)===(SC.id==='halIn');
 const PI=Math.PI,TAU=PI*2,sin=Math.sin,cos=Math.cos,abs=Math.abs,min=Math.min,max=Math.max,hypot=Math.hypot,atan2=Math.atan2;
 const clp=(v,a,b)=>v<a?a:v>b?b:v,lerp=(a,b,t)=>a+(b-a)*t,ease=u=>u<=0?0:u>=1?1:u*u*(3-2*u),easeIn=u=>u<=0?0:u>=1?1:u*u*u;
 const angd=(a,b)=>{let d=(b-a)%TAU;if(d>PI)d-=TAU;if(d<-PI)d+=TAU;return d};
@@ -17015,7 +17017,7 @@ const MD=(()=>{const v=[.28,.5,-.82],l=hypot(v[0],v[1],v[2]);return[v[0]/l,v[1]/
 function visible(now){const out=[];if(typeof WD==='undefined'||!WD[1]||!WD[1].EN)return out;const C=H3.cam().p;
  for(const e of WD[1].EN){const k=MAP[e.mon];if(!k||!e.hal)continue;const m=track(e,now);if(!inHere(e))continue;
   const dying=e.dead&&m.dieT&&now-m.dieT<LIFE[k]+200;if(e.dead&&!dying)continue;
-  const x=e.x+8-OXs(),z=e.y+14,d=hypot(C[0]-x,C[2]-z);if(d>330)continue;const h=HGT[k],gy=gyAt(x,z)+(FLOAT[k]||0);
+  const x=e.x+8-OXs(),z=e.y+14-OZs(),d=hypot(C[0]-x,C[2]-z);if(d>330)continue;const h=HGT[k],gy=gyAt(x,z)+(FLOAT[k]||0);
   if(H3.vis&&!H3.vis(x,gy+h*.5,z,h*.75))continue;out.push({e,m,k,x,z,gy,d,dying})}
  out.sort((a,b)=>a.d-b.d);if(out.length>22)out.length=22;return out}
 HM3.draw=function(t){const gl=ensure();if(!gl)return;HM3.on=true;const now=HM3.frz||Date.now(),ts=now/1000,L=visible(now);HM3.list=L;if(!L.length)return;
@@ -17051,20 +17053,20 @@ HM3.sprites=function(t){const T=H3.tex;if(!T||!HM3.on)return;const now=HM3.frz||
   if(R.dying){const dc=DISC[k];for(let i=0;i<14;i++){const a=i/14*TAU+R.e._h*20,v=((s*.6+i*.137)%1),rr=(.15+.25*v)*h*.5,y=R.gy+h*(.15+.7*((i*.37)%1))+v*h*.4;
     H3.spr(T.glow,R.x+cos(a)*rr,y,R.z+sin(a)*rr,3,3,null,[dc[0],dc[1],dc[2],sin(v*PI)*clp((du-.45)*3,0,1)],true,0,true)}}}};
 // topo da cabeça (barra de vida) e alvo das habilidades
-HM3.top=e=>{const k=MAP[e.mon];const x=e.x+8-OXs(),z=e.y+14;return gyAt(x,z)+(FLOAT[k]||0)+HGT[k]+5};
+HM3.top=e=>{const k=MAP[e.mon];const x=e.x+8-OXs(),z=e.y+14-OZs();return gyAt(x,z)+(FLOAT[k]||0)+HGT[k]+5};
 function hook(S0){SC=S0;
-{const _tg=SC.tgt;SC.tgt=e=>{SC=S0;if(HM3.own(e)){const k=MAP[e.mon],x=e.x+8-OXs(),z=e.y+14,g=gyAt(x,z),h=HGT[k],f=FLOAT[k]||0;return[x,g+f+h*.55,z,max(14,h*.28),g]}return _tg?_tg(e):null}}
+{const _tg=SC.tgt;SC.tgt=e=>{SC=S0;if(HM3.own(e)){const k=MAP[e.mon],x=e.x+8-OXs(),z=e.y+14-OZs(),g=gyAt(x,z),h=HGT[k],f=FLOAT[k]||0;return[x,g+f+h*.55,z,max(14,h*.28),g]}return _tg?_tg(e):null}}
 // números de dano: em cima do monstro mais perto
 {const _np=SC.numPos;SC.numPos=(q,e0)=>{SC=S0;const r=numP(q);return r||(_np?_np(q,e0):null)}}
 function numP(q){if(typeof WD==='undefined'||!WD[1])return null;let best=null,bd=40;for(const e of WD[1].EN){if(!e.hal||!MAP[e.mon]||!inHere(e))continue;const d=hypot(q.x-4-e.x,(q.y-(e.y-(e.vh||30)*.7))*.5);if(d<bd){bd=d;best=e}}
- if(!best)return null;const k=MAP[best.mon];return[best.x+8-OXs()+(q.x-4-best.x)*.6,HM3.top(best)-4,best.y+14]}
+ if(!best)return null;const k=MAP[best.mon];return[best.x+8-OXs()+(q.x-4-best.x)*.6,HM3.top(best)-4,best.y+14-OZs()]}
 // liga na cena do Halloween
 {const _bp=SC.bossPlan;SC.bossPlan=function(t,C){const r=_bp?_bp.apply(this,arguments):null;return()=>{if(r)r();try{SC=S0;HM3.draw(t)}catch(e){if(!HM3.err){HM3.err=1;console.error('HM3',e)}}}}}
 {const _sp=SC.sprites;SC.sprites=function(t){const r=_sp.apply(this,arguments);try{SC=S0;HM3.sprites(t)}catch(e){}return r}}
 {const _fr=SC.free;SC.free=function(){G.ok=false;G.gl=null;return _fr?_fr.apply(this,arguments):undefined}}
 {const _lv=SC.leave;SC.leave=function(){HM3.on=false;HM3.list=[];return _lv?_lv.apply(this,arguments):undefined}}
 }
-hook(H3.scenes.hal);if(H3.scenes.halIn)hook(H3.scenes.halIn);SC=H3.scenes.hal;
+hook(H3.scenes.hal);if(H3.scenes.halIn)hook(H3.scenes.halIn);if(H3.scenes.lich)hook(H3.scenes.lich);SC=H3.scenes.hal;
 // testes
 HM3.dbg={G,MAP,HGT,LIFE,st};
 })();
@@ -27012,7 +27014,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261106013728;
+const GAME_BUILD=20261106015938;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
@@ -31553,6 +31555,169 @@ function tick(){const b=bus();if(!b)return;const t=b.a.currentTime,mini=miniOpen
  if(!lk)for(const k in c.ev){const e=c.ev[k];if(due(k,t,e[0],e[1]))try{ONE[k](t+.05+R()*.2,e[2]+c.wet*.3)}catch(x){}}}
 setInterval(()=>{try{tick()}catch(e){}},100);
 window.SONS={where:()=>{try{return where()}catch(e){return null}},beds:()=>Object.keys(BEDS),ui,portal,ONE:k=>{const b=bus();if(b&&ONE[k])ONE[k](b.a.currentTime+.02,.2)}};
+})();
+</script>
+<script>
+// ===================== HALLOWEEN: QUESTS DO COVEIRO ELIAS (cidade abandonada) =====================
+// Elias dá uma corrente de missões: matar inimigos, caçar tesouro (cavar) e enigmas que levam às chaves das 3 criptas.
+// Chave 1 abre a 1ª cripta e a chave 2 a 2ª (só inimigos comuns); a chave 3 abre a cripta do Lich (a última).
+// Limpar cada cripta dá 5.000 abóboras (só a primeira vez). Derrotar o Lich dá 30.000 abóboras (só a primeira vez).
+// As criptas comuns usam a mesma sala subterrânea da cripta do Lich (só em 3D), sem o Lich, com monstros locais (não compartilhados).
+(function(){
+'use strict';
+const HAL=window.HAL,HM=window.HALMAP,MON=window.HALMON,LICH=window.LICH;
+if(!HAL||!HM||!MON||!LICH){console.warn('HQ: faltam módulos do Halloween');return}
+const TT=HM.T||16,CR_RW=5000,LICH_RW=30000;
+const clp=(v,a,b)=>v<a?a:v>b?b:v,hyp=Math.hypot;
+// ---------- progresso salvo (vai junto do save da conta) ----------
+const H0=()=>({s:0,a:0,n:0,k:[0,0,0,0],cc:{},lich:0});
+let HQ=H0();
+try{const o=typeof SV!=='undefined'&&SV&&SV.hq;if(o&&typeof o==='object'){HQ.s=clp(o.s|0,0,40);HQ.a=o.a?1:0;HQ.n=clp(o.n|0,0,1e6);
+ if(Array.isArray(o.k))HQ.k=[0,1,2,3].map(i=>o.k[i]?1:0);if(o.cc&&typeof o.cc==='object')for(const k of['1','2'])if(o.cc[k])HQ.cc[k]=1;HQ.lich=o.lich?1:0}}catch(e){}
+{const _xs=window.XS;window.XS=()=>Object.assign(_xs?_xs():{},{hq:HQ})}
+const keep=()=>{try{save()}catch(e){}};
+
+// ---------- lugares (em tiles do mapa do Halloween; viram pixels e são ajustados para o chão livre mais perto) ----------
+const solidAt=(x,y)=>{try{return HAL.solid(x,y)}catch(e){return false}};
+const freeP=(x,y)=>!solidAt(x+8,y+15)&&!solidAt(x+3,y+15)&&!solidAt(x+13,y+15)&&!solidAt(x+8,y+10);
+function near(tx,ty){const x0=tx*TT,y0=ty*TT;for(let r=0;r<160;r+=6)for(let a=0;a<12;a++){const x=x0+Math.cos(a/12*6.283)*r,y=y0+Math.sin(a/12*6.283)*r;if(freeP(x,y))return{x:Math.round(x),y:Math.round(y),dir:0}}return{x:x0,y:y0,dir:0}}
+const SP={};function spot(id,tx,ty){if(!SP[id]&&HAL.M)SP[id]=near(tx,ty);return SP[id]||{x:tx*TT,y:ty*TT}}
+const ELIAS={x:0,y:0,dir:0,ok:false};
+function placeElias(){if(ELIAS.ok||!HAL.M)return;const p=near(118,55);ELIAS.x=p.x;ELIAS.y=p.y;ELIAS.ok=true}
+// nome de cada cripta pela zona do mapa
+const ZNM={grave:'Cemitério da Chegada',old:'Cemitério Antigo',forest:'Floresta Sombria',cat:'Praça da Catedral',town:'Cidade Abandonada'};
+const crypt=i=>{const M=HAL.M;return M&&M.extra&&M.extra.crypts?M.extra.crypts.find(c=>c.i===i):null};
+function cName(i){if(i===0)return'Cripta do Lich';const c=crypt(i);let z='';try{z=ZNM[HM.zoneAt(c.x,c.y)]||''}catch(e){}return'Cripta '+(i===1?'I':'II')+(z?' ('+z+')':'')}
+
+// ---------- a corrente de missões ----------
+// ty: kill (t = tipos que contam, g = quantos) · dig (cavar no lugar) · key (enigma: achar a chave) · crypt (limpar) · lich · end
+const QL=[
+ {ty:'kill',t:[0],g:8,rw:800,n:'Zumbis e esqueletos',
+  talk:'Ei, você aí... Sou Elias, o último coveiro desta cidade. Os mortos não ficam mais nas covas!\n\nAntes de confiar em você: derrote 8 zumbis ou esqueletos.',
+  done:'Bom trabalho. Tome 800 abóboras.\n\nVolte a falar comigo: tenho um trabalho de verdade.'},
+ {ty:'dig',id:'t1',at:[131,63],rw:1500,n:'Cavar o baú enterrado',
+  talk:'Quando a cidade caiu, enterrei meu baú perto do canto leste da praça, ao lado do velho muro. Procure a terra remexida e CAVE.\n\nO que tiver lá dentro é seu.',
+  done:'Achou o baú! +1.500 abóboras.\n\nFale comigo de novo: as criptas guardam algo pior.'},
+ {ty:'key',key:1,id:'k1',at:[66,100],n:'Achar a 1ª chave (enigma)',
+  talk:'As criptas foram trancadas com 3 chaves. Escondi a primeira, mas só lembro de um verso:\n\n"Onde a água não corre e a lama engole as botas, a lua dorme refletida. Ao norte da água parada, a chave espera."',
+  done:'A 1ª chave! Ela abre a {C1}. Entre e limpe a cripta.'},
+ {ty:'crypt',c:1,n:'Limpar a {C1}'},
+ {ty:'kill',t:[1],g:4,rw:1500,n:'Lobisomens',
+  talk:'Você limpou a cripta! Mas os lobisomens farejaram o sangue. Derrote 4 lobisomens antes que cerquem a cidade.',
+  done:'Os uivos pararam. +1.500 abóboras.\n\nFale comigo: lembrei de outro esconderijo.'},
+ {ty:'dig',id:'t2',at:[94,43],rw:2500,n:'Cavar o cofre da catedral',
+  talk:'O padre escondeu o cofre da catedral no canto leste da praça, perto das grades. Cave lá antes dos saqueadores.',
+  done:'O cofre da catedral! +2.500 abóboras.'},
+ {ty:'key',key:2,id:'k2',at:[60,60],n:'Achar a 2ª chave (enigma)',
+  talk:'O segundo verso:\n\n"No coração da floresta, onde os caminhos se cruzam e nenhuma árvore ousa crescer, a clareira guarda a segunda chave."',
+  done:'A 2ª chave! Ela abre a {C2}. Mais monstros te esperam lá embaixo.'},
+ {ty:'crypt',c:2,n:'Limpar a {C2}'},
+ {ty:'kill',t:[3],g:2,rw:3000,n:'Aranhas gigantes',
+  talk:'Falta pouco. As aranhas gigantes tecem teias na frente da última cripta. Derrote 2 aranhas gigantes.',
+  done:'As teias caíram. +3.000 abóboras.\n\nFale comigo: o último verso.'},
+ {ty:'key',key:3,id:'k3',at:[124,19],n:'Achar a chave do Lich (enigma)',
+  talk:'O último verso, o mais antigo:\n\n"No fim da avenida dos mortos, ao norte, onde a cidade termina e só os corvos passam, dorme a chave do Lich."',
+  done:'A Chave do Lich... Ela abre a cripta de lanternas verdes no Cemitério Antigo. O Lich te espera lá. Boa sorte.'},
+ {ty:'lich',n:'Derrotar o Lich'},
+ {ty:'end'}];
+const QN=()=>QL[clp(HQ.s,0,QL.length-1)];
+const fill=s=>s.replace('{C1}',cName(1)).replace('{C2}',cName(2));
+function stepDone(){const q=QN();if(q.ty==='kill')return HQ.n>=q.g;return false}
+function next(){HQ.s=Math.min(HQ.s+1,QL.length-1);HQ.n=0;const q=QN();HQ.a=(q.ty==='crypt'||q.ty==='lich'||q.ty==='end')?1:0;keep();ui()}
+function reward(n,txt){pk+=n;try{updHud()}catch(e){}keep();float('+'+n.toLocaleString('pt-BR')+' abóboras','#ff9800');if(txt)try{toast(txt)}catch(e){}}
+function float(s,c){try{fx.push({x:P.x-10,y:P.y-22,t:Date.now(),s,c})}catch(e){}}
+function sayE(t){try{say(t)}catch(e){}try{document.getElementById('sayN').textContent='Coveiro Elias'}catch(e){}}
+
+// conversa com o Elias
+function talk(){const q=QN();
+ if(q.ty==='end'){sayE('O Lich caiu e a cidade finalmente dorme em paz. Você é lenda por aqui, herói.\n\n(Todas as missões do Elias foram concluídas.)');return}
+ if(q.ty==='crypt'){sayE(HQ.cc[q.c]?'A cripta já está limpa.':'Use a chave na '+cName(q.c)+'. Desça e derrote todos os monstros lá dentro.\n\nLimpar uma cripta dá 5.000 abóboras (só na primeira vez).');return}
+ if(q.ty==='lich'){sayE('A Chave do Lich abre a cripta de lanternas verdes no Cemitério Antigo. Derrote o Lich e eu te dou 30.000 abóboras.');return}
+ if(!HQ.a){HQ.a=1;HQ.n=0;keep();sayE(fill(q.talk));ui();return}
+ if(q.ty==='kill'&&HQ.n>=q.g){reward(q.rw);sayE(fill(q.done));next();return}
+ if(q.ty==='kill'){sayE('Ainda faltam: '+q.n.toLowerCase()+' '+HQ.n+'/'+q.g+'.');return}
+ if(q.ty==='dig')sayE(fill(q.talk));else if(q.ty==='key')sayE(fill(q.talk))}
+// mortes contam para a missão de matar
+{const _qk=questKill;questKill=function(e){const r=_qk.apply(this,arguments);try{hqKill(e)}catch(x){}return r}}
+function hqKill(e){if(typeof world==='undefined'||world!==1||!e)return;const q=QN();if(q.ty!=='kill'||!HQ.a||HQ.n>=q.g)return;if(q.t.includes(e.t)){HQ.n++;keep();ui();if(HQ.n>=q.g)float('Volte ao Coveiro Elias','#ffd23f')}}
+// recompensa do Lich (chamada pela luta do Lich quando ele morre e você bateu nele)
+window.HQL=function(){if(!HQ.lich){HQ.lich=1;reward(LICH_RW,'O Lich caiu! +30.000 abóboras');}if(QN().ty==='lich')next()};
+// porta das criptas: chave certa = entra; senão, trancada
+const hintT={};
+window.HQD=function(cr,fx_,fy_,t){const inDoor=Math.abs(fx_-cr.x)<16&&fy_<cr.y+3&&fy_>cr.y-16,nearDoor=Math.abs(fx_-cr.x)<26&&fy_<cr.y+14&&fy_>cr.y-16;
+ const ki=cr.i===0?3:cr.i,adm=(()=>{try{return isAdm()}catch(e){return false}})();
+ if(HQ.k[ki]||adm){if(inDoor){if(cr.i===0){LICH.mode='lich';LICH.door(cr)}else if(LICH.doorC)LICH.doorC(cr,cr.i)}return true}
+ if(nearDoor&&!(t-(hintT[cr.i]||0)<5000)){hintT[cr.i]=t;try{fx.push({x:P.x-30,y:P.y-18,t,s:cr.i===0?'Trancada: falta a Chave do Lich':'Trancada: falta a chave',c:'#e6d8ff',lbl:1})}catch(e){}}
+ return true};
+window.HQOK=()=>{try{if(isAdm())return true}catch(e){}return!!HQ.k[3]};
+
+// ---------- monstros das criptas comuns (locais: não vão para o banco compartilhado) ----------
+const RM=LICH;const CRE={1:[],2:[]};
+function ringPos(i,n){const a=Math.PI/2+(i+.5)*(Math.PI*2)/n*.86+Math.PI*.07,r=i%2?112:128;return[Math.cos(a)*r,Math.sin(a)*r]}
+function mkCrypt(){const L=typeof WD!=='undefined'&&WD[1]&&WD[1].EN;if(!L||CRE[1].length)return;
+ const SET={1:['zombie','skeleton','zombie','skeleton','zombie','skeleton','zombie','skeleton'],2:['werewolf','skeleton','werewolf','skeleton','werewolf','spiderA','skeleton']};
+ for(const c of[1,2]){const N=SET[c].length;SET[c].forEach((nm,i)=>{const p=ringPos(i,N),e=MON.mkEn(nm,p[0]-8+RM.OX,p[1]-14+RM.OY);
+  e.cr=c;e.noSync=1;e.rsp=1e12;e.dead=true;e.back=Infinity;e.max=Math.round(e.max*(c===2?1.6:1.3));e.hp=e.max;e.coin=[e.coin[0]*2,e.coin[1]*2];CRE[c].push(e);L.push(e)})}}
+{const _h=window.MPhit;window.MPhit=(e,d)=>{if(e&&e.cr)return;if(_h)return _h(e,d)}}
+const CS={cur:0,live:0,clearT:0};
+function cryptMode(){return LICH.in&&LICH.mode&&LICH.mode!=='lich'?+String(LICH.mode).slice(1)||0:0}
+function hideCrypt(c){for(const e of CRE[c]||[]){e.dead=true;e.back=Infinity;if(typeof fight!=='undefined'&&fight===e){fight=null;try{Object.values(fpos).forEach(q=>{q.nx=0;q.sk=null})}catch(x){}}}}
+function openCrypt(c){mkCrypt();if(HQ.cc[c]){CS.live=0;setTimeout(()=>{try{toast('A '+cName(c)+' já está limpa. Nada se mexe aqui.')}catch(e){}},900);return}
+ for(const e of CRE[c]){e.dead=false;e.back=0;e.hp=e.max;e.dh=e.max;e.lh=0}CS.live=1;setTimeout(()=>{try{toast('Os mortos da '+cName(c)+' acordaram! Derrote todos.')}catch(e){}},900)}
+function cryptTick(){const cm=cryptMode();
+ if(cm!==CS.cur){if(CS.cur)hideCrypt(CS.cur);CS.cur=cm;CS.live=0;if(cm)openCrypt(cm)}
+ if(cm&&CS.live&&!HQ.cc[cm]){const left=CRE[cm].filter(e=>!e.dead).length;CS.left=left;
+  if(left===0){CS.live=0;HQ.cc[cm]=1;keep();reward(CR_RW,cName(cm)+' purificada! +5.000 abóboras');const q=QN();if(q.ty==='crypt'&&q.c===cm)next()}}}
+
+// ---------- desenho 2D (o 3D usa o mesmo desenho como figurinha) ----------
+const R_=(c,x,y,w,h)=>{try{R(c,x,y,w,h)}catch(e){}};
+function drawElias(f){const x=Math.round(ELIAS.x-cam.x),y=Math.round(ELIAS.y-cam.y);
+ R_('#0006',x+1,y+21,15,3);
+ R_('#8d6e63',x+15,y-5,2,24);R_('#9e9e9e',x+13,y+15,6,6);R_('#cfd8dc',x+13,y+15,6,1);                // pá
+ R_('#263238',x+4,y+15,3,5);R_('#263238',x+9,y+15,3,5);R_('#111',x+3,y+19,4,2);R_('#111',x+9,y+19,4,2); // pernas e botas
+ R_('#455a64',x+2,y+6,12,10);R_('#37474f',x+2,y+13,12,3);R_('#3e2723',x+2,y+11,12,1);R_('#546e7a',x+7,y+6,2,10);   // casaco
+ R_('#d7b49e',x+4,y,8,6);R_('#222',x+5,y+2,1,1);R_('#222',x+10,y+2,1,1);R_('#bdbdbd',x+4,y+4,8,3);R_('#9e9e9e',x+5,y+6,6,1);   // rosto e barba
+ R_('#3e2723',x-1,y-2,18,2);R_('#4e342e',x+3,y-7,10,5);R_('#8d6e63',x+3,y-3,10,1);                    // chapéu
+ const fl=(f>>2)%3;R_('#5d4037',x-2,y+8,1,3);R_(fl?'#ffb300':'#ffd54f',x-3,y+11,3,4);R_('#ff6f00',x-2,y+12,1,2);   // lampião
+ const q=QN(),mark=q.ty==='end'?'':(!HQ.a&&q.ty!=='crypt'&&q.ty!=='lich')?'!':(q.ty==='kill'&&HQ.n>=q.g)?'?':'';
+ if(mark){const o=(f>>4)%2?-1:0;g.font='bold 11px monospace';g.textBaseline='top';g.fillStyle='#000';g.fillText(mark,x+6,y-21+o);g.fillStyle='#ffd23f';g.fillText(mark,x+5,y-22+o)}}
+function drawDig(sp,f){const x=Math.round(sp.x-cam.x),y=Math.round(sp.y-cam.y);R_('#4e342e',x+1,y+14,15,5);R_('#6d4c41',x+3,y+12,11,3);R_('#3e2723',x+5,y+15,7,2);
+ const s=(f>>3)%4;R_('#ffd23f',x+3+s*3,y+8-s,1,1);R_('#fff59d',x+12-s*2,y+10,1,1)}
+function drawKey(sp,f){const x=Math.round(sp.x-cam.x),y=Math.round(sp.y-cam.y),b=Math.round(Math.sin(f/10)*2);
+ R_('#0005',x+4,y+17,9,2);R_('#ffd23f',x+4,y+5+b,5,5);R_('#7a5a00',x+6,y+7+b,1,1);R_('#ffd23f',x+9,y+7+b,6,1);R_('#ffd23f',x+13,y+8+b,1,2);R_('#ffd23f',x+11,y+8+b,1,2);
+ const s=(f>>2)%6;R_('#fffde7',x+2+s*2,y+2+b,1,1);R_('#fff59d',x+14-s,y+4+b,1,1)}
+// itens da missão atual (só aparecem quando a missão está ativa; a chave só fica visível de perto)
+function curItem(){const q=QN();if(!HQ.a)return null;if(q.ty==='dig')return{k:'dig',sp:spot(q.id,q.at[0],q.at[1]),q};if(q.ty==='key'&&!HQ.k[q.key])return{k:'key',sp:spot(q.id,q.at[0],q.at[1]),q};return null}
+{const _p=HAL.push;HAL.push=function(L,f,t){const r=_p.apply(this,arguments);try{if(!LICH.in&&!HAL.inside&&HAL.M){placeElias();const h3=!!(window.H3C&&H3C.on);
+  L.push([ELIAS.y,()=>drawElias(f),h3?{k:'N2',q:ELIAS,nm:'Coveiro Elias'}:undefined]);
+  const it=curItem();if(it){const d=hyp(P.x-it.sp.x,P.y-it.sp.y);if(it.k==='dig'||d<110)L.push([it.sp.y,()=>it.k==='dig'?drawDig(it.sp,f):drawKey(it.sp,f),h3?{k:'N3',q:it.sp,nm:'item'}:undefined])}}}catch(e){}return r}}
+
+// ---------- interface: botão de ação e linha da missão ----------
+const st=document.createElement('style');st.textContent='#hqBtn{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(150px + env(safe-area-inset-bottom,0px));background:linear-gradient(#6d4c41,#3e2723);display:none;z-index:4}#quest2{position:fixed;left:50%;transform:translateX(-50%);top:calc(10px + env(safe-area-inset-top,0px));text-align:center;background:#000a;color:#ffcc80;border:2px solid #ff9800;border-radius:8px;padding:3px 8px;font-size:12px;z-index:3;display:none;max-width:60vw}';
+document.head.appendChild(st);
+const btn=document.createElement('button');btn.className='btn';btn.id='hqBtn';document.body.appendChild(btn);
+const ql=document.createElement('div');ql.id='quest2';document.body.appendChild(ql);
+let act=null;btn.onclick=e=>{e.preventDefault();e.stopPropagation();if(act)act()};
+function ui(){const q=QN();let t='';
+ if(q.ty==='end')t='';else if(!HQ.a)t='Elias (cidade): fale com o Coveiro';
+ else if(q.ty==='kill')t=HQ.n>=q.g?'Elias: volte ao Coveiro':'Elias: '+q.n+' '+HQ.n+'/'+q.g;
+ else if(q.ty==='crypt')t='Elias: '+fill(q.n)+(cryptMode()===q.c&&CS.live?' (faltam '+(CS.left!=null?CS.left:'?')+')':'');
+ else t='Elias: '+fill(q.n);
+ ql.textContent=t;ql.style.display=t&&typeof world!=='undefined'&&world===1&&!(LICH.in&&LICH.mode==='lich')?'block':'none'}
+let uiT=0;
+function hqTick(){if(typeof world==='undefined'||world!==1||!HAL.ready){btn.style.display='none';ql.style.display='none';return}
+ try{cryptTick()}catch(e){console.error('HQ cripta',e)}
+ const now=Date.now();if(now-uiT>400){uiT=now;ui()}
+ act=null;let lab='';
+ if(!lock&&!LICH.in&&!HAL.inside&&HAL.M){placeElias();
+  if(hyp(P.x-ELIAS.x,P.y-ELIAS.y)<34){act=talk;lab='Falar com o Coveiro'}
+  else{const it=curItem();if(it&&hyp(P.x-it.sp.x,P.y-it.sp.y)<26){
+   if(it.k==='dig'){lab='Cavar';act=()=>{try{if(window.bp)bp(140,.12,'square',.06)}catch(e){}reward(it.q.rw);sayE(fill(it.q.done));next()}}
+   else{lab='Pegar a chave';act=()=>{HQ.k[it.q.key]=1;keep();try{if(window.bp)bp(880,.1,'triangle',.06)}catch(e){}float('Chave '+(it.q.key===3?'do Lich':it.q.key),'#ffd23f');sayE(fill(it.q.done));next()}}}}}
+ btn.textContent=lab;btn.style.display=act?'block':'none'}
+{const _t=tick;tick=function(){try{hqTick()}catch(e){console.error('HQ',e)}return _t.apply(this,arguments)}}
+mkCrypt();
+window.HQX={get:()=>HQ,set:o=>{HQ=Object.assign(H0(),o);keep();ui()},QL,CRE,spot:id=>{const q=QL.find(q=>q.id===id);return q?spot(id,q.at[0],q.at[1]):null},ELIAS};
 })();
 </script>
 <script>
