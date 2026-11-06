@@ -26036,6 +26036,7 @@ function hit(att,def,m,mult){if(def.dead)return;
  if(iframe(def)){if(def.state==='roll'&&def.t<def.eq.roll.i[0]+.14&&!def.pdg)perfectDodge(def);else txtFloat(def,'ESQUIVOU','#9ad0ff');return}
  if(m.grab){def.hp-=m.dmg*(mult||1)*def.eq.dmgIn;num(def,m.dmg*def.eq.dmgIn,'#ffd23f',' AGARRÃO');stain(def);snd('blunt');snd('push');G.hs=.14;G.shk=max(G.shk||0,.18);burst(def.x,1,def.z,14,0x6a6056,3,.5,.07);if(checkDead(def,att))return;setS(def,'down');def.mv=null;def.vx=-tx*6;def.vz=-tz*6;txtFloat(def,'AGARRADO!','#ffb030',1);if(def===G.me)vib([60,40,60]);else if(att===G.me)vib(25);return}
  if(def.state==='parry'&&def.W.parry&&def.t>=def.W.pw[0]&&def.t<=def.W.pw[1]&&front&&!m.kd&&!m.np){setS(att,'parried');att.mv=null;sparks(hx_,1.3,hz,26,0xffffff,7);G.rings.push({x:hx_,y:1.3,z:hz,ry:G.cy,t:0,c:0xffffff});txtFloat(def,'APAROU!','#ffffff',1);snd('parry');if(def===G.me||att===G.me)vib(35);def.t=K.PARRY.d-.15;G.flash=.12;G.hs=.16;G.shk=.12;return}
+ if(def.wp==='kt'&&front&&!m.grab&&!m.pr&&((def.state==='block'&&def.t<(def.spam?.14:.26))||(def.state==='parry'&&def.t<.3))&&(def===G.me||def.remote||rnd()<.35+.2*(G.diff||1))){ktDeflect(att,def,m,mult,tx,tz,hx_,hz);return}
  if(def.state==='block'&&front&&m.gbk){def.st=max(0,def.st-25);def.blockT=0;setS(def,'gbreak');def.mv=null;def.vx=-tx*3;def.vz=-tz*3;sparks(hx_,1,hz,14,0xffc050,5);txtFloat(def,'GUARDA QUEBRADA!','#ffb030',1);snd('gb');G.hs=.1;G.shk=max(G.shk||0,.12);return}
  if(def.state==='block'&&front&&def.t<.2&&!m.gbk&&(def===G.me||rnd()<.25+.2*(G.diff||1))){def.st-=8;def.stamDelay=.4;def.blockT=0;def.bk=.25;def.pbk=true;def.pgc=.7;sparks(hx_,1.3,hz,26,0x9ae8ff,7);G.rings.push({x:hx_,y:1.3,z:hz,ry:G.cy,t:0,c:0x9ae8ff});txtFloat(def,'BLOQUEIO PERFEITO!','#9ae8ff',1);snd('parry',.8);G.hs=.13*HF;G.shk=max(G.shk||0,.08);
   if(!m.pr&&!hyper(att)&&!att.remote){setS(att,'flinch');att.mv=null;att.hpw=30;att.hdir=0;att.vx=tx*2.2;att.vz=tz*2.2}return}
@@ -26055,6 +26056,12 @@ function dropWeapon(f){if(f.drop)return;f.drop=1;const h=f.bm&&f.bm.hand_r,x=h&&
 G.deb=[];
 function tickDeb(dt){for(const d of G.deb){if(d.rest)continue;d.t+=dt;d.vy-=12*dt;d.x+=d.vx*dt;d.y+=d.vy*dt;d.z+=d.vz*dt;d.ry+=d.wy*dt;d.rx+=d.wx*dt;if(d.y<.06){d.y=.06;if(abs(d.vy)<2.2){d.rest=1;d.rx=PI/2;d.rz=0;snd('clang',.35)}else{d.vy*=-.35;d.vx*=.5;d.vz*=.5;d.wx*=.5;snd('clang',.25)}}}}
 const REPT=4.9;
+function ktDeflect(att,def,m,mult,tx,tz,hx,hz){def.st=min(K.ST,def.st+5);def.blockT=0;def.dfk=true;def.bk=.18;def.vx=-tx*.7;def.vz=-tz*.7;
+ const pd2=Math.round((16+m.pd*.5)*(mult||1));if(!att.remote)postureHit(att,pd2,m);def.dfP=pd2;
+ sparks(hx,1.35,hz,30,0xffa040,8);sparks(hx,1.35,hz,10,0xffffff,5);G.rings.push({x:hx,y:1.35,z:hz,ry:G.cy,t:0,c:0xffb050});snd('parry',.9);snd('clang',.5);G.hs=.07;G.shk=max(G.shk||0,.06);
+ txtFloat(def,'DEFLETIU','#ffc070');if(def===G.me||att===G.me)vib(22)}
+// postura (Sekiro): cada desvio tira estamina de quem atacou; zerou = postura quebrada (aberto para o golpe crítico)
+function postureHit(f,pd2,m){if(f.dead)return;f.st-=pd2;f.stamDelay=.9;if(f.st<=0){f.st=0;setS(f,'gbreak');f.mv=null;txtFloat(f,'POSTURA QUEBRADA!','#ff5040',1);snd('gb');G.hs=.16;G.zoom=max(G.zoom||0,.6);if(f===G.me)vib([50,30,50])}else if(m&&m.pd>=40&&!hyper(f)){setS(f,'flinch');f.mv=null;f.hpw=25;f.hdir=0}}
 function vib(p){if(G.vib===false)return;try{if(navigator.vibrate)navigator.vibrate(p)}catch(e){}}
 function stain(f){f.stains=f.stains||[];if(f.stains.length>=14)return;f.stains.push({a:(f.hdir||0)+rr(-.6,.6),h:rr(-.3,.25),s:rr(.05,.1),r:rnd()*3})}
 function perfectDodge(f){f.pdg=1;f.pdgT=1.1;f.st=min(K.ST,f.st+20);txtFloat(f,'ESQUIVA PERFEITA!','#7ae8ff',1);G.rings.push({x:f.x,y:.9,z:f.z,ry:0,t:0,c:0x7ae8ff,flat:1,r:2});snd('parry',.5);if(f===G.me){G.slowT=G.on?.35:.6;G.slowK=.3;vib(25)}}
@@ -26092,7 +26099,7 @@ function shoot(f,foe,m,cm){if(m.ammo&&f.W.gun)f.ammo=max(0,f.ammo-1);const P=m.p
  if(P.k!=='bl')snd(P.k==='ar'?'swing':'parry',P.k==='ar'?.7:.35);if(P.k!=='ar'&&!P.rain){const h=f.bm&&f.bm.hand_r;sparks(h?h[12]:f.x,h?h[13]:1.4,h?h[14]:f.z,8,P.k==='fb'?0xff9030:0x8ad0ff,3)}}
 // aparar projétil: flecha (e balas, no futuro: tipo 'bl') voltam para quem atirou
 const PARRYP={ar:1,bl:1,mg:1};
-function canParryP(p,T){if(!PARRYP[p.k]||T.state!=='parry'||!T.W.parry)return false;const st_=p.k==='mg';if(T.t<T.W.pw[0]-(st_?0:.03)||T.t>T.W.pw[1]+(st_?0:.06))return false;const v=hypot(p.vx,p.vz)||1;return(sin(T.yaw)*-p.vx+cos(T.yaw)*-p.vz)/v>.2}
+function canParryP(p,T){if(T.wp==='kt'&&PARRYP[p.k]&&T.state==='block'&&T.t<(T.spam?.14:.26)){const v=hypot(p.vx,p.vz)||1;return(sin(T.yaw)*-p.vx+cos(T.yaw)*-p.vz)/v>.2}if(!PARRYP[p.k]||T.state!=='parry'||!T.W.parry)return false;const st_=p.k==='mg';if(T.t<T.W.pw[0]-(st_?0:.03)||T.t>T.W.pw[1]+(st_?0:.06))return false;const v=hypot(p.vx,p.vz)||1;return(sin(T.yaw)*-p.vx+cos(T.yaw)*-p.vz)/v>.2}
 function deflect(p,T){const o=p.o,ox=T.x+sin(T.yaw)*.6,oz=T.z+cos(T.yaw)*.6,oy=max(1,min(1.6,p.y)),sp=max(30,hypot(p.vx,p.vy,p.vz))*1.1;
  let dx=o.x-ox,dy=1.15-oy,dz=o.z-oz;const l=hypot(dx,dy,dz)||1;dx/=l;dy/=l;dz/=l;
  const m={n:'Reflexo',dmg:Math.round((p.m.dmg||50)*1.2),pd:(p.m.pd||10)+10,np:1,pr:{k:p.k},a:[0,0]},r2=x=>Math.round(x*100)/100,q={k:p.k,x:r2(ox),y:r2(oy),z:r2(oz),vx:r2(dx*sp),vy:r2(dy*sp),vz:r2(dz*sp),g:0,hm:.8,big:p.big||0,life:1.4};
@@ -26131,6 +26138,7 @@ function stepF(f,dt,inp,foe){f.t+=dt;f.rollEnd+=dt;f.blockT+=dt;f.lastHit+=dt;f.
  if(inp.kick&&canAct(f)&&!f.air)startAtk(f,'KK',foe);if(inp.grab&&canAct(f)&&!f.air)startAtk(f,'GR',foe);
  if(inp.fin&&canAct(f)&&!f.air){if(foe&&!foe.dead&&foe.hp<=K.HP*.18&&dist(f,foe)<(f.W.rng?14:2.9)){if(startAtk(f,'FN',foe))txtFloat(f,'FINALIZAÇÃO!','#ff5040',1)}else if(f===G.me)txtFloat(f,'inimigo ainda forte','#c0a0a0')}
  if(f.state==='down'&&!f.dead&&f.t>.85&&inp.light){f.upT=0;startAtk(f,'GU',foe)}
+ if(f.wp==='kt'&&inp.block&&!f.pbH){f.spam=(S.gt-(f.lbp||-9))<.45;f.lbp=S.gt}f.pbH=!!inp.block;
  if(inp.jump)tryJump(f,mx,mz);
  if(inp.flask)tryFlask(f);
  if(f.state==='jump'){if(inp.light)startAtk(f,'JL',foe);else if(inp.heavy)startAtk(f,'JH',foe)}
@@ -26739,7 +26747,7 @@ function setSkBtn(){const W=WPN[G.wpMe];$('pvSkT').textContent=W.sk;$('pvPa').cl
 function panel(){const P_=$('pvPb'),o=(k,v,cur)=>`<button data-k="${k}" data-v="${v}" class="${cur?'on':''}">`;
  P_.innerHTML=`<h2> BONECO DE TREINO</h2><p class="sm" style="font-size:11px;color:#ffd77a"> arraste para ver tudo (armas, armaduras, bot e comandos)</p>
  <p>Sua arma:</p><div class="op">${Object.keys(WPN).map(k=>o('wpMe',k,G.wpMe===k)+WPN[k].n+'</button>').join('')}</div>
- <p class="sm" style="font-size:11px;opacity:.8">Espada longa: equilibrada, com broquel · Adagas: muito rápidas, pouco dano, combo de 5 · Espadão: lento, dano enorme, não é interrompido, não apara · Foice: alcance longo e cortes largos, o 3º golpe gira · Arco: tiros de longe, segure FORTE para puxar mais · Cajado de mago: feitiços (gastam foco, que volta rápido), FORTE = bola de fogo · Katana: rápida, duas mãos, Iai = avanço relâmpago · Punhos: combo de 5 socos, Rajada de Socos · Mosquete: 6 tiros (recarrega sozinho quando acaba), baioneta de perto, Escopeta de perto.</p>
+ <p class="sm" style="font-size:11px;opacity:.8">Espada longa: equilibrada, com broquel · Adagas: muito rápidas, pouco dano, combo de 5 · Espadão: lento, dano enorme, não é interrompido, não apara · Foice: alcance longo e cortes largos, o 3º golpe gira · Arco: tiros de longe, segure FORTE para puxar mais · Cajado de mago: feitiços (gastam foco, que volta rápido), FORTE = bola de fogo · Katana: estilo Sekiro, BLOQ ou APARAR na hora do golpe DEFLETE tudo (até flechas e balas, menos agarrão) e quebra a postura de quem ataca; apertar BLOQ sem parar diminui a janela; Iai = avanço relâmpago · Punhos: combo de 5 socos, Rajada de Socos · Mosquete: 6 tiros (recarrega sozinho quando acaba), baioneta de perto, Escopeta de perto.</p>
  <p>Clima da arena:</p><div class="op">${['limpo','chuva','neblina','noite'].map(w=>o('wx',w,G.wx===w)+w.toUpperCase()+'</button>').join('')}</div>
  <div class="op">${o('hudEd',1,0)}EDITAR BOTÕES DA TELA</button></div>
  <p>Sua armadura (muda rolamento, equilíbrio, dano recebido e estamina):</p><div class="op">${Object.keys(EQ).map(k=>o('eqMe',k,G.eqMe===k)+EQ[k].n+'</button>').join('')}</div>
@@ -26914,6 +26922,7 @@ function onEv(v){const me=G.me,du=G.du;if(!G.on)return;
   const hx_=(me.x+du.x)/2,hz=(me.z+du.z)/2;
   if(v.r==='p'){if(!me.dead){setS(me,'parried');me.mv=null;me.air=false}sparks(hx_,1.3,hz,26,0xffffff,7);G.rings.push({x:hx_,y:1.3,z:hz,ry:G.cy,t:0,c:0xffffff});txtFloat(du,'APAROU!','#ffffff',1);snd('parry');G.flash=.12;G.hs=.16;G.shk=.12}
   else if(v.r==='dg')txtFloat(du,'ESQUIVOU','#9ad0ff');
+  else if(v.r==='df'){postureHit(me,+v.p2||20,{pd:v.pd});sparks(hx_,1.35,hz,26,0xffa040,7);snd('parry',.8);snd('clang',.4);txtFloat(du,'DEFLETIU','#ffc070');G.hs=.07}
   else if(v.r==='pb'){if(!me.dead&&!hyper(me)){setS(me,'flinch');me.mv=null;me.hpw=30;me.hdir=0}sparks(hx_,1.3,hz,22,0x9ae8ff,6);txtFloat(du,'BLOQUEIO PERFEITO!','#9ae8ff',1);snd('parry',.8);G.hs=.12}
   else if(v.r==='b'||v.r==='gb'){sparks(hx_,1.25,hz,18,0xffc050,6);snd('clang');G.hs=.05;if(v.d>=1)num(du,v.d,'#c8c8c8');if(v.r==='gb'){txtFloat(du,'GUARDA QUEBRADA!','#ffb030',1);snd('gb')}}
   else{num(du,v.d||0,'#ffd23f',v.c?' CONTRA':'');sparks(hx_,1.3,hz,12,0xff6a3a,5);burst(hx_,1.3,hz,10,0x9a0a0a,3.5,.6,.05);blood(du.x,du.z);snd('hit');G.hs=v.pd>=30?.12:.07;G.shk=max(G.shk||0,v.pd>=30?.16:.07)}}
@@ -26926,8 +26935,8 @@ function onEv(v){const me=G.me,du=G.du;if(!G.on)return;
 function matchCheck(){if(N.score[0]>=WIN||N.score[1]>=WIN){N.over=true;const w=N.score[0]>=WIN;toast(w?' VOCÊ VENCEU O DUELO!':' '+esc_(N.oppN)+' venceu o duelo',3);snd(w?'crit':'die')}}
 // golpe do oponente me acertou (decidido aqui): aplica e avisa o resultado para ele
 function resolveMe(att,m,cm){const me=G.me,hp0=me.hp,st0=me.state,dodge=iframe(me),cnt=me.state==='atk'&&me.mv&&me.t<me.mv.a[0];
- hit(att,me,m,cm);let r='h';if(dodge)r='dg';else if(me.pbk){r='pb';me.pbk=false}else if(att.state==='parried'){r='p';N.hold=.6}else if(st0==='block'&&me.blockT===0)r=me.state==='gbreak'?'gb':'b';
- sendEv({k:'r',r,d:Math.round(max(0,hp0-me.hp)),pd:m.pd,c:cnt&&r==='h'?1:0})}
+ me.dfk=false;hit(att,me,m,cm);let r='h';if(dodge)r='dg';else if(me.dfk){r='df';me.dfk=false}else if(me.pbk){r='pb';me.pbk=false}else if(att.state==='parried'){r='p';N.hold=.6}else if(st0==='block'&&me.blockT===0)r=me.state==='gbreak'?'gb':'b';
+ sendEv({k:'r',r,d:Math.round(max(0,hp0-me.hp)),pd:m.pd,c:cnt&&r==='h'?1:0,p2:r==='df'?me.dfP||0:0})}
 // hooks chamados pelo combate
 window.__PVN={_N:N,
  crit(f,foe){N.hold=.6;sendEv({k:'c',d:Math.round(f.crit.dmg),b:f.crit.back?1:0,x:+foe.x.toFixed(2),z:+foe.z.toFixed(2),yw:+foe.yaw.toFixed(3)})},
@@ -27003,7 +27012,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261105192634;
+const GAME_BUILD=20261106013728;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
