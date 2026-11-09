@@ -19530,18 +19530,20 @@ function naruto1(s,el,dt,t,I){const R=base(I),H0=home(I),D=I.Er+4,SP=N1_ANG.map(
  return R}
 // manto de chakra da Kyuubi (Naruto 1 Cauda): sempre ligado — chama vermelho-alaranjada em volta do corpo, bolhas de chakra e a cauda balançando atrás
 const N1C=[[1,.22,.06],[1,.45,.12],[.85,.08,.02],[1,.65,.3]];
-function kyuubi(r,s,t){const E=E_(),x=r.x,y=r.y,z=r.z,pul=.5+.5*sin(t/90),run=min(1,s.spd/REF_RUN),T=H3.tex,yw=s.yaw||0,bx=-sin(yw),bz=-cos(yw);
- glow(x,y+14,z,28+4*pul,[1,.12,.03],.13+.05*pul);
- if(T&&T.beam){for(let i=0;i<8;i++){const a=i/8*TAU+t/460+sin(t/230+i)*.25,rr=7.5+1.4*sin(t/95+i*1.7),ox=cos(a)*rr,oz=sin(a)*rr,ph=(t/260+i*.37)%1,h=13+6*sin(PI*ph)+3*sin(t/85+i);
-   H3.strip(T.beam,x+ox,y+1,z+oz,x+ox*.55+bx*run*5,y+h+5,z+oz*.55+bz*run*5,2.6+.8*sin(t/60+i),[1,.16+.08*(i%3),.04,.16+.1*sin(PI*ph)],true)}
-  // cauda: 6 pedaços saindo da base das costas, curvando para cima (a ponta enrola) e balançando
-  let p=[x+bx*3,y+12,z+bz*3];const sw=sin(t/300)*.7,run2=run*.5;
-  for(let k=1;k<=6;k++){const u=k/6,side=sw*u,ang=(.25+1.15*u)*(1-run2),dx=bx*cos(side)-bz*sin(side),dz=bz*cos(side)+bx*sin(side),L=2.6,q=[p[0]+dx*L*cos(ang),p[1]+L*sin(ang)+sin(t/180+k)*.3,p[2]+dz*L*cos(ang)],w=(4.6-u*2.6)*(1+.1*sin(t/70+k));
-   H3.strip(T.beam,p[0],p[1],p[2],q[0],q[1],q[2],w*1.9,[1,.16,.04,.3],true);H3.strip(T.beam,p[0],p[1],p[2],q[0],q[1],q[2],w,[1,.42,.12,.45],true);p=q}
-  glow(p[0],p[1],p[2],5,[1,.45,.15],.35)}
- {const F=E_();if(F&&F.light)try{F.light(x,y+14,z,50,[1,.2,.06],.4+.15*pul)}catch(e){}}
- if(!E)return;if(rnd()<.7){const a=rnd()*TAU,rr=5+rnd()*5;E.emit({x:x+cos(a)*rr,y:y+rnd()*16,z:z+sin(a)*rr,vx:cos(a)*.04+bx*run*.2,vy:.45+rnd()*.4,vz:sin(a)*.04+bz*run*.2,g:-.01,life:420+rnd()*300,s0:3.5+rnd()*2,s1:.4,c:N1C[(rnd()*4)|0],a:.85,drag:.97})}
- if(rnd()<.25)E.emit({x:x+(rnd()-.5)*12,y:y+3+rnd()*16,z:z+(rnd()-.5)*12,vx:0,vy:.3,vz:0,g:0,life:600,s0:1.2,s1:3.2,c:[1,.5,.2],a:.6,drag:.99})}   // bolhas de chakra
+function kyuubi(r,s,t){const E=E_(),x=r.x,y=r.y,z=r.z,pul=.5+.5*sin(t/90),run=min(1,s.spd/REF_RUN),T=H3.tex,yw=s.yaw||0,bx=-sin(yw),bz=-cos(yw),q=s.q4w||0;
+ const cy=lerp(14,9,q),fx=x-bx*3*q,fz=z-bz*3*q,R0=lerp(7.5,10,q);   // de 4 o corpo fica mais baixo e comprido
+ glow(fx,y+cy,fz,34+5*pul,[1,.05,.01],.3+.1*pul);glow(fx,y+cy,fz,20+3*pul,[1,.12,.02],.28);glow(fx,y+cy*.6,fz,26,[.7,0,0],.22);
+ if(T&&T.beam){for(let i=0;i<14;i++){const a=i/14*TAU+t/420+sin(t/230+i)*.25,rr=R0+1.6*sin(t/95+i*1.7),ox=cos(a)*rr,oz=sin(a)*rr,ph=(t/240+i*.37)%1,h=lerp(13,8,q)+6*sin(PI*ph)+3*sin(t/85+i);
+   H3.strip(T.beam,fx+ox,y+1,fz+oz,fx+ox*.5+bx*run*6,y+h+5,fz+oz*.5+bz*run*6,3.4+.9*sin(t/60+i),[1,.04+.06*(i%3),.01,.34+.18*sin(PI*ph)],true);   // labaredas vermelhas
+   if(i%2)H3.strip(T.beam,fx+ox*.7,y+3,fz+oz*.7,fx+ox*.35,y+h*.8,fz+oz*.35,1.6,[1,.35,.1,.3*sin(PI*ph)],true)}
+  // cauda: sai do quadril (de 4: mais para trás e mais baixo), curva para cima e a ponta enrola, balançando
+  let p=[x+bx*lerp(3,7,q),y+lerp(12,8,q),z+bz*lerp(3,7,q)];const sw=sin(t/300)*.7,run2=run*.5;
+  for(let k=1;k<=7;k++){const u=k/7,side=sw*u,ang=(.3+1.2*u)*(1-run2),dx=bx*cos(side)-bz*sin(side),dz=bz*cos(side)+bx*sin(side),L=2.7,c=[p[0]+dx*L*cos(ang),p[1]+L*sin(ang)+sin(t/180+k)*.3,p[2]+dz*L*cos(ang)],wd=(5.2-u*2.8)*(1+.12*sin(t/70+k));
+   H3.strip(T.beam,p[0],p[1],p[2],c[0],c[1],c[2],wd*2.1,[1,.03,.01,.5],true);H3.strip(T.beam,p[0],p[1],p[2],c[0],c[1],c[2],wd,[1,.25,.06,.6],true);p=c}
+  glow(p[0],p[1],p[2],7,[1,.2,.05],.55)}
+ {const F=E_();if(F&&F.light)try{F.light(fx,y+cy,fz,70,[1,.08,.02],.9+.3*pul)}catch(e){}}
+ if(!E)return;for(let n=0;n<2;n++)if(rnd()<.8){const a=rnd()*TAU,rr=R0*(.7+rnd()*.6);E.emit({x:fx+cos(a)*rr,y:y+rnd()*cy*1.3,z:fz+sin(a)*rr,vx:cos(a)*.05+bx*run*.25,vy:.5+rnd()*.45,vz:sin(a)*.05+bz*run*.25,g:-.01,life:450+rnd()*350,s0:4+rnd()*2.5,s1:.4,c:[[1,.08,.02],[1,.2,.04],[.8,0,0],[1,.35,.1]][(rnd()*4)|0],a:.95,drag:.97})}
+ if(rnd()<.35)E.emit({x:fx+(rnd()-.5)*14,y:y+3+rnd()*cy*1.2,z:fz+(rnd()-.5)*14,vx:0,vy:.3,vz:0,g:0,life:650,s0:1.2,s1:3.6,c:[1,.2,.05],a:.7,drag:.99})}   // bolhas de chakra
 const SKF={Tenten:tenten,Hinata:hinata,Neji:neji,Sakura:sakura,Sasuke:sasuke,Gaara:gaara,Jiraiya:jiraiya,Kakashi:kakashi,'Naruto 1 Cauda':naruto1,Goku:goku,Luffy:luffy,Gon:gon,Itadori:itadori,'Goku Kaioken':gokuKai,Yajirobe:yajirobe,Yamcha:yamcha,Tenshinhan:tenshinhan,Gohan:gohan,Kuririn:kuririn,Nappa:nappa,Vegeta:vegeta,Piccolo:piccolo,Chara:chara,Sally:sally,Ghostface:ghostface,'Jeff the Killer':jeff,'Sonic.exe':sonicExe,Jason:jason,Chucky:chucky,Baldi:baldi,Nemesis:nemesis,'Slender Man':slender};
 CH3.sk=nm=>!!SKF[nm];
 // ---------- aura do Kaioken: chama vermelha em volta do corpo (brilho que pulsa + labaredas subindo + faíscas) ----------
@@ -19559,6 +19561,29 @@ function kaioken(r,s,t){const E=E_(),x=r.x,y=r.y,z=r.z,pul=.5+.5*sin(t/70),run=m
   E.emit({x:x+cos(a)*rr,y:y+rnd()*16,z:z+sin(a)*rr,vx:cos(a)*.05-sin(yw)*run*.25,vy:.5+rnd()*.5,vz:sin(a)*.05-cos(yw)*run*.25,g:-.01,life:420+rnd()*320,s0:4.5+rnd()*2.5,s1:.5,c:KAI[(rnd()*4)|0],a:.9,drag:.97})}
  if(rnd()<.35)E.emit({x:x+(rnd()-.5)*14,y:y+4+rnd()*18,z:z+(rnd()-.5)*14,vx:0,vy:1,vz:0,g:0,life:260,s0:1.6,s1:.2,c:[1,.9,.85],a:1,drag:.95})}
 // ---------- um personagem por quadro ----------
+// ---------- Naruto 1 Cauda anda de 4, como a raposa ----------
+// Por cima da animação (parado/socos): o quadril abaixa e vai para trás, o tronco deita para a frente até os ombros ficarem na altura certa para as mãos
+// tocarem o chão, a cabeça olha para a frente, e mãos e pés vão por IK até o chão num trote (pares cruzados: mão esquerda + pé direito juntos).
+// Na habilidade ele levanta (o peso cai para 0) e volta a ficar de 4 quando ela acaba. No ataque normal, a mão do lado dá uma garrada para a frente.
+const TH_L=ND_('thigh_l'),CF_L=ND_('calf_l'),FT_L=ND_('foot_l'),TH_R=ND_('thigh_r'),CF_R=ND_('calf_r'),FT_R=ND_('foot_r'),NECK=ND_('neck_01');
+const QUAD={'Naruto 1 Cauda':1};
+function quad(s,dt,mv,skill,ap,side){
+ s.q4w=(s.q4w===undefined?1:s.q4w);s.q4w+=((skill?0:1)-s.q4w)*min(1,dt*(skill?14:5));const w=s.q4w;if(w<.01)return;
+ const run=mv?clp(s.spd/REF_RUN,0,1):0,S=.3+.12*run,duty=.62-.17*run;
+ if(mv)s.q4p=((s.q4p||0)+dt*s.spd/(S*SC0))%1;
+ fk();const pel=PW[PEL],sh=PW[UA_L],Ls=hypot(sh[1]-pel[1],sh[2]-pel[2]),La=hypot(...RT[LA_L])+hypot(...RT[HA_L]),Ll=hypot(...RT[CF_L])+hypot(...RT[FT_L]),ank=.06;
+ const ph=s.q4p||0,bob=mv?-abs(sin(ph*TAU))*.012*(.4+run):sin(performance.now()/520)*.006;   // trote: o corpo desce a cada passada · parado: respira
+ const hp=ank+Ll*(.6+.08*run)+bob,wy=.05,ca=clp((wy+La*.86-hp)/Ls,-.25,.55),a=Math.acos(ca);   // inclinação para as mãos alcançarem o chão
+ TT[2]=lerp(TT[2],hp/PSC,w);TT[1]=lerp(TT[1],.1/PSC,w);TT[0]*=1-w;
+ turn(PEL,[1,0,0],a*w);turn(SP2,[1,0,0],-.12*w);turn(NECK,[1,0,0],-a*.5*w);turn(HEAD,[1,0,0],-(a*.42-.1*run)*w);
+ const foot=(u0)=>{const u=(ph+u0)%1;if(!mv)return[0,0];if(u<duty)return[S*duty*(.5-u/duty),0];const k=(u-duty)/(1-duty),e=k*k*(3-2*k);return[S*duty*(-.5+e),sin(PI*k)*(.05+.05*run)]};
+ // pernas (pé esquerdo com a mão direita; pé direito com a mão esquerda)
+ for(const sd of[1,-1]){const th=sd>0?TH_L:TH_R,cf=sd>0?CF_L:CF_R,ft=sd>0?FT_L:FT_R;fk();const hip=PW[th],o=foot(sd>0?0:.5);
+  ik(th,cf,ft,[hip[0]*1.15,ank+o[1],hip[2]+.03+o[0]],[sd*.25,-.1,1],w);aim(ft,nrm([0,-.5,1]),w)}
+ for(const sd of[1,-1]){const ua=sd>0?UA_L:UA_R,la=sd>0?LA_L:LA_R,ha=sd>0?HA_L:HA_R;fk();const S0=PW[ua],o=foot(sd>0?.5:0);
+  let T=[S0[0]+sd*.02,wy+o[1],S0[2]+.05+o[0]];
+  if(ap>=0&&(side?1:-1)===sd){const k=sin(PI*clp(ap,0,1));T=[lerp(T[0],S0[0]-sd*.04,k),lerp(T[1],S0[1]+.1,k),lerp(T[2],S0[2]+.3,k)]}   // garrada
+  ik(ua,la,ha,T,[sd*.25,.3,-1],w)}}
 function place(A,s,dt,t,SC){
  const g=A.gq||{},q=A.q,nm=A.m.nm;
  const dx=A.x-s.x,dz=A.z-s.z,d=hypot(dx,dz);s.x=A.x;s.z=A.z;const v=dt>0?d/dt:0;s.spd+=(min(v,200)-s.spd)*min(1,dt*10);
@@ -19581,15 +19606,17 @@ function place(A,s,dt,t,SC){
    setPose(s,s.pn%2?PJ:PC,lerp(.06,.62,ap),.06);
    const vx=E.x-A.x,vz=E.z-A.z,l=hypot(vx,vz)||1,o=sin(PI*ap)*4;px+=vx/l*o;pz+=vz/l*o;tg=Math.atan2(vx,vz);
    if(ap>.38&&!s.hitDone){s.hitDone=1;burst(E.x,E.y+1,E.z,10,1.6,420,[[1,.6,.15],[1,.9,.6],[.9,.3,.05]])}}
-  else{const run=s.spd>52;pick(s,mv?(run?JOG:WALK):'Idle_Loop',.18);if(E&&!mv)tg=Math.atan2(E.x-A.x,E.z-A.z);
+  else{const run=s.spd>52;pick(s,mv&&!QUAD[nm]?(run?JOG:WALK):'Idle_Loop',.18);if(E&&!mv)tg=Math.atan2(E.x-A.x,E.z-A.z);
    rate=s.cur===WALK?clp(s.spd/WALK_REF,.75,1.9):s.cur===JOG?clp(s.spd/REF_RUN,.8,1.6):1}
-  if(ap>=0)rate=0}
+  if(ap>=0)rate=0;s.qap=ap;s.qsd=s.pn%2}
  s.yaw+=clp(angd(s.yaw,tg),-dt*(skill?22:14),dt*(skill?22:14));
  animate(s,dt,rate);
+ if(QUAD[nm])try{quad(s,dt,mv,skill,skill?-1:(s.qap===undefined?-1:s.qap),s.qsd)}catch(e){console.error('CH3 de 4',e);QUAD[nm]=0}
  if(post)try{post(px,py,pz,s.yaw)}catch(e){(CH3.bad||(CH3.bad={}))[nm]=1;console.error('CH3 pose',nm,e)}
  window.EDN=nm;modelM(px,py,pz,s.yaw);bones();
  if(window.H3TR&&!hide)try{H3TR(q,jointW(HA_R),jointW(HA_L),skill,px,py,pz)}catch(e){}
  if(fxf&&!H3.inSh)try{fxf()}catch(e){(CH3.bad||(CH3.bad={}))[nm]=1;console.error('CH3 efeito',nm,e)}
+ if(!flc&&nm==='Naruto 1 Cauda'){const p=.5+.5*sin(t/110);flc=s.n1f||(s.n1f=new Float32Array(4));flc[0]=1;flc[1]=.1+.05*p;flc[2]=.03;flc[3]=.26+.1*p}   // manto da Kurama tingindo o corpo
  return{x:px,y:py,z:pz,h:py-A.y,hide,flc}}
 // o outro Ghostface (habilidade): mesmo modelo, pose própria, cortado no chão enquanto sobe da névoa
 function drawClone(gl,A,s,M,D,u,VP,cam,fog,FO){const c=s.cl,cs=c.st||(c.st={cur:'Idle_Loop',t:0,prev:null,tp:0,bl:1,bd:.1});
@@ -27288,7 +27315,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261109073629;
+const GAME_BUILD=20261109140003;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
