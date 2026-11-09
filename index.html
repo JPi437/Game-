@@ -27317,7 +27317,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261109163738;
+const GAME_BUILD=20261109171509;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
@@ -32015,6 +32015,61 @@ window.SONS={where:()=>{try{return where()}catch(e){return null}},beds:()=>Objec
 })();
 </script>
 <script>
+// ===================== MUNDO 2 (DRAGON BALL): MISSÕES =====================
+// Corrente de 7 missões de derrotar inimigos. Cada uma começa sozinha quando a anterior acaba (sem NPC: o Mundo 2 é só 3D).
+// O progresso aparece no alto da tela enquanto você está no Mundo 2; ao completar, a recompensa entra na hora e a próxima missão começa.
+(function(){
+'use strict';
+const clp=(v,a,b)=>v<a?a:v>b?b:v;
+// k = o que conta (dbk dos inimigos humanos, ou 'dino') · g = quantos · rw = moedas · e = essências
+const QL=[
+ {k:'faz',g:20,n:'Derrote 20 fazendeiros',w:'fazendeiros',rw:1000},
+ {k:'sai',g:10,n:'Derrote 10 saibamans',w:'saibamans',rw:2000},
+ {k:'rad',g:3,n:'Derrote 3 Raditz',w:'Raditz',rw:6000},
+ {k:'dino',g:10,n:'Derrote 10 dinossauros',w:'dinossauros',rw:5000},
+ {k:'nap',g:5,n:'Derrote 5 Nappas',w:'Nappas',rw:8000},
+ {k:'veg',g:3,n:'Derrote 3 Vegetas',w:'Vegetas',rw:20000,e:5},
+ {k:'oza',g:1,n:'Derrote o Vegeta Ozaru',w:'Vegeta Ozaru',rw:60000,e:15}];
+const D0=()=>({s:0,n:0});
+let DQ=D0();
+try{const o=typeof SV!=='undefined'&&SV&&SV.dbq;if(o&&typeof o==='object'){DQ.s=clp(o.s|0,0,QL.length);DQ.n=clp(o.n|0,0,1e6)}}catch(e){}
+{const _xs=window.XS;window.XS=()=>Object.assign(_xs?_xs():{},{dbq:DQ})}
+const keep=()=>{try{save()}catch(e){}};
+const nfm=v=>{try{return nf(v)}catch(e){return v.toLocaleString('pt-BR')}};
+const here=()=>typeof world!=='undefined'&&world===4;
+const kindOf=e=>!e?null:e.dino?'dino':(e.dbm&&e.dbk)||null;
+function float(s,c){try{fx.push({x:P.x-10,y:P.y-22,t:Date.now(),s,c})}catch(e){}}
+function rwTx(q){return nfm(q.rw)+' moedas'+(q.e?' + '+q.e+' essências':'')}
+function finish(){const q=QL[DQ.s];if(!q)return;
+ try{coins+=q.rw;if(q.e)ess+=q.e;if(typeof lastCoins!=='undefined')lastCoins=coins;updHud()}catch(e){}
+ DQ.s++;DQ.n=0;keep();
+ try{if(typeof sWin==='function')sWin(2)}catch(e){}
+ const nx=QL[DQ.s];
+ try{toast('Missão concluída! +'+rwTx(q)+(nx?' · Próxima: '+nx.n:' · Todas as missões do Mundo 2 concluídas!'))}catch(e){}
+ float('+'+nfm(q.rw)+' moedas','#ffd23f');ui(true)}
+// mortes contam (local e luta compartilhada: as duas passam pelo questKill)
+{const _qk=questKill;questKill=function(e){const r=_qk.apply(this,arguments);try{dbqKill(e)}catch(x){}return r}}
+function dbqKill(e){if(!here())return;const q=QL[DQ.s];if(!q||kindOf(e)!==q.k)return;DQ.n=Math.min(q.g,DQ.n+1);keep();
+ if(DQ.n>=q.g)finish();else ui(true)}
+// ---------- painel no alto da tela ----------
+const st=document.createElement('style');
+st.textContent='#dbQ{position:fixed;left:50%;transform:translateX(-50%);top:calc(40px + env(safe-area-inset-top,0px));text-align:center;background:#000b;color:#fff;border:2px solid #ff9800;border-radius:999px;padding:3px 12px;font-size:12px;z-index:3;display:none;max-width:70vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}'
+ +'#dbQ b{color:#ffb74d}#dbQ i{font-style:normal;color:#ffd23f;font-weight:bold}#dbQ.up{animation:dbQp .5s}@keyframes dbQp{0%{transform:translateX(-50%) scale(1.15)}100%{transform:translateX(-50%) scale(1)}}';
+document.head.appendChild(st);
+const el=document.createElement('div');el.id='dbQ';document.body.appendChild(el);
+let last='';
+function ui(pop){const q=QL[DQ.s];let h='';
+ if(q)h='<b>Missão '+(DQ.s+1)+'/'+QL.length+':</b> '+q.n+' <i>'+DQ.n+'/'+q.g+'</i>';
+ const show=!!h&&here()&&!(typeof lock!=='undefined'&&lock);
+ if(h!==last){last=h;el.innerHTML=h;if(pop){el.classList.remove('up');void el.offsetWidth;el.classList.add('up')}}
+ el.style.display=show?'block':'none'}
+let uiT=0,wasHere=false;
+function tickQ(){const h=here();
+ if(h&&!wasHere){const q=QL[DQ.s];if(q)setTimeout(()=>{try{if(here())qToast('Missão '+(DQ.s+1)+' do Mundo 2: '+q.n+' (recompensa: '+rwTx(q)+')')}catch(e){}},1500)}
+ wasHere=h;const now=Date.now();if(now-uiT>300){uiT=now;ui(false)}}
+{const _t=tick;tick=function(){try{tickQ()}catch(e){if(!window.DBQerr){window.DBQerr=1;console.error('DBQ',e)}}return _t.apply(this,arguments)}}
+window.DBQ={QL,get:()=>DQ,set:(s,n)=>{DQ.s=s;DQ.n=n||0;ui(true)},kill:dbqKill};
+})();
 // ===================== HALLOWEEN: QUESTS DO COVEIRO ELIAS (cidade abandonada) =====================
 // Elias dá uma corrente de missões: matar inimigos, caçar tesouro (cavar) e enigmas que levam às chaves das 3 criptas.
 // Chave 1 abre a 1ª cripta e a chave 2 a 2ª (só inimigos comuns); a chave 3 abre a cripta do Lich (a última).
