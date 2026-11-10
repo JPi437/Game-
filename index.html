@@ -10490,7 +10490,10 @@ H3.shBegin=function(fx,fy,fz){
  gl.useProgram(P.sh);gl.uniformMatrix4fv(USH.uVP,false,m);const t=TIM(),g=.7+.3*sin(t*.31)+.25*sin(t*.83+1.3);gl.uniform1f(USH.uTv,t);gl.uniform2f(USH.uWind,WIND[0]*g,WIND[1]*g);
  gl.enableVertexAttribArray(0);gl.enableVertexAttribArray(1);gl.enableVertexAttribArray(2);return true};
 // está dentro da área da sombra? (esfera de centro x,y,z e raio r)
-H3.shVis=(x,y,z,r)=>{const A=SHS.ax,E=SHS.ext+r;return abs(A[0]*x+A[1]*z-SHS.a)<E&&abs(A[2]*x+A[3]*y+A[4]*z-SHS.b)<E};
+H3.shVis=(x,y,z,r)=>{const A=SHS.ax,E=SHS.ext+r;if(!(abs(A[0]*x+A[1]*z-SHS.a)<E&&abs(A[2]*x+A[3]*y+A[4]*z-SHS.b)<E))return false;
+ // otimização sem perder nada: só entra no mapa de sombras quem pode jogar sombra dentro da tela. A sombra sai do objeto na direção oposta ao sol;
+ // testa a esfera que cobre o objeto e todo o caminho da sombra dele até o chão contra a visão da câmera (com folga, a câmera do quadro anterior)
+ if(SHS.cull===false)return true;const sy=SUN[1]>.25?SUN[1]:.25,h=(2*r+40)/sy*.5;return H3.vis(x-SUN[0]*h,y-SUN[1]*h,z-SUN[2]*h,r+h+50)};
 H3.shMesh=function(m,mt,pk){gl.uniformMatrix4fv(USH.uM,false,mt||IDM);gl.uniform1f(USH.uPk,pk?1:0);
  gl.bindBuffer(gl.ARRAY_BUFFER,m.vbo);gl.vertexAttribPointer(0,3,gl.FLOAT,false,28,0);gl.vertexAttribPointer(1,3,gl.FLOAT,false,28,12);gl.vertexAttribPointer(2,4,gl.UNSIGNED_BYTE,true,28,24);gl.drawArrays(gl.TRIANGLES,0,m.n)};
 H3.shMat=()=>SHS.mat;
@@ -11081,7 +11084,9 @@ FX.emit=p=>{p.t0=p.t0||Date.now();p.drag=p.drag===undefined?.985:p.drag;PT.push(
 const VXA={"circle_02":0,"circle_03":1,"circle_05":2,"dirt_01":3,"dirt_03":4,"fire_01":5,"flame_05":6,"flare_01":7,"light_01":8,"magic_03":9,"magic_04":10,"magic_05":11,"muzzle_01":12,"muzzle_02":13,"muzzle_04":14,"scorch_01":15,"scorch_02":16,"scratch_01":17,"slash_01":18,"slash_03":19,"smoke_01":20,"smoke_04":21,"smoke_07":22,"smoke_10":23,"spark_01":24,"spark_02":25,"spark_05":26,"spark_06":27,"star_01":28,"star_04":29,"star_06":30,"star_08":31,"star_09":32,"trace_06":33,"twirl_01":34,"twirl_02":35,"trail":36,"drop":37,"@explosion":[38,25],"@fire":[63,16],"@smokex":[79,25]},VXSRC='dados3d/vfx-846030f8.webp',VXSITE='https://jpi437.github.io/Game-/dados3d/vfx-846030f8.webp';let vxImg=null,vxT=null,vxLoad=0;
 const VXUV=[];for(let i=0;i<128;i++){const c=i%16,r=(i/16)|0;VXUV.push([(c*128+1.5)/2048,(r*128+1.5)/1024,((c+1)*128-1.5)/2048,((r+1)*128-1.5)/1024])}
 function vxTex(){if(!vxImg){if(!vxLoad){vxLoad=1;const a=new Image();a.crossOrigin='anonymous';a.onload=()=>{vxImg=a};a.onerror=()=>{const b=new Image();b.crossOrigin='anonymous';b.onload=()=>{vxImg=b};b.onerror=()=>{vxLoad=9};b.src=VXSITE};a.src=VXSRC}return null}
- try{const g=H3.gl&&H3.gl();if(!g||g.isContextLost())return null;if(!vxT||!g.isTexture(vxT.t))vxT=H3.texNew(vxImg,true)}catch(e){return null}return vxT}
+ // sem gl.isTexture a cada chamada: ele espera a placa de vídeo terminar tudo (trava o quadro no celular). A textura só fica inválida se o contexto mudar ou se perder.
+ try{const g=H3.gl&&H3.gl();if(!g||g.isContextLost()){vxT=null;return null}
+  if(!vxT||vxT.g!==g){if(g.canvas&&!g.__vxL){g.__vxL=1;g.canvas.addEventListener('webglcontextlost',()=>{vxT=null})}vxT=H3.texNew(vxImg,true);if(vxT)vxT.g=g}}catch(e){return null}return vxT}
 FX.vxOk=()=>!!vxTex();FX.vxCell=n=>vxImg?VXA[n]:undefined;FX.vxUV=VXUV;FX.vxA=VXA;FX.vxT=vxTex;
 FX.vxFB=(n,k)=>{const f=VXA[n];return f[0]+Math.min(f[1]-1,Math.max(0,(k*f[1])|0))};
 FX.vx=(n,x,y,z,s,rgba,add,flat,rot)=>{const T=vxTex();if(!T)return false;const i=typeof n==='number'?n:VXA[n];if(i===undefined)return false;
@@ -12604,7 +12609,7 @@ function chunkBuild(ci,cj,gl){const CPC=FLD.CPC,i0=ci*CPC,j0=cj*CPC,i1=min(GWc,i
   for(const p of vs){const k=p[1]*GVW+p[0];if(rk>.42)put(p[0],p[1],nx,ny,nz,0,jit);else put(p[0],p[1],NR[k*3],NR[k*3+1],NR[k*3+2],0,1)}};
  for(let j=j0;j<j1;j++)for(let i=i0;i<i1;i++){tri([i,j],[i,j+1],[i+1,j+1]);tri([i,j],[i+1,j+1],[i+1,j])}
  const cx=(i0+i1)/2*CS-MRG,cz=(j0+j1)/2*CS-MRG,cy=(hmin+hmax)/2,hw=(i1-i0)*CS/2,hd=(j1-j0)*CS/2,rad=sqrt(hw*hw+hd*hd+((hmax-hmin)/2)**2);
- const m=H3.upload(gl,{buf,n:v,cx,cy,cz,rad,pk:false});m.ter=true;m.ci=ci;m.cj=cj;return m}
+ const m=H3.upload(gl,{buf,n:v,cx,cy,cz,rad,pk:false});m.ter=true;m.ci=ci;m.cj=cj;m.hr=hmax-hmin;return m}
 
 // ============================================================ o trabalho todo ============================================================
 function* job(gl){
@@ -14064,7 +14069,7 @@ FL.drawPines=function(cam){const far=cur().pFar;for(const c of FL.pines){if(hypo
 
 // ---------- sombras: o que faz sombra (terreno, árvores, arbustos, pedras, abetos, cenário, inimigos) ----------
 SCN.field.shadow=function(t,F){const L=cur();
- for(const m of FLD.chunks)if(H3.shVis(m.cx,m.cy,m.cz,m.rad))H3.shMesh(m,null,false);
+ for(const m of FLD.chunks)if(!(m.hr<2.5)&&H3.shVis(m.cx,m.cy,m.cz,m.rad))H3.shMesh(m,null,false);   // pedaço de chão plano não faz sombra em nada: fica fora do mapa de sombras
  const lists=[[NAT.trees,1],[NAT.rocks,1]];if(L.bush)lists.push([NAT.bushes,1]);
  for(const[list,lv]of lists)for(const T of list){if(!H3.shVis(T.wx,T.wy,T.wz,T.rad))continue;const ms=T.v.m,d=hypot(T.wx-F.x,T.wz-F.z),m=ms[d<L.lod[0]?min(lv,ms.length-1):ms.length-1];H3.shMesh(m,T.m,true)}
  for(const c of FL.pines)if(H3.shVis(c.cx,c.cy,c.cz,c.rad))H3.shMesh(c.m,null,true);
@@ -28291,7 +28296,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261110151407;
+const GAME_BUILD=20261110155005;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
