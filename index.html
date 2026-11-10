@@ -28291,7 +28291,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261110150012;
+const GAME_BUILD=20261110151407;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
@@ -29247,8 +29247,7 @@ function think(e,m,now,dt){
  {let tg=null;if(inFight||dP<260)tg=atan2(px-x,pz-z);if(tg!==null)m.yaw+=clp(angd(m.yaw,tg),-.07,.07)}
  const busy=m.clip!=='idle'&&m.clip!=='walk'&&m.clip!=='run'&&now-m.t0<CL[m.clip].T*1000;
  if(busy)return;
- // na luta: ataca de tempos em tempos (mordida, garrada, mordida, rugido)
- if(inFight&&now>=m.nextAtk){play(m,ATK[m.atkN++%ATK.length],now);m.nextAtk=now+CL[m.clip].T*1000+900+((e.di*331+m.atkN*97)%900);return}
+ // na luta não ataca (os inimigos não batem de volta): só vira para o jogador
  if(!inFight)m.nextAtk=max(m.nextAtk,now+700);
  // apanhou: encolhe (no máximo de 1,6 em 1,6 s)
  if(now-(e.lh||0)<150&&now-m.hitT>1600){m.hitT=now;play(m,'hit',now);return}
@@ -29386,9 +29385,7 @@ function think(e,m,now,dt){const T=TYP[e.dbk];
   const w=Math.floor(now/9000),r=rng(e.di*7919+w*104729),a=r()*TAU,rr=r()*T.wd,gx=hx+cos(a)*rr,gz=hz+sin(a)*rr,d=hypot(gx-x,gz-z);
   if(d>3&&(now%9000)>1500){const sp=min(d,22*dt),nx=x+(gx-x)/d*sp,nz=z+(gz-z)/d*sp;if(lineOk(x,z,nx,nz,8)){m.x=nx;m.z=nz;mv=1;tg=atan2(gx-x,gz-z)}}}
  if(tg!==null)m.yaw=tg;m.mv=mv;e.x=m.x-8;e.y=m.z-14;
- // na luta: soco a cada ~1,5 s; de tantos em tantos, o golpe especial
- if(inFight&&now>=m.nextAtk){m.atkN++;m.q.atk=now;m.nextAtk=now+(T.big?2100:1400)+((e.di*331+m.atkN*97)%700);
-  if(T.atk&&m.atkN%(T.big?3:4)===0)special(e,m,now,px,pz)}
+ // na luta não bate de volta (sem soco e sem golpe especial): fica virado para o jogador
  if(!inFight)m.nextAtk=max(m.nextAtk,now+700)}
 // ---------- golpes especiais (só o visual: a luta do jogo não tira vida do jogador) ----------
 function special(e,m,now,px,pz){const T=TYP[e.dbk],g=gy(m.x,m.z),fx=sin(m.yaw),fz=cos(m.yaw),hand=[m.x+fx*T.H*.4,g+T.H*.55,m.z+fz*T.H*.4],tgt=[px,gy(px,pz)+14,pz];
@@ -29432,7 +29429,7 @@ function visible(now){const out=[],C=H3.cam().p,dt=lastT?clp((now-lastT)/1000,0,
   else if(now-(e.lh||0)<90){fl=m.fl||(m.fl=new Float32Array(4));fl[0]=fl[1]=fl[2]=1;fl[3]=.35}
   const A=m.A||(m.A={ch3:true,m:{nm:T.nm},q:m.q,k:'X'+e.di,gq:{act:false,t0:0,en:null},enT:{x:0,y:0,r:8}});
   A.x=R.x;A.z=R.z;A.y=R.g-sink;A.yaw=m.yaw;A.mv=m.mv;A.fall=fall;A.flc=fl;A.blob=T.big?225:30;A.noBlob=R.dying&&fall>.5;
-  const inF=typeof fight!=='undefined'&&fight===e;if(inF&&!R.dying){A.enT.x=P.x;A.enT.y=P.y;A.gq.en=A.enT}else A.gq.en=null;
+  const inF=typeof fight!=='undefined'&&fight===e;A.gq.en=null;
   if(R.dying)m.q.atk=0;L.push(A);R.A=A}
  return{out,L}}
 DBE3.draw=function(t){if(!here()||!window.CH3||CH3.fail)return;DBE3.on=true;const now=Date.now(),V=visible(now);DBE3.list=V.out;DBE3.acts=V.L;if(!V.L.length)return;
@@ -30261,9 +30258,7 @@ function think(e,m,now,dt){const T=TYP[e.njk];
   const w=Math.floor(now/9000),r=rng(e.di*7919+w*104729+77),a=r()*TAU,rr=r()*T.wd,gx=hx+cos(a)*rr,gz=hz+sin(a)*rr,d=hypot(gx-x,gz-z);
   if(d>3&&(now%9000)>1500){const sp=min(d,22*dt),nx=x+(gx-x)/d*sp,nz=z+(gz-z)/d*sp;if(lineOk(x,z,nx,nz,8)){m.x=nx;m.z=nz;mv=1;tg=atan2(gx-x,gz-z)}}}
  if(tg!==null)m.yaw=tg;m.mv=mv;e.x=m.x-8;e.y=m.z-14;
- // na luta: soco a cada ~1,5 s; de tantos em tantos, o golpe especial
- if(inFight&&now>=m.nextAtk){m.atkN++;m.q.atk=now;m.nextAtk=now+(T.big?2000:1400)+((e.di*331+m.atkN*97)%700);
-  if(T.atk&&m.atkN%(T.big?2:3)===0)special(e,m,now,px,pz)}
+ // na luta não bate de volta (sem soco e sem golpe especial): fica virado para o jogador
  if(!inFight)m.nextAtk=max(m.nextAtk,now+700)}
 // ---------- golpes especiais (só o visual: a luta do jogo não tira vida do jogador) ----------
 function special(e,m,now,px,pz){const T=TYP[e.njk],g=gy(m.x,m.z),fx=sin(m.yaw),fz=cos(m.yaw),hand=[m.x+fx*T.H*.38,g+T.H*.6,m.z+fz*T.H*.38],tgt=[px,gy(px,pz)+14,pz];
@@ -30342,7 +30337,7 @@ function visible(now){const out=[],C=H3.cam().p,dt=lastT?clp((now-lastT)/1000,0,
   else if(now-(e.lh||0)<90){fl=m.fl||(m.fl=new Float32Array(4));fl[0]=fl[1]=fl[2]=1;fl[3]=.35}
   const A=m.A||(m.A={ch3:true,m:{nm:T.nm},q:m.q,k:'N'+e.di,gq:{act:false,t0:0,en:null},enT:{x:0,y:0,r:8}});
   A.x=R.x;A.z=R.z;A.y=R.g-sink;A.yaw=m.yaw;A.mv=m.mv;A.fall=fall;A.flc=fl;A.blob=T.big?70:30;A.noBlob=R.dying&&fall>.5;
-  const inF=typeof fight!=='undefined'&&fight===e;if(inF&&!R.dying){A.enT.x=P.x;A.enT.y=P.y;A.gq.en=A.enT}else A.gq.en=null;
+  const inF=typeof fight!=='undefined'&&fight===e;A.gq.en=null;
   if(R.dying)m.q.atk=0;L.push(A);R.A=A}
  return{out,L}}
 NJE3.draw=function(t){if(!here()||!window.CH3||CH3.fail)return;NJE3.on=true;const now=Date.now(),V=visible(now);NJE3.list=V.out;NJE3.acts=V.L;if(!V.L.length)return;
@@ -33430,9 +33425,11 @@ const el=document.createElement('div');el.id='njQ';document.body.appendChild(el)
 let last='';
 function ui(pop){const q=QL[NQ.s];let h='';
  if(q)h='<b>Missão '+(NQ.s+1)+'/'+QL.length+':</b> '+q.n+' <i>'+NQ.n+'/'+q.g+'</i>';
- const show=!!h&&here()&&!(typeof lock!=='undefined'&&lock);
+ const show=!!h&&here()&&!(typeof lock!=='undefined'&&lock)&&!bossNear();
  if(h!==last){last=h;el.innerHTML=h;if(pop){el.classList.remove('up');void el.offsetWidth;el.classList.add('up')}}
  el.style.display=show?'block':'none'}
+// perto do boss a barra de vida dele fica no alto da tela: a missão some para não ficar por cima
+function bossNear(){try{const b=WD[WID].EN.find(e=>e.njk==='mal');return!!b&&!b.dead&&(fight===b||Math.hypot(P.x-b.x,P.y-b.y)<450)}catch(e){return false}}
 let uiT=0,wasHere=false;
 function tickQ(){const h=here();
  if(h&&!wasHere){const q=QL[NQ.s];if(q)setTimeout(()=>{try{if(here())qToast('Missão '+(NQ.s+1)+' do Mundo 3: '+q.n+' (recompensa: '+rwTx(q)+')')}catch(e){}},1500)}
