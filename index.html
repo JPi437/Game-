@@ -27739,7 +27739,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261110043915;
+const GAME_BUILD=20261110045939;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
@@ -29868,17 +29868,25 @@ function islandH(I,x,z){const d=islD(I,x,z);if(d>1.45)return null;
  if(d>.8)return lerp(5,WL-4,sm(.8,1,d));
  const hill=(vn(x/170,z/170,3)*.75+vn(x/60,z/60,5)*.25)*26*sm(.8,.35,d);return 5+hill}
 const PADS=[];   // chão plano debaixo das casas, moinhos e farol: {x,z,hw,hd,a,h}
-function baseH(x,z){let h=WL-44;for(const I of ISL)if(I.on){const v=(I.hf||islandH)(I,x,z);if(v!==null&&v>h)h=v}
+PADS.push=function(){if(typeof bhClear==='function')bhClear();for(const Q of arguments){Q.c=cos(Q.a);Q.sn=sin(Q.a);Q.bb=hypot(Q.hw,Q.hd)+16}return Array.prototype.push.apply(this,arguments)};   // muda o chão: o cache de baseH é refeito
+// baseH é chamado milhões de vezes na montagem (chão, água, espuma, cor): resultado guardado num cache (mesmo valor exato) e ilhas longe puladas
+const BH_N=1<<19,BH_X=new Float64Array(BH_N).fill(NaN),BH_Z=new Float64Array(BH_N),BH_V=new Float64Array(BH_N),BH_F=new Float64Array(2),BH_U=new Uint32Array(BH_F.buffer);
+for(const I of ISL){const r=I.R*1.25*1.55;I.bb2=r*r}   // além disso islD > 1,5 em qualquer direção (a forma varia no máximo 25%)
+for(const Q of PAST){const c=cos(Q.a),sn=sin(Q.a);Q.c=c;Q.sn=sn;Q.bb=hypot(Q.hw,Q.hd)+31}
+function baseH(x,z){BH_F[0]=x;BH_F[1]=z;const k=(Math.imul(BH_U[0]^BH_U[1]*31,0x9E3779B1)^Math.imul(BH_U[2]^BH_U[3]*17,0x85EBCA77))>>>13;
+ if(BH_X[k]===x&&BH_Z[k]===z)return BH_V[k];const v=baseH0(x,z);BH_X[k]=x;BH_Z[k]=z;BH_V[k]=v;return v}
+const bhClear=()=>BH_X.fill(NaN);
+function baseH0(x,z){let h=WL-44;for(const I of ISL)if(I.on){const dx=x-I.x,dz=z-I.z;if(dx*dx+dz*dz>I.bb2)continue;const v=(I.hf||islandH)(I,x,z);if(v!==null&&v>h)h=v}
  if(z>WALLZ-380&&abs(x-RMX)<440){const v=spurH(x,z);if(v>h)h=v}   // esporões da Montanha Reversa
  if(z<WALLN+460&&abs(x-RMX)<544){const v=spurN(x,z);if(v>h)h=v}   // a Montanha do Norte
  // praça do porto e vila: mais plano
  const pd=hypot(x-PORT.x,(z-PORT.z)*1.2);if(pd<170){const k=1-sm(90,170,pd);h=lerp(h,max(h,6),k);if(pd<110&&islD(I1,x,z)<1.02)h=lerp(h,6,1-sm(70,110,pd))}
  const rd=roadD(x,z);if(rd<30&&h>4)h=lerp(h,max(5,h*.85),1-sm(10,30,rd));
- for(const Q of PAST)if(inRect(Q,x,z,30))h=lerp(h,h*.9,.5);
+ for(const Q of PAST){const dx=x-Q.x,dz=z-Q.z;if(abs(dx)>Q.bb||abs(dz)>Q.bb)continue;const lx=dx*Q.c-dz*Q.sn,lz=dx*Q.sn+dz*Q.c;if(abs(lx)<Q.hw+30&&abs(lz)<Q.hd+30)h=lerp(h,h*.9,.5)}
  // ilha 2: praça do porto mais plana; a subida tem a altura dela (corta os paredões), as ruas da vila seguem o chão
  if(abs(x-I2.x)<760&&abs(z-I2.z)<700){const p2=hypot(x-PORT2.x,(z-PORT2.z)*1.2);if(p2<170){const k=1-sm(90,170,p2);h=lerp(h,max(h,6),k);if(p2<110&&islD(I2,x,z)<1.02)h=lerp(h,6,1-sm(70,110,p2))}
   road2(x,z);if(R2d<RHW2+22){const k=1-sm(RHW2+1,RHW2+22,R2d);if(R2h>-90)h=lerp(h,R2h,k);else if(h>4)h=lerp(h,max(5,h*.9),k)}}
- for(const Q of PADS){const c=cos(Q.a),sn=sin(Q.a),dx=x-Q.x,dz=z-Q.z,d=max(abs(dx*c-dz*sn)-Q.hw,abs(dx*sn+dz*c)-Q.hd);if(d<16)h=lerp(h,Q.h,1-sm(0,16,d))}
+ for(const Q of PADS){const dx=x-Q.x,dz=z-Q.z;if(abs(dx)>Q.bb||abs(dz)>Q.bb)continue;const c=Q.c,sn=Q.sn,d=max(abs(dx*c-dz*sn)-Q.hw,abs(dx*sn+dz*c)-Q.hd);if(d<16)h=lerp(h,Q.h,1-sm(0,16,d))}
  return h}
 const PIERS=[[PIER,PIERT],[PIER2,PIERT2],[PIER6,PIERT6]];
 const onPier=(x,z)=>{for(const[A,B]of PIERS)if((abs(x-A.x)<A.hw&&z>A.z0&&z<A.z1)||(abs(z-B.z)<B.hw&&x>B.x0&&x<B.x1))return true;return false};
@@ -30975,7 +30983,7 @@ OCW.SPAWN=SPAWN;OCW.BACK=BACK;OCW.M1P=M1P;
 function addTree(key,xd,zd,s,yaw,col){const x=xd*K,z=zd*K,y=floorW(x,z)-1,v=TV[key];if(!v)return;const o={v:key,x,z,y,s,m:M4.trs(new Float32Array(16),x,y,z,0,yaw,0,s,s,s),tint:[1,1,1]},M=o.m;
  o.wx=M[0]*v.cx+M[4]*v.cy+M[8]*v.cz+M[12];o.wy=M[1]*v.cx+M[5]*v.cy+M[9]*v.cz+M[13];o.wz=M[2]*v.cx+M[6]*v.cy+M[10]*v.cz+M[14];o.rad=v.rad*s*1.02;OBJ.push(o);if(col)circ(xd,zd,col)}
 function* gen(gl){
- CG.fill(0);LIGHTS=[];OBJ=[];GLOW=[];MILL.length=0;WHEELS=[];WALLM=[];CLW=[];RMS=null;RMSF=[];MIST=[];SEAO=null;CBM=null;FOAM=[];BOATS=[];CLOUD=[];PADS.length=0;CHIM.length=0;GULLS=[];
+ CG.fill(0);LIGHTS=[];OBJ=[];GLOW=[];MILL.length=0;WHEELS=[];WALLM=[];CLW=[];RMS=null;RMSF=[];MIST=[];SEAO=null;CBM=null;FOAM=[];BOATS=[];CLOUD=[];PADS.length=0;bhClear();CHIM.length=0;GULLS=[];
  const r=rng(20261103);
  CH=[];for(let j=0;j<NCZ;j++)for(let i=0;i<NCX;i++){const sd=i<8&&j<6?j*8+i:1000+j*NCX+i,o=new MB(600+sd,{pk:true});o.push().S(K,K,K);CH.push({i,j,g:new MB(200+sd,{pk:true,noMat:true}),o,gm:null,om:null,cx:(i+.5)*CS*K,cz:(j+.5)*CS*K})}
  OCW.pct=.02;yield;
