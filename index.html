@@ -23441,12 +23441,12 @@ const T_DRIFT=[1.0,2.1,3.4],B_DUR=[.5,.8,1.2],B_POW=[23,25,27.5],NIT_DUR=2.4,NIT
 const TIERC=[[255,236,170],[255,150,40],[70,170,255],[220,90,255]];          // faíscas por nível
 const S={st:'off',pause:false,mode:'solo',laps:3,raceT:0,cd:0,t:0,shake:0,fl:[0,0,0],fa:0,msgs:[],finT:0,overT:0,frost:0,boostFx:0,room:null,bestLap:0,lapTimes:[],pop:null,wrongT:0};
 const IN={thr:0,rev:0,steer:0,drift:0,dig:0,jx:0,key:{},itemEdge:0};
-const CFG={col:0,ctl:'joy',mus:true,sfx:.8,musv:.5,best:0,best2:0,trk:1,drift:false,tod:0};
+const CFG={col:0,ctl:'joy',mus:true,sfx:.8,musv:.5,best:0,best2:0,trk:1,drift:false,tod:0,wx:0,cups:{}};
 const bestGet=()=>TK.cur===2?CFG.best2:CFG.best,bestSet=v=>{if(TK.cur===2)CFG.best2=v;else CFG.best=v};
 let KARTS=[],PL=null,PROJ=[],BANS=[],BOXES=[],idc=1,fpsA=60,qScale=1,camS={x:0,y:3,z:0,yaw:0,fov:64,init:false};
 const cfgKey=()=>'mp_sk_'+((window.MP&&MP.uid)||'guest');
 function loadCfg(){try{const o=JSON.parse(localStorage.getItem(cfgKey())||'{}');if(o){if(typeof o.col==='number'&&o.col>=0&&o.col<COLS.length)CFG.col=o.col;if(o.ctl==='joy'||o.ctl==='dpad')CFG.ctl=o.ctl;if(typeof o.mus==='boolean')CFG.mus=o.mus;
- if(typeof o.sfx==='number')CFG.sfx=clp(o.sfx,0,1);if(typeof o.musv==='number')CFG.musv=clp(o.musv,0,1);if(typeof o.best==='number')CFG.best=o.best;if(typeof o.best2==='number')CFG.best2=o.best2;if(o.trk===2)CFG.trk=2;if(typeof o.drift==='boolean')CFG.drift=o.drift;if(o.tod===1||o.tod===2)CFG.tod=o.tod}}catch(e){}SND.sfx=CFG.sfx;SND.mus=CFG.musv;setVol()}
+ if(typeof o.sfx==='number')CFG.sfx=clp(o.sfx,0,1);if(typeof o.musv==='number')CFG.musv=clp(o.musv,0,1);if(typeof o.best==='number')CFG.best=o.best;if(typeof o.best2==='number')CFG.best2=o.best2;if(o.trk===2)CFG.trk=2;if(typeof o.drift==='boolean')CFG.drift=o.drift;if(o.tod===1||o.tod===2)CFG.tod=o.tod;if(typeof o.wx==='number'&&o.wx>=0&&o.wx<=4)CFG.wx=o.wx|0;if(o.cups&&typeof o.cups==='object')CFG.cups=o.cups}}catch(e){}SND.sfx=CFG.sfx;SND.mus=CFG.musv;setVol()}
 function saveCfg(){try{localStorage.setItem(cfgKey(),JSON.stringify(CFG))}catch(e){}}
 const nowS=()=>Date.now()+((window.MP&&MP.off)||0);
 const fmtT=s=>{if(!isFinite(s)||s<=0)return'--:--.--';const m=floor(s/60),r=s-m*60;return m+':'+(r<10?'0':'')+r.toFixed(2)};
@@ -23534,10 +23534,10 @@ function stepKart(k,dt,I){
   // motor
   if(k.stall>0){k.stall-=dt;thr=0}
   if(boosting){k.boostT-=dt;if(sp<k.boostP)sp=min(k.boostP,sp+52*dt);if(k.boostT<=0){k.boostT=0;k.boostP=0}}
-  else if(thr){if(sp<VMAX)sp=min(VMAX,sp+(16*(1-max(0,sp)/VMAX)+2.6)*dt)}
+  else if(thr){{const VX=VMAX*WXG.vmax;if(sp<VX)sp=min(VX,sp+(16*(1-max(0,sp)/VX)+2.6)*WXG.acc*dt)}}
   else if(rev){if(sp>1)sp-=34*dt;else sp=max(VREV,sp-11*dt)}
   else sp-=sgn(sp)*min(abs(sp),5.2*dt);
-  if(!boosting&&sp>VMAX)sp=max(VMAX,sp-13*dt);
+  if(!boosting&&sp>VMAX*WXG.vmax)sp=max(VMAX*WXG.vmax,sp-13*dt);
   if(rev&&thr&&!boosting&&sp>1)sp-=18*dt;
   if(k.shr>0&&sp>VMAX*.55)sp=max(VMAX*.55,sp-45*dt);   // encolhido pelo raio: mais lento
   // direção (suaviza o analógico/d-pad)
@@ -23551,12 +23551,12 @@ function stepKart(k,dt,I){
   if(k.dr){const t=clp(-k.steer*k.dr,-1,1);om=k.dr*(1.2+.95*t)*clp(sp/11,.5,1.1);
    const acc=sp>9?(.8+.45*max(0,t)):0;k.dT+=dt*acc;const nt=k.dT>=T_DRIFT[2]?3:k.dT>=T_DRIFT[1]?2:k.dT>=T_DRIFT[0]?1:0;
    if(nt>k.tier){k.tier=nt;if(k.me){snd('tier',nt-1);ring(k.x,k.y+.4,k.z,4,.35,TIERC[nt]);flash(TIERC[nt][0],TIERC[nt][1],TIERC[nt][2],.14)}}}
-  else{const spf=clp(abs(sp)/4.5,0,1);om=-k.steer*2.55*spf*(1-.24*clp(abs(sp)/VMAX,0,1))*(sp<-.5?-1:1)*(boosting?.92:1)}
+  else{const spf=clp(abs(sp)/4.5,0,1);om=-k.steer*2.55*WXG.steer*spf*(1-.24*clp(abs(sp)/VMAX,0,1))*(sp<-.5?-1:1)*(boosting?.92:1)}
   const m0=hypot(sp,lat);
   // velocidade no mundo com a nova direção
   let vx=fx*sp+fz*lat,vz=fz*sp-fx*lat;k.h+=om*dt;k.om=om;
   const gx=sin(k.h),gz=cos(k.h);let sp2=vx*gx+vz*gz,lt2=vx*gz-vz*gx;
-  lt2*=exp_(-(k.dr?2.3:9)*dt);
+  lt2*=exp_(-(k.dr?2.3*(.55+.45*WXG.grip):9*WXG.grip)*dt);
   let m1=hypot(sp2,lt2);if(m1>.01){const sc=min(1.15,(m0*(1-(k.dr?.04:.0)*dt))/m1);sp2*=sc;lt2*=sc}
   k.vx=gx*sp2+gz*lt2;k.vz=gz*sp2-gx*lt2;k.sp=sp2;k.lat=lt2;
  }
@@ -24097,6 +24097,70 @@ const TODP={
     {sun:[-.5,.38,.78],sunC:[1.06,.7,.44],sky:[.78,.56,.8],gnd:[.56,.38,.3],fog:[.9,.62,.66],fn:120,ff:340,zen:[.34,.26,.6],hor:[1,.64,.56],tw:[1,.5,.3,.85],night:0,cl:[1,1,1],mt:[1,1,1],pm:[1,.86,.8],lamp:.4,drv:[1,.84,.74],bloom:.5,th:.72,gr:[1.05,.97,.94],sat:1.08,vig:.24},
     {sun:[.4,.56,-.5],sunC:[.36,.38,.56],sky:[.22,.22,.38],gnd:[.12,.09,.11],fog:[.08,.07,.15],fn:90,ff:300,zen:[.014,.02,.07],hor:[.08,.06,.15],tw:[0,0,0,0],night:1,cl:[.22,.2,.3],mt:[.26,.22,.36],pm:[.52,.5,.7],lamp:1,drv:[.6,.62,.82],bloom:.85,th:.6,gr:[.98,.98,1.1],sat:1.02,vig:.34}]};
 const todNow=()=>S.todOv!=null?S.todOv|0:(CFG.tod|0);
+// ============================================================ CLIMA: sol, chuva, tempestade, neve, neblina ============================================================
+// · Céu fechado (nuvens que andam) por cima do céu normal, névoa mais perto e cor da luz/tela de cada clima (vale com dia, tarde e noite)
+// · Chuva/tempestade: riscos de chuva na tela, gotas batendo no chão, spray dos pneus, postes acesos; tempestade tem raios (clarão + trovão)
+// · Neve: flocos que vêm na direção da câmera conforme a velocidade, chão mais claro, poeira de neve nos pneus
+// · Neblina: névoa bem fechada (a pista some a poucos metros)
+// · Aderência: pista molhada escorrega mais nas curvas (chuva < tempestade < neve); neve também tira um pouco da velocidade máxima
+const WXN=['☀️ SOL','🌧️ CHUVA','⛈️ TEMPESTADE','❄️ NEVE','🌫️ NEBLINA'],WXS=['☀️ Sol','🌧️ Chuva','⛈️ Tempestade','❄️ Neve','🌫️ Neblina'],WXI=['☀️','🌧️','⛈️','❄️','🌫️'];
+const wxNow=()=>clp((S.wxOv!=null?S.wxOv:CFG.wx)|0,0,4);
+const WXG={grip:1,acc:1,vmax:1,steer:1},WXGT=[{grip:1,acc:1,vmax:1,steer:1},{grip:.62,acc:.97,vmax:.985,steer:.96},{grip:.52,acc:.95,vmax:.975,steer:.93},{grip:.42,acc:.9,vmax:.95,steer:.9},{grip:1,acc:1,vmax:1,steer:1}];
+function wxGrip(){Object.assign(WXG,WXGT[wxNow()])}
+const WXS_={lit:0,bolt:3,snd:null,sw:-1};
+const mixv=(a,b,t)=>a.map((v,i)=>v+(b[i]-v)*t);
+function wxP(P){const w=wxNow();if(!w)return P;const Q=JSON.parse(JSON.stringify(P)),nb=P.night?.3:1,g3=(v)=>[v*nb,v*nb*1.03,v*nb*1.1];
+ if(w===1||w===2){const st=w===2;Q.sunC=P.sunC.map(v=>v*(st?.34:.5));Q.sky=mixv(P.sky,g3(.52),.6);Q.fog=mixv(P.fog,g3(st?.4:.55),.78);Q.fn=st?10:18;Q.ff=st?72:100;
+  Q.zen=mixv(P.zen,g3(st?.3:.44),.85);Q.hor=mixv(P.hor,g3(st?.42:.58),.85);Q.tw=[0,0,0,0];Q.cl=g3(st?.45:.66);Q.mt=mixv(P.mt,g3(.62),.55);Q.lamp=max(P.lamp,st?.9:.65);
+  Q.sat=P.sat*(st?.76:.85);Q.gr=[.95,.99,1.06];Q.vig=P.vig+(st?.12:.07);Q.bloom=P.bloom+.1;Q.ov=st?1:.93;Q.ovC=g3(st?.3:.47)}
+ else if(w===3){const c=v=>v.map(x=>x*nb);Q.sunC=mixv(P.sunC,[.82,.88,1],.5).map(v=>v*.82);Q.sky=mixv(P.sky,c([.76,.81,.92]),.6);Q.gnd=P.gnd.map(v=>min(1,v*1.4));Q.fog=mixv(P.fog,c([.86,.89,.96]),.8);
+  Q.fn=12;Q.ff=80;Q.zen=mixv(P.zen,c([.7,.76,.87]),.85);Q.hor=mixv(P.hor,c([.88,.91,.97]),.85);Q.tw=[0,0,0,0];Q.cl=c([.96,.98,1]);Q.mt=mixv(P.mt,c([1.1,1.12,1.18]),.5);Q.lamp=max(P.lamp,.4);
+  Q.sat=P.sat*.8;Q.gr=[.96,1,1.08];Q.ov=.9;Q.ovC=c([.8,.84,.92])}
+ else if(w===4){const fg=mixv(P.fog,[.8,.82,.86].map(v=>v*(P.night?.16:1)),.72);Q.fog=fg;Q.fn=0;Q.ff=27;Q.sunC=P.sunC.map(v=>v*.72);Q.hor=mixv(P.hor,fg,.92);Q.zen=mixv(P.zen,fg,.65);Q.tw=[0,0,0,0];
+  Q.sat=P.sat*.84;Q.lamp=max(P.lamp,.55);Q.vig=P.vig+.06;Q.ov=.6;Q.ovC=fg.slice()}
+ return Q}
+// aparelhos sem os gráficos novos: só a névoa muda
+let WXB=null;function wxBasic(){if(GFX.ok)return;const w=wxNow(),key=TK.cur+'_'+w;if(WXB&&WXB.key===key)return;if(!WXB||WXB.trk!==TK.cur)WXB={trk:TK.cur,fog:LIGHT.fog.slice(),fn:LIGHT.fn,ff:LIGHT.ff};WXB.key=key;
+ if(!w){LIGHT.fog=WXB.fog.slice();LIGHT.fn=WXB.fn;LIGHT.ff=WXB.ff;return}const P=wxP({sunC:LIGHT.sunC,sky:LIGHT.sky,gnd:LIGHT.gnd,fog:WXB.fog,fn:WXB.fn,ff:WXB.ff,zen:[0,0,0],hor:[0,0,0],tw:[0,0,0,0],cl:[1,1,1],mt:[1,1,1],lamp:0,sat:1,vig:0,bloom:0,night:0});LIGHT.fog=P.fog;LIGHT.fn=P.fn;LIGHT.ff=P.ff}
+// som contínuo da chuva / vento da neve e trovões
+function wxSndStart(){wxSndStop();const w=wxNow();if(!(w===1||w===2||w===3))return;const A=ac();if(!A||!NBUF)return;try{
+ const s=A.createBufferSource(),f=A.createBiquadFilter(),f2=A.createBiquadFilter(),g=A.createGain();s.buffer=NBUF;s.loop=true;
+ if(w===3){f.type='lowpass';f.frequency.value=520;f2.type='highpass';f2.frequency.value=90;g.gain.value=.11;const l=A.createOscillator(),lg=A.createGain();l.frequency.value=.18;lg.gain.value=.07;l.connect(lg);lg.connect(g.gain);l.start();WXS_.lfo=l}
+ else{f.type='bandpass';f.frequency.value=w===2?1900:2600;f.Q.value=.45;f2.type='highpass';f2.frequency.value=500;g.gain.value=w===2?.2:.13}
+ s.connect(f);f.connect(f2);f2.connect(g);g.connect(SFXG);s.start(0,rnd()*1.5);WXS_.snd={s,g}}catch(e){WXS_.snd=null}}
+function wxSndStop(){try{if(WXS_.snd){WXS_.snd.s.stop()}}catch(e){}try{if(WXS_.lfo)WXS_.lfo.stop()}catch(e){}WXS_.snd=null;WXS_.lfo=null}
+function thunder(d){try{noise(2.8,320,38,.75,.6,'lowpass',d);noise(.6,1500,180,.3,.8,'lowpass',d);noise(1.6,90,40,.5,.5,'lowpass',d+.15)}catch(e){}}
+// raios, spray dos pneus e gotas no chão (chamado todo quadro)
+function wxTick(dt){WXS_.lit*=Math.exp(-dt*6.5);if(S.st==='off')return;const w=wxNow();
+ if(w===2&&S.st!=='results'){WXS_.bolt-=dt;if(WXS_.bolt<=0){WXS_.bolt=5+rnd()*10;WXS_.lit=1;setTimeout(()=>{WXS_.lit=max(WXS_.lit,.75)},140);if(S.st==='race'||S.st==='count')flash(215,225,255,.38);if(S.st!=='menu'||AC)thunder(.35+rnd()*1.3)}}
+ if(!(w===1||w===2||w===3)||LOWP()||S.pause)return;
+ const KL=(S.st==='menu'&&S.show)?[S.show]:KARTS,cp=camPos||[0,0,0];
+ for(const k of KL){if(k.y<-900||k.air)continue;const sp=hypot(k.vx,k.vz);if(sp<6)continue;if(hypot(k.x-cp[0],k.z-cp[2])>45)continue;
+  const n=sp*dt*(w===3?1.2:1.7);let m=floor(n)+(rnd()<n%1?1:0);
+  while(m--){const sd=rnd()<.5?-1:1;kpos(k,.55*sd,.1,-.85);const vx=-k.vx*.14+(rnd()-.5)*2.2,vz=-k.vz*.14+(rnd()-.5)*2.2;
+   if(w===3)emit(WP[0],WP[1],WP[2],vx,1.5+rnd(),vz,.75,.25,1,242,246,255,.55,1.6,2,0,0);else emit(WP[0],WP[1],WP[2],vx,2.3+rnd()*1.6,vz,.5,.15,.75,205,215,232,.32,1.3,4,0,0)}}
+ if(w!==3&&PL&&S.st!=='menu'&&TR.road){const n=(w===2?44:28)*dt;let m=floor(n)+(rnd()<n%1?1:0);
+  while(m--){const a=rnd()*TAU,r=2+rnd()*15,x=PL.x+sin(PL.h)*9+cos(a)*r,z=PL.z+cos(PL.h)*9+sin(a)*r,y=TR.road.top(x,z);if(y===null||y===undefined)continue;
+   emit(x,y+.04,z,(rnd()-.5)*.9,1.7+rnd()*1.2,(rnd()-.5)*.9,.26,.05,.1,215,225,245,.75,0,9,3,0)}}}
+// chuva / neve / neblina desenhadas na tela (por cima do 3D, por baixo do HUD)
+const WXR={a:[],w:-1,yaw:0,n:0};
+function wxHUD(c,u){const w=wxNow();if(!w)return;const dt=S.dtL||.016;
+ if(w===4){c.save();for(let i=0;i<3;i++){const x=((S.t*(10+i*7)*u+i*W*.4)%(W*1.6))-W*.3,y=H*(.35+i*.18),r=max(W,H)*(.45+i*.12),g=c.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,'rgba(220,226,235,.13)');g.addColorStop(1,'rgba(220,226,235,0)');c.fillStyle=g;c.fillRect(0,0,W,H)}c.restore();return}
+ const rain=w!==3,N=Math.round((rain?(w===2?220:150):120)*(mob?.7:1)*(LOWP()?.6:1));
+ if(WXR.w!==w||WXR.a.length!==N){WXR.w=w;WXR.a=[];for(let i=0;i<N;i++)WXR.a.push({x:rnd()*W,y:rnd()*H,z:.35+rnd()*.65,p:rnd()*TAU})}
+ let dy=camS.yaw-WXR.yaw;WXR.yaw=camS.yaw;dy=((dy+PI)%TAU+TAU)%TAU-PI;if(abs(dy)>.6)dy=0;const sx=-dy*W*.8;
+ const k=(S.spec&&specK())||PL,sp=(k&&S.st!=='menu')?hypot(k.vx,k.vz):0,fr=S.pause?0:1;
+ c.save();
+ if(rain){const sl=.2+sp*.011,len=(w===2?27:21)*u;c.strokeStyle=w===2?'rgba(196,210,236,.4)':'rgba(196,210,236,.33)';c.lineWidth=1.15*u;c.lineCap='round';c.beginPath();
+  for(const d of WXR.a){d.y+=(950+sp*28)*d.z*dt*u*fr;d.x+=(sx-sl*700*dt*u)*d.z*fr;if(d.y>H+20){d.y=-rnd()*60*u;d.x=rnd()*W*1.15}if(d.x<-50)d.x+=W+100;if(d.x>W+50)d.x-=W+100;
+   const L=len*d.z;c.moveTo(d.x,d.y);c.lineTo(d.x+sl*L,d.y-L)}c.stroke();
+  if(w===2&&WXS_.lit>.05){c.fillStyle='rgba(225,232,255,'+(WXS_.lit*.16)+')';c.fillRect(0,0,W,H)}}
+ else{c.fillStyle='#fff';const cx=W/2,cy=H*.45,pull=sp/VMAX;
+  for(const d of WXR.a){d.p+=dt*1.4*fr;const vx=(d.x-cx)/W*sp*38*u,vy=(d.y-cy)/H*sp*30*u;d.x+=(sx*d.z+sin(d.p)*16*dt*u+vx*dt*d.z)*fr;d.y+=((55+sp*4)*d.z*u+vy*d.z)*dt*fr;
+   if(d.y>H+10||d.x<-20||d.x>W+20||d.y<-30){if(pull>.35&&rnd()<.7){d.x=cx+(rnd()-.5)*W*.5;d.y=cy+(rnd()-.5)*H*.4}else{d.x=rnd()*W;d.y=-rnd()*40*u}}
+   c.globalAlpha=.45+.5*d.z;c.beginPath();c.arc(d.x,d.y,(1+2.3*d.z)*u*(1+pull*.4),0,TAU);c.fill()}c.globalAlpha=1}
+ c.restore()}
+
 // ---------- programas ----------
 const FS2=`#ifdef GL_FRAGMENT_PRECISION_HIGH
 precision highp float;
@@ -24145,7 +24209,7 @@ precision highp float;
 #else
 precision mediump float;
 #endif
-varying vec3 vD;uniform vec3 uZen;uniform vec3 uHor;uniform vec3 uFogC;uniform vec3 uSunD;uniform vec3 uSunC;uniform vec4 uTw;uniform float uNight;uniform float uT;uniform sampler2D uNz;
+varying vec3 vD;uniform vec3 uZen;uniform vec3 uHor;uniform vec3 uFogC;uniform vec3 uSunD;uniform vec3 uSunC;uniform vec4 uTw;uniform float uNight;uniform float uT;uniform sampler2D uNz;uniform float uOv;uniform vec3 uOvC;uniform float uLit;
 void main(){vec3 d=normalize(vD);float h=d.y;vec3 col=mix(uHor,uZen,pow(clamp(h,0.,1.),.5));float sd=max(dot(d,uSunD),0.);
  vec2 hz=normalize(d.xz+vec2(.0001,0.)),sz=normalize(uSunD.xz+vec2(.0001,0.));float az=dot(hz,sz)*.5+.5;
  col+=uTw.rgb*uTw.a*(pow(az,3.)*.85+.1)*exp(-max(h,0.)*4.5);
@@ -24156,6 +24220,7 @@ void main(){vec3 d=normalize(vD);float h=d.y;vec3 col=mix(uHor,uZen,pow(clamp(h,
   vec3 t1=normalize(cross(uSunD,vec3(0.,1.,0.))),t2=cross(t1,uSunD);vec2 mp=vec2(dot(d,t1),dot(d,t2))/.06;float mr=length(mp);
   if(mr<1.&&sd>0.){float cr=texture2D(uNz,mp*.18+vec2(.3,.6)).g;float mo=(.78+.34*smoothstep(.35,.7,cr))*(1.-.3*mr*mr);col=mix(col,vec3(.92,.95,1.)*mo,1.-smoothstep(.9,1.,mr));}   // a lua
   col+=vec3(.55,.62,.85)*(pow(sd,220.)*.35+pow(sd,22.)*.08);}
+ if(uOv>0.){vec2 cp=d.xz/(max(d.y,0.)+.16);float n1=texture2D(uNz,cp*.05+vec2(uT*.004,uT*.0025)).b,n2=texture2D(uNz,cp*.13-vec2(uT*.009,0.)).g;vec3 oc=uOvC*(.74+.34*n1+.2*n2)*(1.+uLit*2.4);col=mix(col,oc,uOv*smoothstep(-.2,.12,h));}
  col=mix(col,uFogC,smoothstep(.16,-.03,h)*.9);gl_FragColor=vec4(col,1.);}`;
 const VSQ=`attribute vec2 aP;varying vec2 vU;void main(){vU=aP*.5+.5;gl_Position=vec4(aP,0.,1.);}`;
 const FSBR=`precision mediump float;varying vec2 vU;uniform sampler2D uT;uniform vec2 uPx;uniform float uTh;
@@ -24248,7 +24313,7 @@ function lampsBuild(){const T=TR;if(T._lp!==undefined)return T._lp;T._lp=null;if
  const tex=mkTex(c,false,false);
  T._lp={pos,poles:upMesh(poles.build()),heads:upMesh(heads.build()),lm:{t:tex,x0,z0,inv:1/sz}};return T._lp}
 // ---------- horário ----------
-function applyTod(){const id=TK.cur===2?2:1,t=clp(todNow(),0,2),P=TODP[id][t];GFX.P=P;
+function applyTod(){const id=TK.cur===2?2:1,t=clp(todNow(),0,2),P=wxP(TODP[id][t]);GFX.P=P;
  Object.assign(LIGHT,{sun:nrm3(P.sun),sky:P.sky.slice(),gnd:P.gnd.slice(),sunC:P.sunC.slice(),fog:P.fog.slice(),fn:P.fn,ff:P.ff});GFX.pm=P.pm;GFX.drvLt=P.drv;
  try{lampsBuild()}catch(e){console.warn('kart postes',e);TR._lp=null}
  try{bakeStatic()}catch(e){console.warn('kart sombra',e);GFX.stOn=0}
@@ -24271,11 +24336,11 @@ function frameLights(){const P=GFX.P,L=GFX.PL,C=GFX.PLC,G=GFX.glw;L.fill(0);C.fi
  const lp=TR._lp;if(lp&&P.lamp>0)for(const q of lp.pos){const d=hypot(q.x-cam[0],q.z-cam[2]);if(d>240)continue;G.push([q.x,q.y+.1,q.z,1.3,1,.9,.7,.9*P.lamp]);G.push([q.x,q.y,q.z,5.5,1,.8,.55,.3*P.lamp])}}
 // ---------- qualidade automática ----------
 function gfxQual(){if(S.st!=='race'&&S.st!=='count')return;GFX.qT+=1;if(GFX.qT<90)return;GFX.qT=0;if(fpsA<33){GFX.low++;if(GFX.low>=2&&GFX.q>0){GFX.q--;GFX.low=0;console.log('Star Kart: gráficos mais leves (nível '+GFX.q+')')}}else GFX.low=0}
-function gfxTick(dt){if(!GFX.ok)return;GFX.t+=dt;const key=TK.cur+'_'+clp(todNow(),0,2)+'_'+(TR.ready?1:0);if(key!==GFX.key){GFX.key=key;applyTod()}
+function gfxTick(dt){if(!GFX.ok)return;GFX.t+=dt;const key=TK.cur+'_'+clp(todNow(),0,2)+'_'+wxNow()+'_'+(TR.ready?1:0);if(key!==GFX.key){GFX.key=key;applyTod()}
  try{dynShadow()}catch(e){console.warn('kart sombra karts',e);GFX.dyOn=0;GFX.q=0}gfxQual()}
 // ---------- céu ----------
 function drawSkyG(){const p=GFX.PK,U=p.u,P=GFX.P||TODP[1][0];useP(p);gl.uniformMatrix4fv(U.uVP,false,VP);gl.uniform3f(U.uC,camPos[0],camPos[1],camPos[2]);
- gl.uniform3fv(U.uZen,P.zen);gl.uniform3fv(U.uHor,P.hor);gl.uniform3fv(U.uFogC,LIGHT.fog);gl.uniform3fv(U.uSunD,LIGHT.sun);gl.uniform3fv(U.uSunC,LIGHT.sunC);gl.uniform4fv(U.uTw,P.tw);gl.uniform1f(U.uNight,P.night);gl.uniform1f(U.uT,GFX.t);
+ gl.uniform3fv(U.uZen,P.zen);gl.uniform3fv(U.uHor,P.hor);gl.uniform3fv(U.uFogC,LIGHT.fog);gl.uniform3fv(U.uSunD,LIGHT.sun);gl.uniform3fv(U.uSunC,LIGHT.sunC);gl.uniform4fv(U.uTw,P.tw);gl.uniform1f(U.uNight,P.night);gl.uniform1f(U.uOv,P.ov||0);gl.uniform3fv(U.uOvC,P.ovC||[0,0,0]);gl.uniform1f(U.uLit,WXS_.lit||0);gl.uniform1f(U.uT,GFX.t);
  gl.activeTexture(gl.TEXTURE3);gl.bindTexture(gl.TEXTURE_2D,GFX.nz);gl.uniform1i(U.uNz,3);gl.activeTexture(gl.TEXTURE0);
  gl.disable(gl.DEPTH_TEST);gl.depthMask(false);gl.disable(gl.BLEND);gl.disable(gl.CULL_FACE);gl.bindBuffer(gl.ARRAY_BUFFER,GFX.skyM.vb);gl.enableVertexAttribArray(0);gl.disableVertexAttribArray(1);gl.disableVertexAttribArray(2);gl.disableVertexAttribArray(3);
  gl.vertexAttribPointer(0,3,gl.FLOAT,false,36,0);gl.drawArrays(gl.TRIANGLES,0,GFX.skyM.n);gl.enable(gl.DEPTH_TEST);gl.depthMask(true)}
@@ -24471,7 +24536,7 @@ function buildMap(){const c=D.createElement('canvas');c.width=300;c.height=240;c
  for(const [lw,col] of[[14*TS*0+10,'rgba(10,14,30,.9)'],[6.5,'#c8d0e8'],[1.4,'rgba(255,210,63,.9)']]){x.strokeStyle=col;x.lineWidth=lw;x.lineJoin='round';x.lineCap='round';x.beginPath();for(let i=0;i<=TR.n;i++){const p=P(i);if(i)x.lineTo(p[0],p[1]);else x.moveTo(p[0],p[1])}x.stroke()}
  const s0=P(0);x.fillStyle='#fff';x.fillRect(s0[0]-5,s0[1]-2,10,4);mapCv=c}
 function drawHUD(){
- const c=hx;c.setTransform(hr,0,0,hr,0,0);c.clearRect(0,0,W,H);
+ const c=hx;c.setTransform(hr,0,0,hr,0,0);c.clearRect(0,0,W,H);try{if(S.st!=='off')wxHUD(c,clp(min(W,H)/400,.72,1.3))}catch(e){}
  const u=clp(min(W,H)/400,.72,1.3);
  const k=PL;
  if(S.st==='menu'||!k){return}
@@ -24648,13 +24713,13 @@ const ceil_=Math.ceil;
 function finishMe(){PL.fin=S.raceT;S.fin=true;S.finT=0;rankAll();snd('finish');flash(255,230,120,.5);S.shake=.4;burst(PL.x,PL.y+2,PL.z,50,16,1.2,1.2,.1,[[255,220,80],[255,90,160],[80,200,255],[120,255,160]],{up:1,grav:9});if(NETH.on&&NETH.fin)NETH.fin()}
 
 function enterRace(cfg){
- hideScreens();skClear();S.mode=cfg.mode;S.laps=cfg.laps;S.todOv=cfg.mode==='online'?clp(cfg.tod|0,0,2):null;clearEntities();buildBoxes();KARTS=[];PL=null;S.msgs=[];S.lapTimes=[];S.bestLap=0;S.lapFx=null;S.nitA=0;S.fin=false;S.finT=0;S.firstFin=0;S.thrT=0;S.go=false;S.goT=0;S.frost=0;S.fa=0;S.shake=0;S.boostFx=0;S.pause=false;
+ hideScreens();skClear();S.mode=cfg.mode;S.laps=cfg.laps;S.todOv=(cfg.mode==='online'||cfg.tod!=null)?clp(cfg.tod|0,0,2):null;S.wxOv=(cfg.mode==='online'||cfg.wx!=null)?clp(cfg.wx|0,0,4):null;wxGrip();WXS_.bolt=2+rnd()*4;clearEntities();buildBoxes();KARTS=[];PL=null;S.msgs=[];S.lapTimes=[];S.bestLap=0;S.lapFx=null;S.nitA=0;S.fin=false;S.finT=0;S.firstFin=0;S.thrT=0;S.go=false;S.goT=0;S.frost=0;S.fa=0;S.shake=0;S.boostFx=0;S.pause=false;
  cfg.players.forEach((p,i)=>{const k=mkKart({id:p.id,me:p.id===cfg.myId,nick:p.nick,col:p.col,lk:p.lk||null});placeKart(k,i);k.tt=0;KARTS.push(k);if(k.me)PL=k;k.lapT0=0;k.gy=k.y});
  S.raceT=0;S.st='count';S.startAt=cfg.startAt||nowS()+4800;camS.init=false;beepN=-1;rkT=0;S.spec=null;S.pod=null;S.cine=null;S.podDone=0;$('kSpec').style.display='none';
  {const solo=cfg.mode==='solo',D=solo?(cfg.noIntro?0:7.4):(S.startAt-nowS())/1000-4.7;if(solo&&D>0)S.startAt+=D*1000;S.intro=D>2.6?{t:0,dur:D,ph:0,cut:1}:null;   // intro: sobrevoo da pista e grid (online: cabe no tempo até a largada)
   $('kSkip').textContent='PULAR ▶';$('kSkip').style.display=S.intro?'block':'none'}
- ctl(!S.intro);engStart();if(CFG.mus)musStart();if(window.MUSapi)try{if(MUSapi.on)MUSapi.toggle()}catch(e){}}
-function leaveRace(){S.st='menu';S.go=false;S.intro=null;S.spec=null;S.pod=null;S.cine=null;$('kSkip').style.display='none';$('kSpec').style.display='none';KARTS=[];PL=null;clearEntities();engStop();musStop();ctl(false);hideScreens();NETH.on=false}
+ ctl(!S.intro);engStart();wxSndStart();if(CFG.mus)musStart();if(window.MUSapi)try{if(MUSapi.on)MUSapi.toggle()}catch(e){}}
+function leaveRace(){wxSndStop();S.st='menu';S.go=false;S.intro=null;S.spec=null;S.pod=null;S.cine=null;$('kSkip').style.display='none';$('kSpec').style.display='none';KARTS=[];PL=null;clearEntities();engStop();musStop();ctl(false);hideScreens();NETH.on=false}
 
 // ---------- abrir / fechar o minigame ----------
 let booted=false,h3Was=0,musWas=false,lastLock=false;
@@ -24667,8 +24732,8 @@ function open(){if(S.st!=='off')return;const M=$('kM');M.style.display='block';l
  if(!boot()){M.style.display='none';alert('Este aparelho não consegue mostrar o Star Kart (WebGL).');restoreOut();return}
  resize();S.st='menu';S.last=performance.now();showMain();acc=0;cancelAnimationFrame(raf);raf=requestAnimationFrame(frame)}
 function restoreOut(){try{lock=false}catch(e){}try{if(musWas&&window.MUSapi&&!MUSapi.on)MUSapi.toggle()}catch(e){}try{if(h3Was&&H3.setModeQ)setTimeout(()=>H3.setModeQ(h3Was),80)}catch(e){}}
-function close(){if(S.st==='off')return;if(NETH.on&&NETH.leave)NETH.leave();S.st='off';cancelAnimationFrame(raf);engStop();musStop();ctl(false);KARTS=[];PL=null;$('kM').style.display='none';hideScreens();for(const k in KEYS)KEYS[k]=false;IN.thr=IN.rev=IN.drift=0;IN.jx=0;restoreOut()}
-function frame(now){raf=requestAnimationFrame(frame);let dt=min(.05,(now-S.last)/1000||.016);S.last=now;
+function close(){if(S.st==='off')return;if(NETH.on&&NETH.leave)NETH.leave();S.st='off';cancelAnimationFrame(raf);engStop();musStop();wxSndStop();ctl(false);KARTS=[];PL=null;$('kM').style.display='none';hideScreens();for(const k in KEYS)KEYS[k]=false;IN.thr=IN.rev=IN.drift=0;IN.jx=0;restoreOut()}
+function frame(now){raf=requestAnimationFrame(frame);let dt=min(.05,(now-S.last)/1000||.016);S.last=now;S.dtL=dt;try{wxBasic();wxTick(dt)}catch(e){}
  fpsT+=dt;fpsN++;if(fpsT>1.5){fpsA=fpsN/fpsT;fpsT=0;fpsN=0;if(S.st==='race'||S.st==='count'){if(fpsA<38&&qScale>.55){qScale=max(.55,qScale*.88);resize()}else if(fpsA>58&&qScale<1&&mob){qScale=min(1,qScale*1.06);resize()}}}
  if(S.pause&&(S.st==='count'||S.st==='race')&&S.mode==='solo'&&S.startAt)S.startAt+=dt*1000;
  if(!S.pause||S.st==='menu'){acc+=dt;let n=0;while(acc>=1/60&&n<4){simStep(1/60);acc-=1/60;n++}if(n>=4)acc=0}
@@ -24709,6 +24774,11 @@ const SL=(l,b)=>`left:calc(${l}px + env(safe-area-inset-left,0px));bottom:calc($
 .kBtn:disabled{opacity:.45}
 .kRow{display:flex;align-items:center;gap:10px;margin:9px 0;text-align:left;font-size:13px}
 .kTrk{display:flex;gap:6px;margin:6px 0 2px}.kTrk button{flex:1;padding:8px 4px;border-radius:10px;border:2px solid #000;background:#1d2550;color:#cfe3ff;font:900 12px "Courier New",monospace;cursor:pointer;line-height:1.15}
+.kWx button{padding:6px 2px;font-size:16px;line-height:1.05}.kWx button small{font-size:8px!important;margin-top:2px}
+.kCupC{display:flex;gap:10px;align-items:center;text-align:left;background:#0d1433;border:2px solid #ffffff22;border-radius:14px;padding:10px;margin:8px 0}.kCupC .ic{font-size:34px;width:46px;text-align:center}.kCupC .tt{flex:1;min-width:0}.kCupC b{font-size:15px}.kCupC .rc{font-size:10px;color:#9ec2ff;line-height:1.45;margin-top:3px}.kCupC .pb{font-size:11px;color:#ffd23f;margin-top:3px}.kCupC .kBtn{width:auto;margin:0;padding:10px 12px;font-size:14px}
+.kRkT{display:flex;gap:6px;overflow-x:auto;padding:4px 0 8px;scrollbar-width:none}.kRkT::-webkit-scrollbar{display:none}.kRkT button{flex:none;padding:7px 10px;border-radius:10px;border:2px solid #000;background:#1d2550;color:#cfe3ff;font:900 11px 'Courier New',monospace;cursor:pointer}.kRkT button.on{background:linear-gradient(#ff9a3c,#d9480f);color:#fff;box-shadow:0 0 0 2px #ffd23f}
+.kRkR{display:flex;align-items:center;gap:8px;padding:7px 8px;border-bottom:1px solid #ffffff14;font-size:13px;text-align:left}.kRkR .p{width:30px;font-weight:900;color:#9ec2ff}.kRkR.t1 .p{color:#ffd23f}.kRkR.t2 .p{color:#d8e2f0}.kRkR.t3 .p{color:#e09a5c}.kRkR .n{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.kRkR .t{font-weight:900;color:#fff}.kRkR .w{width:22px;text-align:center}.kRkR.me{background:#ffd23f22;border-radius:8px}.kRkR i{display:inline-block;width:11px;height:11px;border-radius:50%;border:2px solid #fff;margin-right:6px;vertical-align:-1px}
+.kRules{background:#000a;border:1px solid #ffd23f55;border-radius:10px;padding:8px;font:11px/1.35 monospace;color:#cfe3ff;text-align:left;white-space:pre-wrap;word-break:break-all;max-height:30vh;overflow:auto;margin-top:6px;user-select:text;-webkit-user-select:text}
 .kTrk button small{display:block;font-size:9px;opacity:.75;font-weight:700}.kTrk button.on{background:linear-gradient(#ff9a3c,#d9480f);color:#fff;box-shadow:0 0 0 2px #ffd23f}
 #kLoadT{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(6,8,20,.75);color:#ffd23f;font:900 20px "Courier New",monospace;z-index:30}
 .kRow>label{flex:0 0 118px;color:#ffd23f;font-weight:900}
@@ -24754,7 +24824,7 @@ wrap.innerHTML=`<canvas id="kG"></canvas><canvas id="kO"></canvas>
  <button id="kPause">❚❚</button></div>
 <div id="kLoadT">MONTANDO A PISTA...</div><div class="kScr" id="kMain"><div class="kCol"><div class="kT">STAR KART<small>Corrida · Drift · Itens</small></div>
  <div class="kSw" id="kSw" style="justify-content:flex-start"></div><div style="font-size:12px;color:#cfe3ff;margin:0 0 6px" id="kCn"></div>
- <div class="kTrk" id="kTrk"><button data-t="1">🏁 CIRCUITO<small>Estrela</small></button><button data-t="2">🌵 DESFILADEIRO<small>do Tempo · paredes e abismos</small></button></div><div class="kTrk" id="kTod"><button data-d="0">☀️ DIA</button><button data-d="1">🌇 TARDE</button><button data-d="2">🌙 NOITE</button></div><button class="kBtn" id="kSolo">▶ JOGAR SOLO</button><button class="kBtn b" id="kOnl">🌐 JOGAR ONLINE</button><button class="kBtn g" id="kExit">SAIR</button></div>
+ <div class="kTrk" id="kTrk"><button data-t="1">🏁 CIRCUITO<small>Estrela</small></button><button data-t="2">🌵 DESFILADEIRO<small>do Tempo · paredes e abismos</small></button></div><div class="kTrk kWx" id="kWx"><button data-w="0">☀️<small>SOL</small></button><button data-w="1">🌧️<small>CHUVA</small></button><button data-w="2">⛈️<small>TEMPEST.</small></button><button data-w="3">❄️<small>NEVE</small></button><button data-w="4">🌫️<small>NEBLINA</small></button></div><div class="kTrk" id="kTod"><button data-d="0">☀️ DIA</button><button data-d="1">🌇 TARDE</button><button data-d="2">🌙 NOITE</button></div><button class="kBtn" id="kSolo">▶ JOGAR SOLO</button><div style="display:flex;gap:8px"><button class="kBtn" id="kCupGo" style="flex:1">🏆 COPAS</button><button class="kBtn b" id="kRkGo" style="flex:1">📊 RANKING</button></div><button class="kBtn b" id="kOnl">🌐 JOGAR ONLINE</button><button class="kBtn g" id="kExit">SAIR</button></div>
  <div id="kMainB"></div></div>
 <div class="kScr" id="kOn"><div class="kP"><div class="kT">ONLINE<small id="kOnW"></small></div>
  <button class="kBtn" id="kOnNew">CRIAR SALA</button><button class="kBtn b" id="kOnJoin">ENTRAR (CÓDIGO)</button><button class="kBtn b" id="kOnPub">SALAS PÚBLICAS</button><button class="kBtn g" id="kOnBack">VOLTAR</button><div class="kErr" id="kOnE"></div></div></div>
@@ -24762,6 +24832,9 @@ wrap.innerHTML=`<canvas id="kG"></canvas><canvas id="kO"></canvas>
  <div class="kRow"><label>Nome da sala</label><input type="text" id="kNn" maxlength="18" autocomplete="off"></div>
  <div class="kRow"><label>Jogadores</label><div class="kStep"><button data-s="pl-">−</button><b id="kNp">4</b><button data-s="pl+">+</button></div></div>
  <div class="kRow"><label>Pista</label><button id="kNt" style="flex:1;padding:8px;border-radius:9px;border:2px solid #000;background:#2b3563;color:#fff;font:900 13px 'Courier New',monospace">🏁 Circuito</button></div>
+ <div class="kRow"><label>Modo</label><button id="kNc" style="flex:1;padding:8px;border-radius:9px;border:2px solid #000;background:#2b3563;color:#fff;font:900 13px 'Courier New',monospace">🏁 Corrida única</button></div>
+ <div class="kRow"><label>Clima</label><button id="kNx" style="flex:1;padding:8px;border-radius:9px;border:2px solid #000;background:#2b3563;color:#fff;font:900 13px 'Courier New',monospace">☀️ Sol</button></div>
+ <p class="kHint" id="kNcH" style="display:none">Na copa são 4 corridas de 3 voltas com pista, horário e clima de cada uma. Quem somar mais pontos é o campeão.</p>
  <div class="kRow"><label>Horário</label><button id="kNd" style="flex:1;padding:8px;border-radius:9px;border:2px solid #000;background:#2b3563;color:#fff;font:900 13px 'Courier New',monospace">☀️ Dia</button></div>
  <div class="kRow"><label>Voltas</label><div class="kStep"><button data-s="lp-">−</button><b id="kNl">3</b><button data-s="lp+">+</button></div></div>
  <div class="kRow"><label>Senha</label><input type="text" id="kNw" maxlength="12" autocomplete="off" placeholder="(opcional)"></div>
@@ -24774,11 +24847,13 @@ wrap.innerHTML=`<canvas id="kG"></canvas><canvas id="kO"></canvas>
 <div class="kScr" id="kPub"><div class="kP"><div class="kT">SALAS PÚBLICAS<small id="kPubS"></small></div><div class="kList" id="kPubL"></div><button class="kBtn g" id="kPback">VOLTAR</button></div></div>
 <div class="kScr" id="kPw"><div class="kP"><div class="kT" style="font-size:24px">SALA FECHADA 🔒</div><p class="kHint" id="kPwN" style="text-align:center"></p><div class="kRow"><label>Senha</label><input type="password" id="kPwI" maxlength="12" autocomplete="off"></div>
  <div class="kErr" id="kPwE"></div><button class="kBtn" id="kPwOk">ENTRAR</button><button class="kBtn g" id="kPwNo">CANCELAR</button></div></div>
-<div class="kScr" id="kLob"><div class="kP"><div class="kT" id="kLn" style="font-size:24px">SALA</div><div class="kHint" style="text-align:center" id="kLi"></div>
+<div class="kScr" id="kLob"><div class="kP"><div class="kT" id="kLn" style="font-size:24px">SALA</div><div class="kHint" style="text-align:center" id="kLi"></div><div id="kLcup"></div>
  <div class="kCode" id="kLc" title="Toque para copiar">-----</div><div class="kList" id="kLp" style="max-height:30vh"></div>
  <div class="kSw" id="kLsw"></div><div class="kHint" style="text-align:center">Toque numa cor para escolher</div>
  <button class="kBtn" id="kLgo">INICIAR CORRIDA</button><button class="kBtn g" id="kLout">SAIR DA SALA</button></div></div>
-<div class="kScr" id="kRes"><div class="kP"><div class="kT" id="kRt_">RESULTADO</div><div id="kRb"></div><button class="kBtn" id="kRa">CORRER DE NOVO</button><button class="kBtn g" id="kRq">SAIR</button></div></div>
+<div class="kScr" id="kCup"><div class="kP"><div class="kT">COPAS<small>4 corridas · 3 voltas · vale o tempo total</small></div><div id="kCupL"></div><button class="kBtn g" id="kCupB">VOLTAR</button></div></div>
+<div class="kScr" id="kRk"><div class="kP" style="width:min(520px,96%)"><div class="kT">RANKING<small>online · melhores tempos de todos os jogadores</small></div><div class="kRkT" id="kRkT"></div><div class="kList" id="kRkL" style="max-height:48vh;overflow:auto"></div><div class="kErr" id="kRkE"></div><button class="kBtn g" id="kRkB">VOLTAR</button></div></div>
+<div class="kScr" id="kRes"><div class="kP"><div class="kT" id="kRt_">RESULTADO</div><div id="kRb"></div><div id="kRkR" class="kHint" style="text-align:center;margin-top:8px"></div><button class="kBtn" id="kRa">CORRER DE NOVO</button><button class="kBtn g" id="kRq">SAIR</button></div></div>
 <div class="kScr" id="kPz"><div class="kP"><div class="kT" style="font-size:28px">PAUSADO<small id="kPzS"></small></div>
  <div class="kRow"><label>Direção</label><div class="kStep" style="gap:6px;flex:1;justify-content:flex-end"><button class="kBtn g" id="kCj" style="margin:0;padding:9px 10px;font-size:12px;width:auto;white-space:nowrap">JOYSTICK</button><button class="kBtn g" id="kCd" style="margin:0;padding:9px 10px;font-size:12px;width:auto;white-space:nowrap">D-PAD</button></div></div>
  <div class="kRow"><label>Efeitos</label><input type="range" id="kVs" min="0" max="100"></div><div class="kRow"><label>Música</label><input type="range" id="kVm" min="0" max="100"></div>
@@ -24787,7 +24862,7 @@ wrap.innerHTML=`<canvas id="kG"></canvas><canvas id="kO"></canvas>
 <div id="kSpec" style="position:absolute;left:50%;transform:translateX(-50%);bottom:calc(12px + env(safe-area-inset-bottom,0px));display:none;align-items:center;gap:8px;background:#0b1024dd;border:2px solid #ffd23f88;border-radius:14px;padding:7px 10px;z-index:4;font:900 13px 'Courier New',monospace"><button class="kBtn g" id="kSpL" style="margin:0;width:44px;padding:8px 0">◀</button><div style="min-width:120px;text-align:center"><div style="font-size:9px;color:#9ec2ff">ASSISTINDO</div><div id="kSpN">-</div></div><button class="kBtn g" id="kSpR" style="margin:0;width:44px;padding:8px 0">▶</button><button class="kBtn b" id="kSpC" style="margin:0;width:auto;padding:8px 10px;font-size:11px">📷 TV</button></div>
 <div id="kToast"></div>`;
 D.body.appendChild(wrap);
-const SCRS=['kMain','kOn','kNew','kJoin','kPub','kPw','kLob','kRes','kPz'];
+const SCRS=['kCup','kRk','kMain','kOn','kNew','kJoin','kPub','kPw','kLob','kRes','kPz'];
 $('kSkip').onclick=()=>{snd('ui');if(S.st==='podium'){showResults();return}if(!S.intro)return;if(S.mode==='solo')S.startAt=nowS()+4600;introEnd()};
 $('kSpL').onclick=()=>{snd('ui');specStep(-1)};$('kSpR').onclick=()=>{snd('ui');specStep(1)};$('kSpC').onclick=()=>{snd('ui');if(!S.spec)return;S.spec.tv=S.spec.tv?0:1;S.spec.cam=-1;camS.init=false;if(!S.spec.tv)S.cine=null;$('kSpC').textContent=S.spec.tv?'📷 TV':'📷 PERSEGUIR'};
 function hideScreens(){SCRS.forEach(i=>$(i).style.display='none')}
@@ -24814,10 +24889,11 @@ addEventListener('blur',()=>{for(const k in KEYS)KEYS[k]=false});
 
 // ---------- menu principal ----------
 function swatches(el,sel,taken,on){el.innerHTML='';COLS.forEach((c,i)=>{const s=D.createElement('i');s.style.background=`radial-gradient(circle at 35% 30%,#fff9,${c.c} 55%,#000a)`;s.title=c.n;if(i===sel)s.className='on';if(taken&&taken.includes(i)&&i!==sel)s.classList.add('no');s.onclick=()=>{if(s.classList.contains('no'))return;on(i)};el.appendChild(s)})}
-function trkUi(){const el=$('kTrk');if(!el)return;el.querySelectorAll('button').forEach(b=>b.classList.toggle('on',+b.dataset.t===TK.cur));const td=$('kTod');if(td)td.querySelectorAll('button').forEach(b=>b.classList.toggle('on',+b.dataset.d===(CFG.tod|0)))}
+function trkUi(){const el=$('kTrk');if(!el)return;el.querySelectorAll('button').forEach(b=>b.classList.toggle('on',+b.dataset.t===TK.cur));const td=$('kTod');if(td)td.querySelectorAll('button').forEach(b=>b.classList.toggle('on',+b.dataset.d===(CFG.tod|0)));const wx=$('kWx');if(wx)wx.querySelectorAll('button').forEach(b=>b.classList.toggle('on',+b.dataset.w===(CFG.wx|0)))}
 $('kTod').querySelectorAll('button').forEach(b=>b.onclick=()=>{snd('ui');CFG.tod=+b.dataset.d;saveCfg();trkUi()});
+$('kWx').querySelectorAll('button').forEach(b=>b.onclick=()=>{snd('ui');CFG.wx=+b.dataset.w;saveCfg();trkUi()});
 function pickTrack(id,cb){if(TK.cur===id&&TR.ready){cb&&cb(true);return}const lw=$('kLoadT');if(lw)lw.style.display='flex';setTimeout(()=>{const ok=useTrack(id);if(lw)lw.style.display='none';if(!ok){CFG.trk=TK.cur;if(id===2)ktoast('Não deu para montar a pista 2 neste aparelho')}cb&&cb(ok)},40)}
-function showMain(){S.todOv=null;if(TK.cur!==CFG.trk&&!S._pk){S._pk=1;pickTrack(CFG.trk,()=>{S._pk=0;showMain()});return}S.st='menu';NETH.on=false;PL=null;KARTS=[];S.show=mkKart({col:CFG.col});const p=clAt(TR.L-4);S.show.x=p.x;S.show.z=p.z;S.show.y=p.y;S.show.h=p.hd;S.show.gy=p.y;
+function showMain(){S.todOv=null;S.wxOv=null;S.cup=null;wxSndStop();if(TK.cur!==CFG.trk&&!S._pk){S._pk=1;pickTrack(CFG.trk,()=>{S._pk=0;showMain()});return}S.st='menu';NETH.on=false;PL=null;KARTS=[];S.show=mkKart({col:CFG.col});const p=clAt(TR.L-4);S.show.x=p.x;S.show.z=p.z;S.show.y=p.y;S.show.h=p.hd;S.show.gy=p.y;
  showScr('kMain');drawSw();$('kMainB').textContent=bestGet()>0?'Melhor volta ('+TK.short[TK.cur]+'): '+fmtT(bestGet()):'';trkUi();ctl(false);engStop();musStop()}
 function drawSw(){swatches($('kSw'),CFG.col,null,i=>{CFG.col=i;saveCfg();if(S.show)S.show.col=i;mkKartTex(i);drawSw();snd('ui')});$('kCn').textContent='Cor do kart: '+COLS[CFG.col].n}
 $('kTrk').querySelectorAll('button').forEach(b=>b.onclick=()=>{const t=+b.dataset.t;snd('ui');CFG.trk=t;saveCfg();pickTrack(t,()=>showMain())});
@@ -24831,7 +24907,7 @@ function pauseOff(){S.pause=false;S.pauseUi=0;hideScreens()}
 $('kPause').onclick=()=>{ac();S.pauseUi?pauseOff():pauseOn()};
 $('kPc').onclick=pauseOff;
 $('kPr').onclick=()=>{if(PL&&S.go)respawn(PL);pauseOff()};
-$('kPq').onclick=()=>{S.pause=false;S.pauseUi=0;if(S.mode==='online'&&NETH.leave)NETH.leave();leaveRace();showMain()};
+$('kPq').onclick=()=>{S.pause=false;S.pauseUi=0;S.cup=null;if(S.mode==='online'&&NETH.leave)NETH.leave();leaveRace();showMain()};
 $('kCj').onclick=()=>{CFG.ctl='joy';saveCfg();applyCtl()};$('kCd').onclick=()=>{CFG.ctl='dpad';saveCfg();applyCtl()};
 $('kVs').oninput=e=>{SND.sfx=CFG.sfx=e.target.value/100;setVol();saveCfg()};$('kVm').oninput=e=>{SND.mus=CFG.musv=e.target.value/100;CFG.mus=CFG.musv>0;setVol();saveCfg();if(CFG.mus)musStart();else musStop()};
 function showResults(){if(S.st==='results')return;if(!S.podDone&&S.st!=='podium'&&PL){S.podDone=1;podStart();return}S.podDone=1;$('kSkip').style.display='none';S.st='results';S.go=true;IN.thr=IN.rev=IN.drift=0;ctl(false);engStop();
@@ -24840,12 +24916,98 @@ function showResults(){if(S.st==='results')return;if(!S.podDone&&S.st!=='podium'
   h='<table class="kTbl"><tr><th>VOLTA</th><th>TEMPO</th></tr>'+S.lapTimes.map((t,i)=>`<tr${t===best?' class="me"':''}><td>${i+1}</td><td>${fmtT(t)}${t===best?' ★':''}</td></tr>`).join('')+`</table><div style="font-size:15px">Tempo total: <b style="color:#ffd23f">${fmtT(tot)}</b>${rec}</div>`;
   $('kRt_').textContent='CHEGADA!';$('kRa').style.display='block';$('kRa').textContent='CORRER DE NOVO'}
  else{rankAll();const a=KARTS.slice().sort((x,y)=>{if(x.fin&&y.fin)return x.fin-y.fin;if(x.fin)return-1;if(y.fin)return 1;return y.maxCum-x.maxCum});
-  h='<table class="kTbl"><tr><th>#</th><th>JOGADOR</th><th>TEMPO</th></tr>'+a.map((k,i)=>`<tr${k.me?' class="me"':''}><td>${i+1}</td><td><i style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${COLS[k.col].c};border:2px solid #fff;margin-right:6px;vertical-align:-1px"></i>${esc(k.nick)}</td><td>${k.fin?fmtT(k.fin):'não terminou'}</td></tr>`).join('')+'</table>';
+  const cupR=NET.room&&NET.room.cup?cupById(NET.room.cup):null;if(cupR)cupAward(a);
+  h=(cupR?`<div style="font-size:13px;color:#9ec2ff;margin-bottom:4px">${cupR.ic} ${cupR.nm} · corrida ${min(cupR.r.length,(NET.room.ci|0)+(NET.room.cpd===NET.room.s?0:1))}/${cupR.r.length}</div>`:'')+'<table class="kTbl"><tr><th>#</th><th>JOGADOR</th><th>TEMPO</th>'+(cupR?'<th>PTS</th>':'')+'</tr>'+a.map((k,i)=>`<tr${k.me?' class="me"':''}><td>${i+1}</td><td><i style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${COLS[k.col].c};border:2px solid #fff;margin-right:6px;vertical-align:-1px"></i>${esc(k.nick)}</td><td>${k.fin?fmtT(k.fin):'não terminou'}</td>${cupR?'<td style="color:#5cff8a">+'+(CUP_PTS[i]||3)+'</td>':''}</tr>`).join('')+'</table>';
   const me=a.indexOf(PL)+1;$('kRt_').textContent=me===1?'VITÓRIA!':'RESULTADO';$('kRa').style.display='block';$('kRa').textContent='VOLTAR À SALA';if(me===1)snd('finish')}
- $('kRb').innerHTML=h;showScr('kRes')}
+ $('kRb').innerHTML=h;showScr('kRes');if(solo&&S.cup)try{cupResult()}catch(e){console.warn('copa',e)}try{rkAfterRace()}catch(e){console.warn('ranking',e)}}
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-$('kRa').onclick=()=>{snd('ui');if(S.mode==='solo'){enterRace({mode:'solo',noIntro:1,laps:3,players:[{id:'me',nick:(window.MP&&MP.nick)||'Você',col:CFG.col}],myId:'me'})}else if(NETH.back)NETH.back()};
+$('kRa').onclick=()=>{snd('ui');if(S.mode==='solo'&&S.cup){cupNext();return}if(S.mode==='solo'){enterRace({mode:'solo',noIntro:1,laps:3,players:[{id:'me',nick:(window.MP&&MP.nick)||'Você',col:CFG.col}],myId:'me'})}else if(NETH.back)NETH.back()};
 $('kRq').onclick=()=>{snd('back');if(S.mode==='online'&&NETH.leave)NETH.leave();leaveRace();showMain()};
+
+// ============================================================ COPAS ============================================================
+// Solo: 4 corridas seguidas (3 voltas cada), vale o tempo total; troféu de ouro/prata/bronze pelo tempo de referência de cada corrida.
+// Online: o anfitrião escolhe a copa ao criar a sala; cada corrida dá pontos pela posição (15·12·10·8·7·6·5·4) e quem somar mais é o campeão.
+const CUPS=[
+ {id:'estrela',nm:'COPA ESTRELA',ic:'⭐',r:[{tk:1,tod:0,wx:0},{tk:2,tod:0,wx:0},{tk:1,tod:1,wx:4},{tk:2,tod:2,wx:0}]},
+ {id:'tempestade',nm:'COPA TEMPESTADE',ic:'⛈️',r:[{tk:1,tod:0,wx:1},{tk:2,tod:1,wx:1},{tk:1,tod:2,wx:2},{tk:2,tod:2,wx:2}]},
+ {id:'gelo',nm:'COPA GELO',ic:'❄️',r:[{tk:1,tod:0,wx:3},{tk:2,tod:1,wx:3},{tk:1,tod:2,wx:3},{tk:2,tod:0,wx:4}]}];
+const CUP_PTS=[15,12,10,8,7,6,5,4];
+const cupById=id=>CUPS.find(c=>c.id===id)||null;
+const raceLbl=R=>TK.short[R.tk===2?2:1]+' · '+TODS[R.tod|0]+' · '+WXS[R.wx|0];
+// tempo de referência por volta (pista, clima) — medido com um piloto automático que não usa drift nem itens
+const PARL={1:[20.4,20.9,21.2,21.95,20.4],2:[59.4,60.7,61.5,63.2,59.4]};   // ~3% abaixo do piloto automático (sem drift): para o ouro precisa derrapar e usar turbo
+const cupPar=C=>C.r.reduce((s,R)=>s+3*(PARL[R.tk][R.wx]||PARL[R.tk][0]),0);
+const TRO=[['🏆','OURO','#ffd23f'],['🥈','PRATA','#d8e2f0'],['🥉','BRONZE','#e09a5c']];
+function cupTrophy(C,tot){const p=cupPar(C);return tot<=p*1.0?0:tot<=p*1.12?1:2}
+function showCups(){S.cup=null;showScr('kCup');const L=$('kCupL');L.innerHTML='';
+ CUPS.forEach(C=>{const pb=(CFG.cups||{})[C.id],d=D.createElement('div');d.className='kCupC';
+  d.innerHTML=`<div class="ic">${C.ic}</div><div class="tt"><b>${C.nm}</b><div class="rc">${C.r.map((R,i)=>(i+1)+'. '+raceLbl(R)).join('<br>')}</div><div class="pb">${pb&&pb.t?TRO[pb.tr|0][0]+' Recorde: '+fmtT(pb.t):'Ouro em '+fmtT(cupPar(C))+' ou menos'}</div></div><button class="kBtn">JOGAR</button>`;
+  d.querySelector('button').onclick=()=>{ac();snd('ui');S.cup={id:C.id,i:0,t:[],lp:[]};cupRace()};L.appendChild(d)})}
+function cupRace(){const C=cupById(S.cup.id),R=C.r[S.cup.i];pickTrack(R.tk,()=>{const cup=S.cup;enterRace({mode:'solo',laps:3,tod:R.tod,wx:R.wx,players:[{id:'me',nick:(window.MP&&MP.nick)||'Você',col:CFG.col}],myId:'me'});S.cup=cup;ktoast(C.ic+' '+C.nm+' · corrida '+(cup.i+1)+'/'+C.r.length)})}
+function cupResult(){const C=cupById(S.cup.id),cu=S.cup;if(cu.t.length<=cu.i){cu.t.push(PL.fin||S.raceT);cu.lp.push(S.bestLap)}
+ const last=cu.i>=C.r.length-1,tot=cu.t.reduce((a,b)=>a+b,0);
+ let h=`<div style="font-size:13px;color:#9ec2ff;margin-bottom:4px">${C.ic} ${C.nm}</div><table class="kTbl"><tr><th>#</th><th>CORRIDA</th><th>TEMPO</th></tr>`+C.r.map((R,i)=>`<tr${i===cu.i?' class="me"':''}><td>${i+1}</td><td style="font-size:11px">${raceLbl(R)}</td><td>${cu.t[i]!=null?fmtT(cu.t[i]):'—'}</td></tr>`).join('')+`</table><div style="font-size:15px">Tempo total: <b style="color:#ffd23f">${fmtT(tot)}</b></div>`;
+ if(last){const tr=cupTrophy(C,tot),T=TRO[tr],pb=(CFG.cups=CFG.cups||{})[C.id];let rec='';if(!pb||!pb.t||tot<pb.t){CFG.cups[C.id]={t:tot,tr:min(tr,pb&&pb.t?pb.tr|0:9)};rec=' <b style="color:#5cff8a">NOVO RECORDE!</b>'}else if(tr<(pb.tr|0)){pb.tr=tr}saveCfg();
+  h+=`<div style="font-size:54px;line-height:1.1;margin-top:6px">${T[0]}</div><div style="font:900 20px 'Courier New',monospace;color:${T[2]}">TROFÉU DE ${T[1]}!</div><div style="font-size:12px;color:#9ec2ff">Ouro: até ${fmtT(cupPar(C))} · Prata: até ${fmtT(cupPar(C)*1.12)}${rec}</div>`;
+  $('kRt_').textContent='FIM DA COPA!';$('kRa').textContent='JOGAR A COPA DE NOVO';snd('finish');gateFireworks(true);
+  rkSubmit('cup_'+C.id,tot).then(r=>rkShowPos('cup_'+C.id,'Copa',r)).catch(()=>{})}
+ else{$('kRt_').textContent='CORRIDA '+(cu.i+1)+'/'+C.r.length;$('kRa').textContent='PRÓXIMA: '+raceLbl(C.r[cu.i+1])}
+ $('kRb').innerHTML=h;$('kRa').style.display='block'}
+function cupNext(){const C=cupById(S.cup.id);if(S.cup.i>=C.r.length-1)S.cup={id:C.id,i:0,t:[],lp:[]};else S.cup.i++;cupRace()}
+$('kCupGo').onclick=()=>{ac();snd('ui');showCups()};
+$('kCupB').onclick=()=>{snd('back');showMain()};
+// ---------- copa online: pontos (o anfitrião grava) e classificação na sala ----------
+function cupAward(a){const db=NB(),r=NET.room;if(!db||!r||!r.cup||r.h!==myUid())return;const ids=a.map(k=>k.id),sid=r.s;
+ db.ref(RC+NET.code).transaction(c=>{if(!c||!c.cup||c.s!==sid||c.cpd===sid)return;const P=c.cp||{};ids.forEach((id,i)=>{P[id]=(P[id]||0)+(CUP_PTS[i]||3)});c.cp=P;c.cpd=sid;c.ci=(c.ci|0)+1;
+  const C=cupById(c.cup),R=C&&C.r[c.ci];if(R){c.tk=R.tk;c.tm=R.tod;c.wx=R.wx;c.lp=3}return c}).catch(e=>console.warn('copa pontos',e))}
+function cupLobby(r){const el=$('kLcup');if(!el)return;const C=r.cup?cupById(r.cup):null;if(!C){el.innerHTML='';return}
+ const ci=r.ci|0,done=ci>=C.r.length,arr=plArr(r),P=r.cp||{},rows=arr.map(p=>({n:p.n,c:p.c,id:p.id,pts:P[p.id]||0})).sort((x,y)=>y.pts-x.pts);
+ el.innerHTML=`<div style="margin:6px 0;padding:8px;border-radius:12px;background:#0d1433;border:2px solid #ffd23f55"><div style="font:900 15px 'Courier New',monospace;color:#ffd23f">${C.ic} ${C.nm}</div>`+
+  (done?`<div style="font-size:13px;margin:4px 0">🏆 Campeão: <b style="color:#ffd23f">${esc(rows[0]?rows[0].n:'-')}</b></div>`:`<div style="font-size:12px;color:#cfe3ff;margin:3px 0">Corrida ${ci+1}/${C.r.length}: ${raceLbl(C.r[ci])}</div>`)+
+  (ci>0?`<table class="kTbl" style="margin:4px 0 0"><tr><th>#</th><th>JOGADOR</th><th>PONTOS</th></tr>${rows.map((p,i)=>`<tr${p.id===myUid()?' class="me"':''}><td>${i+1}</td><td><i style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${COLS[p.c%COLS.length].c};margin-right:5px"></i>${esc(p.n)}</td><td>${p.pts}</td></tr>`).join('')}</table>`:'')+'</div>';
+ const b=$('kLgo');if(done&&r.h===myUid()&&r.st==='w'){b.textContent='NOVA COPA'}}
+
+// ============================================================ RANKING ONLINE ============================================================
+// kart/rank/<quadro>/<uid> = {n: nome, t: tempo em ms, c: cor, w: clima, m: horário, d: data}. Cada um só grava o próprio recorde (só se melhorar).
+const RK='kart/rank/';
+const RKB=[{b:'v1',n:'🏁 Volta · Circuito'},{b:'v2',n:'🌵 Volta · Desfiladeiro'},{b:'r1',n:'🏁 Corrida · Circuito'},{b:'r2',n:'🌵 Corrida · Desfiladeiro'}].concat(CUPS.map(C=>({b:'cup_'+C.id,n:C.ic+' '+C.nm})));
+const RULES_RK=`"rank": {
+  ".read": "auth != null",
+  "$b": {
+    ".indexOn": ["t"],
+    "$uid": {
+      ".write": "auth != null && auth.uid === $uid && (!root.child('banned/' + auth.uid + '/u').exists() || root.child('banned/' + auth.uid + '/u').val() < now)",
+      ".validate": "newData.child('t').isNumber() && newData.child('t').val() > 5000 && newData.child('n').isString()"
+    }
+  }
+}`;
+let RKERR=null;
+async function rkSubmit(b,sec){const db=NB(),me=myUid();if(!db||!me||!(sec>5))return null;const ms=Math.round(sec*1000);
+ try{const res=await db.ref(RK+b+'/'+me).transaction(cur=>{if(cur&&+cur.t>0&&+cur.t<=ms)return;return{n:String(myNick()).slice(0,20),t:ms,c:CFG.col|0,w:wxNow(),m:clp(todNow(),0,2),d:TSV()}});
+  const v=res.snapshot&&res.snapshot.val();RKERR=null;return{rec:!!res.committed,t:v&&+v.t||ms}}catch(e){RKERR=e;console.warn('ranking',e);return null}}
+async function rkPos(b,ms){const db=NB();if(!db)return null;try{const s=await db.ref(RK+b).orderByChild('t').endAt(ms).once('value');return s.numChildren()}catch(e){return null}}
+async function rkShowPos(b,lbl,r){const el=$('kRkR');if(!el||!r)return;const pos=await rkPos(b,r.t);if(pos==null)return;const line=`🌐 ${lbl}: <b style="color:#ffd23f">#${pos}</b>${r.rec?' <b style="color:#5cff8a">(recorde!)</b>':''}`;
+ el.innerHTML=(el.dataset.n?el.innerHTML+' · ':'')+line;el.dataset.n=1}
+function rkAfterRace(){const el=$('kRkR');if(!el)return;el.innerHTML='';el.dataset.n='';if(!PL||!PL.fin)return;
+ if(!NB()){el.textContent='Entre na sua conta para seus tempos entrarem no ranking online.';return}
+ const t=TK.cur===2?2:1,lap=S.bestLap,tot=PL.fin;
+ (async()=>{const a=lap>0?await rkSubmit('v'+t,lap):null;if(a)await rkShowPos('v'+t,'Volta',a);
+  const r=S.laps===3?await rkSubmit('r'+t,tot):null;if(r)await rkShowPos('r'+t,'Corrida',r);
+  if(!a&&!r&&RKERR&&/PERMISSION/i.test(RKERR.code||RKERR.message||''))el.textContent='Ranking online ainda não liberado no Firebase (veja em 📊 RANKING).'})()}
+let RKcur='v1',RKgen=0;
+function showRank(b){if(b)RKcur=b;showScr('kRk');const T=$('kRkT');T.innerHTML=RKB.map(x=>`<button data-b="${x.b}" class="${x.b===RKcur?'on':''}">${x.n}</button>`).join('');
+ T.querySelectorAll('button').forEach(x=>x.onclick=()=>{snd('ui');showRank(x.dataset.b)});const on=T.querySelector('.on');if(on)try{on.scrollIntoView({inline:'center',block:'nearest'})}catch(e){}
+ const L=$('kRkL'),E=$('kRkE');E.innerHTML='';const db=NB();if(!db){L.innerHTML='<div class="kHint" style="text-align:center;padding:14px">Entre na sua conta para ver o ranking online.</div>';return}
+ L.innerHTML='<div class="kHint" style="text-align:center;padding:14px">Carregando...</div>';const g=++RKgen,me=myUid();
+ db.ref(RK+RKcur).orderByChild('t').limitToFirst(50).once('value').then(async s=>{if(g!==RKgen)return;const rows=[];s.forEach(c=>{const v=c.val();if(v&&+v.t>0)rows.push({id:c.key,n:v.n||'?',t:+v.t,c:v.c|0,w:v.w|0,m:v.m|0})});
+  const row=(p,i)=>`<div class="kRkR${i<3?' t'+(i+1):''}${p.id===me?' me':''}"><span class="p">${i<3?['🥇','🥈','🥉'][i]:i+1+'º'}</span><span class="n"><i style="background:${COLS[p.c%COLS.length].c}"></i>${esc(p.n)}${p.id===me?' (você)':''}</span><span class="w" title="${WXS[p.w]}">${WXI[p.w]||''}</span><span class="t">${fmtT(p.t/1000)}</span></div>`;
+  let h=rows.length?rows.map(row).join(''):'<div class="kHint" style="text-align:center;padding:14px">Ninguém ainda. Corra e seja o primeiro!</div>';
+  if(me&&!rows.some(p=>p.id===me)){try{const ms=await db.ref(RK+RKcur+'/'+me).once('value'),v=ms.val();if(v&&+v.t>0){const pos=await rkPos(RKcur,+v.t);h+='<div class="kHint" style="text-align:center">···</div>'+row({id:me,n:v.n,t:+v.t,c:v.c|0,w:v.w|0},(pos||51)-1)}}catch(e){}}
+  if(g===RKgen)L.innerHTML=h}).catch(e=>{if(g!==RKgen)return;L.innerHTML='';
+  if(/PERMISSION/i.test(e&&(e.code||e.message)||''))E.innerHTML='O Firebase ainda não liberou o ranking. No console do Firebase, em Realtime Database → Regras, cole este bloco dentro de "kart" (ao lado de "rooms", "st" e "ev") e publique:<div class="kRules">'+esc(RULES_RK)+'</div>';
+  else E.textContent='Sem conexão. Tente de novo.'})}
+$('kRkGo').onclick=()=>{ac();snd('ui');showRank(TK.cur===2?'v2':'v1')};
+$('kRkB').onclick=()=>{snd('back');showMain()};
 
 // ============================================================ online (salas pelo Firebase) ============================================================
 const NB=()=>{const m=window.MP;return(m&&m.db&&m.uid&&!m.offline)?m.db:null};
@@ -24871,12 +25033,14 @@ let NPL=4,NLP=3;
 D.querySelectorAll('#kNew .kStep button').forEach(b=>b.onclick=()=>{const s=b.dataset.s;if(s==='pl-')NPL=max(2,NPL-1);if(s==='pl+')NPL=min(8,NPL+1);if(s==='lp-')NLP=max(1,NLP-1);if(s==='lp+')NLP=min(10,NLP+1);$('kNp').textContent=NPL;$('kNl').textContent=NLP;snd('ui')});
 let NTK=1;$('kNt').onclick=()=>{NTK=NTK===2?1:2;$('kNt').textContent=TK.short[NTK];snd('ui')};
 let NTD=0;$('kNd').onclick=()=>{NTD=(NTD+1)%3;$('kNd').textContent=TODS[NTD];snd('ui')};
+let NWX=0;$('kNx').onclick=()=>{NWX=(NWX+1)%5;$('kNx').textContent=WXS[NWX];snd('ui')};
+let NCUP=0;$('kNc').onclick=()=>{NCUP=(NCUP+1)%(CUPS.length+1);const C=CUPS[NCUP-1];$('kNc').textContent=C?C.ic+' '+C.nm:'🏁 Corrida única';['kNt','kNd','kNx'].forEach(i=>{const b=$(i);b.disabled=!!C;b.style.opacity=C?.4:1});D.querySelectorAll('#kNew .kStep button[data-s^="lp"]').forEach(b=>b.disabled=!!C);$('kNcH').style.display=C?'block':'none';snd('ui')};
 $('kNback').onclick=()=>{snd('back');showOnline()};
 $('kNgo').onclick=async()=>{const db=NB();if(!db){$('kNe').textContent='Sem conta/offline.';return}if(NET.busy)return;
  let name=clean_($('kNn').value).slice(0,18);if(!name)name='Sala de '+myNick();const pw=$('kNw').value.trim().slice(0,12);
  NET.busy=true;$('kNe').textContent='Abrindo sala...';
  try{let ok=false;for(let t=0;t<8&&!ok;t++){const code=rcode();
-   const room={n:name,mx:NPL,lp:NLP,pw:hpw(pw,code),lk:pw?1:0,h:myUid(),hn:myNick(),st:'w',c:TSV(),pl:{[myUid()]:{n:myNick(),c:CFG.col,t:TSV()}}};if(NTK===2)room.tk=2;if(NTD)room.tm=NTD;
+   const room={n:name,mx:NPL,lp:NLP,pw:hpw(pw,code),lk:pw?1:0,h:myUid(),hn:myNick(),st:'w',c:TSV(),pl:{[myUid()]:{n:myNick(),c:CFG.col,t:TSV()}}};if(NTK===2)room.tk=2;if(NTD)room.tm=NTD;if(NWX)room.wx=NWX;if(NCUP){const C=CUPS[NCUP-1],R=C.r[0];room.cup=C.id;room.ci=0;room.lp=3;room.tk=R.tk;room.tm=R.tod;room.wx=R.wx}
    const tx_=()=>db.ref(RC+code).transaction(cur=>cur===null?room:undefined);
    let r;try{r=await tx_()}catch(e){if(!room.tk&&!room.tm)throw e;let e2=e;if(room.tm){delete room.tm;try{r=await tx_();e2=null;ktoast('As regras do Firebase ainda não aceitam o horário: sala criada de dia')}catch(x){e2=x}}
     if(e2){if(!room.tk)throw e2;delete room.tk;r=await tx_();ktoast('As regras do Firebase não aceitam a pista 2 ainda: sala criada no Circuito')}}
@@ -24938,15 +25102,15 @@ function onRoom(s){const r=s.val(),me=myUid();NET.room=r;
  if(r.st==='p'&&r.s&&NET.rid!==r.s&&(NET.lobby||S.st==='results')){NET.rid=r.s;beginOnlineRace(r)}
  if(r.st==='w'&&NET.code&&S.mode==='online'&&(S.st==='race'||S.st==='count')&&NET.rid&&!S.fin&&r.s===undefined){/* sala voltou ao lobby no meio da corrida (anfitrião reiniciou) */}}
 function lobbyRender(r){const me=myUid(),host=r.h===me,arr=plArr(r);{const want=r.tk===2?2:1;if(TK.cur!==want&&!NET.pre){NET.pre=1;pickTrack(want,()=>{NET.pre=0})}}   // já monta a pista da sala no lobby (não trava na largada)
- $('kLn').textContent=(r.lk?'🔒 ':'')+r.n;$('kLi').textContent=arr.length+'/'+r.mx+' jogadores · '+r.lp+' volta'+(r.lp>1?'s':'')+' · '+TK.short[r.tk===2?2:1]+' · '+TODS[clp(r.tm|0,0,2)];S.todOv=clp(r.tm|0,0,2);$('kLc').textContent=NET.code;
+ $('kLn').textContent=(r.lk?'🔒 ':'')+r.n;$('kLi').textContent=arr.length+'/'+r.mx+' jogadores · '+r.lp+' volta'+(r.lp>1?'s':'')+' · '+TK.short[r.tk===2?2:1]+' · '+TODS[clp(r.tm|0,0,2)]+' · '+WXS[clp(r.wx|0,0,4)];S.todOv=clp(r.tm|0,0,2);S.wxOv=clp(r.wx|0,0,4);$('kLc').textContent=NET.code;
  const el=$('kLp');el.innerHTML='';arr.forEach(p=>{const d=D.createElement('div');d.className='kPl';d.innerHTML='<i style="background:'+COLS[p.c%COLS.length].c+'"></i><span>'+esc(p.n)+(p.id===me?' (você)':'')+'</span>'+(p.id===r.h?'<em>★ ANFITRIÃO</em>':'');el.appendChild(d)});
  const taken=arr.filter(p=>p.id!==me).map(p=>p.c),mine=(r.pl[me]||{}).c||0;swatches($('kLsw'),mine,taken,i=>{const db=NB();if(!db)return;db.ref(RC+NET.code+'/pl/'+me+'/c').set(i);CFG.col=i;saveCfg();snd('ui')});
- const b=$('kLgo');b.style.display='block';if(host){b.disabled=r.st!=='w';b.textContent=r.st==='w'?'INICIAR CORRIDA':'Corrida em andamento...'}else{b.disabled=true;b.textContent=r.st==='w'?'Aguardando o anfitrião...':'Corrida em andamento...'}}
+ const b=$('kLgo');b.style.display='block';if(host){b.disabled=r.st!=='w';b.textContent=r.st==='w'?'INICIAR CORRIDA':'Corrida em andamento...'}else{b.disabled=true;b.textContent=r.st==='w'?'Aguardando o anfitrião...':'Corrida em andamento...'}try{cupLobby(r)}catch(e){console.warn('copa',e)}}
 $('kLc').onclick=()=>{try{navigator.clipboard.writeText(NET.code);ktoast('Código copiado: '+NET.code)}catch(e){ktoast('Código: '+NET.code)}};
 $('kLout').onclick=()=>{snd('back');netLeave();showOnline()};
 $('kLgo').onclick=async()=>{const db=NB(),r=NET.room;if(!db||!r||r.h!==myUid()||r.st!=='w')return;$('kLgo').disabled=true;
  try{await db.ref(SC+NET.code).remove();await db.ref(EC+NET.code).remove();
-  await db.ref(RC+NET.code).transaction(c=>{if(!c||c.st!=='w')return;c.st='p';c.s=nowS()+11500;return c})}catch(e){netErr(e);$('kLgo').disabled=false}};
+  await db.ref(RC+NET.code).transaction(c=>{if(!c||c.st!=='w')return;if(c.cup){const C=cupById(c.cup);if(C&&(c.ci|0)>=C.r.length){c.ci=0;c.cp=null;c.cpd=null;const R=C.r[0];c.tk=R.tk;c.tm=R.tod;c.wx=R.wx;c.lp=3}}c.st='p';c.s=nowS()+11500;return c})}catch(e){netErr(e);$('kLgo').disabled=false}};
 function stopSubs(){const db=NB();try{if(NET.rr&&NET.rcb)NET.rr.off('value',NET.rcb)}catch(e){}NET.rr=null;NET.rcb=null;stopRaceSubs()}
 function stopRaceSubs(){try{if(NET.sr){NET.sr.off()}}catch(e){}try{if(NET.er){NET.er.off()}}catch(e){}NET.sr=null;NET.er=null;clearInterval(NET.send);NET.send=0}
 function netLeaveLocal(){stopSubs();try{if(NET.odr)NET.odr.onDisconnect().cancel()}catch(e){}NET.code='';NET.room=null;NET.lobby=false;NETH.on=false;NET.odr=null}
@@ -24960,7 +25124,7 @@ function beginOnlineRace(r){const db=NB(),me=myUid();if(!db)return;NET.lobby=fal
  const arr=plArr(r);if(!arr.find(p=>p.id===me))return;
  const players=arr.map(p=>{let lk=null;try{lk=typeof p.v==='string'&&typeof LKE!=='undefined'?LKE.unpack(p.v):null}catch(e){}return{id:p.id,nick:p.n,col:p.c%COLS.length,lk}});
  mkKartTex(0);players.forEach(p=>mkKartTex(p.col));
- if(!useTrack(r.tk===2?2:1))useTrack(1);buildBoxes();enterRace({mode:'online',laps:r.lp,startAt:r.s,players,myId:me,tod:r.tm|0});
+ if(!useTrack(r.tk===2?2:1))useTrack(1);buildBoxes();enterRace({mode:'online',laps:r.lp,startAt:r.s,players,myId:me,tod:r.tm|0,wx:r.wx|0});
  for(const k of KARTS){k.tx=k.x;k.tz=k.z;k.ty=k.y;k.th=k.h;k.tt=0}
  NETH.on=true;
  NET.sr=db.ref(SC+NET.code);const onS=s=>onState(s);NET.sr.on('child_added',onS);NET.sr.on('child_changed',onS);NET.sr.on('child_removed',s=>{const k=KARTS.find(x=>x.id===s.key&&!x.me);if(k&&S.st!=='results'){KARTS=KARTS.filter(x=>x!==k);ktoast(k.nick+' saiu')}});
@@ -24986,7 +25150,7 @@ D.addEventListener('visibilitychange',()=>{if(D.hidden&&S.st!=='off'){IN.thr=IN.
 addEventListener('resize',()=>{if(S.st!=='off'&&booted)resize()});
 window.STARKART={S,XP,_fx:{ktx:()=>[KTX,KTX2],boom:(x,y,z,s)=>boomFx(x,y,z,s)},_sk:()=>skN,_spec:specSet,_kset:v=>{KARTS=v},open,close,GFX,_tod:t=>{CFG.tod=clp(t|0,0,2)},IN,CFG,TR,KARTS:()=>KARTS,PL:()=>PL,PROJ:()=>PROJ,BANS:()=>BANS,BOXES:()=>BOXES,NET,
  _sim:sec=>{for(let t=0;t<sec;t+=1/60)simStep(1/60)},_step:simStep,_race:enterRace,_boost:boost,_hit:hitKart,_use:useItem,_give:it=>{if(PL){PL.item=it;PL.rollT=0}},_cam:()=>camS,_snd:snd,_menu:showMain,_res:showResults,_clAt:clAt,_pause:pauseOn,
- _tex:()=>TEXS,LIGHT,_mclk:f=>{MCLK=f},_bend:(o,x,y,z,nf)=>bendInto(o,x,y,z,nf),_bidx:bendIdx,_bendMM:M=>bendMM(M),_me:()=>ME,_tp:(s,sp)=>{const k=PL,p=clAt(s*TR.L);k.x=p.x;k.z=p.z;k.y=p.y;k.h=p.hd;k.hint=clNear(k.x,k.z,p.i,6);const pr=clProj(k.x,k.z,k.hint);k.sPrev=pr.s;k.cum=pr.s;k.maxCum=max(k.maxCum,k.cum);k.vx=sin(k.h)*(sp||0);k.vz=cos(k.h)*(sp||0);k.air=false;camS.init=false},_opts:()=>({qScale,fpsA}),_net:{onRoom,beginOnlineRace,doJoin}};
+ _tex:()=>TEXS,LIGHT,_mclk:f=>{MCLK=f},_bend:(o,x,y,z,nf)=>bendInto(o,x,y,z,nf),_bidx:bendIdx,_bendMM:M=>bendMM(M),_me:()=>ME,_tp:(s,sp)=>{const k=PL,p=clAt(s*TR.L);k.x=p.x;k.z=p.z;k.y=p.y;k.h=p.hd;k.hint=clNear(k.x,k.z,p.i,6);const pr=clProj(k.x,k.z,k.hint);k.sPrev=pr.s;k.cum=pr.s;k.maxCum=max(k.maxCum,k.cum);k.vx=sin(k.h)*(sp||0);k.vz=cos(k.h)*(sp||0);k.air=false;camS.init=false},_opts:()=>({qScale,fpsA}),_wx:{now:wxNow,G:WXG,S:WXS_,P:()=>GFX.P},_cup:{CUPS,PARL,show:showCups,res:()=>S.cup},_rk:{submit:rkSubmit,show:showRank},_in:IN,_tr:TR,_cfg:CFG,_S:S,_useTrack:useTrack,_net:{onRoom,beginOnlineRace,doJoin}};
 
 // ---------- card no menu de Eventos ----------
 function evCard(){const box=D.querySelector('#evM .box'),n=box&&box.querySelector('.evN');if(!box||!n||$('evSk'))return;
@@ -28127,7 +28291,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261110163009;
+const GAME_BUILD=20261110173154;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
