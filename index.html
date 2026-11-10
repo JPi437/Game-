@@ -1509,7 +1509,7 @@ function reels(host,finals,rnd,show,cb){host.innerHTML=finals.map(()=>'<div clas
    if(r>=2||c.sh){el.classList.add('win');el.style.setProperty('--wc',c.sh?'#80deea':(COL[r]||'#f0f'))}
    if(--left===0)setTimeout(cb,350);return}
   show(el,rnd());sTick();setTimeout(st,45+130*Math.pow(1-rem/stop,2))})()})}
-const spinCost=()=>world===1?40:world===4?500:world===5?835:world===6?1395:50;   // estrela (por personagem): Mundo 1 50 moedas · Halloween 40 abóboras · Dragon Ball 500 · ninja 835 · pirata 1.395 moedas (+67% por mundo)
+const spinCost=()=>world===1?40:world===4?500:world===5?850:world===6?1400:50;   // estrela (por personagem): Mundo 1 50 moedas · Halloween 40 abóboras · Dragon Ball 500 · ninja 850 · pirata 1.400 moedas (~+67% por mundo, arredondado)
 const have=()=>world===1?pk:coins,cap=()=>100+10*(ups.inv||0),hasFilter=()=>aset.sell.some(Boolean)||aset.feed.some(Boolean);
 function pay(n){if(world===1)pk-=n;else coins-=n}
 function giveDrop(e,now){let c;if(world){c=ri(...e.coin);pk+=c}else{c=Math.round(ri(...e.coin)*goldMul());coins+=c}save();updHud();fx.push({x:e.x-4,y:e.y-12,t:now,s:'+'+c+(world?' abóboras':' moedas'),c:world?'#ff9800':'#ffd23f'})}
@@ -2425,7 +2425,7 @@ const WCFG=[{w:W0,h:H0,s:[SX0,SY0],to:[TOX0,TOY0],gt:[GX0,GY0],np:[NX0,NY0],p:[S
 goWorld=function(n){if(n===world||!WCFG[n])return;if(n===1&&!ups.gate)return;if(n===2&&!wbCan()){toast('A Arena do Boss Mundial precisa de internet: entre na sua conta');return}
  const c=WCFG[n];world=n;W=c.w;H=c.h;SX=c.s[0];SY=c.s[1];TOX=c.to[0];TOY=c.to[1];GX=c.gt[0];GY=c.gt[1];NPC.x=c.np[0]*T;NPC.y=c.np[1]*T;
  map=WD[n].map;EN=WD[n].EN;qs=QS[n];fight=null;for(const k in fpos)delete fpos[k];P.x=c.p[0];P.y=c.p[1];P.dir=c.d;DY.length=0;PT.length=0;
- spinBtn.textContent=n===1?'Roletar (40 abóboras)':n===4?'Roletar (500 moedas)':n===5?'Roletar (835 moedas)':n===6?'Roletar (1.395 moedas)':'Roletar (50 moedas)';if(n===1)st.hw=1;if(n===2)toast('Caverna de Gelo! Chegue perto do boss e toque em Lutar');
+ spinBtn.textContent=n===1?'Roletar (40 abóboras)':n===4?'Roletar (500 moedas)':n===5?'Roletar (850 moedas)':n===6?'Roletar (1.400 moedas)':'Roletar (50 moedas)';if(n===1)st.hw=1;if(n===2)toast('Caverna de Gelo! Chegue perto do boss e toque em Lutar');
  updHud();updQuest();save();achCheck()};
 function wbStatus(){if(!wbCan())return 'Entre na sua conta (online)';wbUpd();if(!WB.ready)return 'Carregando...';const s=WB.srv;
  if(s&&s.k){const nx=(wbCyc(sNow())+1)*DAY+22*36e5;return 'Derrotado · renasce em '+ft(nx-sNow())}return 'Vivo · '+fk(WB.hp)+' de vida'}
@@ -27578,7 +27578,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261110001129;
+const GAME_BUILD=20261110001409;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
