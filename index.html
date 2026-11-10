@@ -1954,8 +1954,8 @@ stepChars=function(){const t=Date.now();
   const ex=e.x-f.x,ey=e.y+(e.fcy||0)-f.y;f.dir=Math.abs(ex)>Math.abs(ey)?(ex>0?3:1):(ey>0?2:0);
   const S=skOf(k);
   if(f.sk){while(f.sk&&t>=f.sk.nt){const d=Math.max(1,Math.round(dmgOf(k)*(window.gsM?gsM(k,2):1)*S.m*(S.w?S.w[f.sk.n]:1/S.tk)*bm('f')));dealDmg(e,d);e.lh=t;if(window.SKHIT)try{SKHIT(e,S,f.sk.n,f)}catch(_){}
-    fx.push({x:e.x+4+ri(-8,8)+(e.wb?4:0),y:fxTop(e)-ri(0,8),t,s:'-'+fk(d),c:S.lc,big:1});
-    if(S.fin&&f.sk.n===S.tk-1)fx.push({x:e.x-14,y:fxTop(e)-16,t,s:S.fin,c:'#ff2626',big:1});   // Chara: o 99999999 do Undertale (só o desenho)
+    
+    if(false)fx.push({x:e.x-14,y:fxTop(e)-16,t,s:S.fin,c:'#ff2626',big:1});   // Chara: o 99999999 do Undertale (só o desenho)
     f.sk.n++;if(f.sk.n>=S.tk){f.sk=null;f.hits=0;f.nx=t+(S.rec||350)}else f.sk.nt=f.sk.t0+(S.at?S.at[f.sk.n]:S.ch+(S.d-S.ch)*(f.sk.n+1)/S.tk)}}
   else{if(!f.nx)f.nx=t+400+i*300;
    if(t>=f.nx&&Math.hypot(dx,dy)<12){const d=Math.max(1,Math.round(dmgOf(k)*(window.gsM?gsM(k,0):1)*bm('f')));f.nx=t+1000/((1+asOf(k))*(window.gsM?gsM(k,1):1));dealDmg(e,d);e.lh=t;f.atk=t;if(window.HITN)try{HITN(e,f)}catch(_){}
@@ -2016,7 +2016,7 @@ function skFx(o,t){const S=o.S,el=t-o.t0;if(el<0||el>S.d+150)return;const q=o.q,
  case 'barrage':{g.lineWidth=2;g.strokeStyle=S.c;g.globalAlpha=.5;for(let i=0;i<3;i++){const a=t/35+i*2.1;g.beginPath();g.moveTo(ax,ay);g.lineTo(bx+Math.cos(a)*6,by+Math.sin(a*1.3)*5);g.stroke()}g.globalAlpha=1;
   for(let i=0;i<6;i++){const a=t/28+i*1.05,r=3+((t/18+i*5)%8),x=Math.round(bx+Math.cos(a)*r),y=Math.round(by+Math.sin(a)*r*.8);R('#000',x-2,y-2,5,5);R(S.c,x-1,y-1,3,3);R(S.c2,x-1,y+1,3,1)}
   if((t>>5)%2){R('#fff',bx+ri(-8,8),by+ri(-8,8),2,2);R('#fff59d',bx+ri(-8,8),by+ri(-8,8),1,1)}
-  if(S.ora&&(t>>7)%2){g.font='bold 7px monospace';g.textBaseline='top';g.fillStyle='#000';g.fillText('ORA',bx-5,by-17);g.fillStyle=S.c;g.fillText('ORA',bx-6,by-18)}break}
+  if(false){g.font='bold 7px monospace';g.textBaseline='top';g.fillStyle='#000';g.fillText('ORA',bx-5,by-17);g.fillStyle=S.c;g.fillText('ORA',bx-6,by-18)}break}
  case 'beam':{const hx=ax+(q.dir===1?-5:q.dir===3?5:0);if(ch){glow(hx,ay+2,1.5+el/S.ch*4.5,S.c,S.c2);for(let i=0;i<4;i++){const a=t/50+i*1.57,r=10-(el/S.ch)*8;R(S.c2,Math.round(hx+Math.cos(a)*r),Math.round(ay+2+Math.sin(a)*r),1,1)}}
   else{const w=4+Math.sin(t/30)*1.5;ln(hx,ay+2,bx,by,w+5,S.c,.3);ln(hx,ay+2,bx,by,w,S.c,.9);ln(hx,ay+2,bx,by,Math.max(1,w/2.5),S.c2,1);glow(bx,by,6+Math.sin(t/25)*2,S.c,S.c2);for(let i=0;i<5;i++)R(S.c2,bx+ri(-10,10),by+ri(-10,10),1,1)}break}
  case 'orb':{const r=3+Math.sin(t/40);let x=bx,y=by;if(ch){const p=el/S.ch;x=ax+(bx-ax)*p;y=ay+(by-ay)*p-Math.sin(p*Math.PI)*7}
@@ -24449,7 +24449,7 @@ function render(dt){
 function rr(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath()}
 function tx(c,s,x,y,sz,col,al,stroke){c.font='900 '+sz+'px "Courier New",monospace';c.textAlign=al||'left';c.textBaseline='middle';if(stroke!==0){c.lineWidth=max(2,sz*.16);c.strokeStyle=stroke||'rgba(0,0,0,.75)';c.lineJoin='round';c.strokeText(s,x,y)}c.fillStyle=col||'#fff';c.fillText(s,x,y)}
 function flash(r,g,b,a){S.fl=[r,g,b];S.fa=max(S.fa,a)}
-function popup(t,c){if(!t)return;S.msgs.push({t,c:c||'#fff',a:0,d:1.5});if(S.msgs.length>3)S.msgs.shift()}
+function popup(t,c){return;if(!t)return;S.msgs.push({t,c:c||'#fff',a:0,d:1.5});if(S.msgs.length>3)S.msgs.shift()}
 function icon(c,k,x,y,s){c.save();c.translate(x,y);c.scale(s,s);
  if(k==='fire'){let g=c.createRadialGradient(0,2,2,0,0,22);g.addColorStop(0,'#fff6a0');g.addColorStop(.5,'#ff9a1a');g.addColorStop(1,'#d8280a');c.fillStyle=g;c.beginPath();c.moveTo(0,-24);c.bezierCurveTo(16,-8,20,6,12,16);c.bezierCurveTo(8,24,-8,24,-12,16);c.bezierCurveTo(-20,6,-14,-6,-6,-12);c.bezierCurveTo(-4,-4,0,-6,0,-24);c.fill();
   c.fillStyle='#fff3b0';c.beginPath();c.ellipse(0,9,6,8,0,0,TAU);c.fill()}
@@ -25834,13 +25834,13 @@ function partStep(dt){for(const p of PART){p.l-=dt;p.vy-=p.g*dt;p.x+=p.vx*dt;p.y
 // ---------- mensagens ----------
 const KF=[],EMO=[];
 const kcol=r=>r==='s'?'#ff6a5a':'#7fd0ff';
-function kf(parts,t){KF.push({p:parts,t:t||6});if(KF.length>5)KF.shift()}
+function kf(parts,t){return;KF.push({p:parts,t:t||6});if(KF.length>5)KF.shift()}
 function kfMsg(name,col,msg){kf([{s:name,c:col},{s:msg,c:'#ddd'}])}
 function feed(m){kf([{s:m,c:'#ffd23f'}])}
 function showEmo(u,n,i){for(const q of EMO)if(q.u===u)q.t=0;EMO.push({u,n,i,t:3.5});if(EMO.length>6)EMO.shift()}
 function emoStep(dt){for(const q of EMO)q.t-=dt;for(let i=EMO.length-1;i>=0;i--)if(EMO[i].t<=0)EMO.splice(i,1)}
 let toastT=0;
-function toast(m,big){const t=$('phToast');if(!t)return;t.textContent=m;t.style.display='block';t.style.fontSize=big?'15px':'13px';toastT=performance.now()+(big?3200:2200)}
+function toast(m,big){if(!/sala|Sala|C[óo]digo|conex|Pizzaria|ASSISTINDO|COMEÇA|Não deu|encerrada/.test(String(m)))return;const t=$('phToast');if(!t)return;t.textContent=m;t.style.display='block';t.style.fontSize=big?'15px':'13px';toastT=performance.now()+(big?3200:2200)}
 
 function flash(r,g,b,a){S.flash=a;S.flashC=[r/255,g/255,b/255]}
 const r2=v=>Math.round(v*100)/100;
@@ -28127,7 +28127,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261110161946;
+const GAME_BUILD=20261110163009;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
