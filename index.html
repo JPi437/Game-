@@ -26008,7 +26008,7 @@ function moveStep(dt){const ph=phase(),frozen=ph==='pre'||ME.role==='x'||ph==='e
  const n=Math.ceil(max(abs(vx),abs(vz))*dt/.2)||1;for(let i=0;i<n;i++){tryAx(vx*dt/n,0);tryAx(0,vz*dt/n)}
  // pulo e gravidade
  if((IN.jump||KEYS.Space)&&ME.gr&&!frozen){ME.vy=5.2;ME.gr=false;snd('jump')}IN.jump=false;
- ME.vy-=16*dt;if(ME.vy<-20)ME.vy=-20;const ny=ME.y+ME.vy*dt;const b=hitV(ME.x,ny,ME.z,r,h,ME.vy<0);
+ ME.vy-=16*dt;if(ME.vy<-20)ME.vy=-20;const ny=ME.y+ME.vy*dt;const b=hitV(ME.x,ME.vy<0&&ME.gr?Math.min(ny,ME.y-.03):ny,ME.z,r,h,ME.vy<0);
  if(b){if(ME.vy<0){ME.y=b.y1+.001;if(!ME.gr&&ME.vy<-6)snd('land');ME.gr=true}else ME.y=b.y0-h-.001;ME.vy=0}else{ME.y=ny;ME.gr=false}
  if(ME.y<-5){spawnMe()}
  // direção do corpo / do objeto
@@ -26237,7 +26237,7 @@ const LTA=()=>{const k=S.st==='game'&&!S.lob&&!RD.ended?lightK(el()):1,q=k<.5?.4
 const SHOTT=new Map(),THRT=new Map();
 function huntAni(id,gun,wk){const now=performance.now(),H={gun:gun!==undefined,aim:gun!==undefined?gun:0,sh:-1,rl:-1,th:-1,air:false,kick:wk==='sg'||wk==='rf'?1:wk==='fl'?0:.45};
  const st=SHOTT.get(id);if(st&&now-st<900)H.sh=(now-st)/1000;const tt=THRT.get(id);if(tt&&now-tt<1600)H.th=(now-tt)/1000;
- if(id==='me'){if(S.st==='game'&&!RD.ended){if(ME.reload>0&&canShoot())H.rl=1-ME.reload/curW().rl;H.air=!ME.gr&&ME.role!=='x'}}
+ if(id==='me'){if(ME.gr||ME._gT===undefined)ME._gT=now;if(S.st==='game'&&!RD.ended){if(ME.reload>0&&canShoot())H.rl=1-ME.reload/curW().rl;H.air=ME.role!=='x'&&(ME.vy>1.2||now-ME._gT>220)}}
  else{const o=REM.get(id);if(o&&o.rlT)H.rl=(now-o.rlT)/1000/((WPN[o.w]||WPN.sg).rl)}
  return H}
 function drawActor(id,x,y,z,yaw,spd,lk,dt,gun,wk){if(ACT===null){try{ACT=window.HERO3&&HERO3.actor?HERO3.actor(gl):false}catch(e){ACT=false}if(!ACT)ACT=false}
@@ -28918,7 +28918,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261110222916;
+const GAME_BUILD=20261110234632;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
