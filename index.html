@@ -17328,7 +17328,7 @@ function fromQT(o,q,t){const x=q[0],y=q[1],z=q[2],w=q[3],n=1/sqrt(x*x+y*y+z*z+w*
  o[8]=2*(X*Z+Y*W);o[9]=2*(Y*Z-X*W);o[10]=1-2*(X*X+Y*Y);o[11]=0;o[12]=t[0];o[13]=t[1];o[14]=t[2];o[15]=1;return o}
 // ---------- pose: amostra uma animação (quaternions por osso + translação do quadril) ----------
 const Q1=new Float32Array(NN*4),Q2=new Float32Array(NN*4),P1=new Float32Array(3),P2=new Float32Array(3);
-function sample(a,time,Q,P){const A=ANIM[a];let u=(A.loop?time%A.d:min(time,A.d))/A.dt;const m=A.n-1;let i0=Math.floor(u);if(i0>=m)i0=m-1;if(i0<0)i0=0;const f=clp(u-i0,0,1),r=A.rot,n=A.n;
+function sample(a,time,Q,P){const A=ANIM[a];let u=(A.loop?((time%A.d)+A.d)%A.d:clp(time,0,A.d))/A.dt;const m=A.n-1;let i0=Math.floor(u);if(i0>=m)i0=m-1;if(i0<0)i0=0;const f=clp(u-i0,0,1),r=A.rot,n=A.n;
  for(let k=0;k<NN;k++){const o0=(k*n+i0)*4,o1=o0+4;let d=r[o0]*r[o1]+r[o0+1]*r[o1+1]+r[o0+2]*r[o1+2]+r[o0+3]*r[o1+3];const s=d<0?-1:1;
   let x=r[o0]+(r[o1]*s-r[o0])*f,y=r[o0+1]+(r[o1+1]*s-r[o0+1])*f,z=r[o0+2]+(r[o1+2]*s-r[o0+2])*f,w=r[o0+3]+(r[o1+3]*s-r[o0+3])*f;const l=1/sqrt(x*x+y*y+z*z+w*w);
   Q[k*4]=x*l;Q[k*4+1]=y*l;Q[k*4+2]=z*l;Q[k*4+3]=w*l}
@@ -17776,6 +17776,37 @@ function clipMix(s,C,dt){let key='';
  if(s.fd!==undefined&&s.fd<1){s.fd=min(1,s.fd+dt/s.fdT);const e=s.fd*s.fd*(3-2*s.fd);for(let i=0;i<NN;i++){QC[i*4]=QQ[i*4];QC[i*4+1]=QQ[i*4+1];QC[i*4+2]=QQ[i*4+2];QC[i*4+3]=QQ[i*4+3]}
   QQ.set(s.QF);for(let i=0;i<NN;i++)nl(QQ,i,QC,i,e);for(let c=0;c<3;c++)TT[c]=s.TF[c]+(TT[c]-s.TF[c])*e}
  s.QL=s.QL||new Float32Array(NN*4);s.QL.set(QQ);s.TL=s.TL||new Float32Array(3);s.TL.set(TT)}
+// ---------- esconde-esconde: andar de verdade (andar/trotar/correr pela velocidade, de lado e de costas) + arma nas duas mãos (mira, tiro, recarga, granada) ----------
+const QA=new Float32Array(NN*4),QB=new Float32Array(NN*4),PA_=new Float32Array(3),UPL=[];for(let i=0;i<NN;i++)if(UPB[i])UPL.push(i);
+const SPI=['spine_01','spine_02'].map(n=>D.nodes.indexOf(n));
+const LOCO={walk:['Walk_Loop',1.44],jog:['Jog_Fwd_Loop',3.93],run:['Sprint_Loop',4.9]},LT_={idle:[0,.42],walk:[.3,2.65],jog:[2.3,4.75],run:[4.45,99]};
+function huntPose(s,o,dt){const H=o.hunt,hs=(o.h||1.78)/1.78,aim=o.yaw||0,gun=!!H.gun;
+ if(s.hx===undefined){s.hx=o.x;s.hz=o.z;s.vx=0;s.vz=0;s.ly=aim;s.ls='idle';s.ut=Math.random()*2}
+ const dx=o.x-s.hx,dz=o.z-s.hz;s.hx=o.x;s.hz=o.z;
+ if(hypot(dx,dz)>2.5){s.vx=s.vz=0}else if(dt>0){const k=min(1,dt*9);s.vx+=(dx/dt-s.vx)*k;s.vz+=(dz/dt-s.vz)*k}
+ const sp=hypot(s.vx,s.vz)/hs,my=Math.atan2(s.vx,s.vz);
+ let ls=s.ls;if(sp<LT_[ls][0]||sp>LT_[ls][1])ls=sp<.36?'idle':sp<2.5?'walk':sp<4.6?'jog':'run';if(gun&&ls==='run')ls='jog';s.ls=ls;
+ // pernas: para onde anda; com arma, o tronco gira para a mira e, andando para trás, o passo roda ao contrário
+ let tg=s.ly,rev=false;
+ if(ls!=='idle'){if(gun&&Math.abs(angd(aim,my))>1.95){tg=my+PI;rev=true}else tg=my}else if(gun||H.face)tg=aim;
+ const turn=ls==='idle'?7:12;s.ly+=clp(angd(s.ly,tg),-dt*turn,dt*turn);
+ if(H.air)pick(s,'Jump_Loop',.12);else if(ls==='idle')pick(s,'Idle_Loop',.22);else pick(s,LOCO[ls][0],.2);
+ let rate=1;if(!H.air&&ls!=='idle')rate=clp(sp/LOCO[ls][1],.65,1.45)*(rev?-1:1);
+ animate(s,dt,rate);
+ if(!gun)return s.ly;
+ // tronco e braços: arma nas duas mãos (parada respira; mirando para cima/baixo; tiro com coice; recarga; granada)
+ s.ut+=dt;const pt=clp(H.aim||0,-1.1,1.1);let base='Pistol_Idle_Loop',bt=s.ut,aimW=1;
+ if(H.th>=0&&H.th<1.25){base='OverhandThrow';bt=H.th*1.05;aimW=0}
+ else if(H.rl>=0&&H.rl<1){base='Pistol_Reload';bt=H.rl*1.6;aimW=.35}
+ else if(H.sh>=0&&H.sh<.5){base='Pistol_Shoot';bt=H.sh*1.25}
+ sample(base,bt,QA,PA_);
+ if(aimW>0&&Math.abs(pt)>.02){sample(pt>0?'Pistol_Aim_Up':'Pistol_Aim_Down',0,QB,PA_);const k=clp(Math.abs(pt)/.95,0,1)*aimW;for(const i of UPL)nl(QA,i,QB,i,k)}
+ const mvK=ls==='idle'?1:.82;for(const i of UPL)nl(QQ,i,QA,i,(i===SPI[0]||i===SPI[1])?mvK:1);
+ // gira o tronco até a mira (pernas continuam para onde anda)
+ const tw=clp(angd(s.ly,aim),-1.7,1.7);if(Math.abs(tw)>.01){ov('spine_01',1,tw*.3);ov('spine_02',1,tw*.35);ov('spine_03',1,tw*.35)}
+ // coice extra das armas pesadas
+ if(H.sh>=0&&H.sh<.22&&H.kick){const k=(1-H.sh/.22)*H.kick;ov('spine_03',0,-.12*k);ov('upperarm_r',0,-.25*k);ov('upperarm_l',0,-.2*k)}
+ return s.ly}
 HERO3.actor=function(gl){
  if(HERO3.fail||!gl)return null;const G=makeG();try{build(gl,G)}catch(e){console.error('HERO3 actor',e);return null}
  const ST=new Map(),AM=new Float32Array(16);
@@ -17784,11 +17815,13 @@ HERO3.actor=function(gl){
    let s=ST.get(o.id);if(!s){s={yaw:o.yaw||0,cur:'Idle_Loop',t:Math.random()*3,prev:null,tp:0,bl:1,bd:.2,spd:0};ST.set(o.id,s)}
    if(ST.size>40)ST.clear();const dt=clp(o.dt||.016,0,.1);
    if(o.skip){OVK.fill(null)}
+   let YW=o.yaw||0;
+   if(o.hunt){OVK.fill(null);YW=huntPose(s,o,dt)}else{
    s.spd+=((o.spd||0)-s.spd)*min(1,dt*10);const mv=s.spd>.6;pick(s,mv?'Jog_Fwd_Loop':'Idle_Loop',.16);
    animate(s,dt,mv?clp(s.spd/4,.7,1.9):1);OVK.fill(null);
-   clipMix(s,o.clip,dt);
-   if(o.pose==='gun'){const P=o.pp||[-1.4,.2,-1.3,0,0,0,.1,-.8,0];ov('upperarm_r',0,P[0]);ov('upperarm_r',2,P[1]);ov('upperarm_l',0,P[2]);ov('upperarm_l',2,P[3]);ov('lowerarm_l',1,P[4]);ov('upperarm_l',1,P[7]||0);ov('lowerarm_l',0,P[8]||0);ov('lowerarm_r',0,P[5]);ov('spine_03',1,P[6])}
-   const sc=(o.h||1.8)/D.h,c=cos(o.yaw||0),sn=sin(o.yaw||0);
+   clipMix(s,o.clip,dt)}
+   if(o.pose==='gun'&&!o.hunt){const P=o.pp||[-1.4,.2,-1.3,0,0,0,.1,-.8,0];ov('upperarm_r',0,P[0]);ov('upperarm_r',2,P[1]);ov('upperarm_l',0,P[2]);ov('upperarm_l',2,P[3]);ov('lowerarm_l',1,P[4]);ov('upperarm_l',1,P[7]||0);ov('lowerarm_l',0,P[8]||0);ov('lowerarm_r',0,P[5]);ov('spine_03',1,P[6])}
+   const sc=(o.h||1.8)/D.h,c=cos(YW),sn=sin(YW);
    if(o.ovs)for(const v of o.ovs)ov(v[0],v[1],v[2]);const px_=o.rx||0,cp_=cos(px_),sp_=sin(px_);AM.set([c*sc,0,-sn*sc,0, sn*sp_*sc,cp_*sc,c*sp_*sc,0, sn*cp_*sc,-sp_*sc,c*cp_*sc,0, o.x,o.y,o.z,1]);MODEL.set(AM);bonesM();OVK.fill(null);
    if(o.bm)for(const k in o.bm){const i=NI(k);if(i>=0)o.bm[k]=W.slice(i*16,i*16+16)}if(o.hand){const r=NI('hand_r')*16,l=NI('hand_l')*16;o.hand[0]=W[r+12];o.hand[1]=W[r+13];o.hand[2]=W[r+14];o.hand[3]=W[l+12];o.hand[4]=W[l+13];o.hand[5]=W[l+14]}
    const L=o.lk||NOLOOK,u=G.u,F=o.fog||[.1,.1,.15],cm=o.cam;
@@ -26041,8 +26074,8 @@ function onEvent(e){const o=REM.get(e.u);
    if(canShoot()){ME.hp=min(maxHp(ME.role,ME.prop),ME.hp+30);ME.ammo=curW().mag;ME.reload=0;S.hm=.9;S.hmD=30;S.hmC=1}}}
  else if(e.k==='w'){SPOT.set(e.u,performance.now()+((e.m!==undefined&&CLIPS.m[e.m])?CLIPS.m[e.m].duration*1000:7000)+1500);if(e.m!==undefined&&CLIPS.m[e.m]){const L=playAt(CLIPS.m[e.m],srcOf(e.u,e.x,e.y,e.z),.95,44,1);if(L)L.who=e.u}else if(e.x!==undefined)whistleAt(e.x,e.y,e.z)}
  else if(e.k==='t'){if(CLIPS.t[e.i])playAt(CLIPS.t[e.i],srcOf(e.u,e.x,e.y,e.z),1,40,2)}
- else if(e.k==='s'){if(e.ex!==undefined)shotFx(e.x,e.y,e.z,e.ex,e.ey,e.ez,0,e.w);else{const d=hypot(e.x-ME.x,e.z-ME.z);if(d<14)snd('swing',max(.1,1-d/14))}}
- else if(e.k==='gt'){GRN.push({id:e.gid,own:0,x:e.x,y:e.y,z:e.z,vx:e.vx,vy:e.vy,vz:e.vz,t:0,rs:0});const d=hypot(e.x-ME.x,e.z-ME.z);snd('throw',clp(1-d/30,.1,1))}
+ else if(e.k==='s'){if(e.w!=='fl')SHOTT.set(e.u,performance.now());if(e.ex!==undefined)shotFx(e.x,e.y,e.z,e.ex,e.ey,e.ez,0,e.w);else{const d=hypot(e.x-ME.x,e.z-ME.z);if(d<14)snd('swing',max(.1,1-d/14))}}
+ else if(e.k==='gt'){THRT.set(e.u,performance.now());GRN.push({id:e.gid,own:0,x:e.x,y:e.y,z:e.z,vx:e.vx,vy:e.vy,vz:e.vz,t:0,rs:0});const d=hypot(e.x-ME.x,e.z-ME.z);snd('throw',clp(1-d/30,.1,1))}
  else if(e.k==='g'){const g=GRN.find(q=>q.id===e.gid);if(g)g.done=1;explodeAt(e.x,e.y,e.z,e.u)}
  else if(e.k==='pm'){onPoly(Object.assign({},e))}
  else if(e.k==='o'){kfMsg(RD.nick[e.u]||'?',kcol('s'),'ficou sem vida')}
@@ -26165,9 +26198,9 @@ const RANGE=15;
 
 // --- granadas (procurador: 2 por rodada)
 const GRN=[],GR_R=3.8;let grId=0;
-function doGrenade(){if(ME.role!=='s'||RD.ended)return;if(ME.sheep>0){toast('Ovelhas não jogam granada! 🐑');return}if(phase()!=='hunt'){toast('Espere a caçada começar');return}
+function doGrenade(){if(ME.role!=='s'||RD.ended)return;if(ME.sheep>0){toast('Ovelhas não jogam granada');return}if(phase()!=='hunt'){toast('Espere a caçada começar');return}
  if(ME.gren<=0){toast('Acabaram as granadas desta rodada');snd('err');return}if(ME.grCd>0)return;
- ME.gren--;ME.grCd=.9;updBtns();const P=CAM.piv,sp=13;const g={id:myUid()+'_'+(++grId),own:1,x:P[0]+CAM.dx*.6,y:P[1]+CAM.dy*.6,z:P[2]+CAM.dz*.6,vx:CAM.dx*sp,vy:CAM.dy*sp+3.2,vz:CAM.dz*sp,t:0,rs:rnd()*TAU};GRN.push(g);
+ ME.gren--;ME.grCd=.9;updBtns();THRT.set('me',performance.now());const P=CAM.piv,sp=13;const g={id:myUid()+'_'+(++grId),own:1,x:P[0]+CAM.dx*.6,y:P[1]+CAM.dy*.6,z:P[2]+CAM.dz*.6,vx:CAM.dx*sp,vy:CAM.dy*sp+3.2,vz:CAM.dz*sp,t:0,rs:rnd()*TAU};GRN.push(g);
  snd('throw');netEv({k:'gt',gid:g.id,x:r2(g.x),y:r2(g.y),z:r2(g.z),vx:r2(g.vx),vy:r2(g.vy),vz:r2(g.vz)});toast('Granada! 💣 ('+ME.gren+' sobrando)')}
 function solidHit(x,y,z,r){for(const b of near(x,z,r+.1)){if(b.dead)continue;if(x+r>b.x0&&x-r<b.x1&&z+r>b.z0&&z-r<b.z1&&y+r>b.y0&&y-r<b.y1)return b}
  for(const o of REM.values()){if(o.r!=='p')continue;const b=remBox(o);if(b&&x+r>b.x0&&x-r<b.x1&&z+r>b.z0&&z-r<b.z1&&y+r>b.y0&&y-r<b.y1)return b}return null}
@@ -26201,8 +26234,14 @@ function onPoly(e){polyFx(e.x,e.y+.5,e.z);if(e.u)kf([{s:RD.nick[e.u]||'?',c:kcol
 
 const HND=new Float32Array(6),GM_=new Float32Array(16);
 const LTA=()=>{const k=S.st==='game'&&!S.lob&&!RD.ended?lightK(el()):1,q=k<.5?.42:1;return[.95*q,.9*q,.85*q]};
+const SHOTT=new Map(),THRT=new Map();
+function huntAni(id,gun,wk){const now=performance.now(),H={gun:gun!==undefined,aim:gun!==undefined?gun:0,sh:-1,rl:-1,th:-1,air:false,kick:wk==='sg'||wk==='rf'?1:wk==='fl'?0:.45};
+ const st=SHOTT.get(id);if(st&&now-st<900)H.sh=(now-st)/1000;const tt=THRT.get(id);if(tt&&now-tt<1600)H.th=(now-tt)/1000;
+ if(id==='me'){if(S.st==='game'&&!RD.ended){if(ME.reload>0&&canShoot())H.rl=1-ME.reload/curW().rl;H.air=!ME.gr&&ME.role!=='x'}}
+ else{const o=REM.get(id);if(o&&o.rlT)H.rl=(now-o.rlT)/1000/((WPN[o.w]||WPN.sg).rl)}
+ return H}
 function drawActor(id,x,y,z,yaw,spd,lk,dt,gun,wk){if(ACT===null){try{ACT=window.HERO3&&HERO3.actor?HERO3.actor(gl):false}catch(e){ACT=false}if(!ACT)ACT=false}
- let hx_=null,drawn=false;if(ACT&&ACT.ready()){try{ACT.draw({id,VP,cam:[CAM.x,CAM.y,CAM.z],x,y,z,yaw,spd,h:1.78,lk,dt,fog:FOGC,fn:FOGN,ff:FOGF,lt:LTA(),pose:gun!==undefined?'gun':null,pp:window.PH_PP,hand:gun!==undefined?HND:null});bindMine();drawn=true;if(gun!==undefined)hx_=[HND[0],HND[1],HND[2]]}catch(e){console.error('esconde-esconde boneco',e);ACT=false;bindMine()}}
+ let hx_=null,drawn=false;if(ACT&&ACT.ready()){try{ACT.draw({id,VP,cam:[CAM.x,CAM.y,CAM.z],x,y,z,yaw,spd,h:1.78,lk,dt,hunt:huntAni(id,gun,wk),fog:FOGC,fn:FOGN,ff:FOGF,lt:LTA(),pose:gun!==undefined?'gun':null,pp:window.PH_PP,hand:gun!==undefined?HND:null});bindMine();drawn=true;if(gun!==undefined)hx_=[HND[0],HND[1],HND[2]]}catch(e){console.error('esconde-esconde boneco',e);ACT=false;bindMine()}}
  if(!drawn){M4.ty(MM,x,y,z,yaw,1);drawMesh(DECOR.hum,MM)}if(!hx_){if(gun!==undefined)hx_=[x+sin(yaw)*.35-cos(yaw)*.2,y+1.2,z+cos(yaw)*.35+sin(yaw)*.2]}
  if(gun!==undefined&&GUNM){const p=clp(gun,-.9,.9),WW=WPN[wk]||WPN.sg;basisM(GM_,hx_[0],hx_[1],hx_[2],yaw,p,WW.sc);drawMesh(GUNM,GM_,WW.tint?{tint:WW.tint}:null);const f=[sin(yaw)*cos(p),sin(p),cos(yaw)*cos(p)],u=[-sin(yaw)*sin(p),cos(p),-cos(yaw)*sin(p)];
   GUNAT[id]=[hx_[0]+f[0]*.7+u[0]*.12,hx_[1]+f[1]*.7+u[1]*.12,hx_[2]+f[2]*.7+u[2]*.12]}}
@@ -26515,7 +26554,7 @@ function netEv(e){const E=Object.assign({u:myUid(),t:nowS()},e);
  const db=NB();if(!db||!NET.code)return;db.ref(EC+NET.code).push().set(E).catch(()=>{});if(E.u===myUid()&&amHost())try{botRoute(E)}catch(x){}}
 let lastSend=0;
 function sendState(force){const db=NB();if(!db||!NET.code||S.st!=='game'||!RD.s)return;const t=performance.now();if(!force&&t-lastSend<95)return;lastSend=t;
- db.ref(SC+NET.code+'/'+myUid()).set({g:RD.s,x:r2(ME.x),y:r2(ME.y),z:r2(ME.z),h:r2(ME.yaw),p:ME.prop,q:r2(ME.pyaw),r:ME.role,hp:ME.hp|0,a:r2(ME.cp+.12),sh:ME.sheep>0?1:0,w:ME.w||'sg'}).catch(()=>{})}
+ db.ref(SC+NET.code+'/'+myUid()).set({g:RD.s,x:r2(ME.x),y:r2(ME.y),z:r2(ME.z),h:r2(ME.yaw),p:ME.prop,q:r2(ME.pyaw),r:ME.role,hp:ME.hp|0,a:r2(ME.cp+.12),sh:ME.sheep>0?1:0,w:ME.w||'sg',rl:ME.reload>0?1:0}).catch(()=>{})}
 
 // ---------- telas ----------
 const SCRS=['phMain','phNew','phJoin','phPub','phPw','phLob','phRes','phHelp'];
@@ -26636,7 +26675,7 @@ function beginRound(r){const db=NB(),me=myUid();if(!db&&!OFF.on)return;NET.lobby
 let lobMap=-1;
 function onStateSnap(s){const uid=s.key,me=myUid();if(uid===me)return;if(amHost()&&BOTS.has(uid))return;const v=s.val(),o=REM.get(uid);if(!o||!v||v.g!==RD.s)return;
  const first=o.tx===undefined;o.tx=+v.x||0;o.ty=+v.y||0;o.tz=+v.z||0;o.th=+v.h||0;o.tq=+v.q||0;if(first){o.x=o.tx;o.y=o.ty;o.z=o.tz;o.h=o.th;o.q=o.tq}
- const np=v.p|0;if(np!==o.p&&!first&&np>=0){puff(o.tx,o.ty+PT[np].hy*.5,o.tz,[255,240,200],22);o.popT=.35}o.p=np;if(v.r&&v.r!==o.r&&!S.lob){if(v.r==='s'&&o.r==='p'&&!RD.found[uid])RD.found[uid]='?';o.r=v.r}o.hp=v.hp|0;o.a=+v.a||0;o.w=v.w||'sg';const sh=v.sh|0;if(sh&&!o.sh)puff(o.tx,o.ty+.6,o.tz,[230,180,255],14);if(sh)o._shSeen=1;else if(o._shSeen){o.shT=0;o._shSeen=0}o.sh=sh;
+ const np=v.p|0;if(np!==o.p&&!first&&np>=0){puff(o.tx,o.ty+PT[np].hy*.5,o.tz,[255,240,200],22);o.popT=.35}o.p=np;if(v.r&&v.r!==o.r&&!S.lob){if(v.r==='s'&&o.r==='p'&&!RD.found[uid])RD.found[uid]='?';o.r=v.r}o.hp=v.hp|0;o.a=+v.a||0;o.w=v.w||'sg';{const rl=v.rl|0;if(rl&&!o.rl)o.rlT=performance.now();if(!rl)o.rlT=0;o.rl=rl}const sh=v.sh|0;if(sh&&!o.sh)puff(o.tx,o.ty+.6,o.tz,[230,180,255],14);if(sh)o._shSeen=1;else if(o._shSeen){o.shT=0;o._shSeen=0}o.sh=sh;
  if(o.r==='p'&&np>=0){const pv=o._lp;if(pv&&hypot(pv[0]-o.tx,pv[1]-o.tz)<.05)o.hs={x:o.tx,y:o.ty,z:o.tz,p:np,q:o.tq};o._lp=[o.tx,o.tz]}}
 function lobbySync(r){const me=myUid();for(const u in r.pl){if(u===me)continue;if(!REM.has(u)){let lk=null;try{lk=typeof r.pl[u].v==='string'&&typeof LKE!=='undefined'?LKE.unpack(r.pl[u].v):null}catch(e){}if(!lk&&isBot(u))lk=botLook(u);
    REM.set(u,{id:u,lk,r:'p',p:-1,q:0,hp:PROP_HP,x:0,y:-50,z:0,h:0,spd:0,gone:false});if(RD.nick[u]===undefined&&S.lob)kfMsg(r.pl[u].n||'?','#9effc0','entrou na sala');}RD.nick[u]=r.pl[u].n||'?'}
@@ -26776,11 +26815,11 @@ function botMove(C,dt,sp){const o=C.o;if(!C.path||C.pi>=C.path.length){o.mv=0;re
  if(botBoxHit(C,nx,max(ny,p[1])+.03,nz,r,h)){C.stuck+=dt;if(C.stuck>.8){C.stuck=0;// desvia: repete o caminho com um empurrão de lado
    const a=rnd()*TAU;if(!botBoxHit(C,o.x+cos(a)*.3,o.y+.03,o.z+sin(a)*.3,r,h)){o.x+=cos(a)*.3;o.z+=sin(a)*.3}const g=C.path[C.path.length-1];botGo(C,g[0],g[1],g[2])}o.mv=0;return false}
  o.x=nx;o.z=nz;o.y=ny;o.mv=1;const yw=atan2(dx,dz);if(o.p>=0&&!C.lockQ)o.q=(o.q||0)+angd(o.q||0,yw)*min(1,dt*7);o.h=o.h+angd(o.h,yw)*min(1,dt*12);return false}
-function botPub(C){const o=C.o;o.tx=o.x;o.ty=o.y;o.tz=o.z;o.th=o.h;o.tq=o.q||0}
+function botPub(C){const o=C.o;o.tx=o.x;o.ty=o.y;o.tz=o.z;o.th=o.h;o.tq=o.q||0;o.w=C.w;const rl=C.rl>0?1:0;if(rl&&!o.rl)o.rlT=performance.now();if(!rl)o.rlT=0;o.rl=rl}
 // estado do bot para os outros (online: o anfitrião publica como se fosse um jogador)
 let botSendT=0;
 function botNet(){const db=NB();if(OFF.on||!db||!NET.code||!amHost())return;const t=tnow();if(t-botSendT<110)return;botSendT=t;
- for(const C of BOTS.values()){const o=C.o;if(o.gone)continue;db.ref(SC+NET.code+'/'+C.id).set({g:RD.s,x:r2(o.x),y:r2(o.y),z:r2(o.z),h:r2(o.h),p:o.p,q:r2(o.q||0),r:o.r,hp:o.hp|0,a:r2(o.a||0),sh:C.sheep>0?1:0,w:C.w,b:1}).catch(()=>{})}}
+ for(const C of BOTS.values()){const o=C.o;if(o.gone)continue;db.ref(SC+NET.code+'/'+C.id).set({g:RD.s,x:r2(o.x),y:r2(o.y),z:r2(o.z),h:r2(o.h),p:o.p,q:r2(o.q||0),r:o.r,hp:o.hp|0,a:r2(o.a||0),sh:C.sheep>0?1:0,w:C.w,rl:C.rl>0?1:0,b:1}).catch(()=>{})}}
 function botsAdopt(){if(!amHost())return;for(const o of REM.values())if(isBot(o.id)&&!BOTS.has(o.id)){const C=mkBot(o);C.w=WPNK[hashI(o.id)%3];C.ammo=WPN[C.w].mag;if(o.tx!==undefined){o.x=o.tx;o.y=o.ty;o.z=o.tz}if(o.x===undefined||o.y<-20){const k=hashI(o.id)%10,p=MAPC.prop(k);o.x=p[0];o.y=.1;o.z=p[1]}BOTS.set(o.id,C)}}
 function botsClear(){BOTS.clear()}
 // lugar de nascimento dos bots na rodada
@@ -26914,7 +26953,7 @@ function shotTargets(){const L=[];for(const o of REM.values()){if(o.r!=='p'||o.g
 function doShoot(){if(!canShoot()||RD.ended||S.lob)return;if(ME.sheep>0)return;if(ME.stun>0)return;if(phase()!=='hunt')return;
  const W=curW();if(W.flame){IN.fire=true;return}if(ME.swing>0)return;
  if(ME.reload>0)return;if(ME.ammo<=0){startReload();return}ME.ammo--;if(ME.ammo<=0)setTimeout(()=>{if(ME.ammo<=0&&ME.reload<=0)startReload()},450);
- ME.swing=W.cd;ME.recoil=W===WPN.pt?.5:1;S.shake=max(S.shake,W===WPN.rf?.4:W===WPN.pt?.1:.25);vib(W===WPN.pt?10:20);
+ ME.swing=W.cd;ME.recoil=W===WPN.pt?.5:1;SHOTT.set('me',performance.now());S.shake=max(S.shake,W===WPN.rf?.4:W===WPN.pt?.1:.25);vib(W===WPN.pt?10:20);
  const R=aimRay(W.rng),h=rayMap(R.ox,R.oy,R.oz,R.dx,R.dy,R.dz,R.max);let who=null,wt=h.t;
  for(const q of shotTargets()){if(!q.b)continue;const t=rayBox(R.ox,R.oy,R.oz,R.dx,R.dy,R.dz,q.b);if(t>=0&&t<=wt+.01){wt=t;who=q}}
  const dist=o=>hypot(o.x-ME.x,o.z-ME.z),inR=o=>dist(o)<=W.rng;let tg=null;
@@ -28879,7 +28918,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261110215111;
+const GAME_BUILD=20261110222916;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
