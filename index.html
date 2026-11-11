@@ -24424,13 +24424,17 @@ let camPos=[0,5,0];
 // câmera de cinema: S.cine = {ex,ey,ez,tx,ty,tz,fov} em coordenadas da pista plana (na pista 2 o render entorta os dois pontos)
 function cine(ex,ey,ez,tx,ty,tz,fov){const c=S.cine||(S.cine={});c.ex=ex;c.ey=ey;c.ez=ez;c.tx=tx;c.ty=ty;c.tz=tz;camS.fov=fov;camS.x=ex;camS.y=ey;camS.z=ez;camS.tx=tx;camS.ty=ty;camS.tz=tz}
 const latV=(p,l)=>[p.x+cos(p.hd)*l,p.z-sin(p.hd)*l];
+// ponto da linha central com direção e altura suavizadas (sem os degraus de cada segmento) — usado nas câmeras de cinema
+function clSm(s){const p=clAt(s),a=clAt(s-6),b=clAt(s+6),a2=clAt(s-3),b2=clAt(s+3);p.hd=atan2(b.x-a.x+b2.x-a2.x,b.z-a.z+b2.z-a2.z);p.y=(a.y+b.y+a2.y+b2.y+p.y*2)/6;return p}
 // ---------- intro: 3 tomadas da pista e depois o grid de largada ----------
-function introCam(){const I=S.intro,D=I.dur,gd=min(3.4,D*.45),f0=D-gd,L=TR.L;
- if(I.t<f0){const n=3,sl=f0/n,j=min(n-1,floor(I.t/sl)),u=(I.t-j*sl)/sl,fr=[.3,.56,.8][j],sd=j%2?-1:1,s0=fr*L+u*26,p=clAt(s0),q=clAt(s0+22),lt=TR.bg?0:(TR.hw+5)*sd,e=latV(p,lt);
-  cine(e[0],p.y+(TR.bg?9:10)-u*2,e[1],q.x,q.y+1,q.z,58);I.ph=0;I.cut=u<.12?1-u/.12:u>.9?(u-.9)/.1:0}
- else{const u=clp((I.t-f0)/gd,0,1),rows=ceil_(KARTS.length/2),back=3.2+rows*5.4+5,s0=L-back+(back+6)*u*u*(3-2*u),p=clAt(s0),e=latV(p,lerp(5.2,-4.6,u)),q=clAt(s0+lerp(5,-6,u)*-1+2);
-  const tq=clAt(L-3.2-(1-u)*(rows-1)*5.4);cine(e[0],p.y+lerp(1.7,2.6,u),e[1],tq.x,tq.y+.9,tq.z,lerp(50,60,u));I.ph=1;I.cut=u<.1?1-u/.1:0}}
-function introEnd(){if(!S.intro)return;S.intro=null;S.cine=null;camS.init=false;if(S.st==='count')ctl(true);$('kSkip').style.display='none'}
+function introCam(){const I=S.intro,D=I.dur,gd=min(3.4,D*.45),f0=D-gd,L=TR.L,T=I.wu<INWU?0:min(D,I.t+acc);
+ if(I.wu<INWU){I.cut=1}
+ if(T<f0){const n=3,sl=f0/n,j=min(n-1,floor(T/sl)),u=(T-j*sl)/sl,fr=[.3,.56,.8][j],sd=j%2?-1:1,s0=fr*L+u*26,p=clSm(s0),q=clSm(s0+22),lt=TR.bg?0:(TR.hw+5)*sd,e=latV(p,lt);
+  cine(e[0],p.y+(TR.bg?9:10)-u*2,e[1],q.x,q.y+1,q.z,58);I.ph=0;if(I.wu>=INWU)I.cut=u<.12?1-u/.12:u>.9?(u-.9)/.1:0}
+ else{const u=clp((T-f0)/gd,0,1),rows=ceil_(KARTS.length/2),back=3.2+rows*5.4+5,s0=L-back+(back+6)*u*u*(3-2*u),p=clSm(s0),e=latV(p,lerp(5.2,-4.6,u));
+  const tq=clSm(L-3.2-(1-u)*(rows-1)*5.4);cine(e[0],p.y+lerp(1.7,2.6,u),e[1],tq.x,tq.y+.9,tq.z,lerp(50,60,u));I.ph=1;I.cut=u<.1?1-u/.1:0}}
+const INWU=8;
+function introEnd(){if(!S.intro)return;S.intro=null;fpsT=0;fpsN=0;S.cine=null;camS.init=false;if(S.st==='count')ctl(true);$('kSkip').style.display='none'}
 function drawIntroHUD(c,u){const I=S.intro,bh=H*.11;c.fillStyle='#000';c.fillRect(0,0,W,bh);c.fillRect(0,H-bh,W,bh);
  if(I.cut>0){c.fillStyle=`rgba(0,0,0,${clp(I.cut,0,1)})`;c.fillRect(0,0,W,H)}
  const a=clp(I.t/.5,0,1),sl=(1-a)*-60*u;
@@ -24736,7 +24740,7 @@ function simStep(dt){
  if(S.st==='podium'){podStep(dt);return}
  // contagem
  if(S.st==='count'){const rem=(S.startAt-nowS())/1000,n=rem>0?ceil_(rem):0;
-  if(S.intro){S.intro.t+=dt;if(rem<=4.6||S.intro.t>=S.intro.dur)introEnd()}
+  if(S.intro){if(S.intro.wu>=INWU)S.intro.t+=dt;if(rem<=4.6||S.intro.t>=S.intro.dur)introEnd()}
   {const ph=rem>3?-1:rem>1.5?0:1;if(ph>=0&&ph!==beepN){beepN=ph;snd('beep')}}
   if((IN.thr||KEYS.ArrowUp||KEYS.w)&&!S.intro)S.thrT+=dt;else S.thrT=0;
   if(rem<=0){S.st='race';S.go=true;S.goT=.9;beepN=-1;snd('go');
@@ -24777,7 +24781,7 @@ function enterRace(cfg){
  hideScreens();skClear();S.mode=cfg.mode;S.laps=cfg.laps;S.todOv=(cfg.mode==='online'||cfg.tod!=null)?clp(cfg.tod|0,0,2):null;S.wxOv=(cfg.mode==='online'||cfg.wx!=null)?clp(cfg.wx|0,0,4):null;wxGrip();WXS_.bolt=2+rnd()*4;clearEntities();buildBoxes();KARTS=[];PL=null;S.msgs=[];S.lapTimes=[];S.bestLap=0;S.lapFx=null;S.nitA=0;S.fin=false;S.finT=0;S.firstFin=0;S.thrT=0;S.go=false;S.goT=0;S.frost=0;S.fa=0;S.shake=0;S.boostFx=0;S.pause=false;
  cfg.players.forEach((p,i)=>{const k=mkKart({id:p.id,me:p.id===cfg.myId,nick:p.nick,col:p.col,lk:p.lk||null});placeKart(k,i);k.tt=0;KARTS.push(k);if(k.me)PL=k;k.lapT0=0;k.gy=k.y});
  S.raceT=0;S.st='count';S.startAt=cfg.startAt||nowS()+4800;camS.init=false;beepN=-1;rkT=0;S.spec=null;S.pod=null;S.cine=null;S.podDone=0;$('kSpec').style.display='none';
- {const solo=cfg.mode==='solo',D=solo?(cfg.noIntro?0:7.4):(S.startAt-nowS())/1000-4.7;if(solo&&D>0)S.startAt+=D*1000;S.intro=D>2.6?{t:0,dur:D,ph:0,cut:1}:null;   // intro: sobrevoo da pista e grid (online: cabe no tempo até a largada)
+ {const solo=cfg.mode==='solo',D=solo?(cfg.noIntro?0:7.4):(S.startAt-nowS())/1000-4.7;if(solo&&D>0)S.startAt+=D*1000;S.intro=D>2.6?{t:0,dur:D,ph:0,cut:1,wu:0,wT:0}:null;   // intro: sobrevoo da pista e grid (online: cabe no tempo até a largada)
   $('kSkip').textContent='PULAR ▶';$('kSkip').style.display=S.intro?'block':'none'}
  ctl(!S.intro);engStart();wxSndStart();if(CFG.mus)musStart();if(window.MUSapi)try{if(MUSapi.on)MUSapi.toggle()}catch(e){}}
 function leaveRace(){wxSndStop();S.st='menu';S.go=false;S.intro=null;S.spec=null;S.pod=null;S.cine=null;$('kSkip').style.display='none';$('kSpec').style.display='none';KARTS=[];PL=null;clearEntities();engStop();musStop();ctl(false);hideScreens();NETH.on=false}
@@ -24794,8 +24798,10 @@ function open(){if(S.st!=='off')return;const M=$('kM');M.style.display='block';l
  resize();S.st='menu';S.last=performance.now();showMain();acc=0;cancelAnimationFrame(raf);raf=requestAnimationFrame(frame)}
 function restoreOut(){try{lock=false}catch(e){}try{if(musWas&&window.MUSapi&&!MUSapi.on)MUSapi.toggle()}catch(e){}try{if(h3Was&&H3.setModeQ)setTimeout(()=>H3.setModeQ(h3Was),80)}catch(e){}}
 function close(){if(S.st==='off')return;if(NETH.on&&NETH.leave)NETH.leave();S.st='off';cancelAnimationFrame(raf);engStop();musStop();wxSndStop();ctl(false);KARTS=[];PL=null;$('kM').style.display='none';hideScreens();for(const k in KEYS)KEYS[k]=false;IN.thr=IN.rev=IN.drift=0;IN.jx=0;restoreOut()}
-function frame(now){raf=requestAnimationFrame(frame);let dt=min(.05,(now-S.last)/1000||.016);S.last=now;S.dtL=dt;try{wxBasic();wxTick(dt)}catch(e){}
- fpsT+=dt;fpsN++;if(fpsT>1.5){fpsA=fpsN/fpsT;fpsT=0;fpsN=0;if(S.st==='race'||S.st==='count'){if(fpsA<38&&qScale>.55){qScale=max(.55,qScale*.88);resize()}else if(fpsA>58&&qScale<1&&mob){qScale=min(1,qScale*1.06);resize()}}}
+function frame(now){raf=requestAnimationFrame(frame);const rawF=(now-S.last)/1000||.016;let dt=min(.05,rawF);S.last=now;S.dtL=dt;
+ if(S.intro&&S.intro.wu<INWU){const I=S.intro;I.wT+=rawF;I.wu=rawF<.045?I.wu+1:0;if(I.wT>1.6)I.wu=INWU;if(S.mode==='solo'&&S.startAt)S.startAt+=rawF*1000;if(I.wu>=INWU)acc=0}
+ try{wxBasic();wxTick(dt)}catch(e){}
+ if(!S.intro){fpsT+=dt;fpsN++}if(fpsT>1.5){fpsA=fpsN/fpsT;fpsT=0;fpsN=0;if(S.st==='race'||S.st==='count'){if(fpsA<38&&qScale>.55){qScale=max(.55,qScale*.88);resize()}else if(fpsA>58&&qScale<1&&mob){qScale=min(1,qScale*1.06);resize()}}}
  if(S.pause&&(S.st==='count'||S.st==='race')&&S.mode==='solo'&&S.startAt)S.startAt+=dt*1000;
  if(!S.pause||S.st==='menu'){acc+=dt;let n=0;while(acc>=1/60&&n<4){simStep(1/60);acc-=1/60;n++}if(n>=4)acc=0}
  if(S.st==='menu'||S.st==='off'){updateCam(dt,null,true)}
