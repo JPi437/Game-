@@ -4598,7 +4598,8 @@ const DEF={g:'m',s:0,h:'curto',hc:0,e:0,t:'camiseta',tc:0,b:'calca',bc:1,f:'sapa
 const ok=(cat,id)=>STY[cat].some(a=>a[0]===id);
 function norm(o){o=o&&typeof o==='object'?o:{};const L={};
  const n=(k,max)=>{if(o[k]==null)return DEF[k];const v=o[k]|0;return v>=0&&v<max?v:DEF[k]};
- L.s=n('s',SKIN.length);L.hc=n('hc',HAIRC.length);L.e=n('e',EYEC.length);L.tc=n('tc',CLOTH.length);L.bc=n('bc',CLOTH.length);L.fc=n('fc',CLOTH.length);L.cc=n('cc',CLOTH.length);L.o=n('o',32);if((L.o&1)&&(L.o&8))L.o&=~8;if((L.o&4)&&(L.o&16))L.o&=~16;L.k=n('k',3);L.a=n('a',5);L.w=n('w',3);L.m=n('m',2);if(L.m)L.o=0;
+ L.s=n('s',SKIN.length);L.hc=n('hc',HAIRC.length);L.e=n('e',EYEC.length);L.tc=n('tc',CLOTH.length);L.bc=n('bc',CLOTH.length);L.fc=n('fc',CLOTH.length);L.cc=n('cc',CLOTH.length);L.o=n('o',32);if((L.o&1)&&(L.o&8))L.o&=~8;if((L.o&4)&&(L.o&16))L.o&=~16;L.k=n('k',3);L.a=n('a',5);L.w=n('w',3);L.m=n('m',2);if(L.m)L.o=0;L.o&=~24;L.k=0;if(L.w===1)L.w=0;   // itens retirados: camiseta e botas padrão, capas (Lich e mago) e chapéu de mago
+ 
  L.g=ok('g',o.g)?o.g:'m';
  for(const k of['h','t','b','f','c'])L[k]=ok(k,o[k])?o[k]:(k==='h'&&L.g==='f'?'longo':DEF[k]);return L}
 const hex=h=>{h=h.replace('#','');if(h.length===3)h=h.split('').map(c=>c+c).join('');return[parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)]};
@@ -5029,7 +5030,7 @@ M.innerHTML=`<div class="box" id="lkBox"><div id="lkHead"><b id="lkTitle"></b><s
 <div id="lkRight"><div id="lkTabs"></div><div class="lkLbl" id="lkL1">Estilo</div><div id="lkSty"></div><div class="lkLbl" id="lkL2">Cor</div><div id="lkCol"></div></div></div>
 <div id="lkFoot"><span id="lkTip">Arraste o boneco para girar · toque para ele andar</span><button class="btn" id="lkCancel" style="background:#555">Cancelar</button><button class="btn" id="lkOk"></button></div></div>`;
 D.body.appendChild(M);
-const TABS=[['s','','Pele',null,'s'],['oc','','Conjunto',null,null],['op','','Peito',null,null],['ol','','Calça',null,null],['of','','Pés',null,null],['ok','','Costas',null,null],['oa','','Cabelo',null,null],['ow','','Chapéu',null,null]];   // roupas 3D: o conjunto inteiro ou peça por peça, cabelo (com cor) e chapéu
+const TABS=[['s','','Pele',null,'s'],['oc','','Conjunto',null,null],['op','','Peito',null,null],['ol','','Calça',null,null],['of','','Pés',null,null],['oa','','Cabelo',null,null],['ow','','Chapéu',null,null]];   // roupas 3D: o conjunto inteiro ou peça por peça, cabelo (com cor) e chapéu
 const CL3=window.CLOTH_TH||{},CLB={op:1,ol:2,of:4},CLN={oc:'Aventureiro',op:'Camisa de aventureiro',ol:'Calça de aventureiro',of:'Botas de aventureiro'},CLI={oc:'set',op:'p',ol:'l',of:'f'};   // o personagem 3D é o único modelo: na criação só escolhe o tom de pele
 const PALS={s:E.SKIN,hc:E.HAIRC,e:E.EYEC,tc:E.CLOTH,bc:E.CLOTH,fc:E.CLOTH,cc:E.CLOTH};
 let gPrev='m',L=null,tab='s',isNew=false,dirI=0,raf=0,t0=0,pv=null,yaw=0,yawT=0;
@@ -5064,11 +5065,11 @@ function render(){
  $('lkTabs').innerHTML=tabs.map(t=>`<button class="lkTab${t[0]===tab?' on':''}" data-t="${t[0]}">${t[2]}</button>`).join('');
  $('lkTabs').querySelectorAll('.lkTab').forEach(b=>b.onclick=()=>{tab=b.dataset.t;render()});
  // peças com várias opções: m = bits do campo o (uma opção por vez) · f = campo próprio do visual · col = paleta de cor (cabelo)
- const OPTS={op:{t:'Peça',m:9,o:[[0,'Nenhuma','none'],[1,'Camisa de aventureiro','p'],[8,'Camiseta padrão','cam']],n:'Use junto com as outras peças ou sozinha.'},
-  of:{t:'Peça',m:20,o:[[0,'Nenhuma','none'],[4,'Botas de aventureiro','f'],[16,'Botas padrão','bot']],n:'Use junto com as outras peças ou sozinha.'},
+ const OPTS={op:{t:'Peça',m:9,o:[[0,'Nenhuma','none'],[1,'Camisa de aventureiro','p']],n:'Use junto com as outras peças ou sozinha.'},
+  of:{t:'Peça',m:20,o:[[0,'Nenhuma','none'],[4,'Botas de aventureiro','f']],n:'Use junto com as outras peças ou sozinha.'},
   ok:{t:'Acessório de costas',f:'k',o:[[0,'Nenhum','none'],[1,'Capa do Lich','cape'],[2,'Capa de mago','capm']],n:'A capa do Lich balança, voa para trás quando você corre e deixa um rastro de fogo verde. A capa de mago é um sobretudo comprido por cima da roupa.'},
   oa:{t:'Cabelo',f:'a',o:[[0,'Nenhum','none'],[1,'Feminino curto','h1'],[2,'Feminino médio','h2'],[3,'Masculino cacheado','h3'],[4,'Masculino liso','h4']],col:'hc',n:'Escolha a cor do cabelo embaixo.'},
-  ow:{t:'Chapéu',f:'w',o:[[0,'Nenhum','none'],[1,'Chapéu de mago','chm'],[2,'Máscara do Freddy','frm']],n:'O chapéu fica por cima do cabelo. A máscara do Freddy cobre a cabeça inteira (o cabelo fica escondido por baixo).'}};
+  ow:{t:'Chapéu',f:'w',o:[[0,'Nenhum','none'],[2,'Máscara do Freddy','frm']],n:'A máscara do Freddy cobre a cabeça inteira (o cabelo fica escondido por baixo).'}};
  if(tab==='og'){const st=$('lkSty'),op=[['m','Personagem normal','none'],['tv','TV (exclusivo do ADM)','adm']],on=v=>(v==='tv')===(L.g==='tv');
   $('lkL1').style.display=st.style.display='';$('lkL1').textContent='Modelo do personagem';$('lkL2').style.display=$('lkCol').style.display='none';
   st.innerHTML=op.map(a=>`<button class="lkIt${on(a[0])?' on':''}" data-v="${a[0]}">${CL3[a[2]]?'<img src="'+CL3[a[2]]+'" style="width:100%;max-width:96px;height:84px;object-fit:contain;display:block;margin:0 auto">':''}${a[1]}</button>`).join('')+'<div class="lkSep">Modelo 3D exclusivo da conta ADM: cabeça de TV, terno, gravata e tênis, já vem pronto (sem roupas, cabelo ou chapéu). Só o ADM pode usar, e todos os jogadores veem você com ele. Aparece no personagem 3D e no Star Kart.</div>';
@@ -17534,11 +17535,13 @@ function capeParams(s,tm){const sp=s&&s.spd||0,run=min(1.4,sp/REF_RUN);CPV[0]=.0
 // assim, se o corpo/roupa cortar ou atravessar a capa, ou se der para ver por dentro, aparece só preto (sombra) em vez do corpo
 function capeLined(gl,G,c,pre){const u=G.u;gl.uniform4f(u.uBk,1,.014,0,0);gl.drawElements(gl.TRIANGLES,c.ni,gl.UNSIGNED_SHORT,0);gl.uniform4f(u.uBk,0,0,0,0);if(pre)pre();
  const po=gl.isEnabled(gl.POLYGON_OFFSET_FILL);gl.enable(gl.POLYGON_OFFSET_FILL);gl.polygonOffset(-1,-2);gl.drawElements(gl.TRIANGLES,c.ni,gl.UNSIGNED_SHORT,0);gl.polygonOffset(0,0);if(!po)gl.disable(gl.POLYGON_OFFSET_FILL)}
-function drawCape(gl,G,s,tm){const c=D.cape,o=G.cape;if(!c||!o||!o.tex)return;const u=G.u;bindGeo(gl,G,c,o.vb,o.ib,o.tex);
+function drawCape(gl,G,s,tm){return;   // capas retiradas da customização
+ const c=D.cape,o=G.cape;if(!c||!o||!o.tex)return;const u=G.u;bindGeo(gl,G,c,o.vb,o.ib,o.tex);
  const cf=gl.isEnabled(gl.CULL_FACE);if(cf)gl.disable(gl.CULL_FACE);gl.uniform4fv(u.uCp,capeParams(s,tm));adjFor(gl,G,'capr',c);capeLined(gl,G,c,()=>{gl.uniform4f(u.uFr,1,tm,0,0)});if(cf)gl.enable(gl.CULL_FACE);
  gl.uniform4f(u.uCp,0,0,0,0);gl.uniform4f(u.uFr,0,0,0,0);bindGeo(gl,G,D,G.vb,G.ib,G.tex)}
 // fogo verde na barra (mesma conta do shader, em alguns pontos da barra) — parado sobe e some; andando, as brasas ficam para trás e fazem o rastro
-function capeFire(s,tm,moving){const E=H3.FX,c=D.cape;if(!E||!c||CSP<0)return;const P=capeParams(s,tm),H=c.hem;
+function capeFire(s,tm,moving){return;
+ const E=H3.FX,c=D.cape;if(!E||!c||CSP<0)return;const P=capeParams(s,tm),H=c.hem;
  const n=moving?3:1;for(let i=0;i<n;i++){const h=H[(Math.random()*H.length)|0];let x=h[0],y=h[1],z=h[2];const bi=h.length>3?h[3]:CSP,m=BM.subarray(bi*16,bi*16+16);let k=Math.pow(clp((.76-y)/.74,0,1),1.35);if(P[3]>1.5){const t=clp((z+.08)/.14,0,1);k*=1-t*t*(3-2*t)}z-=P[2]*k;x+=sin(P[1]*3.1+y*9)*P[0]*k;z+=cos(P[1]*2.3+y*7+x*6)*P[0]*.7*k;
   const wx=m[0]*x+m[4]*y+m[8]*z+m[12],wy=m[1]*x+m[5]*y+m[9]*z+m[13],wz=m[2]*x+m[6]*y+m[10]*z+m[14];
   if(moving&&Math.random()<.6)E.emit({x:wx,y:wy+.5,z:wz,vx:(Math.random()-.5)*.1,vy:.05+Math.random()*.1,vz:(Math.random()-.5)*.1,g:-.002,life:900+Math.random()*500,s0:2.4+Math.random()*1.4,s1:.3,c:Math.random()<.5?[.2,.95,.35]:[.08,.55,.18],a:.85,drag:.98});
@@ -17566,7 +17569,8 @@ function wearOf0(L){const E=LKEg3();let N=null;try{N=E?E.norm(L):null;if(N&&E.ef
  const t1=h(N.tc),lm=(t1[0]*.3+t1[1]*.59+t1[2]*.11)*255,t2=lm>200?t1.map(v=>v*.75):t1.map(v=>v+(1-v)*.55);
  w={s:[WTS[N.t]||1,WBS[N.b]||1,WFS[N.f]||1],c1:t1,c2:t2,c3:h(N.bc),c4:h(N.fc)};if(WC.size>200)WC.clear();WC.set(key,w);return w}
 function LKEg3(){try{return typeof LKE!=='undefined'?LKE:null}catch(e){return null}}
-function drawDressed(gl,G,L){if(L&&L.g==='tv'){const tv=itemGeo(gl,G,'adm');if(tv){drawItem(gl,G,tv);bindGeo(gl,G,D,G.vb,G.ib,G.tex);return}}   // modelo exclusivo do ADM (cabeça de TV): substitui corpo, roupas, cabelo e chapéu
+function drawDressed(gl,G,L){if(L&&L.g==='tv'){const tv=itemGeo(gl,G,'adm');if(tv){drawItem(gl,G,tv);bindGeo(gl,G,D,G.vb,G.ib,G.tex);return}}
+ L=Object.assign({},L,{o:(L.o|0)&~24,k:0,w:(L.w|0)===1?0:(L.w|0)});   // itens retirados: ninguém aparece com eles (nem saves antigos)   // modelo exclusivo do ADM (cabeça de TV): substitui corpo, roupas, cabelo e chapéu
  const m=(L.m|0)===1?0:L.o|0,c=D.cloth&&D.cloth[CLK],o=G.cl[CLK],av=0,u=G.u;   // aventureiro agora é roupa colada no corpo (wearOf), sem malha 3D por cima
  const cam=(m&8)?itemGeo(gl,G,'cam'):null,bot=(m&16)?itemGeo(gl,G,'bot'):null,hide=[0,(av&1)||cam?1:0,(av&2)?1:0,(av&4)||bot?1:0];
  const wr=wearOf(L);gl.uniform3fv(u.uW1,wr.c1);gl.uniform3fv(u.uW2,wr.c2);gl.uniform3fv(u.uW3,wr.c3);gl.uniform3fv(u.uW4,wr.c4);
@@ -28918,7 +28922,7 @@ const _d=MON.draw;MON.draw=function(e,t,f){if(!e||e.mon!=='dracula')return _d.ap
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261110234632;
+const GAME_BUILD=20261111114451;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
