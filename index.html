@@ -9565,7 +9565,8 @@ SCN.field={id:'field',K:1,OX:0,OY:0,eye:25,camD:92,p3:-.2,pl:[[-.95,.85],[-1.0,.
  lowAt:(x,z,pad)=>FLD.lowAt?FLD.lowAt(x,z,pad):null,
  bound:(x,z)=>x>6&&z>6&&x<MW-6&&z<MH-6,free:(x,z)=>!blocked(x,z),   // pulando dá para subir morros, mas nunca sair do mapa
  tallAt:(x,z)=>{const N=FLD.nat;if(!N||!N.trees)return false;for(const T of N.trees){const dx=x-T.x,dz=z-T.z;if(dx*dx+dz*dz<121)return true}return false},   // tronco de árvore: alto, não dá para pular
- camSolid:(x,z)=>{for(const zn of ZN)if(x>=zn.x0&&x<=zn.x1&&z>=zn.z0&&z<=zn.z1)return zn.block(x,z);const ty=FLD.typeAt(x,z);if(ty===4||ty===7||ty===9)return false;return solid(x|0,(z-3)|0)||(FLD.extra?FLD.extra(x,z):false)},
+ camSolid:(x,z)=>{for(const zn of ZN)if(x>=zn.x0&&x<=zn.x1&&z>=zn.z0&&z<=zn.z1)return zn.block(x,z);if(FLD.lowAt&&FLD.lowAt(x,z,3))return false;const ty=FLD.typeAt(x,z);   // pedra e arbusto baixos: a câmera passa por cima
+if(ty===4||ty===7||ty===9)return false;return solid(x|0,(z-3)|0)||(FLD.extra?FLD.extra(x,z):false)},
  camY:(cy,cz,cx)=>max(cy,hAt(cx===undefined?MW/2:cx,cz)+7),
  enter(){for(const p of FLD.parts)if(p.enter)p.enter()},leave(){for(const p of FLD.parts)if(p.leave)p.leave()},clear(){for(const p of FLD.parts)if(p.clear)p.clear()},
  boss:()=>null,isTgt:e=>!!e,tgt:e=>FLD.tgt?FLD.tgt(e):null,bossPlan:(t,C)=>null,
@@ -12666,7 +12667,7 @@ SCN.hal={id:'hal',K:1,OX:0,OY:0,eye:25,camD:88,p3:-.16,pl:[[-.95,.9],[-1.0,.45]]
  env:()=>envOn(),
  floorY:(x,z)=>hAt(x,z),
  step:o=>{const ok=(x,z)=>!hit(x-8,z-14);if(ok(o.x,o.z))return;if(ok(o.x,o.oz)){o.z=o.oz;return}if(ok(o.ox,o.z)){o.x=o.ox;return}o.x=o.ox;o.z=o.oz},
- camOk:pz=>(x,z)=>!blockedCam(x,z)&&!camBlk(x,z),camSolid:(x,z)=>solid(x|0,(z-3)|0),
+ camOk:pz=>(x,z)=>!blockedCam(x,z)&&!camBlk(x,z),camSolid:(x,z,y)=>(y!==undefined&&y>hAt(x,z)+18)?false:solid(x|0,(z-3)|0),   // túmulos, cercas, arbustos são baixos: o raio que passa por cima deles não bate (casas e catedral ficam no camOk)
  bound:(x,z)=>!blockedCam(x,z),free:(x,z)=>!hit(x-8,z-14),
  camY:(cy)=>clp(cy,4,240),
  enter(){envOn();BANKS.length=0;lastFx=0;document.body.classList.add('h3hal')},
@@ -25802,7 +25803,7 @@ const _t=tick;tick=function(){_t();if(world!==1)return;const e=drac();if(!e||e.d
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261112014511;
+const GAME_BUILD=20261112015919;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
@@ -26035,12 +26036,16 @@ DBW.floorY=floorW;
 // ---------- colisão: grade de 4 x 4 (projeto); CG0 = só o fixo, CG = fixo + objetos ----------
 const GW=MW>>2,GH=MH>>2,CG=new Uint8Array(GW*GH),CG0=new Uint8Array(GW*GH);
 let CGT=CG;   // onde as formas são gravadas
+// CGS: 1 = célula só com coisa pequena (banco, arbusto, pedra, poste...) · 2 = grande; a câmera só bate nas grandes
+const CGS=new Uint8Array(GW*GH),CGS0=new Uint8Array(GW*GH);let CGST=CGS;
+const cgsW=(k,v,sm)=>{if(v!==1)CGST[k]=0;else if(!sm)CGST[k]=2;else if(CGST[k]!==2)CGST[k]=1};
 function circ(x,z,r,v){v=v===undefined?1:v;const x0=max(0,(x-r)>>2),x1=min(GW-1,(x+r)>>2),z0=max(0,(z-r)>>2),z1=min(GH-1,(z+r)>>2);
- for(let j=z0;j<=z1;j++)for(let i=x0;i<=x1;i++){if(hypot(i*4+2-x,j*4+2-z)<=r)CGT[j*GW+i]=v}}
-function rect(x0,z0,x1,z1,v){v=v===undefined?1:v;const a=max(0,x0>>2),b=min(GW-1,x1>>2),c=max(0,z0>>2),d=min(GH-1,z1>>2);for(let j=c;j<=d;j++)for(let i=a;i<=b;i++)CGT[j*GW+i]=v}
+ for(let j=z0;j<=z1;j++)for(let i=x0;i<=x1;i++){if(hypot(i*4+2-x,j*4+2-z)<=r){CGT[j*GW+i]=v;cgsW(j*GW+i,v,r<=9)}}}
+function rect(x0,z0,x1,z1,v){v=v===undefined?1:v;const a=max(0,x0>>2),b=min(GW-1,x1>>2),c=max(0,z0>>2),d=min(GH-1,z1>>2);for(let j=c;j<=d;j++)for(let i=a;i<=b;i++){CGT[j*GW+i]=v;cgsW(j*GW+i,v,0)}}
 function orect(cx,cz,hw,hd,yaw,v){const r=hypot(hw,hd),c=cos(yaw),s=sin(yaw);v=v===undefined?1:v;
- for(let j=max(0,(cz-r)>>2);j<=min(GH-1,(cz+r)>>2);j++)for(let i=max(0,(cx-r)>>2);i<=min(GW-1,(cx+r)>>2);i++){const dx=i*4+2-cx,dz=j*4+2-cz,lx=dx*c-dz*s,lz=dx*s+dz*c;if(abs(lx)<=hw&&abs(lz)<=hd)CGT[j*GW+i]=v}}
+ for(let j=max(0,(cz-r)>>2);j<=min(GH-1,(cz+r)>>2);j++)for(let i=max(0,(cx-r)>>2);i<=min(GW-1,(cx+r)>>2);i++){const dx=i*4+2-cx,dz=j*4+2-cz,lx=dx*c-dz*s,lz=dx*s+dz*c;if(abs(lx)<=hw&&abs(lz)<=hd){CGT[j*GW+i]=v;cgsW(j*GW+i,v,0)}}}
 function blockedD(x,z){if(x<0||z<0||x>=MW||z>=MH)return true;return CG[(z>>2)*GW+(x>>2)]===1}
+const lowCam=(x,z)=>{const X=x/K,Z=z/K;if(X<0||Z<0||X>=MW||Z>=MH)return false;return CGS[(Z>>2)*GW+(X>>2)]===1};   // só coisa pequena nessa célula: a câmera passa
 const blocked=(x,z)=>blockedD(x/K,z/K)||hypot(x-STW.x,z-STW.z)<15;   // + pedestal da estrela
 DBW.solid=(px,py)=>blocked(px,py);DBW.blocked=blocked;
 
@@ -26362,7 +26367,7 @@ function applyEdits(){const E=window.EDITS,gl=H3.gl();if(!DBW.ready||!gl)return;
   o._a=a;o.colOn=a.col!==undefined?!!a.col:true;o._e.o.x=a.x;o._e.o.z=a.z;
   place(o,a.x,a.z,a.y||0,a.r||0,a.sx||1,a.sy||1,a.sz||1,a.c||null)}
  // colisão
- CG.set(CG0);CGT=CG;for(const o of OBJ)if(!o.hid&&o.colOn)stampCol(o);for(const o of ADDS.values())if(o.colOn)stampCol(o);
+ CG.set(CG0);CGT=CG;CGS.set(CGS0);CGST=CGS;for(const o of OBJ)if(!o.hid&&o.colOn)stampCol(o);for(const o of ADDS.values())if(o.colOn)stampCol(o);
  DBW.rev++;grassClear()}
 DBW.apply=()=>{appliedRev=-1};
 function editTick(){const E=window.EDITS,r=E?E.rev:0;if(r!==appliedRev){appliedRev=r;try{applyEdits()}catch(e){console.error('DBW edits',e)}}}
@@ -26383,7 +26388,7 @@ let CH=[],LIGHTS=[],building=null;
 const CHK=(x,z)=>{const i=clp(floor(x/CS),0,NCX-1),j=clp(floor(z/CS),0,NCZ-1);return CH[j*NCX+i]};
 function newChunkMB(seed){const mb=new MB(seed,{pk:true});mb.push().S(K,K,K);return mb}
 function* gen(gl){
- CGT=CG0;CG0.fill(0);LIGHTS=[];OBJ=[];ADDS=new Map();GONE=[];
+ CGT=CG0;CG0.fill(0);CGST=CGS0;CGS0.fill(0);LIGHTS=[];OBJ=[];ADDS=new Map();GONE=[];
  const r=rng(20261026);
  CH=[];for(let j=0;j<NCZ;j++)for(let i=0;i<NCX;i++)CH.push({i,j,g:new MB(100+j*NCX+i,{pk:true,noMat:true}),o:newChunkMB(500+j*NCX+i),gm:null,om:null,cx:(i+.5)*CS*K,cz:(j+.5)*CS*K});
  DBW.pct=.02;yield;
@@ -26468,7 +26473,7 @@ function* gen(gl){
  DBW.pct=.92;yield;
  // sobe o fixo para a placa de vídeo
  for(const c of CH){c.gm=c.g.count?H3.upload(gl,c.g.pack()):null;c.om=c.o.count?H3.upload(gl,c.o.pack()):null;c.g=null;c.o=null}
- CGT=CG;CG.set(CG0);
+ CGT=CG;CG.set(CG0);CGST=CGS;CGS.set(CGS0);
  {const PR=H3.fld&&H3.fld.props;if(PR){const y=floorW(STW.x,STW.z)-.2;STM={ped:PR.pedestalMB().build(gl),star:PR.starMB().build(gl),y,mt:M4.trs(new Float32Array(16),STW.x,y,STW.z,0,PI/8,0,1,1,1),a:0}}}   // estátua da estrela (mesmos modelos do Mundo 1)
  DBW.pct=1;DBW.ready=true;appliedRev=-1;editTick()}
 function step(ms){const gl=H3.gl();if(!gl)return false;if(DBW.ready)return true;if(!building)building=gen(gl);const t0=performance.now();
@@ -26569,7 +26574,7 @@ SCN.db={id:'db',K:1,OX:0,OY:0,eye:25,camD:92,p3:-.18,pl:[[-.95,.85],[-1.0,.4]],a
  floorY:(x,z)=>floorW(x,z),
  step:o=>{const ok=(x,z)=>!blocked(x,z);if(ok(o.x,o.z))return;if(ok(o.x,o.oz)){o.z=o.oz;return}if(ok(o.ox,o.z)){o.x=o.ox;return}o.x=o.ox;o.z=o.oz},
  bound:(x,z)=>x>8&&z>8&&x<WW-8&&z<WH-8,free:(x,z)=>!blocked(x,z),
- camOk:pz=>(x,z)=>x>8&&z>8&&x<WW-8&&z<WH-8&&!insideCC(x,z),camSolid:(x,z)=>blocked(x,z),
+ camOk:pz=>(x,z)=>x>8&&z>8&&x<WW-8&&z<WH-8&&!insideCC(x,z),camSolid:(x,z)=>blocked(x,z)&&!lowCam(x,z),
  camY:(cy,cz,cx)=>max(cy,floorW(cx===undefined?WW/2:cx,cz)+6),
  enter(){shKey='';if(typeof P!=='undefined'&&P&&DBW.ready)grassStep({x:P.x+8,z:P.y+14},60,120)},leave(){grassClear();shKey='';try{if(H3.gfx&&H3.gfx.apply)H3.gfx.apply()}catch(e){}},clear(){},
  boss:()=>null,isTgt:e=>!!e,tgt:e=>e?[e.x+8,floorW(e.x+8,e.y+14)+16,e.y+14,30,floorW(e.x+8,e.y+14)]:null,bossPlan:()=>null,
@@ -27066,12 +27071,16 @@ NJW.floorY=floorW;
 
 // ---------- colisão: grade de 4 x 4 (projeto) ----------
 const GW=MW>>2,GH=MH>>2,CG=new Uint8Array(GW*GH);
-function circ(x,z,r){const x0=max(0,(x-r)>>2),x1=min(GW-1,(x+r)>>2),z0=max(0,(z-r)>>2),z1=min(GH-1,(z+r)>>2);
- for(let j=z0;j<=z1;j++)for(let i=x0;i<=x1;i++){if(hypot(i*4+2-x,j*4+2-z)<=r)CG[j*GW+i]=1}}
-function rect(x0,z0,x1,z1){const a=max(0,x0>>2),b=min(GW-1,x1>>2),c=max(0,z0>>2),d=min(GH-1,z1>>2);for(let j=c;j<=d;j++)for(let i=a;i<=b;i++)CG[j*GW+i]=1}
+// CGS: que tipo de coisa ocupa cada célula (1 = só coisa pequena: banco, arbusto, pedra, barril, poste, palmeira, cerca · 2 = grande: casa, muro, casco...)
+// o personagem bate em todas; a CÂMERA só nas grandes (antes ela batia num banco baixinho como se fosse uma parede)
+const CGS=new Uint8Array(GW*GH);let LOWC=0,LNB=0;
+function circ(x,z,r){const x0=max(0,(x-r)>>2),x1=min(GW-1,(x+r)>>2),z0=max(0,(z-r)>>2),z1=min(GH-1,(z+r)>>2),sm=LOWC||(r<=9&&!LNB);
+ for(let j=z0;j<=z1;j++)for(let i=x0;i<=x1;i++){if(hypot(i*4+2-x,j*4+2-z)<=r){const k=j*GW+i;CG[k]=1;if(!sm)CGS[k]=2;else if(CGS[k]!==2)CGS[k]=1}}}
+function rect(x0,z0,x1,z1){const a=max(0,x0>>2),b=min(GW-1,x1>>2),c=max(0,z0>>2),d=min(GH-1,z1>>2);for(let j=c;j<=d;j++)for(let i=a;i<=b;i++){CG[j*GW+i]=1;CGS[j*GW+i]=LOWC&&CGS[j*GW+i]!==2?1:2}}
 function orect(cx,cz,hw,hd,yaw){const r=hypot(hw,hd),c=cos(yaw),s=sin(yaw);
- for(let j=max(0,(cz-r)>>2);j<=min(GH-1,(cz+r)>>2);j++)for(let i=max(0,(cx-r)>>2);i<=min(GW-1,(cx+r)>>2);i++){const dx=i*4+2-cx,dz=j*4+2-cz,lx=dx*c-dz*s,lz=dx*s+dz*c;if(abs(lx)<=hw&&abs(lz)<=hd)CG[j*GW+i]=1}}
+ for(let j=max(0,(cz-r)>>2);j<=min(GH-1,(cz+r)>>2);j++)for(let i=max(0,(cx-r)>>2);i<=min(GW-1,(cx+r)>>2);i++){const dx=i*4+2-cx,dz=j*4+2-cz,lx=dx*c-dz*s,lz=dx*s+dz*c;if(abs(lx)<=hw&&abs(lz)<=hd){CG[j*GW+i]=1;CGS[j*GW+i]=LOWC&&CGS[j*GW+i]!==2?1:2}}}
 function blockedD(x,z){if(x<0||z<0||x>=MW||z>=MH)return true;return CG[(z>>2)*GW+(x>>2)]===1}
+const lowCam=(x,z)=>{const X=x/K,Z=z/K;if(X<0||Z<0||X>=MW||Z>=MH)return false;return CGS[(Z>>2)*GW+(X>>2)]===1};   // só coisa pequena nessa célula: a câmera passa
 const blocked=(x,z)=>blockedD(x/K,z/K);
 NJW.solid=(px,py)=>blocked(px,py);NJW.blocked=blocked;
 
@@ -27436,7 +27445,7 @@ function addTree(kind,v,xd,zd,s,yaw,tint,colR){const x=xd*K,z=zd*K,y=floorW(x,z)
  o.wx=M[0]*vv.cx+M[4]*vv.cy+M[8]*vv.cz+M[12];o.wy=M[1]*vv.cx+M[5]*vv.cy+M[9]*vv.cz+M[13];o.wz=M[2]*vv.cx+M[6]*vv.cy+M[10]*vv.cz+M[14];o.rad=vv.rad*s*1.02;
  OBJ.push(o);if(colR)circ(xd,zd,colR);return o}
 function* gen(gl){
- CG.fill(0);LIGHTS=[];OBJ=[];GLOW=[];SHAFT=[];OCC.clear();PV=[];WFM=[];
+ CG.fill(0);CGS.fill(0);LIGHTS=[];OBJ=[];GLOW=[];SHAFT=[];OCC.clear();PV=[];WFM=[];
  const r=rng(20261103);
  CH=[];for(let j=0;j<NCZ;j++)for(let i=0;i<NCX;i++){const o=new MB(500+j*NCX+i,{pk:true});o.push().S(K,K,K);CH.push({i,j,g:new MB(100+j*NCX+i,{pk:true,noMat:true}),o,gm:null,om:null,cx:(i+.5)*CS*K,cz:(j+.5)*CS*K})}
  {const e0=[BRG.x+BRS*BL,BRG.z+BRC*BL],e1=[BRG.x-BRS*BL,BRG.z-BRC*BL];BRB=max(baseH(e0[0],e0[1]),baseH(e1[0],e1[1]),-1)}
@@ -27641,7 +27650,7 @@ SCN.ninja={id:'ninja',K:1,OX:0,OY:0,eye:25,camD:92,p3:-.18,pl:[[-.95,.85],[-1.0,
  floorY:(x,z)=>floorW(x,z),
  step:o=>{const ok=(x,z)=>!blocked(x,z);if(ok(o.x,o.z))return;if(ok(o.x,o.oz)){o.z=o.oz;return}if(ok(o.ox,o.z)){o.x=o.ox;return}o.x=o.ox;o.z=o.oz},
  bound:(x,z)=>x>8&&z>8&&x<WW-8&&z<WH-8,free:(x,z)=>!blocked(x,z),
- camOk:pz=>(x,z)=>x>8&&z>8&&x<WW-8&&z<WH-8,camSolid:(x,z)=>blocked(x,z),
+ camOk:pz=>(x,z)=>x>8&&z>8&&x<WW-8&&z<WH-8,camSolid:(x,z)=>blocked(x,z)&&!lowCam(x,z),
  camY:(cy,cz,cx)=>max(cy,floorW(cx===undefined?WW/2:cx,cz)+6),
  enter(){shKey='';if(typeof P!=='undefined'&&P&&NJW.ready)grassStep({x:P.x+8,z:P.y+14},60,120)},leave(){grassClear();shKey='';try{if(H3.gfx&&H3.gfx.apply)H3.gfx.apply()}catch(e){}},clear(){},
  boss:()=>null,isTgt:e=>!!e,tgt:e=>e?[e.x+8,floorW(e.x+8,e.y+14)+16,e.y+14,30,floorW(e.x+8,e.y+14)]:null,bossPlan:()=>null,
@@ -28152,13 +28161,17 @@ const floorW=(x,z)=>floorD(x/K,z/K)*K;
 const GW=MW>>2,GH=MH>>2,CG=new Uint8Array(GW*GH);
 const RB2={x0:floor((I2.x-I2.R*1.4)/4),z0:floor((I2.z-I2.R*1.3)/4),w:Math.ceil(I2.R*2.8/4)+2,h:Math.ceil(I2.R*2.6/4)+2},ROCKG=new Uint8Array(RB2.w*RB2.h);   // paredões da ilha 2 (1 = encosta forte, 2 = paredão)
 const rockAt=(x,z)=>{const i=((x/4)|0)-RB2.x0,j=((z/4)|0)-RB2.z0;return i<0||j<0||i>=RB2.w||j>=RB2.h?0:ROCKG[j*RB2.w+i]};
-function circ(x,z,r){const x0=max(0,(x-r)>>2),x1=min(GW-1,(x+r)>>2),z0=max(0,(z-r)>>2),z1=min(GH-1,(z+r)>>2);
- for(let j=z0;j<=z1;j++)for(let i=x0;i<=x1;i++){if(hypot(i*4+2-x,j*4+2-z)<=r)CG[j*GW+i]=1}}
-function rect(x0,z0,x1,z1){const a=max(0,x0>>2),b=min(GW-1,x1>>2),c=max(0,z0>>2),d=min(GH-1,z1>>2);for(let j=c;j<=d;j++)for(let i=a;i<=b;i++)CG[j*GW+i]=1}
+// CGS: que tipo de coisa ocupa cada célula (1 = só coisa pequena: banco, arbusto, pedra, barril, poste, palmeira, cerca · 2 = grande: casa, muro, casco...)
+// o personagem bate em todas; a CÂMERA só nas grandes (antes ela batia num banco baixinho como se fosse uma parede)
+const CGS=new Uint8Array(GW*GH);let LOWC=0,LNB=0;
+function circ(x,z,r){const x0=max(0,(x-r)>>2),x1=min(GW-1,(x+r)>>2),z0=max(0,(z-r)>>2),z1=min(GH-1,(z+r)>>2),sm=LOWC||(r<=9&&!LNB);
+ for(let j=z0;j<=z1;j++)for(let i=x0;i<=x1;i++){if(hypot(i*4+2-x,j*4+2-z)<=r){const k=j*GW+i;CG[k]=1;if(!sm)CGS[k]=2;else if(CGS[k]!==2)CGS[k]=1}}}
+function rect(x0,z0,x1,z1){const a=max(0,x0>>2),b=min(GW-1,x1>>2),c=max(0,z0>>2),d=min(GH-1,z1>>2);for(let j=c;j<=d;j++)for(let i=a;i<=b;i++){CG[j*GW+i]=1;CGS[j*GW+i]=LOWC&&CGS[j*GW+i]!==2?1:2}}
 function orect(cx,cz,hw,hd,yaw){const r=hypot(hw,hd),c=cos(yaw),s=sin(yaw);
- for(let j=max(0,(cz-r)>>2);j<=min(GH-1,(cz+r)>>2);j++)for(let i=max(0,(cx-r)>>2);i<=min(GW-1,(cx+r)>>2);i++){const dx=i*4+2-cx,dz=j*4+2-cz,lx=dx*c-dz*s,lz=dx*s+dz*c;if(abs(lx)<=hw&&abs(lz)<=hd)CG[j*GW+i]=1}}
-function line(x0,z0,x1,z1,w){const L=hypot(x1-x0,z1-z0),n=max(1,Math.ceil(L/3));for(let i=0;i<=n;i++){const t=i/n;circ(x0+(x1-x0)*t,z0+(z1-z0)*t,w)}}
+ for(let j=max(0,(cz-r)>>2);j<=min(GH-1,(cz+r)>>2);j++)for(let i=max(0,(cx-r)>>2);i<=min(GW-1,(cx+r)>>2);i++){const dx=i*4+2-cx,dz=j*4+2-cz,lx=dx*c-dz*s,lz=dx*s+dz*c;if(abs(lx)<=hw&&abs(lz)<=hd){CG[j*GW+i]=1;CGS[j*GW+i]=LOWC&&CGS[j*GW+i]!==2?1:2}}}
+function line(x0,z0,x1,z1,w){const L=hypot(x1-x0,z1-z0),n=max(1,Math.ceil(L/3));LNB=1;try{for(let i=0;i<=n;i++){const t=i/n;circ(x0+(x1-x0)*t,z0+(z1-z0)*t,w)}}finally{LNB=0}}   // linha = muro/casco/corrimão: grande (a cerca baixa usa LOWC)
 function blockedD(x,z){if(x<0||z<0||x>=MW||z>=MH)return true;return CG[(z>>2)*GW+(x>>2)]===1}
+const lowCam=(x,z)=>{const X=x/K,Z=z/K;if(X<0||Z<0||X>=MW||Z>=MH)return false;return CGS[(Z>>2)*GW+(X>>2)]===1};   // só coisa pequena nessa célula: a câmera passa
 const blocked=(x,z)=>blockedD(x/K,z/K);
 const OCW=window.OCW={WID,K,MW:WW,MH:WH,ready:false,pct:0,ISL,floorY:floorW,solid:(px,py)=>blocked(px,py),blocked,boat:false,rev:0};
 const OSTP={x:PORT.x+36,z:PORT.z-82};                   // (projeto) estátua da estrela (roleta pirata) — WCFG[6].s aponta para cá
@@ -28271,7 +28284,7 @@ function fence(mb,x0,z0,x1,z1,r){const L=hypot(x1-x0,z1-z0),a=atan2(x1-x0,z1-z0)
  for(let i=0;i<=n;i++){const t=i/n,x=lerp(x0,x1,t),z=lerp(z0,z1,t),y=floorY(x,z);mb.push().T(x,y-1,z).RY(a+(r()-.5)*.2).cyl(1.5,1.3,13,6,WOOD2,0,{ct:'#a07a52'}).push().T(0,5,0).cyl(1.75,1.75,1.2,6,'#d8c38e',0).pop().push().T(0,10,0).cyl(1.75,1.75,1.2,6,'#d8c38e',0).pop().pop()}
  for(let i=0;i<n;i++){const t0=i/n,t1=(i+1)/n,xa=lerp(x0,x1,t0),za=lerp(z0,z1,t0),xb=lerp(x0,x1,t1),zb=lerp(z0,z1,t1),ya=floorY(xa,za),yb=floorY(xb,zb);
   for(const hh of[5.4,10.4]){const yA=ya+hh-1,yB=yb+hh-1,len=hypot(xb-xa,zb-za);mb.push().T((xa+xb)/2,(yA+yB)/2,(za+zb)/2).RY(a).RX(-atan2(yB-yA,len)).box(1.4,1.6,len+1,WOOD,0).pop()}}
- line(x0,z0,x1,z1,2)}
+ LOWC=1;try{line(x0,z0,x1,z1,2)}finally{LOWC=0}}
 function hay(mb,x,z,r){const y=floorY(x,z);mb.push().T(x,y+5.5,z).RY(r()*TAU).RZ(PI/2).T(0,-6,0).cyl(5.5,5.5,12,12,'#e2c46a',0,{ct:'#d4b25a',cb:'#d4b25a'}).pop();circ(x,z,7)}
 function sheep(mb,x,z,r){const y=floorY(x,z),a=r()*TAU;mb.push().T(x,y,z).RY(a);mb.push().T(0,5.4,0).S(1,.82,1.25).sph(4.4,3,8,'#f4f1ea',0).pop();
  mb.push().T(0,6,5.4).S(1,1,1.2).sph(2,2,6,'#3a3433',0).pop();for(const sx of[-1,1])for(const sz of[-1,1])mb.push().T(sx*2,0,sz*2.6).cyl(.6,.6,3.4,5,'#3a3433',0).pop();mb.pop();circ(x,z,4)}
@@ -29238,7 +29251,7 @@ OCW.SPAWN=SPAWN;OCW.BACK=BACK;OCW.M1P=M1P;
 function addTree(key,xd,zd,s,yaw,col){const x=xd*K,z=zd*K,y=floorW(x,z)-1,v=TV[key];if(!v)return;const o={v:key,x,z,y,s,m:M4.trs(new Float32Array(16),x,y,z,0,yaw,0,s,s,s),tint:[1,1,1]},M=o.m;
  o.wx=M[0]*v.cx+M[4]*v.cy+M[8]*v.cz+M[12];o.wy=M[1]*v.cx+M[5]*v.cy+M[9]*v.cz+M[13];o.wz=M[2]*v.cx+M[6]*v.cy+M[10]*v.cz+M[14];o.rad=v.rad*s*1.02;OBJ.push(o);if(col)circ(xd,zd,col)}
 function* gen(gl){
- CG.fill(0);LIGHTS=[];OBJ=[];GLOW=[];MILL.length=0;WHEELS=[];WALLM=[];CLW=[];RMS=null;RMSF=[];MIST=[];SEAO=null;CBM=null;FOAM=[];BOATS=[];CLOUD=[];PADS.length=0;bhClear();CHIM.length=0;GULLS=[];
+ CG.fill(0);CGS.fill(0);LIGHTS=[];OBJ=[];GLOW=[];MILL.length=0;WHEELS=[];WALLM=[];CLW=[];RMS=null;RMSF=[];MIST=[];SEAO=null;CBM=null;FOAM=[];BOATS=[];CLOUD=[];PADS.length=0;bhClear();CHIM.length=0;GULLS=[];
  const r=rng(20261103);
  CH=[];for(let j=0;j<NCZ;j++)for(let i=0;i<NCX;i++){const sd=i<8&&j<6?j*8+i:1000+j*NCX+i,o=new MB(600+sd,{pk:true});o.push().S(K,K,K);CH.push({i,j,g:new MB(200+sd,{pk:true,noMat:true}),o,gm:null,om:null,cx:(i+.5)*CS*K,cz:(j+.5)*CS*K})}
  OCW.pct=.02;yield;
@@ -29798,7 +29811,7 @@ SCN.ocean={id:'ocean',K:1,OX:0,OY:0,eye:25,camD:92,p3:-.18,pl:[[-.95,.85],[-1.0,
   if(isBoat(o.ox/K,o.oz/K)||isBoat(o.x/K,o.z/K)){const k=BOOST*(1-.7*calm01(o.ox/K));o.x=o.ox+(o.x-o.ox)*k;o.z=o.oz+(o.z-o.oz)*k}   // no Calm Belt o vento some: o barco vai parando
   const ok=(x,z)=>!blocked(x,z)||underRail(x,z);if(ok(o.x,o.z))return;if(ok(o.x,o.oz)){o.z=o.oz;return}if(ok(o.ox,o.z)){o.x=o.ox;return}o.x=o.ox;o.z=o.oz},
  bound:(x,z)=>x>8&&z>8&&x<WW-8&&z<WH-8,free:(x,z)=>!blocked(x,z)||underRail(x,z),
- camOk:pz=>(x,z)=>x>8&&z>8&&x<WW-8&&z<WH-8,camSolid:(x,z,y)=>blocked(x,z)&&!underRail(x,z,1)&&!underExe(x,z,y),
+ camOk:pz=>(x,z)=>x>8&&z>8&&x<WW-8&&z<WH-8,camSolid:(x,z,y)=>blocked(x,z)&&!lowCam(x,z)&&!underRail(x,z,1)&&!underExe(x,z,y),
  camY:(cy,cz,cx)=>{if(cx===undefined)cx=WW/2;const pf=H3.S&&H3.S.pfy,g=floorWL(cx,cz,pf);let y=max(cy,g+6);const e=exeF(cx/K,cz/K);if(pf!==undefined&&e>-99&&pf<(e-5)*K)y=max(g+3,min(y,(e-4)*K));return y},   // embaixo da escada / do deck a câmera fica embaixo também
  enter(){shKey='';ENV4=0;FOGK=-1;CB.st=0;CB.inW=false;LAND=null;cbWarn(false);cbFade(0);if(typeof P!=='undefined'&&P&&OCW.ready)grassStep({x:P.x+8,z:P.y+14},60,120);PB.lx=P.x+8;PB.lz=P.y+14},leave(){grassClear();shKey='';if(CB.st===1&&CB.cam)H3.S.dbg=null;CB.st=0;CB.inW=false;cbWarn(false);cbFade(0);try{H3.shadowCfg({D:0})}catch(e){}try{if(H3.gfx&&H3.gfx.apply)H3.gfx.apply()}catch(e){}},clear(){},
  boss:()=>null,isTgt:e=>!!e,tgt:e=>e?[e.x+8,floorW(e.x+8,e.y+14)+16,e.y+14,30,floorW(e.x+8,e.y+14)]:null,bossPlan:()=>null,
