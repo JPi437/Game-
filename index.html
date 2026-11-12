@@ -15422,7 +15422,9 @@ NAR3.info={tris:D.ni/3,verts:D.n,bones:NB,height:HEIGHT};NAR3.dbg=()=>({BM:Array
  // ao entrar num mundo já pede os inimigos de lá (e no começo, os do mundo atual)
  window.CH3_WORLD={"4":["Inimigo Fazendeiro","Inimigo Saibaman","Inimigo Raditz","Inimigo Nappa","Inimigo Vegeta","Inimigo Ozaru"],"5":["Inimigo Ninja","Inimigo Ninja 2","Inimigo Ninja Shuriken","Inimigo Ninja do Som","Inimigo Zabuza","Inimigo Cobra","Inimigo Marca da Maldicao"],"6":["Inimigo Alvida","Inimigo Marinheiro","Inimigo Marinheiro 2","Inimigo Mohji","Inimigo Cabaji","Inimigo Homem-Peixe","Inimigo Kuroobi","Inimigo Sham","Inimigo Buchi","Inimigo Jango","Inimigo Kuro","Inimigo Morgan","Inimigo Buggy","Inimigo Arlong"]};
  const pre=n=>{try{CH3_PRE(CH3_WORLD[n]||[])}catch(e){}};
- if(typeof goWorld==='function'){const g=goWorld;goWorld=function(n){const r=g.apply(this,arguments);pre(n);return r}}
+ // espera o mapa terminar de montar antes de pedir (senão a leitura dos modelos disputa o processador com a montagem e o carregamento demora mais)
+ const preAfter=n=>{let k=0;const iv=setInterval(()=>{const S=window.H3&&H3.S;if(++k>600||(S&&!S.ld&&document.body.classList.contains('h3on'))||(k>20&&!(S&&S.ld))){clearInterval(iv);pre(n)}},250)};
+ if(typeof goWorld==='function'){const g=goWorld;goWorld=function(n){const r=g.apply(this,arguments);preAfter(n);return r}}
  setTimeout(()=>{if(typeof world!=='undefined')pre(world)},1500);
  window.CH3_DATA=new Proxy(D,{get:(t,k)=>typeof k==='string'?get(k):t[k],has:(t,k)=>k in t||k in IDX||k in DER,set:(t,k,v)=>{t[k]=v;return true}});
 })();
@@ -25828,7 +25830,7 @@ const _t=tick;tick=function(){_t();if(world!==1)return;const e=drac();if(!e||e.d
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261112031048;
+const GAME_BUILD=20261112033407;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
