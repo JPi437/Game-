@@ -8195,19 +8195,19 @@ function mkBtn(){if(btn)return;css();btn=document.createElement('button');btn.cl
  jb.addEventListener('pointerdown',jd);jb.addEventListener('pointerup',ju);jb.addEventListener('pointercancel',ju);jb.addEventListener('pointerleave',ju)}
 // pulo: só visual (a posição no mapa continua no chão), com gravidade; a câmera e o boneco sobem juntos
 // altura do apoio embaixo do jogador (acima do chão): pedra, arbusto, caixote... (SC.lowAt) — só conta se os pés já estão em cima dele
-function supportH(){if(!SC||!SC.lowAt)return 0;const x=P.x+8-SC.OX,z=(P.y+14-SC.OY)*SC.K,gy=floorAt(x,z),L=SC.lowAt(x,z);return L&&gy+S.jh>=L.top-3?max(0,L.top-gy):0}
+function supportH(){if(!SC||!SC.lowAt)return 0;const x=P.x+8-SC.OX,z=(P.y+14-SC.OY)*SC.K,gy=floorP(x,z),L=SC.lowAt(x,z);return L&&gy+S.jh>=L.top-3?max(0,L.top-gy):0}
 S.hs=0;S.jair=0;
 function jump(){if(!S.mode||lock||(window.STUN&&STUN()))return;const hs=supportH();if(S.jv!==0||S.jh>hs+.6)return;
  S.jv=3.45;S.jh=hs+.01;S.jt=Date.now()+(window.MP&&MP.off||0);try{bp(520,.07,'triangle',.05,0,760)}catch(e){}}
-function jumpTick(){gTrack();jumpPhys()}
+function jumpTick(){gTrack();jumpPhys();if(S.lgy!==undefined)S.pfy=S.lgy+S.jh}
 function gTrack(){
  // o chão sumiu debaixo dos pés (saiu da beira de uma plataforma, de um morro, de um caixote): o boneco continua na mesma altura e CAI com gravidade,
  // em vez de "teleportar" para o chão. No ar o chão que muda embaixo também não mexe a altura de verdade dos pés.
- {const x=P.x+8-SC.OX,z=(P.y+14-SC.OY)*SC.K,gy=floorAt(x,z);
+ {const x=P.x+8-SC.OX,z=(P.y+14-SC.OY)*SC.K,gy=floorP(x,z);
   if(S.lgS===SC&&S.lgy!==undefined&&hypot(x-S.lgx,z-S.lgz)<60){const dr=S.lgy-gy,air=S.jv!==0||S.jh>S.hs+.05;
    if(air&&abs(dr)<400){S.jh+=dr;if(dr>0){S.jfall=(S.jfall||0)+dr;if(S.cgy!==undefined)S.cgy-=dr}}
    else if(dr>3.5&&dr<400){S.jh+=dr;S.jv=min(S.jv,0);S.jfall=dr;if(S.cgy!==undefined)S.cgy-=dr}}
-  S.lgy=gy;S.lgx=x;S.lgz=z;S.lgS=SC}}
+  S.lgy=gy;S.lgx=x;S.lgz=z;S.lgS=SC;S.pfy=gy+S.jh}}
 function jumpPhys(){
  const hs=supportH();S.hs=hs;
  if(S.jv===0&&S.jh<=hs+.02){S.jh=hs;S.jair=0;S.jfall=0;return}                 // parado no chão ou em cima de uma pedra
@@ -8346,12 +8346,12 @@ function free3(x,z){if(SC.free)return SC.free(x,z);PRB.ox=-1e7;PRB.oz=-1e7;PRB.x
 //  · em cima de algo bloqueado (caiu numa cerca, está no morro): pode sair andando reto ou descendo, sem subir sem pular
 const JCLR=9,JTHK=30;
 function jumpOver(ox,oz,tx,tz,dx,dz){
- const gO=floorAt(ox,oz),feet=gO+S.jh;
+ const gO=floorP(ox,oz),feet=gO+S.jh;
  if(SC.lowAt){const L=SC.lowAt(tx,tz,14);if(L&&feet>=L.top-2.5)return true}
  if(SC.tallAt&&SC.tallAt(tx,tz))return false;
  const bd=SC.bound;if(bd&&!bd(tx,tz))return false;
- const gT=floorAt(tx,tz);if(gT>feet+.6)return false;
- if(S.jair>=JCLR){const L=hypot(dx,dz)||1,ux=dx/L,uz=dz/L;for(let d=2;d<=JTHK;d+=2){const x=tx+ux*d,z=tz+uz*d;if(free3(x,z))return floorAt(x,z)<=feet+4}}
+ const gT=floorP(tx,tz);if(gT>feet+.6)return false;
+ if(S.jair>=JCLR){const L=hypot(dx,dz)||1,ux=dx/L,uz=dz/L;for(let d=2;d<=JTHK;d+=2){const x=tx+ux*d,z=tz+uz*d;if(free3(x,z))return floorP(x,z)<=feet+4}}
  if(!free3(ox,oz)&&gT<=feet+(S.jair>0?.6:1.2)){const L=hypot(dx,dz)||1,ux=dx/L,uz=dz/L;for(let d=0;d<=60;d+=3)if(free3(tx+ux*d,tz+uz*d))return true}   // saindo de cima de algo, em direção ao chão livre
  if(!bd)return false;
  if(gT-gO>=3&&feet>=gT-1.5)return true;
@@ -8394,6 +8394,8 @@ tick=function(){
 
 // ============================================================ câmera ============================================================
 function floorAt(x,z){return SC.floorY(x,z)}
+// chão embaixo do JOGADOR: cenas com piso em camadas (SC.floorL) usam a altura dos pés dele (S.pfy) para saber se está em cima ou embaixo
+function floorP(x,z){return SC.floorL?SC.floorL(x,z,S.pfy):SC.floorY(x,z)}
 // ---------- zoom: pinça com dois dedos (celular) e rodinha do mouse (PC) ----------
 // 3ª pessoa: aproxima/afasta a câmera (0,45x a 2,2x) · 1ª pessoa: fecha/abre a lente (zoom de luneta, até 2,5x). Fica salvo no aparelho.
 S.zoom=1;S.zoom1=1;try{const z=JSON.parse(localStorage.getItem('mp_zoom')||'null');if(z){S.zoom=clp(+z[0]||1,.45,2.2);S.zoom1=clp(+z[1]||1,1,2.5)}}catch(e){}
@@ -8405,7 +8407,7 @@ H3.zoomBy=zoomBy;
 const DEG=PI/180;
 function camRaw(){
  if(S.dbg){S.foc={x:S.dbg.x,y:S.dbg.y,z:S.dbg.z};return S.dbg}                 // câmera fixa (só para testes)
- const x=P.x+8-SC.OX,z=(P.y+14-SC.OY)*SC.K,gy=floorAt(x,z),jh=S.jh;S.px=x;S.pz=z;
+ const x=P.x+8-SC.OX,z=(P.y+14-SC.OY)*SC.K,gy=floorP(x,z),jh=S.jh;S.px=x;S.pz=z;
  const kick=S.punchT&&Date.now()-S.punchT<200?sin((Date.now()-S.punchT)/200*PI)*.025:0,
   land=S.land&&Date.now()-S.land<260?sin((Date.now()-S.land)/260*PI)*1.6*(S.landK||1):0;      // a câmera afunda um pouco ao cair do pulo
  if(S.mode===1){const bob=0;S.step=P.step;   // sem balanço de câmera ao andar
@@ -8474,7 +8476,7 @@ function remJump(q){const o={h:+q.hh||0,air:0,v:0};if(!q.jt)return o;const n=(Da
 function prep(m){const q=m.q;if(!q||q.x===undefined)return null;
  const x=q.x+8-SC.OX,z=(q.y+14-SC.OY)*SC.K,dk=m.dk||'dir',d0=q[dk],A={m,q,k:m.k,x,z,y:floorAt(x,z),h3d:m.nm===NM3||m.nm==='Herobrine',m3:!!(window.HM3&&m.k&&m.k.charAt(0)==='E'&&HM3.own(q)),dk,px:q.x,py:q.y,d0};
  let fx0,fz0;const kind=m.k.charAt(0);
- if(kind==='P'){fx0=sin(S.yaw);fz0=-cos(S.yaw);A.y+=S.jh;A.jh=S.jair;A.jv=S.jv}
+ if(kind==='P'){fx0=sin(S.yaw);fz0=-cos(S.yaw);A.y=floorP(x,z)+S.jh;A.jh=S.jair;A.jv=S.jv}
  else if((kind==='F'&&fight)||(kind==='R'&&q.rfe)){const dx=SC.fx-x,dz=SC.fz-z,l=hypot(dx,dz)||1;fx0=dx/l;fz0=dz/l}
  else if(kind==='F'||kind==='R'||kind==='B'){
   {// igual ao jogador (segue o joystick, não a câmera): olha para onde está andando; parado, continua virado para onde parou
@@ -25798,7 +25800,7 @@ const _t=tick;tick=function(){_t();if(world!==1)return;const e=drac();if(!e||e.d
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261112004201;
+const GAME_BUILD=20261112005926;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
@@ -28014,8 +28016,8 @@ function islandH3(I,x,z){const d=islD(I,x,z);if(d>1.5)return null;
 I3.hf=islandH3;
 const near3=(x,z)=>abs(x-C3.x)<800&&abs(z-C3.z)<800;
 // chão de construções por cima da água: a ponte (rampa do cais até o convés) e o convés do navio
-function structF(x,z){
- {const e=exeF(x,z);if(e>-99)return e}
+function structF(x,z,nx){
+ if(!nx){const e=exeF(x,z);if(e>-99)return e}
  if(abs(x-BR3.x)<BR3.hw+.5&&z>BR3.z0&&z<BR3.z1)return z<=QZ?TOWNH+.6:lerp(TOWNH+.6,SHD,clp((z-QZ)/(BR3.zs-QZ),0,1));
  const u=(x-SH.x)/SH.L2;if(u>=-1&&u<=1&&abs(z-SH.z)<=shipHW(u)+1)return SHD;
  {const lx=x-S4.x,lz=z-S4.z;if(lx>-910&&lx<620&&abs(lz)<400)return f4(lx,lz)}
@@ -28128,7 +28130,12 @@ function baseH0(x,z){let h=WL-44;for(const I of ISL)if(I.on){const dx=x-I.x,dz=z
 const PIERS=[[PIER,PIERT],[PIER2,PIERT2],[PIER6,PIERT6]];
 const onPier=(x,z)=>{for(const[A,B]of PIERS)if((abs(x-A.x)<A.hw&&z>A.z0&&z<A.z1)||(abs(z-B.z)<B.hw&&x>B.x0&&x<B.x1))return true;return false};
 const BSC=1.7,DECK=5.2;                                // tamanho do barco e altura do convés (acima da água, projeto)
-function floorD(x,z){if(onPier(x,z))return PIER.y+.6;const s=structF(x,z);if(s>-99)return s;const h=baseH(x,z);if(h<WL-2.5)return WL+DECK;return h}
+function floorD(x,z,nx){if(onPier(x,z))return PIER.y+.6;const s=structF(x,z,nx);if(s>-99)return s;const h=baseH(x,z);if(h<WL-2.5)return WL+DECK;return h}
+// chão em camadas: quem está bem abaixo do deck / da escada da plataforma de execução (passando por baixo dela) pisa no chão de baixo, não lá em cima
+// o corrimão da escada da plataforma só bloqueia lá em cima: quem passa por baixo da escada atravessa a linha dele (menos nos pilares)
+const underRail=(x,z)=>{const X=x/K,Z=z/K;if(!(X>EXE.s0+4&&X<EXE.s1&&abs(abs(Z-EXE.z)-(EXE.sw+1.5))<=3.4))return false;const ys=lerp(T6H+EXE.h,T6H,(X-EXE.s0)/(EXE.s1-EXE.s0)),pf=H3.S&&H3.S.pfy;if(pf===undefined||pf>(ys-12)*K)return false;
+ for(let i=1;i<4;i++)if(abs(X-lerp(EXE.s0,EXE.s1,i/4))<3.5)return false;return true};
+const floorWL=(x,z,y)=>{if(y===undefined)return floorD(x/K,z/K)*K;const e=exeF(x/K,z/K);return(e>-99&&y<(e-5)*K)?floorD(x/K,z/K,1)*K:floorD(x/K,z/K)*K};
 const isBoat=(x,z)=>!onPier(x,z)&&structF(x,z)<-99&&baseH(x,z)<WL-2.5;
 let LOCAL=false;
 const floorY=(x,z)=>LOCAL?0:floorD(x,z);
@@ -29778,13 +29785,14 @@ SCN.ocean={id:'ocean',K:1,OX:0,OY:0,eye:25,camD:92,p3:-.18,pl:[[-.95,.85],[-1.0,
  free:()=>freeAll(),
  env:()=>{H3.env({fog:[.8,.86,.9,.00032],ambT:[1.1,1.08,1.02],ambB:[.6,.62,.58],sun:SUN,sunC:SUNC,skyA:SKYA,skyB:SKYB,gndA:GNDA,wind:[1.4,.6],gscale:[1/WW,1/WH],detk:.48,lmk:0,fogOff:0,trs:0,detkL:0,moonL:[0,0,0]});try{if(H3.fogOff)H3.fogOff(0);if(H3.tex)H3.tex.lm=null}catch(e){}},
  floorY:(x,z)=>floorW(x,z),
+ floorL:(x,z,y)=>floorWL(x,z,y),
  // no barco anda BOOST vezes mais rápido; cais, casas, cercas e borda do mapa bloqueiam
  step:o=>{if(CB.st===1){o.x=o.ox;o.z=o.oz;return}   // Calm Belt: o barco parou de vez
   if(isBoat(o.ox/K,o.oz/K)||isBoat(o.x/K,o.z/K)){const k=BOOST*(1-.7*calm01(o.ox/K));o.x=o.ox+(o.x-o.ox)*k;o.z=o.oz+(o.z-o.oz)*k}   // no Calm Belt o vento some: o barco vai parando
-  const ok=(x,z)=>!blocked(x,z);if(ok(o.x,o.z))return;if(ok(o.x,o.oz)){o.z=o.oz;return}if(ok(o.ox,o.z)){o.x=o.ox;return}o.x=o.ox;o.z=o.oz},
- bound:(x,z)=>x>8&&z>8&&x<WW-8&&z<WH-8,free:(x,z)=>!blocked(x,z),
+  const ok=(x,z)=>!blocked(x,z)||underRail(x,z);if(ok(o.x,o.z))return;if(ok(o.x,o.oz)){o.z=o.oz;return}if(ok(o.ox,o.z)){o.x=o.ox;return}o.x=o.ox;o.z=o.oz},
+ bound:(x,z)=>x>8&&z>8&&x<WW-8&&z<WH-8,free:(x,z)=>!blocked(x,z)||underRail(x,z),
  camOk:pz=>(x,z)=>x>8&&z>8&&x<WW-8&&z<WH-8,camSolid:(x,z)=>blocked(x,z),
- camY:(cy,cz,cx)=>max(cy,floorW(cx===undefined?WW/2:cx,cz)+6),
+ camY:(cy,cz,cx)=>{if(cx===undefined)cx=WW/2;const pf=H3.S&&H3.S.pfy,g=floorWL(cx,cz,pf);let y=max(cy,g+6);const e=exeF(cx/K,cz/K);if(pf!==undefined&&e>-99&&pf<(e-5)*K)y=max(g+3,min(y,(e-4)*K));return y},   // embaixo da escada / do deck a câmera fica embaixo também
  enter(){shKey='';ENV4=0;FOGK=-1;CB.st=0;CB.inW=false;LAND=null;cbWarn(false);cbFade(0);if(typeof P!=='undefined'&&P&&OCW.ready)grassStep({x:P.x+8,z:P.y+14},60,120);PB.lx=P.x+8;PB.lz=P.y+14},leave(){grassClear();shKey='';if(CB.st===1&&CB.cam)H3.S.dbg=null;CB.st=0;CB.inW=false;cbWarn(false);cbFade(0);try{H3.shadowCfg({D:0})}catch(e){}try{if(H3.gfx&&H3.gfx.apply)H3.gfx.apply()}catch(e){}},clear(){},
  boss:()=>null,isTgt:e=>!!e,tgt:e=>e?[e.x+8,floorW(e.x+8,e.y+14)+16,e.y+14,30,floorW(e.x+8,e.y+14)]:null,bossPlan:()=>null,
  flicker:()=>{},draw,sprites,frameFx,shadow,shake:()=>null,flash:()=>0,fbPos:id=>id==='spinBtn'?[OSTW.x,(OSTM?OSTM.y:floorW(OSTW.x,OSTW.z))+42,OSTW.z]:null};   // botão Roletar flutuando em cima da estrela
