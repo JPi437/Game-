@@ -6606,6 +6606,7 @@ class MB{
  build(gl){return H3.upload(gl,this.pack())}
 }
 H3.MB=MB;
+
 // sombra nos cantos (feita uma vez, ao montar a cena): paredes, troncos e pedras ficam mais escuros perto da base. A "base" de cada pedaço de 12 x 12 é o
 // ponto mais baixo da própria malha ali; só escurece faces de lado ou para baixo (o chão e os topos não mudam), nunca folhas que balançam nem o que brilha.
 H3.aoBake=function(A,n,pk){const CS=12,mp=new Map();let y0=1e9,y1=-1e9;const key=(x,z)=>Math.floor(x/CS)*100003+Math.floor(z/CS);
@@ -8284,10 +8285,11 @@ function startLoad(sc,m){
  if(H3.isLost&&H3.isLost()){toastS('Os gráficos 3D estão indisponíveis agora. Tente de novo em instantes.');return}
  if(!H3.gl()&&!H3.init(glc)){S.dead=true;toastS('Este aparelho não consegue mostrar o modo 3D (WebGL).');if(btn)btn.style.display='none';return}
  try{if(!S.built){H3.makeTex();MOD.init();FX.init();S.built=true}}catch(e){console.error('H3',e);S.dead=true;return}
- S.ld={sc,m};toastS('Montando o mundo em 3D…');const b=btn&&btn.querySelector('b');
+ S.ld={sc,m,t0:performance.now()};toastS('Montando o mundo em 3D…');const b=btn&&btn.querySelector('b');
  const run=()=>{const L=S.ld;if(!L)return;
   if(sceneNow()!==L.sc||!L.sc.active()||S.mode){S.ld=null;if(b)b.textContent=LABEL[S.mode];return}
   let done=false;try{done=L.sc.stepBuild((LDS&&LDS.style.display==='flex')||$$('bootLd')?60:9)}catch(e){console.error('H3',e);S.ld=null;S.dead=true;if(b)b.textContent=LABEL[S.mode];return}
+  if(done)H3.lastLoad={id:L.sc.id,ms:Math.round(performance.now()-L.t0),t:Date.now()};   // tempo da última montagem (medidor de desempenho)
   if(b)b.textContent=Math.round(clp(L.sc.progress(),0,1)*100)+'%';
   if(done){S.ld=null;if(b)b.textContent=LABEL[S.mode];
    if(!L.sc.built()){toastS('Não foi possível montar o 3D do mundo neste aparelho.');return}
@@ -15402,7 +15404,29 @@ NAR3.info={tris:D.ni/3,verts:D.n,bones:NB,height:HEIGHT};NAR3.dbg=()=>({BM:Array
 
 </script>
 <script>
-</script><script src="dados3d/personagens-8c08713c.js"></script><script>window.CH3_DATA||document.write('<script src="https://jpi437.github.io/Game-/dados3d/personagens-8c08713c.js?r='+Date.now()+'"><\/script>')</script><script src="dados3d/mundo1-44d78ef0.js"></script><script>(window.CH3_DATA&&window.CH3_DATA.Kaneki)||document.write('<script src="https://jpi437.github.io/Game-/dados3d/mundo1-44d78ef0.js?r='+Date.now()+'"><\/script>')</script><script src="dados3d/halloween3d-43c77835.js"></script><script>(window.CH3_DATA&&window.CH3_DATA.Ghostface)||document.write('<script src="https://jpi437.github.io/Game-/dados3d/halloween3d-43c77835.js?r='+Date.now()+'"><\/script>')</script><script src="dados3d/halloween3d2-2300e3a7.js"></script><script>(window.CH3_DATA&&window.CH3_DATA.Jason)||document.write('<script src="https://jpi437.github.io/Game-/dados3d/halloween3d2-2300e3a7.js?r='+Date.now()+'"><\/script>')</script><script src="dados3d/halloween3d3-ba198132.js"></script><script>(window.CH3_DATA&&window.CH3_DATA.Nemesis)||document.write('<script src="https://jpi437.github.io/Game-/dados3d/halloween3d3-ba198132.js?r='+Date.now()+'"><\/script>')</script><script src="dados3d/ninja-def7bd81.js"></script><script>(window.CH3_DATA&&window.CH3_DATA.Neji)||document.write('<script src="https://jpi437.github.io/Game-/dados3d/ninja-def7bd81.js?r='+Date.now()+'"><\/script>')</script><script src="dados3d/inimigos-db-15829f1e.js"></script><script>(window.CH3_DATA&&window.CH3_DATA['Inimigo Fazendeiro'])||document.write('<script src="https://jpi437.github.io/Game-/dados3d/inimigos-db-15829f1e.js?r='+Date.now()+'"><\/script>')</script><script src="dados3d/inimigos-ninja-24956dd2.js"></script><script>(window.CH3_DATA&&window.CH3_DATA['Inimigo Ninja'])||document.write('<script src="https://jpi437.github.io/Game-/dados3d/inimigos-ninja-24956dd2.js?r='+Date.now()+'"><\/script>')</script><script src="dados3d/objetos3d-2c18ebfb.js"></script><script>window.CH3_PROPS||document.write('<script src="https://jpi437.github.io/Game-/dados3d/objetos3d-2c18ebfb.js?r='+Date.now()+'"><\/script>')</script><script src="dados3d/piratas-3fc6fc50.js"></script><script>(window.CH3_DATA&&window.CH3_DATA.Mihawk)||document.write('<script src="https://jpi437.github.io/Game-/dados3d/piratas-3fc6fc50.js?r='+Date.now()+'"><\/script>')</script><script src="dados3d/inimigos-op-bd07dfb8.js"></script><script>(window.CH3_DATA&&window.CH3_DATA['Inimigo Kuro'])||document.write('<script src="https://jpi437.github.io/Game-/dados3d/inimigos-op-bd07dfb8.js?r='+Date.now()+'"><\/script>')</script><script>
+</script><script>
+// ===================== modelos 3D dos personagens: carregados só quando aparecem =====================
+// Antes o jogo baixava e lia ~65 MB de modelos (todos os personagens e inimigos de todos os mundos) ao abrir. Agora cada um fica num arquivo próprio
+// (dados3d/p/*.js) e só é baixado na primeira vez que precisa: CH3_DATA[nome] pede o arquivo e devolve undefined até ele chegar (o jogo mostra o
+// boneco padrão nesse meio tempo). CH3_META guarda só a altura (usada na montagem dos inimigos). CH3_PRE(lista) já pede antes (ao entrar num mundo).
+(function(){const IDX={"Luffy":["p/luffy-c0ccb378.js",1.0388],"Goku":["p/goku-03d1ed24.js",1.1651],"Gon":["p/gon-cf767515.js",1.1355],"Itadori":["p/itadori-3989d454.js",1.0483],"Yajirobe":["p/yajirobe-36ca1591.js",1.0942],"Yamcha":["p/yamcha-39540ae5.js",1.0713],"Tenshinhan":["p/tenshinhan-05379879.js",0.9008],"Gohan":["p/gohan-3d6068f9.js",1.0456],"Kuririn":["p/kuririn-1954424b.js",0.9179],"Nappa":["p/nappa-178cfaa5.js",0.8926],"Vegeta":["p/vegeta-0f52142b.js",1.1038],"Piccolo":["p/piccolo-54076a86.js",0.9771],"Goku Kaioken":["p/goku-kaioken-405d1384.js",1.0659],"Kaneki":["p/kaneki-25d3752d.js",1.0703],"Meliodas":["p/meliodas-e989525c.js",1.0246],"Baki":["p/baki-db3debf6.js",1.1282],"Jotaro":["p/jotaro-477af005.js",1.1559],"Ichigo":["p/ichigo-ba3bdf3e.js",1.0992],"Ghostface":["p/ghostface-c1e5a077.js",1.1476],"Chara":["p/chara-6b603250.js",1.0254],"Sally":["p/sally-037c0dd0.js",1.0524],"Jeff the Killer":["p/jeff-the-killer-e10896ed.js",1.0837],"Sonic.exe":["p/sonic-exe-0910d69a.js",0.968],"Jason":["p/jason-a88cbe98.js",1.1843],"Nemesis":["p/nemesis-e9a0820b.js",1.3],"Chucky":["p/chucky-d0e4c1e5.js",0.72],"Baldi":["p/baldi-c311b283.js",1.12],"Slender Man":["p/slender-man-1cbbfd81.js",1.45],"Tenten":["p/tenten-d8de6d2d.js",1],"Hinata":["p/hinata-93b25eff.js",1],"Neji":["p/neji-1b3b1e8c.js",1.03],"Sakura":["p/sakura-49578ee2.js",1],"Sasuke":["p/sasuke-ab1c8b8c.js",1.03],"Gaara":["p/gaara-5afe4d42.js",1],"Jiraiya":["p/jiraiya-2fbe4893.js",1.2],"Kakashi":["p/kakashi-d6fa96c9.js",1.14],"Naruto 1 Cauda":["p/naruto-1-cauda-13828e70.js",1.02],"Inimigo Fazendeiro":["p/inimigo-fazendeiro-94812b33.js",1.05],"Inimigo Saibaman":["p/inimigo-saibaman-0a90a5b8.js",0.95],"Inimigo Raditz":["p/inimigo-raditz-63db4c99.js",1.2],"Inimigo Nappa":["p/inimigo-nappa-4d374ac1.js",1.32],"Inimigo Vegeta":["p/inimigo-vegeta-53126c89.js",1.05],"Inimigo Ozaru":["p/inimigo-ozaru-0257a6a7.js",8.13],"Inimigo Ninja":["p/inimigo-ninja-6e0cf9d4.js",1],"Inimigo Ninja 2":["p/inimigo-ninja-2-dd2184b7.js",1],"Inimigo Ninja Shuriken":["p/inimigo-ninja-shuriken-4f2d3e51.js",1.03],"Inimigo Ninja do Som":["p/inimigo-ninja-do-som-ff361114.js",1.05],"Inimigo Zabuza":["p/inimigo-zabuza-11848ae7.js",1.25],"Inimigo Cobra":["p/inimigo-cobra-41c5e9cd.js",1.2],"Inimigo Marca da Maldicao":["p/inimigo-marca-da-maldicao-abd3c247.js",2.5177],"Usopp":["p/usopp-45788f62.js",1.04],"Coby":["p/coby-a99bdbd1.js",0.95],"Buggy":["p/buggy-e81475b1.js",1.08],"Morgan":["p/morgan-f2a4f532.js",1.3],"Zoro":["p/zoro-e705eb4c.js",1.08],"Sanji":["p/sanji-27da13b2.js",1.1],"Smoker":["p/smoker-09fc0100.js",1.2],"Arlong":["p/arlong-cc76e469.js",1.3],"Mihawk":["p/mihawk-55e2ae45.js",1.15],"Inimigo Alvida":["p/inimigo-alvida-b528c163.js",1.2487],"Inimigo Marinheiro":["p/inimigo-marinheiro-53946181.js",1.05],"Inimigo Marinheiro 2":["p/inimigo-marinheiro-2-a75cf24f.js",1.12],"Inimigo Mohji":["p/inimigo-mohji-8692ad39.js",1.0799],"Inimigo Cabaji":["p/inimigo-cabaji-084584f7.js",1.12],"Inimigo Homem-Peixe":["p/inimigo-homem-peixe-14fd0c97.js",1.15],"Inimigo Kuroobi":["p/inimigo-kuroobi-2183e327.js",1.25],"Inimigo Sham":["p/inimigo-sham-c15e2edb.js",1.05],"Inimigo Buchi":["p/inimigo-buchi-cf1b1b85.js",1.22],"Inimigo Jango":["p/inimigo-jango-30df2795.js",1.15],"Inimigo Kuro":["p/inimigo-kuro-a8dbda03.js",1.2]};
+ const D={},ST={},DER={},META={},WAIT={};for(const k in IDX)META[k]={h:IDX[k][1]};window.CH3_META=META;
+ const REM='https://jpi437.github.io/Game-/dados3d/';
+ function load(n){if(ST[n]||!IDX[n])return;ST[n]=1;const add=(src,last)=>{const s=document.createElement('script');s.async=true;s.src=src;s.onerror=()=>{s.remove();if(!last)add(REM+IDX[n][0]+'?r='+Date.now(),true);else{ST[n]=0}};document.head.appendChild(s)};add('dados3d/'+IDX[n][0],false)}
+ window.CH3L=(n,d)=>{D[n]=d;ST[n]=2;const w=WAIT[n];if(w){delete WAIT[n];for(const f of w)try{f(d)}catch(e){console.error(e)}}};
+ // cópias derivadas (ex.: chefe com o modelo de um personagem em outra escala): feitas quando o original chega
+ window.CH3_DERIVE=(n,src,f,h)=>{DER[n]={src,f};META[n]={h:h!==undefined?h:(META[src]&&META[src].h)}};
+ const get=n=>{if(n in D)return D[n];const dv=DER[n];if(dv){const sd=get(dv.src);if(sd){D[n]=dv.f(sd);return D[n]}return undefined}if(IDX[n])load(n);return undefined};
+ window.CH3_PRE=L=>{for(const n of L){const dv=DER[n];if(dv)load(dv.src);else load(n)}};
+ window.CH3_READY=n=>{const dv=DER[n];return !!(D[n]||(dv&&D[dv.src]))};
+ // ao entrar num mundo já pede os inimigos de lá (e no começo, os do mundo atual)
+ window.CH3_WORLD={"4":["Inimigo Fazendeiro","Inimigo Saibaman","Inimigo Raditz","Inimigo Nappa","Inimigo Vegeta","Inimigo Ozaru"],"5":["Inimigo Ninja","Inimigo Ninja 2","Inimigo Ninja Shuriken","Inimigo Ninja do Som","Inimigo Zabuza","Inimigo Cobra","Inimigo Marca da Maldicao"],"6":["Inimigo Alvida","Inimigo Marinheiro","Inimigo Marinheiro 2","Inimigo Mohji","Inimigo Cabaji","Inimigo Homem-Peixe","Inimigo Kuroobi","Inimigo Sham","Inimigo Buchi","Inimigo Jango","Inimigo Kuro","Inimigo Morgan","Inimigo Buggy","Inimigo Arlong"]};
+ const pre=n=>{try{CH3_PRE(CH3_WORLD[n]||[])}catch(e){}};
+ if(typeof goWorld==='function'){const g=goWorld;goWorld=function(n){const r=g.apply(this,arguments);pre(n);return r}}
+ setTimeout(()=>{if(typeof world!=='undefined')pre(world)},1500);
+ window.CH3_DATA=new Proxy(D,{get:(t,k)=>typeof k==='string'?get(k):t[k],has:(t,k)=>k in t||k in IDX||k in DER,set:(t,k,v)=>{t[k]=v;return true}});
+})();
+</script><script src="dados3d/objetos3d-2c18ebfb.js"></script><script>window.CH3_PROPS||document.write('<script src="https://jpi437.github.io/Game-/dados3d/objetos3d-2c18ebfb.js?r='+Date.now()+'"><\/script>')</script><script src="dados3d/objetos3d-op-2f38a37e.js"></script><script>(window.CH3_PROPS&&window.CH3_PROPS.opYoru)||document.write('<script src="https://jpi437.github.io/Game-/dados3d/objetos3d-op-2f38a37e.js?r='+Date.now()+'"><\/script>')</script><script>
 // ===================== Goku, Luffy, Gon e Itadori em 3D (modelos de 18 mil triângulos, esqueleto do personagem do jogador) =====================
 // Mundo 1 também: Kaneki, Meliodas, Baki, Jotaro e Ichigo (dados3d/mundo1-*.js), e do Halloween: Ghostface, Chara e Sally (dados3d/halloween3d-*.js), Jeff the Killer, Sonic.exe e Jason (dados3d/halloween3d2-*.js), Nemesis, Chucky, Baldi e Slender Man (dados3d/halloween3d3-*.js). Esses trazem o esqueleto encaixado no próprio corpo
 // (D.rt = posição das juntas, D.ibm = pose de encaixe, D.ps = escala da altura do quadril) com as mesmas animações (parado, andar, correr e socos).
@@ -17042,7 +17066,8 @@ CH3.draw=function(list,lightAt,SC,t){
  gl.useProgram(G.p);gl.uniform1i(u.uTex,0);gl.uniform1f(u.uCut,-1e9);try{texTx(gl)}catch(e){}
  for(let i=0;i<5;i++)gl.enableVertexAttribArray(i);
  gl.uniformMatrix4fv(u.uVP,false,VP);gl.uniform3f(u.uCam,cam[0],cam[1],cam[2]);gl.uniform4fv(u.uFog,fog);gl.uniform1f(u.uFO,FO);gl.uniform3fv(u.uMD,MD);
- for(const A of L){const M=model(gl,A.m.nm);if(!M.tex)continue;const D=M.D,q=A.q,s=state(q,A);let dt=(now-s.last)/1000;s.last=now;if(!(dt>0))dt=.016;dt=min(dt,.1);
+ for(const A of L){if(!DD[A.m.nm])continue;const M=model(gl,A.m.nm);if(!M.tex)continue;   // modelo ainda chegando (dados3d/p): pula este quadro
+ const D=M.D,q=A.q,s=state(q,A);let dt=(now-s.last)/1000;s.last=now;if(!(dt>0))dt=.016;dt=min(dt,.1);
   lightAt(A.x,A.y+12,A.z,LT);if(SC&&SC.shadeAt)SC.shadeAt(A.x,A.y,A.z,LT);
   const r=place(A,s,dt,t,SC),h=max(0,r.h),sk=max(.45,1-h/60);
   if(!r.hide&&!A.noBlob&&H3.flat&&H3.tex&&H3.tex.blob){const bw=(A.blob||30)*sk;H3.flat(H3.tex.blob,r.x,A.y+.25,r.z,bw,bw,null,[1,1,1,.85*sk],false)}
@@ -25803,7 +25828,7 @@ const _t=tick;tick=function(){_t();if(world!==1)return;const e=drac();if(!e||e.d
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261112015919;
+const GAME_BUILD=20261112031048;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
@@ -26842,7 +26867,7 @@ DINO3.dbg={G,st,POS,DEF};
 (function(){
 'use strict';
 const H3=window.H3,CD=window.CH3_DATA;
-if(!H3||!H3.M4||!H3.scenes||!H3.scenes.db||typeof WD==='undefined'||!WD[4]||!CD||!CD['Inimigo Fazendeiro']){console.warn('DBE3: faltam módulos do 3D ou os dados dos inimigos');return}
+if(!H3||!H3.M4||!H3.scenes||!H3.scenes.db||typeof WD==='undefined'||!WD[4]||!CD||!('Inimigo Fazendeiro' in CD)){console.warn('DBE3: faltam módulos do 3D ou os dados dos inimigos');return}
 const SC=H3.scenes.db,DBW=window.DBW;
 const PI=Math.PI,TAU=PI*2,sin=Math.sin,cos=Math.cos,abs=Math.abs,min=Math.min,max=Math.max,hypot=Math.hypot,atan2=Math.atan2;
 const clp=(v,a,b)=>v<a?a:v>b?b:v,lerp=(a,b,t)=>a+(b-a)*t,sm=v=>{v=clp(v,0,1);return v*v*(3-2*v)};
@@ -27712,7 +27737,7 @@ const FLD=H3.fld;
 (function(){
 'use strict';
 const H3=window.H3,CD=window.CH3_DATA,NJW=window.NJW;
-if(!H3||!H3.scenes||!H3.scenes.ninja||!NJW||typeof WD==='undefined'||!WD[NJW.WID]||!CD||!CD['Inimigo Ninja']){console.warn('NJE3: faltam módulos do 3D ou os dados dos inimigos ninja');return}
+if(!H3||!H3.scenes||!H3.scenes.ninja||!NJW||typeof WD==='undefined'||!WD[NJW.WID]||!CD||!('Inimigo Ninja' in CD)){console.warn('NJE3: faltam módulos do 3D ou os dados dos inimigos ninja');return}
 const SC=H3.scenes.ninja,WID=NJW.WID;
 const PI=Math.PI,TAU=PI*2,sin=Math.sin,cos=Math.cos,abs=Math.abs,min=Math.min,max=Math.max,hypot=Math.hypot,atan2=Math.atan2,rnd=Math.random;
 const clp=(v,a,b)=>v<a?a:v>b?b:v,lerp=(a,b,t)=>a+(b-a)*t,sm=v=>{v=clp(v,0,1);return v*v*(3-2*v)};
@@ -27726,7 +27751,7 @@ const TYP={
  zab:{nm:'Inimigo Zabuza',H:37,n:3,ar:'t',wd:40,t:1,mb:1,s:2.6,vh:41,max:2500000,coin:[1170,1670],r:13,orb:32,eng:60,rsp:45000,atk:'agua'},
  cob:{nm:'Inimigo Cobra',H:35,n:2,ar:'h',wd:40,t:1,mb:1,s:2.4,vh:39,max:8350000,coin:[3340,5000],r:12,orb:32,eng:60,rsp:90000,atk:'cobra'},
  mal:{nm:'Inimigo Marca da Maldicao',H:71,n:1,ar:'w',wd:0,t:2,s:5,vh:76,max:33400000,coin:[16700,25000],r:24,orb:50,eng:80,rsp:300000,atk:'maldicao',big:1}};
-for(const k in TYP){const D=CD[TYP[k].nm];if(D&&D.h)TYP[k].H=Math.round(D.h*28/0.9489)}   // altura de verdade do modelo
+for(const k in TYP){const D=window.CH3_META&&CH3_META[TYP[k].nm]||CD[TYP[k].nm];if(D&&D.h)TYP[k].H=Math.round(D.h*28/0.9489)}   // altura de verdade do modelo
 // ---------- lugares (sorteio com semente fixa; quando o mapa fica pronto, quem caiu em cima de algo vai para o lugar livre mais perto) ----------
 function rng(s){s=s>>>0;return()=>{s=(s+0x6D2B79F5)>>>0;let t=s;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296}}
 const K=NJW.K||2,SP=NJW.SPAWN,BK=NJW.BACK;
@@ -29868,7 +29893,7 @@ const FLD=H3.fld;
 (function(){
 'use strict';
 const H3=window.H3,CD=window.CH3_DATA,OCW=window.OCW;
-if(!H3||!H3.scenes||!H3.scenes.ocean||!OCW||!OCW.spots||typeof WD==='undefined'||!WD[OCW.WID]||!CD||!CD['Inimigo Marinheiro']){console.warn('OPE3: faltam módulos do 3D ou os dados dos inimigos piratas');return}
+if(!H3||!H3.scenes||!H3.scenes.ocean||!OCW||!OCW.spots||typeof WD==='undefined'||!WD[OCW.WID]||!CD||!('Inimigo Marinheiro' in CD)){console.warn('OPE3: faltam módulos do 3D ou os dados dos inimigos piratas');return}
 const SC=H3.scenes.ocean,WID=OCW.WID,K=OCW.K,S=OCW.spots;
 const PI=Math.PI,TAU=PI*2,sin=Math.sin,cos=Math.cos,abs=Math.abs,min=Math.min,max=Math.max,hypot=Math.hypot,atan2=Math.atan2;
 const clp=(v,a,b)=>v<a?a:v>b?b:v,sm=v=>{v=clp(v,0,1);return v*v*(3-2*v)};
@@ -29876,7 +29901,7 @@ const OPE3=window.OPE3={on:false,list:[]};
 // chefes com o modelo do personagem da roleta (cópia em escala: malha, juntas e pose de encaixe)
 function scaled(D,k){const o=Object.assign({},D);o.h=D.h*k;o.min=D.min.map(v=>v*k);o.size=D.size.map(v=>v*k);o.rt=D.rt.map(v=>v.map(a=>a*k));o.ps=D.ps.map(v=>v*k);
  const ib=D.ibm.slice();for(let b=0;b<ib.length/16;b++)for(let c=12;c<15;c++)ib[b*16+c]*=k;o.ibm=ib;delete o._ibm;return o}
-for(const[nm,src,k]of[['Inimigo Morgan','Morgan',2],['Inimigo Buggy','Buggy',1],['Inimigo Arlong','Arlong',1]])if(!CD[nm]&&CD[src])CD[nm]=scaled(CD[src],k);
+for(const[nm,src,k]of[['Inimigo Morgan','Morgan',2],['Inimigo Buggy','Buggy',1],['Inimigo Arlong','Arlong',1]])if(window.CH3_DERIVE){if(!(nm in CD)&&(src in CD))CH3_DERIVE(nm,src,d=>scaled(d,k),CH3_META[src]&&CH3_META[src].h*k)}else if(!CD[nm]&&CD[src])CD[nm]=scaled(CD[src],k);   // a cópia em escala é feita quando o modelo original chega
 // tipos: n = quantos · ar = onde · wd = raio do passeio · t: 0 normal, 1 forte, 2 chefe · mb = mini/semi-chefe
 const TYP={
  alv:{nm:'Inimigo Alvida',n:1,ar:'alv',wd:30,t:2,s:3,max:6000000,coin:[4000,6000],r:16,orb:36,eng:70,rsp:300000,big:1},
@@ -29893,7 +29918,7 @@ const TYP={
  buc:{nm:'Inimigo Buchi',n:10,ar:'i6',wd:50,t:0,s:2.4,max:900000,coin:[350,540],r:13,orb:30,eng:50,rsp:15000},
  jan:{nm:'Inimigo Jango',n:2,ar:'praca',wd:40,t:1,mb:1,s:2.4,max:10000000,coin:[5000,7500],r:12,orb:30,eng:55,rsp:45000},
  kur:{nm:'Inimigo Kuro',n:1,ar:'kur',wd:0,t:2,s:3,max:56000000,coin:[27000,40000],r:14,orb:36,eng:70,rsp:300000,big:1}};
-for(const k in TYP){const T=TYP[k],D=CD[T.nm];T.H=Math.round((D&&D.h||1.1)*28/0.9489);T.vh=T.H+3;if(!D)T.n=0}
+for(const k in TYP){const T=TYP[k],D=window.CH3_META&&CH3_META[T.nm]||CD[T.nm];T.H=Math.round((D&&D.h||1.1)*28/0.9489);T.vh=T.H+3;if(!D)T.n=0}
 // ---------- lugares (projeto; sorteio com semente fixa; quando o mapa fica pronto, quem caiu em cima de algo vai para o lugar livre mais perto) ----------
 function rng(s){s=s>>>0;return()=>{s=(s+0x6D2B79F5)>>>0;let t=s;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296}}
 const I=S.ISL,B=S.BASE,SH=S.SH,C3=S.C3,C6=S.C6;
@@ -30238,15 +30263,19 @@ const now=()=>performance.now();
 
 // ============================================================ opções ============================================================
 const KEYS=['aa','det','amb','fx','cin','res','lux'];
-const PRE=[   // Baixo · Médio · Alto · Ultra (sh/il/veg/pp são as opções antigas)
+const PRE=[   // Desempenho · Baixo · Médio · Alto · Ultra (sh/il/veg/pp são as opções antigas)
+ {sh:0,il:0,veg:1,pp:0,aa:0,det:0,amb:0,fx:1,cin:0,res:0,lux:0},   // Desempenho: o mais leve possível (sem sombras, luzes de ponto, efeitos de tela, ambiente e detalhes; resolução menor)
  {sh:0,il:1,veg:1,pp:0,aa:0,det:0,amb:1,fx:1,cin:0,res:0,lux:0},
  {sh:1,il:2,veg:2,pp:1,aa:1,det:1,amb:2,fx:2,cin:1,res:1,lux:1},
  {sh:3,il:3,veg:2,pp:2,aa:1,det:2,amb:3,fx:3,cin:1,res:2,lux:2},
  {sh:4,il:3,veg:3,pp:2,aa:2,det:3,amb:3,fx:3,cin:2,res:3,lux:2}];
-const PREN=['Baixo','Médio','Alto','Ultra'];
+const PREN=['Desempenho','Baixo','Médio','Alto','Ultra'];
 const MAXV={aa:2,det:3,amb:3,fx:3,cin:2,res:3,lux:2};
 {let X={};try{X=JSON.parse(localStorage.getItem('mp_3dx')||'{}')||{}}catch(e){}
- const d=PRE[mob?1:2];for(const k of KEYS){const v=X[k];G3[k]=(v>=0&&v<=MAXV[k])?v|0:d[k]}}
+ // padrão (quem nunca escolheu): celular fraco (até 4 GB de memória ou até 4 núcleos) começa no Desempenho; outros celulares no Baixo; PC no Médio
+ const weak=mob&&((navigator.deviceMemory&&navigator.deviceMemory<=4)||(navigator.hardwareConcurrency&&navigator.hardwareConcurrency<=4));
+ const d=PRE[weak?0:mob?1:2];if(weak&&!localStorage.getItem('mp_3dx')&&!localStorage.getItem('mp_3d')){G3.sh=d.sh;G3.il=d.il;G3.veg=d.veg;G3.pp=d.pp}
+ for(const k of KEYS){const v=X[k];G3[k]=(v>=0&&v<=MAXV[k])?v|0:d[k]}}
 const saveX=()=>{try{const o={};for(const k of KEYS)o[k]=G3[k];localStorage.setItem('mp_3dx',JSON.stringify(o))}catch(e){}};
 const L4=(a,v)=>a[clp(v|0,0,a.length-1)];
 
@@ -30450,7 +30479,7 @@ function ui(){const sec=document.getElementById('g3Sec');if(!sec||document.getEl
 #g3Pre .g3T{font-weight:900;font-size:13px;margin:0 0 5px 2px;display:flex;justify-content:space-between}#g3Pre .g3T i{font-style:normal;opacity:.75;font-weight:700}
 #g3xSec{margin-top:2px}`;document.head.appendChild(st);
  const pre=document.createElement('div');pre.id='g3Pre';
- pre.innerHTML=`<div class="g3T">Qualidade geral<i></i></div><div class="g3Lv">${PREN.map((n,i)=>`<button data-p="${i}">${n}</button>`).join('')}</div><div class="g3D">Ajusta tudo de uma vez. Baixo é para celular fraco; Ultra é o mais bonito (e o mais pesado).</div>`;
+ pre.innerHTML=`<div class="g3T">Qualidade geral<i></i></div><div class="g3Lv">${PREN.map((n,i)=>`<button data-p="${i}">${n}</button>`).join('')}</div><div class="g3D">Ajusta tudo de uma vez. Desempenho é o mais leve (celular fraco ou para jogar liso); Ultra é o mais bonito (e o mais pesado).</div>`;
  const h=sec.querySelector('h3');if(h&&h.nextSibling)sec.insertBefore(pre,h.nextSibling);else sec.prepend(pre);
  const box=document.createElement('div');box.id='g3xSec';
  box.innerHTML=ROWS.map(([k,l,ns])=>`<div class="g3Row" data-x="${k}"><div class="g3T">${l}<i></i></div><div class="g3Lv">${ns.map((n,i)=>`<button data-l="${i}">${n}</button>`).join('')}</div><div class="g3D"></div></div>`).join('');
@@ -31279,5 +31308,39 @@ window.HQX={get:()=>HQ,set:o=>{HQ=Object.assign(H0(),o);keep();ui()},QL,CRE,spot
 </script>
 <script>
 if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+</script>
+<script>
+// ===================== medidor de desempenho (Configurações → Gráficos 3D → "Medidor de desempenho") =====================
+// Mostra no canto da tela: quadros por segundo (média e o pior momento), tempo de cada quadro, memória usada pelo jogo (quando o aparelho informa)
+// e quanto tempo levou para montar o último mapa. Salvo no aparelho em mp_meter. Desligado não custa nada (o laço nem roda).
+(function(){
+'use strict';
+let on=false;try{on=localStorage.getItem('mp_meter')==='1'}catch(e){}
+const st=document.createElement('style');st.textContent=`#perfM{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 36px);transform:translateX(-50%);z-index:99990;pointer-events:none;
+ font:800 11px/1.25 ui-monospace,Menlo,Consolas,monospace;color:#fff;background:#000000a8;border:1px solid #ffffff30;border-radius:8px;padding:4px 8px;white-space:pre;text-align:center;text-shadow:0 1px 0 #000}
+#perfM b{color:#7dff8a}#perfM b.m{color:#ffd23f}#perfM b.r{color:#ff6b6b}
+#g3Pre .g3Lv button{font-size:10.5px}`;document.head.appendChild(st);
+let el=null,raf=0,last=0,acc=0,n=0,worst=0,shown=0;const FT=[];
+const col=f=>f>=50?'':f>=30?' class="m"':' class="r"';
+function loop(t){raf=requestAnimationFrame(loop);if(last){const d=t-last;if(d<1000){acc+=d;n++;FT.push(d);if(FT.length>120)FT.shift();if(d>worst)worst=d}}last=t;
+ if(t-shown<500)return;shown=t;if(!n)return;const fps=1000*n/acc,srt=FT.slice().sort((a,b)=>b-a),p1=srt[Math.min(srt.length-1,Math.floor(srt.length*.02))]||0,low=p1?1000/p1:0;
+ let mem='';try{const m=performance.memory;if(m)mem=' · mem '+Math.round(m.usedJSHeapSize/1048576)+' MB'}catch(e){}
+ let ld='';try{const L=window.H3&&H3.lastLoad;if(L)ld='\nmapa '+(L.id||'')+': '+(L.ms/1000).toFixed(1)+' s'}catch(e){}
+ let q='';try{const G=window.H3&&H3.G3;if(G&&H3.getQ)q=' · res '+Math.round(H3.getQ()*100)+'%'}catch(e){}
+ el.innerHTML=`<b${col(fps)}>${Math.round(fps)} fps</b> · pior <b${col(low)}>${Math.round(low)}</b> · ${(acc/n).toFixed(1)} ms${mem}${q}${ld}`;acc=0;n=0;worst=0}
+function set(v){on=!!v;try{localStorage.setItem('mp_meter',on?'1':'0')}catch(e){}
+ if(on){if(!el){el=document.createElement('div');el.id='perfM';document.body.appendChild(el)}el.style.display='block';el.textContent='medindo…';if(!raf){last=0;raf=requestAnimationFrame(loop)}}
+ else{if(raf)cancelAnimationFrame(raf);raf=0;if(el)el.style.display='none'}}
+window.PERFM={set,get:()=>on};
+// a opção entra na seção Gráficos 3D quando ela existir
+function ui(){const sec=document.getElementById('g3Sec');if(!sec||document.getElementById('perfRow'))return;
+ const r=document.createElement('div');r.className='g3Row';r.id='perfRow';
+ r.innerHTML='<div class="g3T">Medidor de desempenho<i></i></div><div class="g3Lv"><button data-v="0">Desligado</button><button data-v="1">Ligado</button></div><div class="g3D">Mostra os quadros por segundo, o pior momento, a memória e quanto tempo levou para montar o mapa. Bom para ver o que deixa o jogo pesado.</div>';
+ const sync=()=>{r.querySelectorAll('button').forEach(b=>b.classList.toggle('on',+b.dataset.v===(on?1:0)));r.querySelector('.g3T i').textContent=on?'Ligado':'Desligado'};
+ r.querySelectorAll('button').forEach(b=>b.onclick=()=>{set(+b.dataset.v===1);sync()});
+ const pre=document.getElementById('g3Pre');if(pre&&pre.nextSibling)sec.insertBefore(r,pre.nextSibling);else sec.appendChild(r);sync()}
+const iv=setInterval(()=>{ui();if(document.getElementById('perfRow'))clearInterval(iv)},1000);
+if(on)set(true);
+})();
 </script>
 </body></html>
