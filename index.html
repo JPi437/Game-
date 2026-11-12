@@ -6946,7 +6946,7 @@ void main(){vec4 t=texture2D(uTex,vT);float nf=vC.a<0.0?1.0:0.0;float a=t.a*abs(
 // Três programas: "out" (árvores, pedras, construções: malhas pk, o byte de brilho leva o balanço do vento e o brilho próprio), "ter" (terreno: cor vem de uma
 // textura do chão + cor de rocha/neve por vértice; a água é desenhada aqui mesmo, com ondas, reflexo do céu e brilho do sol) e "sky" (cúpula do céu com sol e nuvens).
 const NLO=4;let NLO_=NLO;               // luzes de ponto por desenho ao ar livre (menos em aparelho com poucos uniformes)
-const GL_COMMON=`uniform vec3 uCam;uniform vec3 uSun;uniform vec3 uSunC;uniform vec3 uSkyA;uniform vec3 uSkyB;uniform vec3 uGndA;uniform vec4 uFog;uniform float uT;uniform sampler2D uCloud;uniform float uFO;
+const GL_COMMON=`uniform vec3 uCam;uniform vec3 uSun;uniform vec3 uSunC;uniform vec3 uSkyA;uniform vec3 uSkyB;uniform vec3 uGndA;uniform vec4 uFog;uniform float uT;uniform sampler2D uCloud;uniform float uFO;uniform vec4 uRl;
 float cloudSh(vec3 p){float c=texture2D(uCloud,p.xz*0.00085+vec2(uT*0.0045,uT*0.0016)).r;return 1.0-0.46*smoothstep(0.5,0.8,c);}
 vec3 skyAt(vec3 d){float h=clamp(d.y,0.0,1.0);vec3 s=mix(uSkyB,uSkyA,pow(h,0.5));float sd=max(dot(d,uSun),0.0);return s+uSunC*(pow(sd,64.0)*0.5+pow(sd,6.0)*0.1+pow(sd,2.5)*vec3(0.09,0.06,0.025));}
 vec3 waterShade(vec3 base,vec3 p,vec3 V,float cs){
@@ -6958,11 +6958,11 @@ vec3 waterShade(vec3 base,vec3 p,vec3 V,float cs){
  vec3 n=normalize(vec3((a*0.10+c*0.06)*fk+s1*0.045,1.0,(b*0.10+c*0.06)*fk+s2*0.045));
  float fr=0.10+0.90*pow(1.0-max(dot(n,V),0.0),4.0);
  vec3 R=reflect(-V,n);vec3 refl=skyAt(vec3(R.x,abs(R.y)+0.02,R.z));
- float sd=max(dot(R,uSun),0.0);float gl=pow(sd,110.0)*1.8+pow(sd,14.0)*0.14;
+ float sd=max(dot(R,uSun),0.0);float gl=pow(sd,110.0)*1.8+pow(sd,14.0)*0.14;gl+=uRl.x*(pow(sd,110.0)*2.0+pow(sd,30.0)*0.3);   // Gráficos 6: caminho de luz do sol/lua na água
  vec3 lg=mix(uGndA,uSkyA,0.75)+uSunC*(uSun.y*0.8)*cs;
  vec3 col=base*lg*(0.9+0.1*a*b);
  float sp=pow(max(sin(q.x*1.9+t*2.7+a*2.0)*sin(q.y*1.7-t*2.2+b*2.0),0.0),90.0)*smoothstep(0.0,0.3,uSun.y);
- return mix(col,refl,fr*0.72)+uSunC*(gl+sp*fk*fk*(0.12+fr*0.45))*cs;}
+ return mix(col,refl,fr*(0.72+0.2*uRl.x))+uSunC*(gl+sp*fk*fk*(0.12+fr*0.45)*(1.0+uRl.x))*cs;}
 `;
 // sombras do sol (mapa de profundidade visto do sol, em volta do jogador): uSh = [0 desligado · 1 simples · 2 suave (PCF), deslocamento pela normal, início e fim do sumiço]
 const SH_COMMON=`uniform sampler2D uShT;uniform mat4 uSM;uniform vec4 uSh;uniform vec3 uShR;uniform vec3 uFoc;uniform vec4 uCut;
@@ -7037,9 +7037,11 @@ void main(){
   lg+=uSunC*(sunK*cs+trK*uTrS);
   for(int i=0;i<${nl};i++){vec3 d=uL[i].xyz-vP;float d2=dot(d,d);float r=uL[i].w;float a=1.0-d2/(r*r);if(a<=0.0)continue;a*=a;
    float nd=dot(n,d*inversesqrt(d2+0.0001));nd=max(nd*0.62+0.38,0.0);lg+=uLC[i]*(a*nd);}
-  c=col*lg*(1.0-vEm)+col*(vEm*uEG);
+  {vec3 em=col*(vEm*uEG*(1.0+uRl.z));if(uRl.w>0.0){float mxc=max(col.r,max(col.g,col.b));em*=mix(vec3(1.0),vec3(1.16,0.84,0.5),uRl.w*smoothstep(0.3,0.65,min(col.r,min(col.g,col.b))/max(mxc,0.05)));}if(uRl.z>0.0){float me=max(em.r,max(em.g,em.b));if(me>1.2)em*=1.2/me;}   // Gráficos 6: de noite as luzes brancas (lampiões) ficam quentes; o brilho reforçado não estoura para o branco (a cor continua)
+  c=col*lg*(1.0-vEm)+em;}
+  if(uRl.y>0.0){float rm=1.0-max(dot(n,V),0.0);rm*=rm;c+=col*mix(uGndA,uSkyA,0.8)*(rm*rm*uRl.y*(0.35+0.65*cs)*(0.5+0.5*n.y)*(1.0-vEm));}   // Gráficos 6: luz do céu no contorno das formas
   if(uWin.a>0.0){vec3 q=vC*uTint/max(uWin.rgb,vec3(0.01));if(abs(q.r-1.0)<0.12&&abs(q.g-1.0)<0.12&&abs(q.b-1.0)<0.12){float hw=fract(sin(dot(floor(vP.xz*0.07)+floor(vP.y*0.09)*vec2(3.1,1.7),vec2(12.9898,78.233)))*43758.5453);   // de noite as janelas acendem (umas sim, outras não)
-   if(hw>0.3)c+=vec3(1.0,0.76,0.42)*uWin.a*(0.55+0.45*hw);}}
+   if(hw>0.3)c+=mix(vec3(1.0,0.76,0.42),vec3(1.25,0.74,0.24),min(uRl.z,1.0))*uWin.a*(0.55+0.45*hw);}}
   if(uShn>0.5&&uGx.y>0.0&&vShn>0.5&&vEm<0.3&&vSw<0.01){vec3 R=reflect(-V,n),hl=uSunC*pow(max(dot(R,uSun),0.0),48.0)*cs*1.7;   // brilho de metal e vidro: reflexo do céu e das luzes
    for(int i=0;i<${nl};i++){vec3 d=uL[i].xyz-vP;float d2=dot(d,d);float r=uL[i].w;float a=1.0-d2/(r*r*2.5);if(a<=0.0)continue;hl+=uLC[i]*a*pow(max(dot(R,d*inversesqrt(d2+0.0001)),0.0),32.0)*2.0;}
    float fr=0.07+0.93*pow(1.0-max(dot(n,V),0.0),4.0);vec3 env=skyAt(vec3(R.x,abs(R.y)*0.8+0.05,R.z));vec3 tc=mix(vec3(1.0),col/max(max(col.r,max(col.g,col.b)),0.04),0.35);
@@ -7281,6 +7283,88 @@ void main(){vec2 uv=vU;uv=shk_(uv,uSk0);uv=shk_(uv,uSk1);uv=shk_(uv,uSk2);   // 
  if(uCin.x>0.0){float l2=dot(c,vec3(0.299,0.587,0.114));float gn=fract(sin(dot(gl_FragCoord.xy+vec2(uPx.w*61.7,uPx.w*37.3),vec2(12.9898,78.233)))*43758.5453)-0.5;c+=gn*uCin.x*(1.1-l2*0.7);}   // grão de filme
  if(uLx.y>0.0)c+=(fract(52.9829189*fract(dot(gl_FragCoord.xy,vec2(0.06711056,0.00583715))))-0.5)*(uLx.y/255.0);   // Gráficos 4: pontilhado fino (some com as faixas no céu e na névoa)
  gl_FragColor=vec4(clamp(c,0.0,1.0),1.0);}`;
+// Gráficos 6 — composição com profundidade (FS_CMP2), oclusão de ambiente (FS_AO) e máscara do céu para os raios de luz (FS_RMK2). Só entram quando a cena é
+// desenhada numa textura com profundidade (ver SRT, mais abaixo); se o aparelho não compilar algum, fica o caminho de antes.
+const FS_CMP2=`#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;
+#else
+precision mediump float;
+#endif
+varying vec2 vU;uniform sampler2D uTex;uniform sampler2D uBl;uniform sampler2D uDf;uniform sampler2D uRy;uniform float uDofK;uniform float uBk;uniform vec4 uGr;uniform vec3 uWarm;uniform float uVig;uniform float uAsp;uniform vec4 uSun;uniform vec3 uSunC;
+uniform vec4 uPx;uniform vec4 uCin;uniform vec4 uSk0;uniform vec4 uSk1;uniform vec4 uSk2;uniform vec4 uFla;uniform vec3 uLift;uniform vec3 uGain;uniform vec4 uRyC;uniform vec4 uLx;uniform sampler2D uAo;uniform sampler2D uDp;uniform vec4 uDpp;uniform vec4 uFx;uniform vec3 uAoC;
+vec3 nb_;float eg_;
+vec3 fxaa_(vec2 uv){vec2 px=uPx.xy;vec3 L=vec3(0.299,0.587,0.114);
+ vec3 cNW=texture2D(uTex,uv+vec2(-1.0,-1.0)*px).rgb,cNE=texture2D(uTex,uv+vec2(1.0,-1.0)*px).rgb,cSW=texture2D(uTex,uv+vec2(-1.0,1.0)*px).rgb,cSE=texture2D(uTex,uv+vec2(1.0,1.0)*px).rgb,cM=texture2D(uTex,uv).rgb;
+ nb_=(cNW+cNE+cSW+cSE)*0.25;eg_=0.0;
+ float lNW=dot(cNW,L),lNE=dot(cNE,L),lSW=dot(cSW,L),lSE=dot(cSE,L),lM=dot(cM,L);float lMin=min(lM,min(min(lNW,lNE),min(lSW,lSE))),lMax=max(lM,max(max(lNW,lNE),max(lSW,lSE)));
+ if(lMax-lMin<max(0.04,lMax*0.12))return cM;
+ eg_=1.0;
+ vec2 dir=vec2(-((lNW+lNE)-(lSW+lSE)),((lNW+lSW)-(lNE+lSE)));float dr=max((lNW+lNE+lSW+lSE)*0.03125,0.0078125);float rc=1.0/(min(abs(dir.x),abs(dir.y))+dr);dir=clamp(dir*rc,-8.0,8.0)*px;
+ vec3 A=0.5*(texture2D(uTex,uv+dir*(-0.1667)).rgb+texture2D(uTex,uv+dir*0.1667).rgb);vec3 B=A*0.5+0.25*(texture2D(uTex,uv-dir*0.5).rgb+texture2D(uTex,uv+dir*0.5).rgb);
+ float lB=dot(B,L);return(lB<lMin||lB>lMax)?A:B;}
+vec2 shk_(vec2 uv,vec4 k){if(k.w<=0.0)return uv;vec2 d=(uv-k.xy)*vec2(uAsp,1.0);float r=length(d);float x=(r-k.z)/0.045;float a=k.w*exp(-x*x)*x;return uv-(d/max(r,0.0001))*vec2(1.0/uAsp,1.0)*a;}
+void main(){vec2 uv=vU;uv=shk_(uv,uSk0);uv=shk_(uv,uSk1);uv=shk_(uv,uSk2);   // onda de choque: anel que entorta a imagem
+ vec3 c;
+ if(uPx.z>0.5)c=fxaa_(uv);   // antisserrilhado (FXAA)
+ else{c=texture2D(uTex,uv).rgb;eg_=0.0;nb_=c;if(uLx.x>0.0)nb_=(texture2D(uTex,uv+vec2(-1.0,-1.0)*uPx.xy).rgb+texture2D(uTex,uv+vec2(1.0,-1.0)*uPx.xy).rgb+texture2D(uTex,uv+vec2(-1.0,1.0)*uPx.xy).rgb+texture2D(uTex,uv+vec2(1.0,1.0)*uPx.xy).rgb)*0.25;}
+ if(uLx.x>0.0)c+=clamp(c-nb_,-0.1,0.1)*(uLx.x*(1.0-eg_));   // Gráficos 4: nitidez (realça o detalhe fino sem voltar a serrilhar as bordas)
+ if(uCin.y>0.0){vec2 o=(uv-0.5)*uCin.y*(0.35+dot(uv-0.5,uv-0.5)*2.6);c.r=mix(c.r,texture2D(uTex,uv+o).r,0.85);c.b=mix(c.b,texture2D(uTex,uv-o).b,0.85);}   // aberração cromática (mais nas bordas)
+ float dq=1.0,zl=0.0;if(uFx.x>0.0||uFx.y>0.0){dq=texture2D(uDp,uv).r;zl=uDpp.x*uDpp.y/(uDpp.y-dq*(uDpp.y-uDpp.x));}
+ if(uFx.x>0.0){float ao=texture2D(uAo,uv).r;float la=dot(c,vec3(0.299,0.587,0.114));c=mix(c,c*uAoC,(1.0-ao)*uFx.x*(1.0-0.6*smoothstep(0.5,1.0,la)));}   // Gráficos 6: oclusão de ambiente (cantos, pé das árvores e das casas)
+ if(uDofK>0.0){float dk;if(uFx.y>0.0)dk=dq>0.99995?0.0:uDofK*uFx.y*smoothstep(uDpp.z,uDpp.w,zl);   // Gráficos 6: desfoque só do que está longe de verdade (pela profundidade)
+  else{dk=uDofK*smoothstep(0.54,0.86,vU.y);if(uLx.w>0.0)dk=max(dk,uLx.w*max(smoothstep(0.26,0.0,vU.y),smoothstep(0.62,1.0,vU.y)));}
+  if(dk>0.0)c=mix(c,texture2D(uDf,vU).rgb,min(dk,1.0));}   // longe (alto da tela): desfoque leve
+ if(uBk>0.0){vec3 b=texture2D(uBl,vU).rgb;c+=b*uBk*(1.0-c*0.45);}
+ if(uRyC.a>0.0){float ry=texture2D(uRy,vU).r;c+=uRyC.rgb*(ry*uRyC.a)*(1.0-c*0.55);}   // Gráficos 4: raios de luz (sol e lua), calculados em 1/4 do tamanho
+ if(uFx.z>0.0){vec3 x=c*c*uFx.w;x=(x*(2.51*x+0.03))/(x*(2.43*x+0.59)+0.14);c=mix(c,sqrt(clamp(x,0.0,1.0)),uFx.z);}   // Gráficos 6: curva de filme (ACES): preto firme, claro que não estoura
+ float l=dot(c,vec3(0.299,0.587,0.114));
+ float s=max(c.r,max(c.g,c.b))-min(c.r,min(c.g,c.b));
+ c=mix(vec3(l),c,1.0+uGr.x*(1.0-s)-uGr.y*s*s);
+ c=min(c,vec3(1.0));c=mix(c,c*c*(3.0-2.0*c),uGr.z);
+ l=dot(c,vec3(0.299,0.587,0.114));
+ c+=uGr.w*(uWarm*smoothstep(0.45,1.0,l)-vec3(uWarm.b,uWarm.g*0.3,uWarm.r)*0.6*(1.0-smoothstep(0.0,0.35,l)));
+ if(uSun.z>0.0){vec2 q=(vU-uSun.xy)*vec2(uAsp,1.0);float d=length(q);vec2 sp=clamp(uSun.xy,0.002,0.998);
+  float vis=smoothstep(0.78,0.96,dot(texture2D(uTex,sp).rgb+texture2D(uTex,sp+vec2(0.012,0.0)).rgb+texture2D(uTex,sp-vec2(0.012,0.0)).rgb,vec3(0.111)));
+  float g=0.55*exp(-d*9.0)+0.24*exp(-d*2.8)+0.07*exp(-d*0.9);c+=uSunC*g*vis*uSun.z*(1.0-c*0.45);
+  if(uLx.z>0.0){vec2 ax=vec2(0.5)-uSun.xy;vec2 a1=vec2(uAsp,1.0);   // Gráficos 4: reflexos da lente (bem de leve) e um risco de luz atravessando o sol
+   float d1=length((vU-(uSun.xy+ax*1.6))*a1),d2=length((vU-(uSun.xy+ax*2.3))*a1),d3=length((vU-(uSun.xy+ax*0.62))*a1);
+   vec3 gh=vec3(0.30,0.72,1.0)*exp(-d1*d1*240.0)*0.16+vec3(1.0,0.62,0.30)*(smoothstep(0.125,0.105,d2)*smoothstep(0.06,0.10,d2))*0.07+vec3(0.55,1.0,0.66)*exp(-d3*d3*1000.0)*0.12;
+   gh+=uSunC*(exp(-abs(q.y)*90.0)*exp(-abs(q.x)*2.6)*0.22);
+   c+=gh*(vis*uSun.z*uLx.z)*(1.0-c*0.5);}}
+ if(uVig>0.0){vec2 d=(vU-0.5)*vec2(uAsp,1.0);c*=1.0-uVig*smoothstep(0.45,1.15,length(d));}
+ if(uCin.z>0.0){c=clamp(c,0.0,1.2);c=mix(c,c*uGain+uLift*(1.0-c),uCin.z);float lg=dot(c,vec3(0.299,0.587,0.114));c=mix(vec3(lg),c,mix(1.0,uCin.w,uCin.z));}   // cor de cada mundo
+ if(uFla.a>0.0)c+=uFla.rgb*uFla.a*(1.0-c*0.5);   // clarão das habilidades
+ if(uCin.x>0.0){float l2=dot(c,vec3(0.299,0.587,0.114));float gn=fract(sin(dot(gl_FragCoord.xy+vec2(uPx.w*61.7,uPx.w*37.3),vec2(12.9898,78.233)))*43758.5453)-0.5;c+=gn*uCin.x*(1.1-l2*0.7);}   // grão de filme
+ if(uLx.y>0.0)c+=(fract(52.9829189*fract(dot(gl_FragCoord.xy,vec2(0.06711056,0.00583715))))-0.5)*(uLx.y/255.0);   // Gráficos 4: pontilhado fino (some com as faixas no céu e na névoa)
+ gl_FragColor=vec4(clamp(c,0.0,1.0),1.0);}`;
+// oclusão de ambiente: só com a profundidade (sem normais). O plano da superfície sai da inclinação da própria profundidade, então chão e parede lisos não
+// escurecem sozinhos; 8 leituras em espiral, giradas por pixel, e depois um borrão. Roda em 1/2 ou 1/4 da tela.
+const FS_AO=`#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;
+#else
+precision mediump float;
+#endif
+varying vec2 vU;uniform sampler2D uDp;uniform vec4 uPr;uniform vec4 uPx;uniform float uAsp;
+float lz(vec2 uv){float d=texture2D(uDp,uv).r;return uPr.x*uPr.y/(uPr.y-d*(uPr.y-uPr.x));}
+void main(){float z0=lz(vU);if(z0>uPx.w){gl_FragColor=vec4(1.0);return;}
+ float R=uPr.z*(1.0+z0*0.004);float r=clamp(R*uPr.w/z0,0.006,0.085);vec2 e=uPx.xy*1.5;
+ float zl=lz(vU-vec2(e.x,0.0)),zr=lz(vU+vec2(e.x,0.0)),zd=lz(vU-vec2(0.0,e.y)),zu=lz(vU+vec2(0.0,e.y));
+ float gx=(abs(zr-z0)<abs(z0-zl)?zr-z0:z0-zl)/e.x,gy=(abs(zu-z0)<abs(z0-zd)?zu-z0:z0-zd)/e.y;
+ float an=6.2831853*fract(52.9829189*fract(dot(gl_FragCoord.xy,vec2(0.06711056,0.00583715))));vec2 o=vec2(cos(an),sin(an));
+ float occ=0.0,bias=R*0.07+z0*0.0025;
+ for(int i=0;i<8;i++){o=vec2(o.x*-0.7374-o.y*0.6755,o.x*0.6755+o.y*-0.7374);float rr=r*sqrt((float(i)+0.5)*0.125);vec2 q=o*rr*vec2(uAsp,1.0);
+  float sl=gx*q.x+gy*q.y,dz=z0+sl-lz(vU+q);
+  occ+=clamp((dz-bias)/(R*0.4),0.0,1.0)*(1.0-smoothstep(R*1.1,R*2.6,dz))*(1.0-smoothstep(R*0.9,R*2.2,abs(sl)));}
+ float ao=1.0-occ*0.125*1.5;ao=mix(clamp(ao,0.0,1.0),1.0,smoothstep(uPx.z,uPx.w,z0));gl_FragColor=vec4(ao,ao,ao,1.0);}`;
+const FS_RMK2=`#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;
+#else
+precision mediump float;
+#endif
+varying vec2 vU;uniform sampler2D uTex;uniform sampler2D uDp;uniform vec2 uPx;uniform float uTh;
+void main(){vec3 c=(texture2D(uTex,vU+uPx*vec2(-1.0,-1.0)).rgb+texture2D(uTex,vU+uPx*vec2(1.0,-1.0)).rgb+texture2D(uTex,vU+uPx*vec2(-1.0,1.0)).rgb+texture2D(uTex,vU+uPx*vec2(1.0,1.0)).rgb)*0.25;
+ float sk=step(0.99995,min(min(texture2D(uDp,vU+uPx*vec2(-1.0,-1.0)).r,texture2D(uDp,vU+uPx*vec2(1.0,1.0)).r),min(texture2D(uDp,vU+uPx*vec2(1.0,-1.0)).r,texture2D(uDp,vU+uPx*vec2(-1.0,1.0)).r)));
+ float l=dot(c,vec3(0.299,0.587,0.114));float m=sk*smoothstep(uTh,uTh+0.17,l);gl_FragColor=vec4(m,m,m,m);}`;
 // Gráficos 4 — raios de luz em qualquer mundo: a máscara sai da própria imagem pronta (o que é claro perto do sol/lua: céu, névoa acesa) ou, no Mundo 1,
 // do passe de oclusão que já existia (RTS.occ). O borrão radial roda em 1/4 do tamanho da tela e entra na composição (antes era na tela inteira).
 const FS_RMK=`precision mediump float;varying vec2 vU;uniform sampler2D uTex;uniform vec2 uPx;uniform float uTh;
@@ -7347,7 +7431,7 @@ function frameO(which){
  gl.useProgram(p);
  if(PFR[which]===frameId)return u;PFR[which]=frameId;
  gl.uniformMatrix4fv(u.uVP,false,VP);gl.uniform3f(u.uCam,camP[0],camP[1],camP[2]);gl.uniform3fv(u.uSun,SUN);gl.uniform3fv(u.uSunC,SUNC);gl.uniform3fv(u.uSkyA,SKYA);gl.uniform3fv(u.uSkyB,SKYB);gl.uniform3fv(u.uGndA,GNDA);
- gl.uniform4fv(u.uFog,fog);const t=TIM();gl.uniform1f(u.uT,t);gl.uniform1f(u.uFO,FOGO);
+ gl.uniform4fv(u.uFog,fog);const t=TIM();gl.uniform1f(u.uT,t);gl.uniform1f(u.uFO,FOGO);if(u.uRl)gl.uniform4fv(u.uRl,GX.rl);
  gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,tex.cloud?tex.cloud.t:null);gl.uniform1i(u.uCloud,1);
  if(which!=='sky'){const on=SHS.on&&SHS.ok;gl.activeTexture(gl.TEXTURE3);gl.bindTexture(gl.TEXTURE_2D,on&&RTS.sh?RTS.sh.t:shTex1);gl.uniform1i(u.uShT,3);
   gl.uniformMatrix4fv(u.uSM,false,SHS.mat);gl.uniform4f(u.uSh,on?SHS.on:0,SHS.nOff,SHS.f0,SHS.f1);gl.uniform3f(u.uShR,SHS.texel,SHS.bias,SHS.penT||0);gl.uniform3f(u.uFoc,FOC[0],FOC[1],FOC[2]);gl.uniform4f(u.uCut,CUT[0],CUT[1],CUT[2],0)}
@@ -7482,7 +7566,7 @@ function setup(){
  tex.cloud=tex.det=null;H3.outOK=false;try{                          // programas do mundo ao ar livre: se este aparelho não compilar, só o 3D do primeiro mundo fica de fora
   NLO_=mu>=48?NLO:2;
   P.out=program(VS_OUT,FS_OUT(NLO_),['aP','aN','aC']);P.ter=program(VS_TER,FS_TER(NLO_),['aP','aN','aC']);P.sky=program(VS_SKY,FS_SKY,['aP']);
-  const com=['uCam','uSun','uSunC','uSkyA','uSkyB','uGndA','uFog','uT','uCloud','uFO'],shu=['uShT','uSM','uSh','uShR','uFoc','uCut'];
+  const com=['uCam','uSun','uSunC','uSkyA','uSkyB','uGndA','uFog','uT','uCloud','uFO','uRl'],shu=['uShT','uSM','uSh','uShR','uFoc','uCut'];
   Object.assign(UO,uloc(P.out,com.concat(['uVP','uM','uTv','uWind','uL','uLC','uFl','uTint','uDi','uTr','uEG','uFd','uAl','uDet','uDetK','uNC','uTrS','uBr','uGx','uShn','uHf','uHfC','uWin'],shu)));
   Object.assign(UT,uloc(P.ter,com.concat(['uVP','uM','uGnd','uDet','uGS','uL','uLC','uFl','uLM','uLMk','uTx','uGx','uLeaf','uHf','uHfC'],shu)));
   Object.assign(US,uloc(P.sky,com.concat(['uVP','uCamV','uNight','uTw','uTwD','uMA','uMB','uSD','uSkX','uRs'])));
@@ -7495,10 +7579,14 @@ function setup(){
  try{P.sh=program(VS_SH,FS_SH,['aP','aN','aC']);Object.assign(USH,uloc(P.sh,['uVP','uM','uTv','uWind','uPk']))}catch(e){console.error('H3 sombras',e&&e.message||e);P.sh=null}
  try{P.rays=program(VS_Q,FS_RAYS,['aP']);Object.assign(URY,uloc(P.rays,['uOcc','uSunP','uCol','uK','uAsp']))}catch(e){console.error('H3 raios',e&&e.message||e);P.rays=null}
  P.rmk=P.ray2=P.ray2b=null;
- try{try{P.cmp=program(VS_Q,FS_CMP,['aP'])}catch(e){console.error('H3 pós (novo)',e&&e.message||e);P.cmp=program(VS_Q,FS_CMP0,['aP'])}   // se o aparelho não compilar a composição nova, fica a antiga
-  UPP.c=uloc(P.cmp,['uTex','uBl','uDf','uDofK','uBk','uGr','uWarm','uVig','uAsp','uSun','uSunC','uPx','uCin','uSk0','uSk1','uSk2','uFla','uLift','uGain','uRy','uRyC','uLx']);
+ SRT.fb=SRT.ct=SRT.dt=null;SRT.w=SRT.h=0;SRT.on=SRT.want=false;SRT.ext=null;if(SRT.ok!==-1)SRT.ok=null;P.ao=P.rmk2=null;CMP2=false;RTS.aoA=RTS.aoB=null;
+ try{try{P.cmp=program(VS_Q,FS_CMP2,['aP']);CMP2=true}catch(e0){console.error('H3 pós (profundidade)',e0&&e0.message||e0);
+   try{P.cmp=program(VS_Q,FS_CMP,['aP'])}catch(e){console.error('H3 pós (novo)',e&&e.message||e);P.cmp=program(VS_Q,FS_CMP0,['aP'])}}   // se o aparelho não compilar a composição nova, fica a antiga
+  UPP.c=uloc(P.cmp,['uTex','uBl','uDf','uDofK','uBk','uGr','uWarm','uVig','uAsp','uSun','uSunC','uPx','uCin','uSk0','uSk1','uSk2','uFla','uLift','uGain','uRy','uRyC','uLx','uAo','uDp','uDpp','uFx','uAoC']);
   P.brt=program(VS_Q,FS_BRT,['aP']);UPP.b=uloc(P.brt,['uTex','uPx','uTh']);P.blr=program(VS_Q,FS_BLR,['aP']);UPP.l=uloc(P.blr,['uTex','uD'])}catch(e){console.error('H3 pós',e&&e.message||e);if(!P.cmp)P.brt=P.blr=null}
  try{P.rmk=program(VS_Q,FS_RMK,['aP']);UPP.m=uloc(P.rmk,['uTex','uPx','uTh']);P.ray2=program(VS_Q,FS_RAY2(24),['aP']);UPP.r=uloc(P.ray2,['uOcc','uSunP']);P.ray2b=program(VS_Q,FS_RAY2(14),['aP']);UPP.r2=uloc(P.ray2b,['uOcc','uSunP'])}catch(e){console.error('H3 raios 2',e&&e.message||e);P.rmk=P.ray2=P.ray2b=null}
+ if(CMP2){try{P.ao=program(VS_Q,FS_AO,['aP']);UPP.a=uloc(P.ao,['uDp','uPr','uPx','uAsp'])}catch(e){console.error('H3 oclusão',e&&e.message||e);P.ao=null}
+  try{P.rmk2=program(VS_Q,FS_RMK2,['aP']);UPP.m2=uloc(P.rmk2,['uTex','uDp','uPx','uTh'])}catch(e){console.error('H3 raios (céu)',e&&e.message||e);P.rmk2=null}}
  qbuf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,qbuf);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,1,1,-1,-1,1,1,-1,1]),gl.STATIC_DRAW);
  {const t=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,t);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,1,1,0,gl.RGBA,gl.UNSIGNED_BYTE,new Uint8Array([255,255,255,255]));shTex1=t}
  MAXT=Math.min(gl.getParameter(gl.MAX_TEXTURE_SIZE)||2048,gl.getParameter(gl.MAX_RENDERBUFFER_SIZE)||2048);
@@ -7515,7 +7603,7 @@ H3.setQ=v=>{qs=v;resize()};H3.getQ=()=>qs;
 const VP=new Float32Array(16),PM=new Float32Array(16),VM=new Float32Array(16),IDM=M4.id();
 let fog=new Float32Array([.02,.008,.03,.0036]),ambT=[.17,.11,.2],ambB=[.07,.045,.08];
 let FOGO=0,DETK=0,LMK=0,TRS=0,DETKL=0,MOOND=[0,1,0],MOONL=[0,0,0];
-const GX=H3.gx={shT:0,bnc:0,skx:[0,0,0,0],bump:0,shine:0,br:0,slope:0,det:0,foam:0,wet:0,hf:[0,0,1,0],hfc:[0,0,0],leaf:[0,0,0,0],night:0,tw:[0,0,0,0],twd:[0,1,0,1],ma:[0,1,0,0],mb:[0,1,0,0],sd:[0,1,0,0],win:[0,0,0,0],skyO:0,skyA:[0,0,0],skyB:[0,0,0]};   // efeitos novos dos Gráficos 3 (relevo, brilho, galhos, inclinação, detalhes, espuma, chão molhado, neblina rasteira, céu de noite)          // névoa começando mais longe (3ª pessoa) · grão de textura nas malhas ao ar livre · força do mapa de luz do chão
+const GX=H3.gx={rl:[0,0,0,0],shT:0,bnc:0,skx:[0,0,0,0],bump:0,shine:0,br:0,slope:0,det:0,foam:0,wet:0,hf:[0,0,1,0],hfc:[0,0,0],leaf:[0,0,0,0],night:0,tw:[0,0,0,0],twd:[0,1,0,1],ma:[0,1,0,0],mb:[0,1,0,0],sd:[0,1,0,0],win:[0,0,0,0],skyO:0,skyA:[0,0,0],skyB:[0,0,0]};   // efeitos novos dos Gráficos 3 (relevo, brilho, galhos, inclinação, detalhes, espuma, chão molhado, neblina rasteira, céu de noite)          // névoa começando mais longe (3ª pessoa) · grão de textura nas malhas ao ar livre · força do mapa de luz do chão
 // parâmetros do mundo ao ar livre: sun = direção PARA o sol · sunC = cor/força do sol · skyA = céu em cima · skyB = céu no horizonte · gndA = luz que sobe do chão · wind = [x,z] do balanço
 let SUN=[-.57,.6,-.4],SUNC=[1.05,.94,.76],SKYA=[.42,.58,.74],SKYB=[.72,.8,.86],GNDA=[.34,.3,.22],WIND=[1.7,.7],GSC=[1/1344,1/1008];
 H3.env=o=>{if(o.fog){fog.set(o.fog)}if(o.ambT)ambT=o.ambT;if(o.ambB)ambB=o.ambB;
@@ -7541,9 +7629,30 @@ function rtMake(o,w,h,depth,lin){if(o&&o.w===w&&o.h===h)return o;if(o)rtFree(o);
  const r={fb,t,rb,w,h};if(!ok){rtFree(r);return null}return r}
 function rtFree(o){gl.deleteFramebuffer(o.fb);gl.deleteTexture(o.t);if(o.rb)gl.deleteRenderbuffer(o.rb)}
 function quad(){gl.bindBuffer(gl.ARRAY_BUFFER,qbuf);gl.enableVertexAttribArray(0);gl.disableVertexAttribArray(1);gl.disableVertexAttribArray(2);gl.vertexAttribPointer(0,2,gl.FLOAT,false,8,0);gl.drawArrays(gl.TRIANGLES,0,6);gl.enableVertexAttribArray(1);gl.enableVertexAttribArray(2)}
+// ---------- Gráficos 6: a cena desenhada numa textura com profundidade ----------
+// Quando o quadro pede (H3.sceneRT(true) logo antes do H3.begin), a cena vai para uma textura de cor + uma de profundidade em vez de ir direto para a tela;
+// a composição (H3.postFx) lê as duas e põe o resultado na tela. Com a profundidade na mão dá para fazer oclusão de ambiente, desfoque só do que está longe
+// e raios de luz que nascem só do céu — e a cópia da tela que a composição fazia deixa de existir. Precisa da extensão WEBGL_depth_texture (quase todo
+// aparelho tem); sem ela, ou se a textura não montar, tudo segue pelo caminho de antes.
+const SRT={on:false,want:false,ok:null,fb:null,ct:null,dt:null,w:0,h:0,ext:null};let CMP2=false;
+function srtFree(){if(SRT.fb)gl.deleteFramebuffer(SRT.fb);if(SRT.ct)gl.deleteTexture(SRT.ct);if(SRT.dt)gl.deleteTexture(SRT.dt);SRT.fb=SRT.ct=SRT.dt=null;SRT.w=SRT.h=0}
+function srtMake(w,h){if(SRT.ok===false||SRT.ok===-1||!CMP2)return false;if(SRT.fb&&SRT.w===w&&SRT.h===h)return true;
+ if(!SRT.ext){SRT.ext=gl.getExtension('WEBGL_depth_texture')||gl.getExtension('WEBKIT_WEBGL_depth_texture')||gl.getExtension('MOZ_WEBGL_depth_texture');if(!SRT.ext){SRT.ok=false;return false}}
+ if(w>MAXT||h>MAXT){return false}
+ srtFree();gl.getError();gl.activeTexture(gl.TEXTURE0);const t0=gl.getParameter(gl.TEXTURE_BINDING_2D);
+ const mk=(ifm,fm,ty,f)=>{const t=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,t);gl.texImage2D(gl.TEXTURE_2D,0,ifm,w,h,0,fm,ty,null);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,f);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,f);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);return t};
+ SRT.ct=mk(gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,gl.LINEAR);SRT.dt=mk(gl.DEPTH_COMPONENT,gl.DEPTH_COMPONENT,gl.UNSIGNED_INT,gl.NEAREST);
+ SRT.fb=gl.createFramebuffer();gl.bindFramebuffer(gl.FRAMEBUFFER,SRT.fb);gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,SRT.ct,0);gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.DEPTH_ATTACHMENT,gl.TEXTURE_2D,SRT.dt,0);
+ const ok=gl.checkFramebufferStatus(gl.FRAMEBUFFER)===gl.FRAMEBUFFER_COMPLETE&&!gl.getError();gl.bindFramebuffer(gl.FRAMEBUFFER,curFB);gl.bindTexture(gl.TEXTURE_2D,t0);
+ if(!ok){srtFree();SRT.ok=false;return false}SRT.w=w;SRT.h=h;SRT.ok=true;return true}
+H3.sceneRT=v=>{SRT.want=!!v};H3.rtOn=()=>SRT.on;H3.rtCan=()=>CMP2&&SRT.ok!==false&&SRT.ok!==-1;
+// algo deu errado no meio do quadro: volta para a tela e não usa mais a textura (o jogo segue como antes)
+H3.rtOff=function(){if(SRT.on){SRT.on=false;curFB=null;try{gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.viewport(0,0,W,Hh)}catch(e){}}SRT.ok=-1};
+H3.PP0={bloom:0,th:1,vib:0,tame:0,sc:0,split:0,warm:[0,0,0],vig:0,glare:0,dof:0,aa:1};
 function begin(ex,ey,ez,yaw,pitch,fov,roll){
  frameId++;resize();try{lodWork()}catch(e){}
- const fb=null;
+ let fb=null;if(SRT.want){SRT.want=false;try{if(srtMake(W,Hh))fb=SRT.fb}catch(e){fb=null;SRT.ok=false}}SRT.on=!!fb;
  gl.bindFramebuffer(gl.FRAMEBUFFER,fb);curFB=fb;
  {curFov=fov;M4.persp(PM,fov,W/Hh,NEAR,FAR);M4.view(VM,ex,ey,ez,yaw,pitch);M4.mul(VP,PM,VM);
   camP=[ex,ey,ez];camR=[cos(yaw),0,sin(yaw)];const cp=cos(pitch),sp=sin(pitch);camU=[-sin(yaw)*sp,cp,cos(yaw)*sp];}
@@ -7636,7 +7745,7 @@ H3.raysOcc=function(draw){if(!P.rays||!gl)return false;const w=max(8,W>>2),h=max
  gl.bindFramebuffer(gl.FRAMEBUFFER,RTS.occ.fb);gl.viewport(0,0,w,h);gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.enable(gl.DEPTH_TEST);gl.disable(gl.BLEND);gl.depthMask(true);
  PFR.out=PFR.ter=PFR.sky=-1;                                   // sobe tudo de novo (e religa as texturas: a do passe anterior pode estar presa a esta)
  try{draw()}finally{gl.bindFramebuffer(gl.FRAMEBUFFER,curFB);gl.viewport(0,0,W,Hh);PFR.out=PFR.ter=PFR.sky=-1}return true};
-H3.ppReady=()=>!!(P.cmp&&P.ray2&&!curFB&&!lost);
+H3.ppReady=()=>!!(P.cmp&&P.ray2&&(!curFB||(SRT.on&&curFB===SRT.fb))&&!lost);
 H3.raysApply=function(sx,sy,k,col){if(!RTS.occ||!P.rays)return;if(H3.rayStash&&H3.rayStash(sx,sy,k,col))return;gl.disable(gl.DEPTH_TEST);gl.depthMask(false);gl.enable(gl.BLEND);gl.blendFunc(gl.ONE,gl.ONE);gl.useProgram(P.rays);
  gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,RTS.occ.t);gl.uniform1i(URY.uOcc,0);gl.uniform2f(URY.uSunP,sx,sy);gl.uniform3f(URY.uCol,col[0],col[1],col[2]);gl.uniform1f(URY.uK,k);gl.uniform1f(URY.uAsp,W/Hh);
  quad();gl.enable(gl.DEPTH_TEST);gl.depthMask(true);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA)};
@@ -7646,16 +7755,16 @@ H3.sunScreen=function(){const d=600,x=camP[0]+SUN[0]*d,y=camP[1]+SUN[1]*d,z=camP
 
 // ---------- pós-processamento (efeitos de tela) no fim do quadro: o = {bloom, th, vib, tame, sc, split, warm:[r,g,b], vig} ----------
 const NOSK=[];
-H3.postFx=function(o){if(!o||!P.cmp||curFB||!gl||lost)return false;const w=W,h=Hh;
+H3.postFx=function(o){if(!o||!P.cmp||!gl||lost)return false;const rt=SRT.on&&curFB===SRT.fb;if(curFB&&!rt)return false;const w=W,h=Hh;
  gl.activeTexture(gl.TEXTURE1);const t1=gl.getParameter(gl.TEXTURE_BINDING_2D);gl.activeTexture(gl.TEXTURE0);const t0=gl.getParameter(gl.TEXTURE_BINDING_2D);
- if(!PPT||PPW!==w||PPH!==h){if(!PPT)PPT=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,PPT);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGB,w,h,0,gl.RGB,gl.UNSIGNED_BYTE,null);
+ let SRC=PPT;if(rt)SRC=SRT.ct;else{if(!PPT||PPW!==w||PPH!==h){if(!PPT)PPT=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,PPT);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGB,w,h,0,gl.RGB,gl.UNSIGNED_BYTE,null);
   gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);PPW=w;PPH=h}
- gl.bindTexture(gl.TEXTURE_2D,PPT);gl.copyTexSubImage2D(gl.TEXTURE_2D,0,0,0,0,0,w,h);
+ gl.bindTexture(gl.TEXTURE_2D,PPT);gl.copyTexSubImage2D(gl.TEXTURE_2D,0,0,0,0,0,w,h);SRC=PPT}
  gl.disable(gl.DEPTH_TEST);gl.disable(gl.BLEND);gl.depthMask(false);
  let bk=0;const bw=max(1,w>>2),bh=max(1,h>>2);
  if(o.bloom>0&&P.brt&&P.blr){RTS.ppA=rtMake(RTS.ppA,bw,bh,false,true);RTS.ppB=rtMake(RTS.ppB,bw,bh,false,true);
   if(RTS.ppA&&RTS.ppB){gl.viewport(0,0,bw,bh);
-   gl.bindFramebuffer(gl.FRAMEBUFFER,RTS.ppA.fb);gl.useProgram(P.brt);gl.bindTexture(gl.TEXTURE_2D,PPT);gl.uniform1i(UPP.b.uTex,0);gl.uniform2f(UPP.b.uPx,1/w,1/h);gl.uniform1f(UPP.b.uTh,o.th||.75);quad();
+   gl.bindFramebuffer(gl.FRAMEBUFFER,RTS.ppA.fb);gl.useProgram(P.brt);gl.bindTexture(gl.TEXTURE_2D,SRC);gl.uniform1i(UPP.b.uTex,0);gl.uniform2f(UPP.b.uPx,1/w,1/h);gl.uniform1f(UPP.b.uTh,o.th||.75);quad();
    gl.useProgram(P.blr);gl.uniform1i(UPP.l.uTex,0);
    gl.bindFramebuffer(gl.FRAMEBUFFER,RTS.ppB.fb);gl.bindTexture(gl.TEXTURE_2D,RTS.ppA.t);gl.uniform2f(UPP.l.uD,1.4/bw,0);quad();
    gl.bindFramebuffer(gl.FRAMEBUFFER,RTS.ppA.fb);gl.bindTexture(gl.TEXTURE_2D,RTS.ppB.t);gl.uniform2f(UPP.l.uD,0,1.4/bh);quad();
@@ -7676,19 +7785,30 @@ H3.postFx=function(o){if(!o||!P.cmp||curFB||!gl||lost)return false;const w=W,h=H
  let ryK=0;const RY=o.rays;
  if(RY&&RY.k>0&&P.ray2&&P.rmk){RTS.ryO=rtMake(RTS.ryO,bw,bh,false,true);let src=null;gl.activeTexture(gl.TEXTURE0);
   if(RY.occ&&RTS.occ)src=RTS.occ;
-  else{RTS.ryM=rtMake(RTS.ryM,bw,bh,false,true);if(RTS.ryM){gl.viewport(0,0,bw,bh);gl.bindFramebuffer(gl.FRAMEBUFFER,RTS.ryM.fb);gl.useProgram(P.rmk);gl.bindTexture(gl.TEXTURE_2D,PPT);gl.uniform1i(UPP.m.uTex,0);gl.uniform2f(UPP.m.uPx,1/w,1/h);gl.uniform1f(UPP.m.uTh,RY.th===undefined?.74:RY.th);quad();src=RTS.ryM}}
+  else if(rt&&RY.sky&&P.rmk2){RTS.ryM=rtMake(RTS.ryM,bw,bh,false,true);if(RTS.ryM){gl.viewport(0,0,bw,bh);gl.bindFramebuffer(gl.FRAMEBUFFER,RTS.ryM.fb);gl.useProgram(P.rmk2);gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,SRT.dt);gl.uniform1i(UPP.m2.uDp,1);
+    gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,SRC);gl.uniform1i(UPP.m2.uTex,0);gl.uniform2f(UPP.m2.uPx,1/w,1/h);gl.uniform1f(UPP.m2.uTh,RY.th===undefined?.3:RY.th);quad();src=RTS.ryM}}   // Gráficos 6: só o céu solta raio (árvores, casas e morros tapam de verdade)
+  else{RTS.ryM=rtMake(RTS.ryM,bw,bh,false,true);if(RTS.ryM){gl.viewport(0,0,bw,bh);gl.bindFramebuffer(gl.FRAMEBUFFER,RTS.ryM.fb);gl.useProgram(P.rmk);gl.bindTexture(gl.TEXTURE_2D,SRC);gl.uniform1i(UPP.m.uTex,0);gl.uniform2f(UPP.m.uPx,1/w,1/h);gl.uniform1f(UPP.m.uTh,RY.th===undefined?.74:RY.th);quad();src=RTS.ryM}}
   if(src&&RTS.ryO){const lo=RY.lo&&P.ray2b,ur=lo?UPP.r2:UPP.r;gl.viewport(0,0,bw,bh);gl.bindFramebuffer(gl.FRAMEBUFFER,RTS.ryO.fb);gl.useProgram(lo?P.ray2b:P.ray2);gl.bindTexture(gl.TEXTURE_2D,src.t);gl.uniform1i(ur.uOcc,0);
    gl.uniform4f(ur.uSunP,RY.x,RY.y,w/h,RY.g===undefined?3.2:RY.g);quad();ryK=RY.k}}
  let dof=0;if(o.dof>0&&P.brt&&P.blr){RTS.ppC=rtMake(RTS.ppC,bw,bh,false,true);RTS.ppB=rtMake(RTS.ppB,bw,bh,false,true);
   if(RTS.ppC&&RTS.ppB){gl.viewport(0,0,bw,bh);gl.activeTexture(gl.TEXTURE0);
-   gl.bindFramebuffer(gl.FRAMEBUFFER,RTS.ppC.fb);gl.useProgram(P.brt);gl.bindTexture(gl.TEXTURE_2D,PPT);gl.uniform1i(UPP.b.uTex,0);gl.uniform2f(UPP.b.uPx,1/w,1/h);gl.uniform1f(UPP.b.uTh,-2);quad();
+   gl.bindFramebuffer(gl.FRAMEBUFFER,RTS.ppC.fb);gl.useProgram(P.brt);gl.bindTexture(gl.TEXTURE_2D,SRC);gl.uniform1i(UPP.b.uTex,0);gl.uniform2f(UPP.b.uPx,1/w,1/h);gl.uniform1f(UPP.b.uTh,-2);quad();
    gl.useProgram(P.blr);gl.uniform1i(UPP.l.uTex,0);
    gl.bindFramebuffer(gl.FRAMEBUFFER,RTS.ppB.fb);gl.bindTexture(gl.TEXTURE_2D,RTS.ppC.t);gl.uniform2f(UPP.l.uD,1/bw,0);quad();
    gl.bindFramebuffer(gl.FRAMEBUFFER,RTS.ppC.fb);gl.bindTexture(gl.TEXTURE_2D,RTS.ppB.t);gl.uniform2f(UPP.l.uD,0,1/bh);quad();dof=o.dof}}
+ // Gráficos 6: oclusão de ambiente em 1/2 (aoHi) ou 1/4 da tela, com borrão
+ let aoK=0;if(rt&&o.ao>0&&P.ao&&P.blr){const sh_=o.aoHi?1:2,aw=max(2,w>>sh_),ah=max(2,h>>sh_);RTS.aoA=rtMake(RTS.aoA,aw,ah,false,true);RTS.aoB=rtMake(RTS.aoB,aw,ah,false,true);
+  if(RTS.aoA&&RTS.aoB){gl.viewport(0,0,aw,ah);gl.activeTexture(gl.TEXTURE0);gl.bindFramebuffer(gl.FRAMEBUFFER,RTS.aoA.fb);gl.useProgram(P.ao);gl.bindTexture(gl.TEXTURE_2D,SRT.dt);gl.uniform1i(UPP.a.uDp,0);
+   gl.uniform4f(UPP.a.uPr,NEAR,FAR,o.aoR||7,.5/Math.tan((curFov||1)/2));gl.uniform4f(UPP.a.uPx,1/w,1/h,o.aoF0||520,o.aoF1||820);gl.uniform1f(UPP.a.uAsp,h/w);quad();
+   gl.useProgram(P.blr);gl.uniform1i(UPP.l.uTex,0);gl.bindFramebuffer(gl.FRAMEBUFFER,RTS.aoB.fb);gl.bindTexture(gl.TEXTURE_2D,RTS.aoA.t);gl.uniform2f(UPP.l.uD,1/aw,0);quad();
+   gl.bindFramebuffer(gl.FRAMEBUFFER,RTS.aoA.fb);gl.bindTexture(gl.TEXTURE_2D,RTS.aoB.t);gl.uniform2f(UPP.l.uD,0,1/ah);quad();aoK=o.ao}}
+ if(rt){curFB=null;SRT.on=false}
  gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.viewport(0,0,w,h);gl.useProgram(P.cmp);
- gl.activeTexture(gl.TEXTURE2);const t2=gl.getParameter(gl.TEXTURE_BINDING_2D);gl.bindTexture(gl.TEXTURE_2D,dof>0?RTS.ppC.t:PPT);gl.uniform1i(UPP.c.uDf,2);gl.uniform1f(UPP.c.uDofK,dof);
- gl.activeTexture(gl.TEXTURE3);const t3=gl.getParameter(gl.TEXTURE_BINDING_2D);gl.bindTexture(gl.TEXTURE_2D,ryK>0?RTS.ryO.t:PPT);
- gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,bk>0?RTS.ppA.t:PPT);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,PPT);
+ gl.activeTexture(gl.TEXTURE2);const t2=gl.getParameter(gl.TEXTURE_BINDING_2D);gl.bindTexture(gl.TEXTURE_2D,dof>0?RTS.ppC.t:SRC);gl.uniform1i(UPP.c.uDf,2);gl.uniform1f(UPP.c.uDofK,dof);
+ gl.activeTexture(gl.TEXTURE3);const t3=gl.getParameter(gl.TEXTURE_BINDING_2D);gl.bindTexture(gl.TEXTURE_2D,ryK>0?RTS.ryO.t:SRC);
+ gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,bk>0?RTS.ppA.t:SRC);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,SRC);
+ if(CMP2){const ud=UPP.c,dz=rt&&o.dofZ?o.dofZ:null,ac=o.aoC||[.3,.32,.42];gl.activeTexture(gl.TEXTURE4);gl.bindTexture(gl.TEXTURE_2D,aoK>0?RTS.aoA.t:SRC);gl.uniform1i(ud.uAo,4);gl.activeTexture(gl.TEXTURE5);gl.bindTexture(gl.TEXTURE_2D,rt?SRT.dt:SRC);gl.uniform1i(ud.uDp,5);gl.activeTexture(gl.TEXTURE0);
+  gl.uniform4f(ud.uDpp,NEAR,FAR,dz?dz[0]:1e9,dz?dz[1]:2e9);gl.uniform4f(ud.uFx,aoK,dz?1:0,o.tm||0,o.expo||1);gl.uniform3f(ud.uAoC,ac[0],ac[1],ac[2])}
  const u=UPP.c,wm=o.warm||[.035,.012,-.03];gl.uniform1i(u.uTex,0);gl.uniform1i(u.uBl,1);gl.uniform1f(u.uBk,bk);
  if(u.uRy){const rc=RY&&RY.col||[1,1,1];gl.uniform1i(u.uRy,3);gl.uniform4f(u.uRyC,rc[0],rc[1],rc[2],ryK);gl.uniform4f(u.uLx,o.sharp||0,o.dither||0,o.flare||0,o.tilt||0)}
  gl.uniform4f(u.uGr,o.vib===undefined?.14:o.vib,o.tame===undefined?.2:o.tame,o.sc===undefined?.22:o.sc,o.split===undefined?1:o.split);gl.uniform3f(u.uWarm,wm[0],wm[1],wm[2]);gl.uniform1f(u.uVig,o.vig||0);gl.uniform1f(u.uAsp,w/h);
@@ -7696,10 +7816,11 @@ H3.postFx=function(o){if(!o||!P.cmp||curFB||!gl||lost)return false;const w=W,h=H
    cw=VP[3]*x+VP[7]*y+VP[11]*z+VP[15];if(cw>0){su=(VP[0]*x+VP[4]*y+VP[8]*z+VP[12])/cw*.5+.5;sv=(VP[1]*x+VP[5]*y+VP[9]*z+VP[13])/cw*.5+.5;
    if(su>-.35&&su<1.35&&sv>-.35&&sv<1.35)sk=gk*Math.min(1,(SUN[1]+.05)/.2)}}
   gl.uniform4f(u.uSun,su,sv,sk,0);gl.uniform3f(u.uSunC,SUNC[0]*.62,SUNC[1]*.52,SUNC[2]*.36)}
- {const sk=o.shocks||NOSK,Z4=[0,0,0,0];gl.uniform4f(u.uPx,1/w,1/h,o.aa?1:0,(performance.now()%100000)/1000);gl.uniform4f(u.uCin,o.grain||0,o.ca||0,o.grade||0,o.sat===undefined?1:o.sat);
+ {const sk=o.shocks||NOSK,Z4=[0,0,0,0];gl.uniform4f(u.uPx,1/w,1/h,(o.aa||rt)?1:0,(performance.now()%100000)/1000);gl.uniform4f(u.uCin,o.grain||0,o.ca||0,o.grade||0,o.sat===undefined?1:o.sat);
   const k0=sk[0]||Z4,k1=sk[1]||Z4,k2=sk[2]||Z4;gl.uniform4f(u.uSk0,k0[0],k0[1],k0[2],k0[3]);gl.uniform4f(u.uSk1,k1[0],k1[1],k1[2],k1[3]);gl.uniform4f(u.uSk2,k2[0],k2[1],k2[2],k2[3]);
   const fa=o.flash||Z4;gl.uniform4f(u.uFla,fa[0],fa[1],fa[2],fa[3]);const lf=o.lift||Z4,gn=o.gain||[1,1,1];gl.uniform3f(u.uLift,lf[0],lf[1],lf[2]);gl.uniform3f(u.uGain,gn[0],gn[1],gn[2])}
  quad();
+ if(CMP2){gl.activeTexture(gl.TEXTURE5);gl.bindTexture(gl.TEXTURE_2D,null);gl.activeTexture(gl.TEXTURE4);gl.bindTexture(gl.TEXTURE_2D,null)}
  gl.activeTexture(gl.TEXTURE3);gl.bindTexture(gl.TEXTURE_2D,t3);gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,t2);gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,t1);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,t0);
  gl.enable(gl.DEPTH_TEST);gl.depthMask(true);PFR.out=PFR.ter=PFR.sky=-1;return true};
 // segundo passe com projeção própria (braço em primeira pessoa): limpa a profundidade e desenha com outro campo de visão e plano de corte bem perto
@@ -8855,6 +8976,7 @@ function frame(){
  // sombras do sol: mapa de profundidade em volta do jogador, antes do quadro
  H3.realSh=false;if(SC.shadow&&H3.shadowOn()){let ok=false;try{ok=H3.shBegin(F.x,F.y,F.z);if(ok){SC.shadow(t,F);if(H3.chShadow)try{H3.realSh=H3.chShadow(H3C.list,t)}catch(e){console.error('H3 sombra dos personagens',e);H3.chShadow=null}}}catch(e){console.error('H3 sombra',e)}finally{if(ok)H3.shEnd()}}
  H3.focus(F.x,F.y,F.z);
+ try{if(H3.sceneRT)H3.sceneRT(!!(H3.ppCfg&&H3.rtUse&&H3.rtUse(SC)))}catch(e){}   // Gráficos 6: cena numa textura com profundidade (quando os efeitos pedem)
  H3.begin(C.x,C.y,C.z,C.yaw,C.pitch,C.fov);
  SC.flicker(t);FX.light(C.x,C.y+3,C.z,60,SC.camLight,.3);
  const draws=[],bd=SC.bossPlan(t,C);if(bd)draws.push(bd);
@@ -8873,8 +8995,10 @@ function frame(){
  for(const G of GL)MOD.drawGhast({x:G.x,y:G.y,z:G.z,yaw:G.yaw,t,mood:G.mood,sc:G.sc,di:G.al,ch:G.ch},SC.lights,FX.L);
  FX.draw(t);SC.sprites(t);H3.end();
  // raios de sol (gráfico Alto, olhando para o lado do sol)
- if(SC.rays)try{SC.rays(t,C)}catch(e){console.error('H3 raios',e);SC.rays=null}
- try{const pc=H3.ppCfg&&H3.ppCfg(SC);if(pc)H3.postFx(pc)}catch(e){console.error('H3 pós',e);H3.ppCfg=null}   // efeitos de tela (brilho e cor)
+ const rtOn=!!(H3.rtOn&&H3.rtOn());
+ if(SC.rays&&!rtOn)try{SC.rays(t,C)}catch(e){console.error('H3 raios',e);SC.rays=null}   // com a profundidade, os raios saem do céu de verdade (sem o passe de oclusão)
+ try{let pc=H3.ppCfg&&H3.ppCfg(SC);if(!pc&&rtOn)pc=H3.PP0;if(pc)H3.postFx(pc)}catch(e){console.error('H3 pós',e);H3.ppCfg=null}
+ if(H3.rtOn&&H3.rtOn())try{if(!H3.postFx(H3.PP0))H3.rtOff()}catch(e){try{H3.rtOff()}catch(x){}}   // nunca deixa o quadro preso na textura   // efeitos de tela (brilho e cor)
 if(false&&S.mode===1&&!S.ctrOn){const pp=S.punchT?(t-S.punchT)/260:1;MOD.drawArm({ex:C.x,ey:C.y,ez:C.z,yaw:C.yaw,pitch:C.pitch,t,mv:S.moving&&S.jair<=0?1:0,pu:pp<1?pp:0,fov:1.15,jv:S.jv,jh:S.jair},SC.lights,FX.L)}
  overlay(t,C);
  // 4) qualidade
@@ -26072,7 +26196,7 @@ const _t=tick;tick=function(){_t();if(world!==1)return;const e=drac();if(!e||e.d
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261112193235;
+const GAME_BUILD=20261112234927;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
@@ -30897,7 +31021,7 @@ function update(){const sc=curSC(),S=H3.S;
  const lm=1+1.45*ST.nk;if(H3.setLMul)H3.setLMul(lm);H3.lmulS=1+1.1*ST.nk;
  const t=performance.now();metStep(t);
  const F=S.foc||S.cam;
- if(F&&ST.nk>.01){FX.light(F.x,(F.y||0)+26,F.z,150,PL,(H3.G3&&H3.G3.real&&sc.id==='field'?.1:.42)*ST.nk);   // luz suave em volta do jogador: de noite nunca fica no escuro total
+ if(F&&ST.nk>.01){FX.light(F.x,(F.y||0)+26,F.z,150,PL,(H3.gfx5&&H3.gfx5.dn&&H3.gfx5.dn(sc)?.1:.42)*ST.nk);   // luz suave em volta do jogador: de noite nunca fica no escuro total
   try{fireflies(sc,F)}catch(e){}}
  notify();if(t-pillT>250){pillT=t;try{pillTick()}catch(e){}}}   // relógio atualizado junto com o quadro
 let pillT=0;
@@ -31815,15 +31939,18 @@ const off=$('stOff');if(off&&!document.querySelector('.stOu')){const o=document.
 })();
 </script>
 <script>
-// ===================== Gráficos 5: Realista (opcional · por enquanto só no Mundo 1) =====================
-// Configurações → Gráficos 3D → "Gráfico realista" (Desligado / Ligado; salvo no aparelho em mp_real). Feito para ficar o mais parecido possível com as
-// imagens de referência, sem pensar em desempenho: ao ligar, a Qualidade geral vai para o Ultra (sombras, luzes, raios e efeitos no máximo).
-//  · Céu: azul forte de dia e azul-marinho de noite, nuvens fofas com volume desenhadas no céu (as nuvens de polígonos somem), lua cheia grande com
-//    crateras e clarão, sol com brilho largo, raios de luz do sol e da lua.
-//  · Luz: sol dourado e mais baixo (sombras compridas e fundas); de noite luar azul forte de cima (copas e grama acesas, sombra escura embaixo).
-//  · Atmosfera: névoa fina de dia (dá para ver longe) e bruma azul entre as árvores de noite; lampiões quentes com clarão.
-//  · Imagem: cores vivas, contraste de cinema, brilho largo, vinheta, desfoque leve no alto e embaixo da tela; sem grão nem aberração cromática.
-// Para levar a outros mundos depois: acrescentar o id em IDS.
+// ===================== Gráficos 5: Realista / cinema (todos os mundos em 3D) =====================
+// Configurações → Gráficos 3D → "Gráfico realista" (Desligado / Ligado; salvo no aparelho em mp_real; quem nunca escolheu começa Ligado).
+// É a direção de arte de cinema do jogo: NÃO tem níveis próprios. Cada parte obedece às opções que já existiam, então o visual acompanha a Qualidade geral:
+//  · Sempre (custo zero, até no Desempenho): céu azul forte com nuvens fofas, sol dourado e mais baixo, luar azul, cor da névoa, lua cheia grande.
+//  · Efeitos de tela ≥ Só cor: curva de filme (tone mapping ACES), cor de cinema de cada mundo, vinheta e desfoque do que está longe. Cor + brilho: brilho (bloom).
+//  · Sombras ≥ Médio: oclusão de ambiente (cantos, pé das árvores e das casas); no Alto/Ultra em resolução maior.
+//  · Iluminação ≥ Médio + Luz e atmosfera ≥ Leve: raios de luz do sol e da lua saindo do céu de verdade; Completo: brilho largo e reflexos de lente.
+//  · Iluminação ≥ Baixo: lampiões, janelas, portais e objetos mágicos mais acesos de noite (e com clarão em volta).
+//  · Superfícies ≥ Baixo: caminho de luz do sol/lua na água e chão úmido de noite; ≥ Médio: luz do céu no contorno das formas.
+// Com Efeitos de tela ligado, a cena é desenhada numa textura com profundidade (ver SRT no motor): é ela que permite a oclusão, o desfoque pela distância e
+// os raios que nascem só do céu. Aparelho sem a extensão de profundidade segue pelo caminho antigo (sem esses três).
+// Perfis: mundos com dia e noite (Mundo 1, Dragon Ball, Ninja, Arquipélago e os futuros), terror (Halloween) e interiores (só os efeitos de tela).
 (function(){
 'use strict';
 const H3=window.H3;if(!H3||!H3.scenes||!H3.gx||!H3.fx||!H3.envGet)return;
@@ -31831,28 +31958,53 @@ const GX=H3.gx,FX=H3.fx,G3=H3.G3||(H3.G3={}),ATM=window.GFX2&&GFX2.atm||null;
 const min=Math.min,max=Math.max,hypot=Math.hypot;
 const clp=(v,a,b)=>v<a?a:v>b?b:v,sm=(a,b,v)=>{const t=clp((v-a)/(b-a),0,1);return t*t*(3-2*t)},lr=(a,b,t)=>a+(b-a)*t;
 const MX=(o,c,t)=>{o[0]+=(c[0]-o[0])*t;o[1]+=(c[1]-o[1])*t;o[2]+=(c[2]-o[2])*t},ML=(o,m,t)=>{o[0]*=lr(1,m[0],t);o[1]*=lr(1,m[1],t);o[2]*=lr(1,m[2],t)};
-const IDS={field:1};
-try{G3.real=localStorage.getItem('mp_real')==='1'?1:0}catch(e){G3.real=0}
+const mob=/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent||'');
+try{G3.real=localStorage.getItem('mp_real')==='0'?0:1}catch(e){G3.real=1}
 const curSC=()=>{try{return H3.curSC&&H3.curSC()}catch(e){return null}};
-const isOn=sc=>!!(G3.real&&sc&&IDS[sc.id]&&H3.S&&H3.S.mode);
-let was=false,fogBase=-1,fogW=-1;const ST={n:0,tw:0,nk:0,day:1};
-GX.rs=[0,.54,0,0];
+if(!GX.rs)GX.rs=[0,.54,0,0];if(!GX.rl)GX.rl=[0,0,0,0];
 
 // ============================================================ valores (tudo aqui pode ser calibrado) ============================================================
-const V=H3.gfx5v={
+// mundos com dia e noite
+const DV={
  skyD:[.045,.25,.86],hzD:[.46,.71,1],fogD:[.68,.82,1],                    // dia: céu em cima · horizonte · névoa
  skyN:[.006,.018,.07],hzN:[.022,.07,.2],fogN:[.035,.09,.25],hfN:[.07,.17,.4],   // noite
  sunM:[1.2,1.07,.86],skyLD:[.78,.87,1.06],                              // dia: sol dourado · luz do céu mais azul e mais fraca (sombra funda)
- moon:[.24,.36,.54],skyLN:[.34,.5,.8],gndN:[.2,.24,.38],              // noite: luar · luz do céu (vem de cima) · luz que sobe do chão
- fogKD:.46,fogKN:.9,cloud:.5,moonS:1.25,
+ moon:[.27,.39,.58],skyLN:[.27,.4,.66],gndN:[.14,.17,.28],              // noite: luar · luz do céu (vem de cima) · luz que sobe do chão
+ fogKD:.46,fogKN:.9,cloud:.47,moonS:1.25,aur:.35,
  lm:2.0,wet:.1,
- satD:1.36,satN:1.32,bloomD:.3,bloomN:.45,thD:.8,thN:.62,vigD:.26,vigN:.42,scD:.42,scN:.5,raysD:.45,raysN:1.0,tilt:.5,glare:.2,atmD:1.0,atmN:2.0};
+ satD:1.32,satN:1.14,bloomD:.26,bloomN:.6,thD:.84,thN:.62,vigD:.26,vigN:.42,scD:.42,scN:.5,raysD:.45,raysN:1.0,tilt:.5,glare:.12,atmD:.55,atmN:2.0,
+ // Gráficos 6
+ water:.85,rim:.55,emis:.7,                                                // caminho de luz na água · luz no contorno · brilho próprio de noite
+ tm:.72,expoD:.86,expoN:.92,                                               // curva de filme (0 = desligada) e exposição
+ ao:.9,aoR:10,aoCD:[.34,.36,.5],aoCN:[.3,.34,.52],                         // oclusão de ambiente: força · raio (unidades do mundo) · cor da sombra
+ dof:.6,dofA:3.4,dofB:3.6,dofMin:300,                                      // desfoque do longe: força · começa a (dofA × distância do jogador) · termina a (começo × dofB)
+ rayThD:.78,rayThN:.2,rayKD:.36,rayKN:.42,warmL:.9};
+const mk=o=>Object.assign({},DV,o||{});
+const PROF={field:mk(),
+ db:mk({fogKD:.5,satD:1.3,hzD:[.5,.74,1],rim:.65}),
+ ninja:mk({fogKD:.52,fogKN:1,satD:1.3,skyLD:[.8,.88,1.04]}),
+ ocean:mk({fogKD:.8,fogKN:1.1,water:1,satD:1.3,dofMin:420})};
+// terror (Halloween): sempre de noite; o mapa cuida do próprio céu e da própria névoa — aqui entram a luz das fontes, o chão molhado e os efeitos de tela
+const HOR={horror:1,lm:.7,moonS:1.15,hfK:1.3,wet:.85,water:.9,rim:.4,emis:.5,
+ sat:1.2,gain:[.99,.94,1.07],lift:[.012,.002,.034],bloom:.7,th:.55,vig:.52,sc:.5,vib:.2,tame:.1,warm:[-.012,0,.045],
+ tm:.85,expo:.9,ao:.95,aoR:10,aoC:[.26,.22,.4],dof:.5,dofA:3.2,dofB:3.4,dofMin:260,rayTh:.1,rayK:.55,rayC:[.74,.66,1]};
+// interiores (Salão do Demônio, Catedral, Cripta, Caverna de Gelo, Dungeon): só os efeitos de tela
+const INT={inn:1,emis:.5,tm:.8,expo:.9,ao:.9,aoR:9,aoC:[.28,.26,.36],vig:.34,dofA:4,dofB:3,dofMin:320};
+const INT_ON=false;   // interiores ainda sem teste: ficam com o visual de antes até serem conferidos
+const INTS={halIn:INT,hall:INT,lich:INT,raid:INT,ice:Object.assign({},INT,{aoC:[.24,.3,.42]})};
+function profOf(sc){if(!sc)return null;const id=sc.id;if(PROF[id])return PROF[id];if(id==='hal')return HOR;if(INTS[id])return INT_ON?INTS[id]:null;
+ const DN=H3.DN;if(DN&&DN.ids&&DN.ids[id])return PROF[id]=mk(sc.gfx5);return typeof sc.shadow==='function'?null:(INT_ON?INT:null)}
+const isOn=sc=>!!(G3.real&&sc&&H3.S&&H3.S.mode);
+const V=H3.gfx5v=PROF.field;
+let was=false,fogBase=-1,fogW=-1,lmSet=false;const ST={n:0,tw:0,nk:0,day:1};
 
 // ============================================================ a cada quadro (depois do ciclo de dia e noite e dos Gráficos 3/4) ============================================================
-function off(){if(!was)return;was=false;GX.skx[2]=0;GX.skx[3]=0;GX.rs[0]=0;const fv=H3.fogv&&H3.fogv();if(fv&&fogBase>=0&&Math.abs(fv[3]-fogW)<1e-7)fv[3]=fogBase;fogBase=fogW=-1}
-function tick(){const sc=curSC();if(!isOn(sc)){off();return}was=true;
+function off(){if(!was)return;was=false;GX.skx[2]=0;GX.skx[3]=0;GX.rs[0]=0;GX.rl[0]=GX.rl[1]=GX.rl[2]=GX.rl[3]=0;
+ if(lmSet){lmSet=false;const DN=H3.DN;if(!(DN&&DN.on)&&H3.setLMul){H3.setLMul(1);H3.lmulS=1}}
+ const fv=H3.fogv&&H3.fogv();if(fv&&fogBase>=0&&Math.abs(fv[3]-fogW)<1e-7)fv[3]=fogBase;fogBase=fogW=-1}
+function tickDN(sc,V){
  const DN=H3.DN,dn=!!(DN&&DN.on&&DN.st),st=dn?DN.st:null,n=dn?DN.night:0,tw=min(1,GX.tw[3]||0),nk=st?st.nk:0,day=(1-n)*(1-tw*.85);ST.n=n;ST.tw=tw;ST.nk=nk;ST.day=day;
- const E=H3.envGet();
+ const E=H3.envGet(),det=G3.det|0,il=G3.il|0;
  // sol mais baixo: sombras mais compridas o dia todo (a pino fica sem graça)
  if(st&&st.s>.22){const lo=v=>{if(v[1]<=.22)return;const y=.22+(v[1]-.22)*.45,h=hypot(v[0],v[2])||1,k=Math.sqrt(max(0,1-y*y))/h;v[0]*=k;v[2]*=k;v[1]=y};
   lo(E.sun);lo(st.sd);if(GX.sd[3]>0){GX.sd[0]=st.sd[0];GX.sd[1]=st.sd[1];GX.sd[2]=st.sd[2]}}
@@ -31867,38 +32019,88 @@ function tick(){const sc=curSC();if(!isOn(sc)){off();return}was=true;
  if(ATM&&ATM.S[3]>0){ATM.S[3]*=lr(V.atmD,V.atmN,n);if(n>.5){ATM.C[0]=.42;ATM.C[1]=.6;ATM.C[2]=1}}
  if(GX.hf[0]>0){GX.hf[0]=lr(GX.hf[0]*.2,max(GX.hf[0],.46),n);if(n>0)MX(GX.hfc,V.hfN,n)}
  // céu: nuvens com volume, lua grande com clarão
- GX.rs[0]=1;GX.rs[1]=V.cloud;GX.skx[2]=V.moonS;GX.skx[3]=n;
+ GX.rs[0]=1;GX.rs[1]=V.cloud;GX.skx[2]=V.moonS;GX.skx[3]=n;if(GX.skx[1]>0)GX.skx[1]=V.aur;
  // lampiões, tochas e janelas mais fortes · chão levemente molhado refletindo as luzes e a lua
- if(nk>.01&&H3.setLMul){H3.setLMul(1+V.lm*nk);H3.lmulS=1+V.lm*.8*nk}
- GX.wet=max(GX.wet,V.wet*n)}
+ if(nk>.01&&H3.setLMul&&il>=1){H3.setLMul(1+V.lm*nk);H3.lmulS=1+V.lm*.8*nk}
+ if(det>=1)GX.wet=max(GX.wet,V.wet*n);
+ // Gráficos 6: água, contorno e brilho próprio
+ GX.rl[0]=det>=1?V.water:0;GX.rl[1]=det>=2?V.rim*(1-.45*n):0;GX.rl[2]=il>=1?V.emis*nk:0;GX.rl[3]=il>=1?V.warmL*nk:0}
+function tickHor(sc,V){ST.n=1;ST.tw=0;ST.nk=1;ST.day=0;const det=G3.det|0,il=G3.il|0;
+ if(H3.setLMul&&il>=1){H3.setLMul(1+V.lm);H3.lmulS=1+V.lm*.8;lmSet=true}
+ if(GX.hf[0]>0)GX.hf[0]=min(.9,GX.hf[0]*V.hfK);
+ if(det>=1)GX.wet=max(GX.wet,V.wet);
+ GX.skx[2]=V.moonS;GX.skx[3]=GX.night>0?1:0;
+ GX.rl[0]=det>=1?V.water:0;GX.rl[1]=det>=2?V.rim:0;GX.rl[2]=il>=1?V.emis:0;GX.rl[3]=0}
+function tick(){const sc=curSC(),pr=isOn(sc)?profOf(sc):null;if(!pr){off();return}
+ if(was&&was!==sc.id)off();was=sc.id;
+ if(pr.inn){ST.n=0;ST.tw=0;ST.nk=1;ST.day=0;GX.rl[0]=GX.rl[1]=GX.rl[3]=0;GX.rl[2]=(G3.il|0)>=1?pr.emis:0;return}
+ if(pr.horror)tickHor(sc,pr);else tickDN(sc,pr)}
 {const _st=FX.step;FX.step=function(){const r=_st.apply(this,arguments);try{tick()}catch(e){if(!H3.gx5err){H3.gx5err=1;console.error('Gráfico realista',e)}}return r}}
 
+// ============================================================ a cena numa textura com profundidade: quando vale a pena ============================================================
+// só com "Efeitos de tela" ligado: é a composição que usa a profundidade (desfoque do longe, oclusão, raios de luz)
+H3.rtUse=function(SC){if(!G3.real||!H3.rtCan||!H3.rtCan())return false;const pp=G3.pp|0;if(pp<1||!profOf(SC))return false;
+ return true};
+
+// ============================================================ raios de luz (sol, lua): saem só do céu (máscara pela profundidade) ============================================================
+const RC=[1,1,1];
+function rays5(SC,pr){if((G3.il|0)<2||!(G3.lux|0)||!H3.cam||!H3.gl_frame)return null;
+ const DN=H3.DN,dn=!!(DN&&DN.on&&DN.st),E=H3.envGet();let dir,k,th;
+ if(pr.horror){dir=E.sun;k=pr.rayK;th=pr.rayTh;RC[0]=pr.rayC[0];RC[1]=pr.rayC[1];RC[2]=pr.rayC[2]}
+ else if(dn){const st=DN.st,s=st.s;
+  if(s>0){const twk=min(1,GX.tw[3]),c=E.sunC,mx=max(c[0],c[1],c[2],.001),q=twk*.6;dir=st.sd;k=pr.rayKD*(1+.5*twk)*sm(0,.07,s);th=pr.rayThD-.1*twk;
+   RC[0]=c[0]/mx*(1-q)+GX.tw[0]*q;RC[1]=c[1]/mx*(1-q)+GX.tw[1]*q;RC[2]=c[2]/mx*.9*(1-q)+GX.tw[2]*q}
+  else{dir=st.md;k=pr.rayKN*sm(.05,.25,-s);th=pr.rayThN;RC[0]=.6;RC[1]=.78;RC[2]=1}}
+ else return null;
+ if(!(k>.01))return null;
+ const cam=H3.cam().p,m=H3.gl_frame().VP,x=cam[0]+dir[0]*4000,y=cam[1]+dir[1]*4000,z=cam[2]+dir[2]*4000,cw=m[3]*x+m[7]*y+m[11]*z+m[15];if(!(cw>.01))return null;
+ const su=(m[0]*x+m[4]*y+m[8]*z+m[12])/cw*.5+.5,sv=(m[1]*x+m[5]*y+m[9]*z+m[13])/cw*.5+.5;
+ const e=1-sm(0,.55,hypot(max(0,-su,su-1),max(0,-sv,sv-1)));if(e<.02)return null;
+ return{x:su,y:sv,k:k*e,col:[RC[0],RC[1],RC[2]],th,g:3,lo:(G3.lux|0)<2,sky:1}}
+
 // ============================================================ efeitos de tela ============================================================
-const NEUT={bloom:0,th:1,vib:0,tame:0,sc:0,split:0,warm:[0,0,0],vig:0,glare:0,dof:0};
 const L3=(a,b,t)=>[lr(a[0],b[0],t),lr(a[1],b[1],t),lr(a[2],b[2],t)];
+function focD(){const S=H3.S;if(!S||!S.foc||!H3.cam)return 90;const c=H3.cam().p,F=S.foc;return clp(hypot(c[0]-F.x,c[1]-(F.y||0),c[2]-F.z),40,400)}
 {const _pp=H3.ppCfg;H3.ppCfg=function(SC){let o=null;try{o=_pp?_pp.apply(this,arguments):null}catch(e){o=null}
- if(!G3.real||!SC||!IDS[SC.id])return o;
- const n=ST.n,tw=ST.tw,o2=Object.assign({},o||NEUT);
- o2.aa=1;o2.grain=0;o2.ca=0;o2.grade=1;
- o2.sat=lr(lr(V.satD,1.25,tw),V.satN,n);o2.gain=L3(L3([1.03,1.01,.97],[1.08,.99,.88],tw),[.94,1.0,1.12],n);o2.lift=L3([0,.002,.012],[0,.004,.02],n);
- o2.bloom=lr(V.bloomD,V.bloomN,n);o2.th=lr(V.thD,V.thN,n);o2.bloom2=1;o2.sc=lr(V.scD,V.scN,n);o2.split=1.2;
- o2.vib=lr(.22,.16,n);o2.tame=lr(.08,.14,n);o2.vig=lr(V.vigD,V.vigN,n);o2.warm=L3(L3([.022,.01,-.018],[.06,.026,-.045],tw),[-.022,0,.06],n);
- o2.glare=V.glare*(1-n);o2.flare=1;o2.dof=max(o2.dof||0,.6);o2.tilt=V.tilt;
- if(o2.rays){o2.rays=Object.assign({},o2.rays);o2.rays.k*=lr(V.raysD,V.raysN,n);o2.rays.lo=false;if(n>.5){o2.rays.col=[.6,.78,1];o2.rays.th=min(o2.rays.th||.34,.3)}}
+ const pp=G3.pp|0;if(!G3.real||!SC||!o||pp<1)return o;const pr=profOf(SC);if(!pr)return o;
+ const n=ST.n,tw=ST.tw,o2=Object.assign({},o),lux=G3.lux|0,rt=!!(H3.rtOn&&H3.rtOn());
+ o2.aa=1;let aoC;
+ if(pr.inn){   // interior: fica a cor do lugar; entram a curva de filme, a vinheta e (pela profundidade) a oclusão
+  o2.vig=max(o2.vig||0,pr.vig);o2.tm=pr.tm;o2.expo=pr.expo;aoC=pr.aoC;if(o2.sc!==undefined)o2.sc*=.7}
+ else if(pr.horror){
+  o2.grade=1;o2.sat=pr.sat;o2.gain=pr.gain;o2.lift=pr.lift;o2.bloom=pr.bloom;o2.th=pr.th;o2.bloom2=1;o2.sc=pr.sc;o2.split=1.2;o2.vib=pr.vib;o2.tame=pr.tame;o2.vig=pr.vig;o2.warm=pr.warm;
+  o2.glare=0;o2.dof=max(o2.dof||0,pr.dof);o2.tm=pr.tm;o2.expo=pr.expo;aoC=pr.aoC;
+  if(o2.rays&&!rt){o2.rays=Object.assign({},o2.rays);o2.rays.lo=false}}
+ else{const V=pr;
+  o2.grade=1;o2.grain=0;o2.ca=0;
+  o2.sat=lr(lr(V.satD,1.25,tw),V.satN,n);o2.gain=L3(L3([1.03,1.01,.97],[1.08,.99,.88],tw),[.95,1.0,1.08],n);o2.lift=L3([0,.002,.012],[0,.004,.02],n);
+  o2.bloom=lr(V.bloomD,V.bloomN,n);o2.th=lr(V.thD,V.thN,n);o2.bloom2=1;o2.sc=lr(V.scD,V.scN,n);o2.split=1.2;
+  o2.vib=lr(.22,.16,n);o2.tame=lr(.08,.14,n);o2.vig=lr(V.vigD,V.vigN,n);o2.warm=L3(L3([.022,.01,-.018],[.06,.026,-.045],tw),[-.022,0,.06],n);
+  o2.glare=V.glare*(1-n);o2.dof=max(o2.dof||0,V.dof);o2.tilt=rt?0:V.tilt;
+  o2.tm=V.tm;o2.expo=lr(V.expoD,V.expoN,n);aoC=L3(V.aoCD,V.aoCN,n);
+  if(o2.rays&&!rt){o2.rays=Object.assign({},o2.rays);o2.rays.k*=lr(V.raysD,V.raysN,n);o2.rays.lo=false;if(n>.5){o2.rays.col=[.6,.78,1];o2.rays.th=min(o2.rays.th||.34,.3)}}}
+ if(o2.tm>0&&o2.sc!==undefined)o2.sc*=.55;             // a curva de filme já dá o contraste: a curva antiga entra mais fraca
+ // o que cada opção existente libera
+ if(pp<2){o2.bloom=0;o2.bloom2=0}
+ if(lux<2){o2.bloom2=0;o2.flare=0}
+ if(rt){
+  if((G3.sh|0)>=2&&pr.ao>0){o2.ao=pr.ao;o2.aoR=pr.aoR;o2.aoC=aoC;o2.aoHi=(G3.sh|0)>=3&&!mob?1:0}
+  if(o2.dof>0){const a=max(pr.dofMin,focD()*pr.dofA);o2.dofZ=[a,a*pr.dofB];o2.tilt=0}
+  let r=null;try{r=rays5(SC,pr)}catch(e){r=null}o2.rays=r}
  return o2}}
 
 // ============================================================ noite: clarão quente maior em volta dos lampiões ============================================================
-function halos(){const sc=curSC();if(!isOn(sc)||ST.nk<.03)return;let L=null;try{L=sc.lights}catch(e){}if(!L||!L.length||!H3.tex||!H3.tex.glow||!H3.cam||!H3.spr)return;
- const cam=H3.cam().p,T=H3.tex.glow,nk=ST.nk;let c=0;
+function halos(){const sc=curSC();if(!isOn(sc)||ST.nk<.03||(G3.il|0)<1)return;const pr=profOf(sc);if(!pr||pr.inn)return;
+ let L=null;try{L=sc.lights}catch(e){}if(!L||!L.length||!H3.tex||!H3.tex.glow||!H3.cam||!H3.spr)return;
+ const cam=H3.cam().p,T=H3.tex.glow,nk=ST.nk*(pr.horror?.55:1);let c=0;
  for(let i=0;i<L.length&&c<32;i++){const l=L[i];if(!l||!(l.k>0)||l.r>190)continue;const d=hypot(l.x-cam[0],l.y-cam[1],l.z-cam[2]);if(d>900||d<8)continue;
   if(H3.vis&&!H3.vis(l.x,l.y,l.z,l.r*.4))continue;const m=max(l.cr,l.cg,l.cb,.01),s=l.r*.85,a=nk*min(1,l.k)*.2*(d>800?(900-d)/100:1);
   H3.spr(T,l.x,l.y,l.z,s,s,null,[l.cr/m,l.cg/m*.9,l.cb/m*.75,a],true,0,true);c++}}
 if(FX.draw){const _d=FX.draw;FX.draw=function(){const r=_d.apply(this,arguments);try{if(!H3.inSh)halos()}catch(e){if(!H3.gx5err){H3.gx5err=1;console.error('Gráfico realista',e)}}return r}}
 
 // ============================================================ liga / desliga ============================================================
-function setReal(v){G3.real=v?1:0;try{localStorage.setItem('mp_real',String(G3.real))}catch(e){}
- if(G3.real){try{const b=document.querySelector('#g3Pre button[data-p="4"]');if(b)b.click()}catch(e){}}}   // realista = tudo no máximo (Qualidade geral: Ultra)
-const NM=['Desligado','Ligado'],DS=['Luz e cores normais do jogo.','Visual de cinema: céu azul forte com nuvens fofas, sol dourado, sombras compridas e cores vivas; de noite lua cheia grande, luar azul, bruma entre as árvores e lampiões quentes. Coloca a Qualidade geral no Ultra (pesado). Por enquanto só no Mundo 1 (teste).'];
+function setReal(v){G3.real=v?1:0;try{localStorage.setItem('mp_real',String(G3.real))}catch(e){}if(!G3.real)try{off()}catch(e){}}
+const NM=['Desligado','Ligado'],DS=['Luz e cores normais do jogo.','Visual de cinema em todos os mundos: céu azul forte com nuvens fofas, sol dourado, sombras compridas e cores vivas; de noite lua cheia grande, luar azul, bruma e lampiões quentes; no Halloween, noite funda com névoa e luzes acesas. Acompanha a Qualidade geral: brilho, desfoque do longe, raios de luz e sombra nos cantos entram conforme Efeitos de tela, Sombras, Iluminação e Luz e atmosfera.'];
 function ui(){const box=document.getElementById('g3xSec');if(!box)return false;if(document.getElementById('g5Row'))return true;
  const r=document.createElement('div');r.className='g3Row';r.id='g5Row';
  r.innerHTML='<div class="g3T">Gráfico realista<i></i></div><div class="g3Lv">'+NM.map((t,i)=>'<button data-r="'+i+'">'+t+'</button>').join('')+'</div><div class="g3D"></div>';
@@ -31907,7 +32109,8 @@ function ui(){const box=document.getElementById('g3xSec');if(!box)return false;i
  r.querySelectorAll('button').forEach(b=>b.onclick=()=>{setReal(+b.dataset.r);sync()});
  sync();const M=document.getElementById('cfgM');if(M&&window.MutationObserver)new MutationObserver(()=>{if(M.style.display==='flex')sync()}).observe(M,{attributes:true,attributeFilter:['style']});return true}
 {let k=0;const iv=setInterval(()=>{k++;let ok=false;try{ok=ui()}catch(e){console.error('Gráfico realista tela',e)}if(ok||k>240)clearInterval(iv)},500)}
-H3.gfx5={IDS,tick,V,set:setReal};
+const dnOf=sc=>{const p=isOn(sc)?profOf(sc):null;return!!(p&&!p.horror&&!p.inn)};
+H3.gfx5={IDS:PROF,PROF,HOR,INT,INTS,tick,V,set:setReal,prof:profOf,dn:dnOf,st:ST};
 })();
 </script>
 </body></html>
