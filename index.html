@@ -7144,7 +7144,7 @@ void main(){
   vec3 cc=mix(vec3(0.60,0.66,0.78),vec3(1.0,0.985,0.95),sh)*(0.82+0.18*uSkyA.b);
   if(uSkX.y>0.0)cc+=uSunC*(pow(sd,9.0)*0.5+pow(sd,2.0)*0.07)*(1.0-cov*0.72)*uSkX.y;   // Gráficos 4: borda das nuvens acesa perto do sol
   cc*=uTwD.w;if(uTw.a>0.0)cc=mix(cc,(cc*0.55+0.3)*uTw.rgb*1.35,clamp(uTw.a,0.0,1.0)*(0.3+0.7*az)*0.85);   // fim de tarde: nuvens escurecem e ficam rosa/laranja do lado do sol
-  if(uNight>0.0)cc=mix(cc,mix(vec3(0.05,0.045,0.08),uSkyA*0.55,0.5)+uSunC*(0.12+0.55*pow(sd,5.0))*sh,uNight);   // nuvens da noite: escuras, com a borda prateada perto da lua
+  if(uNight>0.0)cc=mix(cc,mix(vec3(0.05,0.045,0.08),uSkyA*0.55,0.5)+uSunC*(0.12+0.55*pow(sd,5.0))*sh,uNight);if(uSkX.w>0.0&&uNight>0.0)cc+=uSkX.w*uNight*(uSunC*(0.16+0.9*pow(sd,6.0))*sh+vec3(0.015,0.03,0.085));   // nuvens da noite: escuras, com a borda prateada perto da lua
   float k=cov*0.94*smoothstep(0.0,0.22,d.y);sky=mix(sky,cc,k);op=1.0-k*0.8;cov_=k;
   {vec2 u2=d.xz/(d.y+0.3)*0.16+vec2(uT*0.0011,-uT*0.0005);float ci=smoothstep(0.56,0.86,texture2D(uCloud,u2*vec2(1.0,3.2)).r)*smoothstep(0.06,0.45,d.y)*(1.0-k);sky=mix(sky,(vec3(1.0,0.97,0.93)*(0.86+0.14*uSkyA.b)*uTwD.w+uSunC*pow(sd,8.0)*0.25)*mix(vec3(1.0),uTw.rgb*1.4,clamp(uTw.a,0.0,1.0)*0.6),ci*0.38*(1.0-uNight*0.8));}   // nuvens altas e finas (passam devagar)
  }
@@ -7159,10 +7159,10 @@ void main(){
    vec2 s2=mu*560.0;vec2 c2=floor(s2),f2=fract(s2)-0.5;float h2=fract(sin(dot(c2,vec2(41.3,289.1)))*24634.6345);
    float st2=step(0.955-mb*0.10*mn,h2)*(1.0-smoothstep(0.0,0.22,length(f2-(vec2(fract(h2*17.3),fract(h2*9.1))-0.5)*0.6)));
    sky+=mix(vec3(0.75,0.82,1.0),vec3(1.0,0.86,0.72),fract(h2*23.0))*st2*(0.22+0.5*fract(h2*71.0))*(0.7+0.3*sin(uT*1.9+h2*60.0))*vis;}
-  vec3 t1=normalize(cross(SU,vec3(0.0,1.0,0.0))),t2=cross(t1,SU);vec2 mp=vec2(dot(d,t1),dot(d,t2))/0.052;float mr=length(mp);
+  vec3 t1=normalize(cross(SU,vec3(0.0,1.0,0.0))),t2=cross(t1,SU);vec2 mp=vec2(dot(d,t1),dot(d,t2))/(0.052*(uSkX.z>0.0?uSkX.z:1.0));float mr=length(mp);
   if(mr<1.0&&sd>0.0){float cr=texture2D(uCloud,mp*0.28+vec2(0.37,0.61)).r;float mo=(0.78+0.32*smoothstep(0.35,0.75,cr))*(1.0-0.35*mr*mr);   // a lua: disco com manchas
-   sky=mix(sky,uSunC*1.15*mo+vec3(0.12),(1.0-smoothstep(0.93,1.0,mr))*(1.0-cov_*0.85)*uNight);}
-  sky+=uSunC*(pow(sd,260.0)*0.32+pow(sd,24.0)*0.07+uSkX.x*(pow(sd,5.0)*0.045+smoothstep(0.012,0.0,abs(sd-0.9925))*0.05))*(1.0-cov_*0.5)*uNight;}   // halo (Gráficos 4: clarão largo e um anel fino em volta da lua)
+   sky=mix(sky,mix(uSunC*1.15*mo+vec3(0.12),vec3(0.93,0.96,1.0)*(1.25+0.35*mo),uSkX.w*0.7),(1.0-smoothstep(0.93,1.0,mr))*(1.0-cov_*0.85)*uNight);}
+  sky+=uSunC*(pow(sd,260.0)*0.32+pow(sd,24.0)*0.07+uSkX.x*(pow(sd,5.0)*0.045+smoothstep(0.012,0.0,abs(sd-0.9925))*0.05)+uSkX.w*(pow(sd,120.0)*0.55+pow(sd,16.0)*0.16+pow(sd,4.0)*0.05))*(1.0-cov_*0.5)*uNight;}   // halo (Gráficos 4: clarão largo e um anel fino em volta da lua)
  if(uMA.w>0.0&&d.y>0.0){vec3 Hd=normalize(mix(uMA.xyz,uMB.xyz,uMB.w)),Td=normalize(mix(uMA.xyz,uMB.xyz,max(uMB.w-0.3,0.0)));vec3 ab=Hd-Td;   // estrela cadente
   float q=clamp(dot(d-Td,ab)/max(dot(ab,ab),0.0000001),0.0,1.0);float ds=length(d-Td-ab*q);sky+=vec3(1.0,0.95,0.86)*uMA.w*q*q*(1.0-smoothstep(0.0007,0.003,ds))*1.7*(1.0-cov_);}
  sky=mix(sky,uFog.rgb,smoothstep(0.20,0.0,d.y));
@@ -26062,7 +26062,7 @@ const _t=tick;tick=function(){_t();if(world!==1)return;const e=drac();if(!e||e.d
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261112182123;
+const GAME_BUILD=20261112190120;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
@@ -31802,6 +31802,93 @@ const sh=$('stShow');if(sh&&!$('stFg')){const r=document.createElement('div');r.
  const f=document.createElement('button');f.type='button';f.id='stFg';f.textContent='Esqueceu a senha?';r.appendChild(f);
  f.onclick=()=>{const m=$('stMsg');if(m)m.textContent='A senha não pode ser recuperada. Peça ajuda a um ADM no chat ou crie uma conta nova.'}}
 const off=$('stOff');if(off&&!document.querySelector('.stOu')){const o=document.createElement('div');o.className='stOu';o.textContent='OU';off.parentNode.insertBefore(o,off)}
+})();
+</script>
+<script>
+// ===================== Gráficos 5: Realista (opcional · por enquanto só no Mundo 1) =====================
+// Configurações → Gráficos 3D → "Gráfico realista" (Desligado / Ligado; salvo no aparelho em mp_real). Só muda a luz e a cor, então quase não pesa:
+//  · Dia: céu azul forte, névoa bem mais fina (dá para ver longe), sol mais quente e um pouco mais baixo (sombras mais compridas), sombras mais fundas,
+//    cores mais vivas e brilho em volta do sol.
+//  · Noite: azul-escuro limpo em vez da camada cinza, luar azul forte, lua grande com clarão, nuvens com borda prateada, lampiões mais fortes
+//    (poças de luz quente no chão), chão levemente molhado refletindo as luzes, e sem grão de filme nem aberração cromática.
+// Para levar a outros mundos depois: acrescentar o id em IDS.
+(function(){
+'use strict';
+const H3=window.H3;if(!H3||!H3.scenes||!H3.gx||!H3.fx||!H3.envGet)return;
+const GX=H3.gx,FX=H3.fx,G3=H3.G3||(H3.G3={});
+const min=Math.min,max=Math.max,hypot=Math.hypot;
+const clp=(v,a,b)=>v<a?a:v>b?b:v,sm=(a,b,v)=>{const t=clp((v-a)/(b-a),0,1);return t*t*(3-2*t)},lr=(a,b,t)=>a+(b-a)*t;
+const MX=(o,c,t)=>{o[0]+=(c[0]-o[0])*t;o[1]+=(c[1]-o[1])*t;o[2]+=(c[2]-o[2])*t},ML=(o,m)=>{o[0]*=m[0];o[1]*=m[1];o[2]*=m[2]};
+const IDS={field:1};
+try{G3.real=localStorage.getItem('mp_real')==='1'?1:0}catch(e){G3.real=0}
+const curSC=()=>{try{return H3.curSC&&H3.curSC()}catch(e){return null}};
+const isOn=sc=>!!(G3.real&&sc&&IDS[sc.id]&&H3.S&&H3.S.mode);
+let was=false,fogBase=-1,fogW=-1;const ST={n:0,tw:0,nk:0};
+
+// ============================================================ a cada quadro (depois do ciclo de dia e noite e dos Gráficos 3/4) ============================================================
+const SKY_D=[.1,.34,.86],HZ_D=[.56,.75,.98],FOG_D=[.6,.76,.97];
+const SKY_N=[.01,.026,.095],HZ_N=[.03,.07,.19],FOG_N=[.028,.05,.13],HF_N=[.05,.09,.2];
+const SUNM=[1.13,1.03,.88],MOONM=[1.02,1.12,1.32],SKYL_D=[.8,.87,1.02],SKYL_N=[.15,.23,.5],GND_N=[.06,.08,.13];
+function off(){if(!was)return;was=false;GX.skx[2]=0;GX.skx[3]=0;const fv=H3.fogv&&H3.fogv();if(fv&&fogBase>=0&&Math.abs(fv[3]-fogW)<1e-7)fv[3]=fogBase;fogBase=fogW=-1}
+function tick(){const sc=curSC();if(!isOn(sc)){off();return}was=true;
+ const DN=H3.DN,dn=!!(DN&&DN.on&&DN.st),st=dn?DN.st:null,n=dn?DN.night:0,day=1-n,tw=min(1,GX.tw[3]||0),nk=st?st.nk:0;ST.n=n;ST.tw=tw;ST.nk=nk;
+ const E=H3.envGet();
+ // sol mais baixo: sombras mais compridas o dia todo (a pino fica sem graça)
+ if(st&&st.s>.22){const lo=v=>{if(v[1]<=.22)return;const y=.22+(v[1]-.22)*.5,h=hypot(v[0],v[2])||1,k=Math.sqrt(max(0,1-y*y))/h;v[0]*=k;v[2]*=k;v[1]=y};
+  lo(E.sun);lo(st.sd);if(GX.sd[3]>0){GX.sd[0]=st.sd[0];GX.sd[1]=st.sd[1];GX.sd[2]=st.sd[2]}}
+ // luz: sol quente e forte de dia, luar azul de noite; luz do céu mais azul e mais fraca (sombra mais funda, mais contraste)
+ if(st&&st.s<0)ML(E.sunC,MOONM);else{const m=[lr(1,SUNM[0],day),lr(1,SUNM[1],day),lr(1,SUNM[2],day)];ML(E.sunC,m)}
+ ML(E.skyA,[lr(1,SKYL_D[0],day*(1-tw)),lr(1,SKYL_D[1],day*(1-tw)),lr(1,SKYL_D[2],day*(1-tw))]);
+ if(n>0){MX(E.skyA,SKYL_N,n*.85);MX(E.gndA,GND_N,n*.8)}
+ // céu desenhado
+ if(GX.skyO){const kd=day*(1-tw*.85);MX(GX.skyA,SKY_D,kd*.7);MX(GX.skyB,HZ_D,kd*.55);if(n>0){MX(GX.skyA,SKY_N,n*.9);MX(GX.skyB,HZ_N,n*.9)}}
+ // névoa: bem mais fina (o fundo aparece) e da cor do céu; de noite azul-escura em vez de cinza
+ const fv=H3.fogv&&H3.fogv();
+ if(fv){if(fogW<0||Math.abs(fv[3]-fogW)>1e-7)fogBase=fv[3];
+  const kd=day*(1-tw*.7);MX(fv,FOG_D,kd*.55);if(n>0)MX(fv,FOG_N,n*.92);
+  fv[3]=fogBase*lr(lr(.42,.62,tw),.58,n);fogW=fv[3]}
+ // neblina rasteira: quase some de dia; de noite fica baixa e azul
+ if(GX.hf[0]>0){GX.hf[0]*=lr(.3,.75,n);if(n>0)MX(GX.hfc,HF_N,n)}
+ // lua grande com clarão, nuvens da noite com borda prateada (ver uSkX.z / uSkX.w no shader do céu)
+ GX.skx[2]=lr(1,2.1,n);GX.skx[3]=n;
+ if(H3.cloudFl&&n>0){const c=H3.cloudFl;MX(c,[.2,.27,.48],n*.8);c[3]=min(c[3],lr(c[3],.45,n))}
+ // lampiões, tochas e janelas: mais fortes (poças de luz quente no chão) · chão levemente molhado refletindo as luzes e a lua
+ if(nk>.01&&H3.setLMul){H3.setLMul(1+1.75*nk);H3.lmulS=1+1.4*nk}
+ GX.wet=max(GX.wet,.12*n)}
+{const _st=FX.step;FX.step=function(){const r=_st.apply(this,arguments);try{tick()}catch(e){if(!H3.gx5err){H3.gx5err=1;console.error('Gráfico realista',e)}}return r}}
+
+// ============================================================ efeitos de tela: cor viva, brilho, sem grão ============================================================
+const NEUT={bloom:0,th:1,vib:0,tame:0,sc:0,split:0,warm:[0,0,0],vig:0,glare:0,dof:0};
+const L3=(a,b,t)=>[lr(a[0],b[0],t),lr(a[1],b[1],t),lr(a[2],b[2],t)];
+{const _pp=H3.ppCfg;H3.ppCfg=function(SC){let o=null;try{o=_pp?_pp.apply(this,arguments):null}catch(e){o=null}
+ if(!G3.real||!SC||!IDS[SC.id])return o;
+ const n=ST.n,tw=ST.tw,o2=Object.assign({},o||NEUT);
+ o2.grain=0;o2.ca=0;o2.grade=1;
+ o2.sat=lr(lr(1.3,1.22,tw),1.2,n);o2.gain=L3(L3([1.05,1.02,.95],[1.07,.99,.9],tw),[.93,1.0,1.13],n);o2.lift=L3([0,.002,.01],[0,.006,.026],n);
+ o2.bloom=max(o2.bloom||0,lr(.42,.62,n));o2.th=lr(.8,.62,n);o2.bloom2=1;
+ o2.vib=lr(.2,.14,n);o2.tame=lr(.1,.18,n);o2.vig=lr(.22,.3,n);o2.warm=L3([.055,.024,-.04],[-.02,0,.055],n);
+ if((o2.glare||0)<.75&&n<.5)o2.glare=.75*(1-n*2);
+ return o2}}
+
+// ============================================================ noite: clarão quente maior em volta dos lampiões ============================================================
+function halos(){const sc=curSC();if(!isOn(sc)||ST.nk<.03)return;let L=null;try{L=sc.lights}catch(e){}if(!L||!L.length||!H3.tex||!H3.tex.glow||!H3.cam||!H3.spr)return;
+ const cam=H3.cam().p,T=H3.tex.glow,nk=ST.nk;let c=0;
+ for(let i=0;i<L.length&&c<24;i++){const l=L[i];if(!l||!(l.k>0)||l.r>190)continue;const d=hypot(l.x-cam[0],l.y-cam[1],l.z-cam[2]);if(d>560||d<8)continue;
+  if(H3.vis&&!H3.vis(l.x,l.y,l.z,l.r*.4))continue;const m=max(l.cr,l.cg,l.cb,.01),s=l.r*.75,a=nk*min(1,l.k)*.16*(d>460?(560-d)/100:1);
+  H3.spr(T,l.x,l.y,l.z,s,s,null,[l.cr/m,l.cg/m*.92,l.cb/m*.8,a],true,0,true);c++}}
+if(FX.draw){const _d=FX.draw;FX.draw=function(){const r=_d.apply(this,arguments);try{if(!H3.inSh)halos()}catch(e){if(!H3.gx5err){H3.gx5err=1;console.error('Gráfico realista',e)}}return r}}
+
+// ============================================================ tela de configurações ============================================================
+const NM=['Desligado','Ligado'],DS=['Luz e cores normais do jogo.','Céu azul forte, pouca névoa, sol dourado com sombras compridas e cores vivas; de noite lua grande, luar azul, lampiões fortes e chão molhado. Por enquanto só no Mundo 1 (teste).'];
+function ui(){const box=document.getElementById('g3xSec');if(!box)return false;if(document.getElementById('g5Row'))return true;
+ const r=document.createElement('div');r.className='g3Row';r.id='g5Row';
+ r.innerHTML='<div class="g3T">Gráfico realista<i></i></div><div class="g3Lv">'+NM.map((t,i)=>'<button data-r="'+i+'">'+t+'</button>').join('')+'</div><div class="g3D"></div>';
+ box.insertBefore(r,box.firstChild);
+ const sync=()=>{const v=G3.real|0;r.querySelectorAll('button').forEach(b=>b.classList.toggle('on',+b.dataset.r===v));r.querySelector('.g3D').textContent=DS[v];r.querySelector('.g3T i').textContent=NM[v]};
+ r.querySelectorAll('button').forEach(b=>b.onclick=()=>{G3.real=+b.dataset.r;try{localStorage.setItem('mp_real',String(G3.real))}catch(e){}sync()});
+ sync();const M=document.getElementById('cfgM');if(M&&window.MutationObserver)new MutationObserver(()=>{if(M.style.display==='flex')sync()}).observe(M,{attributes:true,attributeFilter:['style']});return true}
+{let k=0;const iv=setInterval(()=>{k++;let ok=false;try{ok=ui()}catch(e){console.error('Gráfico realista tela',e)}if(ok||k>240)clearInterval(iv)},500)}
+H3.gfx5={IDS,tick,set:v=>{G3.real=v?1:0;try{localStorage.setItem('mp_real',String(G3.real))}catch(e){}}};
 })();
 </script>
 </body></html>
