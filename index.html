@@ -6607,6 +6607,29 @@ class MB{
 }
 H3.MB=MB;
 
+// ---------- muitas cópias da mesma malha (árvores, pinheiros, pedras) juntas num pacote só ----------
+// Cada árvore desenhada sozinha é uma chamada para a placa de vídeo; no celular centenas delas por quadro derrubam o FPS (o Mundo 1 e o Mundo 3
+// passavam de 400 chamadas). H3.instGroups junta as árvores de cada pedaço do mapa (do mesmo tipo) em malhas prontas para os níveis de longe:
+// de longe o pedaço inteiro vira 1 chamada; perto do jogador continua uma por árvore (com a troca de detalhe suave de sempre).
+H3.mergeInst=function(list){let n=0;for(const it of list)n+=it.p.n;const buf=new ArrayBuffer(n*28),F=new Float32Array(buf),U=new Uint8Array(buf);let o=0,sx=0,sy=0,sz=0;
+ const bb=[1e9,1e9,1e9,-1e9,-1e9,-1e9];
+ for(const it of list){const Fs=new Float32Array(it.p.buf),Us=new Uint8Array(it.p.buf),M=it.M,tn=it.tn,N=it.p.n;
+  for(let i=0;i<N;i++,o++){const s=i*7,d=o*7,x=Fs[s],y=Fs[s+1],z=Fs[s+2];
+   const X=M[0]*x+M[4]*y+M[8]*z+M[12],Y=M[1]*x+M[5]*y+M[9]*z+M[13],Z=M[2]*x+M[6]*y+M[10]*z+M[14];F[d]=X;F[d+1]=Y;F[d+2]=Z;sx+=X;sy+=Y;sz+=Z;
+   if(X<bb[0])bb[0]=X;if(Y<bb[1])bb[1]=Y;if(Z<bb[2])bb[2]=Z;if(X>bb[3])bb[3]=X;if(Y>bb[4])bb[4]=Y;if(Z>bb[5])bb[5]=Z;
+   const a=Fs[s+3],b=Fs[s+4],c=Fs[s+5];let nx=M[0]*a+M[4]*b+M[8]*c,ny=M[1]*a+M[5]*b+M[9]*c,nz=M[2]*a+M[6]*b+M[10]*c;const l=Math.sqrt(nx*nx+ny*ny+nz*nz)||1;F[d+3]=nx/l;F[d+4]=ny/l;F[d+5]=nz/l;
+   const sb=i*28+24,db=o*28+24;for(let k=0;k<3;k++){const v=Us[sb+k];U[db+k]=tn?((Math.min(255,v*tn[k])&254)|(v&1)):v}U[db+3]=Us[sb+3]}}   // o bit baixo de cada cor é o material/brilho: fica como estava
+ const cx=sx/(n||1),cy=sy/(n||1),cz=sz/(n||1);let rad=0;for(let i=0;i<n;i++){const d=i*7;rad=Math.max(rad,Math.hypot(F[d]-cx,F[d+1]-cy,F[d+2]-cz))}
+ return{buf,n,cx,cy,cz,rad,pk:true,bb,shn:true,noLod:true}};
+// objs: lista com o (posição wx/wz, matriz m, tint); varOf(o) = {p:[pack0,pack1,pack2]}; cell = tamanho do pedaço; keyOf(o) separa tipos (cada tipo tem suas distâncias)
+H3.instGroups=function(gl,objs,cell,varOf,keyOf){const G=new Map();
+ for(const o of objs){const v=varOf(o);if(!v||!v.p)continue;const k=(keyOf?keyOf(o):'')+'|'+Math.floor(o.wx/cell)+','+Math.floor(o.wz/cell);let g=G.get(k);if(!g){g={key:keyOf?keyOf(o):'',objs:[]};G.set(k,g)}g.objs.push(o)}
+ const out=[];for(const g of G.values()){const L1=[],L2=[];for(const o of g.objs){const v=varOf(o);L1.push({p:v.p[1]||v.p[0],M:o.m,tn:o.tint});L2.push({p:v.p[2]||v.p[1]||v.p[0],M:o.m,tn:o.tint})}
+  const p1=H3.mergeInst(L1),p2=H3.mergeInst(L2);g.m1=H3.upload(gl,p1);g.m2=H3.upload(gl,p2);g.cx=p1.cx;g.cy=p1.cy;g.cz=p1.cz;g.rad=p1.rad;
+  let R=0;for(const o of g.objs)R=Math.max(R,Math.hypot(o.wx-g.cx,o.wz-g.cz)+o.rad);g.R=R;out.push(g)}
+ return out};
+H3.instFree=(gl,groups)=>{for(const g of groups||[])for(const m of[g.m1,g.m2])if(m)try{gl.deleteBuffer(m.vbo)}catch(e){}};
+
 // sombra nos cantos (feita uma vez, ao montar a cena): paredes, troncos e pedras ficam mais escuros perto da base. A "base" de cada pedaço de 12 x 12 é o
 // ponto mais baixo da própria malha ali; só escurece faces de lado ou para baixo (o chão e os topos não mudam), nunca folhas que balançam nem o que brilha.
 H3.aoBake=function(A,n,pk){const CS=12,mp=new Map();let y0=1e9,y1=-1e9;const key=(x,z)=>Math.floor(x/CS)*100003+Math.floor(z/CS);
@@ -6671,7 +6694,7 @@ function lodPick(m,M){const L=m.lod;if(!L)return null;
 
 // apaga junto as versões simples quando o jogo apaga a malha (gl.deleteBuffer)
 const LODV=new Map();
-H3.lodKeep=(p,m,g)=>{if(!LOD.on||p.ter||p.n<LOD.minN||p.n>2400000)return;
+H3.lodKeep=(p,m,g)=>{if(!LOD.on||p.ter||p.noLod||p.n<LOD.minN||p.n>2400000)return;
  if(!g.__lodDel){const db=g.deleteBuffer.bind(g);g.__lodDel=1;g.deleteBuffer=b=>{const mm=LODV.get(b);if(mm){LODV.delete(b);mm.dead=1;mm.src=null;if(mm.lod)for(const l of mm.lod)if(l!==mm)db(l.vbo);mm.lod=null}db(b)}}
  LODV.set(m.vbo,m);lodKeep(p,m)};
 // desenha uma lista de níveis feitos à mão (ms[0] perto ... ms[n] longe) com troca suave (pontilhado) perto de cada limite de distância
@@ -7212,6 +7235,7 @@ function shUni(u){const on=!!(SHS.on&&SHS.ok&&RTS.sh);gl.activeTexture(gl.TEXTUR
  gl.uniform1i(u.uShT,3);gl.uniformMatrix4fv(u.uSM,false,SHS.mat);gl.uniform4f(u.uSh,on?SHS.on:0,SHS.nOff,SHS.f0,SHS.f1);gl.uniform3f(u.uShR,SHS.texel,SHS.bias,SHS.penT||0);gl.uniform3f(u.uFoc,FOC[0],FOC[1],FOC[2]);return on}
 function litSun(u){const on=shUni(u);   // luz e sombra do sol nos personagens: só com Sombras em Ultra (H3.charSh)
  gl.uniform4f(u.uSunL,SUN[0],SUN[1],SUN[2],on&&H3.charSh?1:0);gl.uniform3f(u.uSunCL,SUNC[0],SUNC[1],SUNC[2])}
+let SPRID=0;
 function flushSprites(fogv){
  if(!SL.length)return;gl.useProgram(P.spr);const spOn=U.spSh&&U.spSh.uShT?shUni(U.spSh):false;gl.uniform4fv(U.sFog,fogv);gl.uniform1f(U.sFO,FOGO);gl.uniform3fv(U.sCam,camP);gl.uniform1i(U.sTex,0);
  gl.bindBuffer(gl.ARRAY_BUFFER,sbuf);gl.enableVertexAttribArray(0);gl.enableVertexAttribArray(1);gl.enableVertexAttribArray(2);
@@ -7219,7 +7243,7 @@ function flushSprites(fogv){
  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,sidx);gl.depthMask(false);
  for(const pass of[0,1,2]){                            // 0 = normais · 1 = brilhos (soma) · 2 = "raio-x": só as partes escondidas atrás de algo
   const L=pass<2?SL.filter(s=>s.add===pass):SL.filter(s=>s.xr>0&&!s.add);if(!L.length)continue;
-  if(pass!==1)L.sort((a,b)=>b.d-a.d);
+  if(pass!==1)L.sort((a,b)=>b.d-a.d);else L.sort((a,b)=>(a.t.__sid||(a.t.__sid=++SPRID))-(b.t.__sid||(b.t.__sid=++SPRID)));   // brilhos (soma) não dependem da ordem: agrupa por textura = bem menos trocas e chamadas
   const ad=pass===1?1:0;if(pass===2)gl.depthFunc(gl.GREATER);
   gl.blendFunc(ad?gl.ONE:gl.SRC_ALPHA,ad?gl.ONE:gl.ONE_MINUS_SRC_ALPHA);gl.uniform1f(U.sAdd,ad);if(U.spSh&&U.spSh.uShK)gl.uniform1f(U.spSh.uShK,0);
   let n=0,run=0,cur=null;
@@ -9391,7 +9415,7 @@ if(!H3||!H3.MB||!X||!X.w3||!X.MW)return;
 const PI=Math.PI,TAU=PI*2,sin=Math.sin,cos=Math.cos,abs=Math.abs,min=Math.min,max=Math.max,floor=Math.floor,round=Math.round,sqrt=Math.sqrt,hypot=Math.hypot,exp=Math.exp,pow=Math.pow,rnd=Math.random;
 const clp=(v,a,b)=>v<a?a:v>b?b:v,lerp=(a,b,t)=>a+(b-a)*t,sm=(a,b,v)=>{const t=clp((v-a)/(b-a),0,1);return t*t*(3-2*t)};
 const MW=X.MW,MH=X.MH;
-const FLD=H3.fld={ready:false,parts:[],lights:[],chunks:[],job:null,pct:0,err:null,CS:8,MRG:320,LAND:2.6,CPC:16,MW,MH,
+const FLD=H3.fld={ready:false,parts:[],lights:[],chunks:[],job:null,pct:0,err:null,CS:8,MRG:320,LAND:2.6,CPC:32,MW,MH,
  reg(p){FLD.parts.push(p);return p}};
 const CS=FLD.CS,MRG=FLD.MRG,LAND=FLD.LAND;
 
@@ -9781,7 +9805,7 @@ function decor(kind,seed){
 // cada variante vira 3 malhas (nível de detalhe 0 perto, 1 médio, 2 longe); a lista de instâncias guarda onde cada uma fica
 const LODD=[260,600];                          // até onde valem os níveis 0 e 1 (acima disso, o 2)
 const TREE_FAR=1100,SMALL_FAR=430;
-function addVar(gl,key,fn,nl){const v={key,m:[],cx:0,cy:0,cz:0,rad:1};for(let l=0;l<nl;l++){const mb=fn(l),pk=mb.pack(),m=H3.upload(gl,pk);v.m.push(m);if(l===0){v.cx=pk.cx;v.cy=pk.cy;v.cz=pk.cz;v.rad=pk.rad}}NAT.VAR[key]=v;return v}
+function addVar(gl,key,fn,nl){const v={key,m:[],p:[],cx:0,cy:0,cz:0,rad:1};for(let l=0;l<nl;l++){const mb=fn(l),pk=mb.pack(),m=H3.upload(gl,pk);v.m.push(m);v.p.push(pk);if(l===0){v.cx=pk.cx;v.cy=pk.cy;v.cz=pk.cz;v.rad=pk.rad}}NAT.VAR[key]=v;return v}
 NAT.addVar=addVar;
 
 const sdOf=(a,b)=>((a*73856093)^(b*19349663))>>>0;
@@ -9829,9 +9853,11 @@ NAT.build=function*(gl){
   NAT.rocks.push({x,y,z,v,m:inst(x,y,z,rot,s,s*(.85+h2(r[0],r[1],42)*.3),s),wx:x,wy:y+4*s,wz:z,rad:v.rad*s*1.05,tint:[1,1,1]})}
  NAT.decor=[];for(const d of L.decor){const key='dc'+d[2],v=NAT.VAR[key];if(!v)continue;const x=d[0],z=d[1],y=hAt(x,z),rot=h2(d[0],d[1],51)*TAU,s=.8+h2(d[0],d[1],52)*.5;
   NAT.decor.push({x,y,z,v,m:inst(x,y,z,rot,s,s,s),wx:x,wy:y+2,wz:z,rad:v.rad*s*1.1,tint:[1,1,1]})}
+ // árvores, arbustos, pedras e enfeites juntos por pedaço (H3.instGroups): de longe o pedaço inteiro é 1 chamada
+ {const gl2=H3.gl();if(H3.instGroups&&gl2){NAT.G={};for(const k of['trees','bushes','rocks','decor']){NAT.G[k]=H3.instGroups(gl2,NAT[k],k==='trees'?300:200,T=>T.v);yield .99}for(const k in NAT.VAR)NAT.VAR[k].p=null}}
  yield 1};
 
-NAT.free=function(){NAT.VAR={};NAT.trees=[];NAT.bushes=[];NAT.rocks=[];NAT.decor=[]};
+NAT.free=function(){try{const gl=H3.gl();if(NAT.G&&gl)for(const k in NAT.G)H3.instFree(gl,NAT.G[k])}catch(e){}NAT.G=null;NAT.VAR={};NAT.trees=[];NAT.bushes=[];NAT.rocks=[];NAT.decor=[]};
 // coisas baixas onde dá para subir/pular por cima (pedras e arbustos): grade de 32 px com [x,z,raio,topo]
 let LOWG=null,LOWK=null;
 function lowBuild(){LOWK=NAT.rocks;LOWG=new Map();
@@ -10947,12 +10973,15 @@ H3.gfx={apply:()=>apply(true),cur};
 {const _st=FLD.step;FLD.step=function(ms){const r=_st.apply(this,arguments);if(FLD.ready)try{groundTex(!!cur().bake||!H3.shadowOn())}catch(e){}return r}}
 
 // ---------- desenho das árvores, arbustos, pedras e abetos com as distâncias do nível ----------
-function drawList(list,far,cam,dyn,tr,lod,occ){const far2=far*far,l0=lod[0]*lod[0],l1=lod[1]*lod[1];
+function drawList(list,far,cam,dyn,tr,lod,occ,G){const far2=far*far,l0=lod[0]*lod[0],l1=lod[1]*lod[1];
+ if(G){for(const g of G){const gx=g.cx-cam.x,gz=g.cz-cam.z,dc=Math.sqrt(gx*gx+gz*gz),dn=dc-g.R;if(dn>far)continue;
+   if(dn>lod[0]-30){if(H3.vis(g.cx,g.cy,g.cz,g.rad))H3.mesh(dc<lod[1]?g.m1:g.m2,null,FLD.lights,dyn,{di:H3.farFade(dc,far+g.R*.5),rad:g.rad,cx:g.cx,cy:g.cy,cz:g.cz});continue}   // pedaço todo longe: 1 chamada
+   drawList(g.objs,far,cam,dyn,tr,lod,occ)}return}
  for(const T of list){const dx=T.wx-cam.x,dz=T.wz-cam.z,d2=dx*dx+dz*dz;if(d2>far2)continue;if(!H3.vis(T.wx,T.wy,T.wz,T.rad))continue;
   const d=Math.sqrt(d2);H3.lodDraw(T.v.m,d,lod,T.m,FLD.lights,dyn,{di:(T.di===undefined?1:T.di)*H3.farFade(d,far),tint:T.tint,tr,rad:T.rad,cx:T.wx,cy:T.wy,cz:T.wz,occ})}}
 const NAT_D0=NAT.draw;
 NAT.draw=function(t,dyn){const cam=H3.S.foc||H3.S.cam,L=cur();
- drawList(NAT.trees,L.tFar,cam,dyn,.55,L.lod,true);if(L.bush)drawList(NAT.bushes,L.sFar,cam,dyn,.45,L.lod);drawList(NAT.rocks,L.sFar+60,cam,dyn,0,L.lod);drawList(NAT.decor,L.sFar*.5,cam,dyn,.2,L.lod);
+ const G=NAT.G||{};drawList(NAT.trees,L.tFar,cam,dyn,.55,L.lod,true,G.trees);if(L.bush)drawList(NAT.bushes,L.sFar,cam,dyn,.45,L.lod,false,G.bushes);drawList(NAT.rocks,L.sFar+60,cam,dyn,0,L.lod,false,G.rocks);drawList(NAT.decor,L.sFar*.5,cam,dyn,.2,L.lod,false,G.decor);
  if(NAT.gal){for(const g of NAT.gal){const ms=g.v.m;H3.mesh(ms[min(g.lod||0,ms.length-1)],g.m,FLD.lights,dyn,{di:1,tr:.55,rad:g.v.rad})}}};
 for(const p of FLD.parts)if(p.draw===NAT_D0)p.draw=(t,dyn)=>NAT.draw(t,dyn);      // a parte registrada guardava a função antiga
 FL.drawPines=function(cam){const far=cur().pFar;for(const c of FL.pines){if(hypot(c.cx-cam.x,c.cz-cam.z)-c.rad>far)continue;if(!H3.vis(c.cx,c.cy,c.cz,c.rad))continue;H3.mesh(c.m,null,null,null,{rad:c.rad,cx:c.cx,cy:c.cy,cz:c.cz,tr:.5,sq:true})}};
@@ -10961,7 +10990,11 @@ FL.drawPines=function(cam){const far=cur().pFar;for(const c of FL.pines){if(hypo
 SCN.field.shadow=function(t,F){const L=cur();
  for(const m of FLD.chunks)if(!(m.hr<2.5)&&H3.shVis(m.cx,m.cy,m.cz,m.rad))H3.shMesh(m,null,false);   // pedaço de chão plano não faz sombra em nada: fica fora do mapa de sombras
  const lists=[[NAT.trees,1],[NAT.rocks,1]];if(L.bush)lists.push([NAT.bushes,1]);
- for(const[list,lv]of lists)for(const T of list){if(!H3.shVis(T.wx,T.wy,T.wz,T.rad))continue;const ms=T.v.m,d=hypot(T.wx-F.x,T.wz-F.z),m=ms[d<L.lod[0]?min(lv,ms.length-1):ms.length-1];H3.shMesh(m,T.m,true)}
+ const NG=NAT.G||{},GL=new Map([[NAT.trees,NG.trees],[NAT.rocks,NG.rocks],[NAT.bushes,NG.bushes]]);
+ for(const[list,lv]of lists){const G=GL.get(list);
+  if(G){for(const g of G){if(!H3.shVis(g.cx,g.cy,g.cz,g.rad))continue;if(hypot(g.cx-F.x,g.cz-F.z)-g.R>L.lod[0]){H3.shMesh(g.m2,null,true);continue}   // pedaço longe: 1 chamada
+    for(const T of g.objs){if(!H3.shVis(T.wx,T.wy,T.wz,T.rad))continue;const ms=T.v.m,d=hypot(T.wx-F.x,T.wz-F.z),m=ms[d<L.lod[0]?min(lv,ms.length-1):ms.length-1];H3.shMesh(m,T.m,true)}}continue}
+  for(const T of list){if(!H3.shVis(T.wx,T.wy,T.wz,T.rad))continue;const ms=T.v.m,d=hypot(T.wx-F.x,T.wz-F.z),m=ms[d<L.lod[0]?min(lv,ms.length-1):ms.length-1];H3.shMesh(m,T.m,true)}}
  for(const c of FL.pines)if(H3.shVis(c.cx,c.cy,c.cz,c.rad))H3.shMesh(c.m,null,true);
  for(const p of FLD.parts)if(p.shadow)p.shadow(t,F)};
 
@@ -12029,7 +12062,7 @@ function* gen(gl){const T0=performance.now();let TP=T0,IP=0;HV.prof={};HV.idle=0
  HV.cath.length=0;for(const m of HV.cathMs){if(!m.count)continue;const g=m.build(gl);g.occ=true;HV.cath.push(g)}HV.cathMs=null;
  // cada pedaço da catedral guarda as 12 luzes que mais pesam nele (luzes do mapa + refletores da catedral); assim nada pisca quando as chamas tremem
  for(const g of HV.cath){const o=[];for(const l of HV.lights.concat(HV.clights||[])){const d=max(0,hypot(l.x-g.cx,l.y-g.cy,l.z-g.cz)-g.rad*.7);if(d<l.r){const w=1-d/l.r;o.push([w*w*l.b*(l.cr+l.cg+l.cb+.3),l])}}o.sort((a,b)=>b[0]-a[0]);g.L=o.length?o.slice(0,12).map(q=>q[1]):null}
- TREEM={};for(const k in TREE){TREEM[k]=TREE[k].map(L=>L.map(mb=>mb.build(gl)))}PM('upload');yield .9;
+ TREEM={};const TREEP={};for(const k in TREE){TREEP[k]=TREE[k].map(L=>L.map(mb=>mb.pack()));TREEM[k]=TREEP[k].map(L=>L.map(p=>H3.upload(gl,p)))}PM('upload');yield .9;
  // caixas das árvores (centro e raio de verdade) e as luzes de cada coisa
  for(const T of HV.trees){const m0=TREEM[T.k][T.vi][0],M_=T.m;T.wx=M_[0]*m0.cx+M_[4]*m0.cy+M_[8]*m0.cz+M_[12];T.wy=M_[1]*m0.cx+M_[5]*m0.cy+M_[9]*m0.cz+M_[13];T.wz=M_[2]*m0.cx+M_[6]*m0.cy+M_[10]*m0.cz+M_[14];T.rad=m0.rad*T.s*1.05}
  const near=lightsNear;
@@ -12037,6 +12070,8 @@ function* gen(gl){const T0=performance.now();let TP=T0,IP=0;HV.prof={};HV.idle=0
  for(const T of HV.trees)T.L=near(T.wx,T.wy,T.wz,T.rad);
  // grade das árvores (para achar rápido as perto da câmera)
  HV.tg=new Map();for(const T of HV.trees){const key=floor(T.x/128)+','+floor(T.z/128);let a=HV.tg.get(key);if(!a)HV.tg.set(key,a=[]);a.push(T)}
+ // as árvores de cada quadrado de 128 juntas (H3.instGroups): de longe o quadrado é 1 chamada (antes era uma por árvore)
+ HV.tgG=new Map();if(H3.instGroups)for(const[key,a]of HV.tg){const G=H3.instGroups(gl,a,1e9,T=>({p:TREEP[T.k][T.vi]}));if(G[0]){G[0].L=a[0].L;HV.tgG.set(key,G[0])}}
  yield .93;
  // peças que se mexem: ponteiros, estrela da roleta, lua
  {const h1=new MB(31);h1.box(2,11,.6,'#1a1446',0,true);HV.dyn.hour=h1.build(gl);const h2=new MB(32);h2.box(1.4,16,.6,'#1a1446',0,true);HV.dyn.min=h2.build(gl);
@@ -12085,7 +12120,7 @@ HV.step=function(ms){if(HV.ready)return true;const gl=H3.gl();if(!gl)return true
 HV.buildSync=function(){const gl=H3.gl();HV.gen=gen(gl);let r;do{r=HV.gen.next()}while(!r.done);HV.gen=null};
 HV.free=()=>{const gl=H3.gl();const del=a=>{if(gl&&a)for(const m of a)try{gl.deleteBuffer(m.vbo)}catch(e){}};
  del(HV.ochunks);del(HV.vchunks);del(HV.tchunks);del(HV.cath);for(const c of HV.grass.values())del([c.m]);
- if(TREEM)for(const k in TREEM)for(const L of TREEM[k])del(L);
+ if(TREEM)for(const k in TREEM)for(const L of TREEM[k])del(L);if(HV.tgG){try{H3.instFree(H3.gl(),[...HV.tgG.values()])}catch(e){}HV.tgG=null}
  if(gl){if(HV.gtex)try{gl.deleteTexture(HV.gtex.t)}catch(e){}if(HV.lmtex)try{gl.deleteTexture(HV.lmtex.t)}catch(e){}if(IN.ftex)try{gl.deleteTexture(IN.ftex.t)}catch(e){}if(IN.lm)try{gl.deleteTexture(IN.lm.t)}catch(e){}}
  del(IN.ms);if(IN.floor)del([IN.floor]);IN.ms.length=0;IN.floor=null;IN.ready=false;IN.ftex=IN.lm=null;
  HV.ready=false;HV.gen=null;HV.ochunks=HV.vchunks=HV.tchunks=null;HV.cath.length=0;HV.trees.length=0;HV.grass.clear();HV.dyn={};HV.gtex=HV.lmtex=null;TREEM=null;TX=null;HV.cm=null;HG=null};
@@ -12519,6 +12554,8 @@ function draw(t,dyn){const C=H3.S.cam,L=HV.lights,R=drawR(),V=vegNow();frameN++;
  // árvores (três níveis de detalhe)
  {const g0=floor((C.x-R)/128),g1=floor((C.x+R)/128),h0=floor((C.z-R)/128),h1=floor((C.z+R)/128),off=FO*.7;
   for(let gj=h0;gj<=h1;gj++)for(let gi=g0;gi<=g1;gi++){const a=HV.tg.get(gi+','+gj);if(!a)continue;
+   {const g=HV.tgG&&HV.tgG.get(gi+','+gj);if(g){const gx=g.cx-C.x,gz=g.cz-C.z,dc=sqrt(gx*gx+gz*gz),dn=dc-g.R;if(dn>R-8)continue;
+    if(dn-off>66){if(H3.vis(g.cx,g.cy,g.cz,g.rad)){const mm=dc-off<142?g.m1:g.m2;H3.mesh(mm,null,g.L,dyn,{rad:g.rad,cx:g.cx,cy:g.cy,cz:g.cz,nc:NC.t});cnt(mm,'G')}continue}}}   // quadrado todo longe: 1 chamada
    for(const T of a){const dx=T.wx-C.x,dz=T.wz-C.z,d=sqrt(dx*dx+dz*dz)-T.rad;if(d>R-8)continue;if(!H3.vis(T.wx,T.wy,T.wz,T.rad))continue;
     const mm=TREEM[T.k][T.vi][treeLod(d-off)];H3.mesh(mm,T.m,T.L,dyn,{tr:T.k==='pine'?.3:T.k==='dead'?.15:.5,tint:T.tint,rad:T.rad,cx:T.wx,cy:T.wy,cz:T.wz,nc:NC.t});cnt(mm,'T'+treeLod(d-off))}}}
  // capim (some em pontinhos na borda)
@@ -12566,7 +12603,7 @@ function shadow(t,F){if(!HV.ready)return;
  for(const m of HV.ochunks)if(H3.shVis(m.cx,m.cy,m.cz,m.rad))H3.shMesh(m,null,true);
  if(vegNow().bush)for(const m of HV.vchunks)if(H3.shVis(m.cx,m.cy,m.cz,m.rad))H3.shMesh(m,null,true);
  const R=260,g0=floor((F.x-R)/128),g1=floor((F.x+R)/128),h0=floor((F.z-R)/128),h1=floor((F.z+R)/128);
- for(let gj=h0;gj<=h1;gj++)for(let gi=g0;gi<=g1;gi++){const a=HV.tg.get(gi+','+gj);if(!a)continue;for(const T of a)if(H3.shVis(T.wx,T.wy,T.wz,T.rad))H3.shMesh(TREEM[T.k][T.vi][1],T.m,true)}
+ for(let gj=h0;gj<=h1;gj++)for(let gi=g0;gi<=g1;gi++){const a=HV.tg.get(gi+','+gj);if(!a)continue;const g=HV.tgG&&HV.tgG.get(gi+','+gj);if(g){if(H3.shVis(g.cx,g.cy,g.cz,g.rad))H3.shMesh(g.m1,null,true);continue}for(const T of a)if(H3.shVis(T.wx,T.wy,T.wz,T.rad))H3.shMesh(TREEM[T.k][T.vi][1],T.m,true)}
  for(const m of HV.cath)if(H3.shVis(m.cx,m.cy,m.cz,m.rad))H3.shMesh(m,null,false);
  if(HV.props)for(const q of HV.props)if(H3.shVis(q.p[0],q.p[1]+q.h,q.p[2],q.r))H3.shMesh(q.m,q.mt,true)}
 function sprites(t){const T=H3.tex,C=H3.S.cam,F=H3.S.foc||C;if(!T||!TX)return;
@@ -25830,7 +25867,7 @@ const _t=tick;tick=function(){_t();if(world!==1)return;const e=drac();if(!e||e.d
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261112033407;
+const GAME_BUILD=20261112042455;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
@@ -27194,9 +27231,10 @@ function treeVar(gl,key){if(TV[key])return TV[key];const G=H3.fld&&H3.fld.nat&&H
   if(k0==='x')mb=G.dead(+key.slice(1),900+(+key.slice(1))*7,l);
   else if(k0==='p')mb=G.spruce(+key.slice(1),310+(+key.slice(1))*3,l);
   else{const R=+key.slice(1).split('.')[0],q=+key.split('.')[1];mb=G.broadleaf(k0,R,((k0.charCodeAt(0)*17+R)*73856093^((q+3)*19349663))>>>0,l)}
-  const pk=mb.pack();v.m.push(H3.upload(gl,pk));if(l===0){v.cx=pk.cx;v.cy=pk.cy;v.cz=pk.cz;v.rad=pk.rad}}
+  const pk=mb.pack();(v.p||(v.p=[])).push(pk);v.m.push(H3.upload(gl,pk));if(l===0){v.cx=pk.cx;v.cy=pk.cy;v.cz=pk.cz;v.rad=pk.rad}}
  return TV[key]=v}
 const TKEYS=['p13','p16','p19','x15','x21','d16.0','g16.1'];
+let NJG=[];   // árvores juntas por pedaço (H3.instGroups): de longe 1 chamada por pedaço
 
 // ============================================================ construções (escala de projeto, a malha toda leva S(K)) ============================================================
 // ---------- muro da vila ----------
@@ -27534,7 +27572,7 @@ function* gen(gl){
  for(const[z,dir]of[[1250,-1],[1500,1]]){const x=pathX(z)+dir*-30,y=floorY(x,z),mb=CHK(x,z).o;mb.push().T(x,y,z).cyl(1.6,1.6,26,6,WOOD2,0).push().T(dir*9,20,0).RZ(dir*.05).box(20,5,1.6,'#8a6440',0,true).pop().pop();circ(x,z,3)}
  NJW.pct=.58;yield;
  // ---- pinheiros gigantes (variantes) ----
- for(let i=0;i<PH.length;i++){const v={m:[],cx:0,cy:0,cz:0,rad:1,H:PH[i]};for(let l=0;l<3;l++){const pk=pineMB(PH[i],7000+i*31,l).pack();v.m.push(H3.upload(gl,pk));if(l===0){v.cx=pk.cx;v.cy=pk.cy;v.cz=pk.cz;v.rad=pk.rad}}PV.push(v);NJW.pct=.58+.06*(i+1)/PH.length;yield}
+ for(let i=0;i<PH.length;i++){const v={m:[],cx:0,cy:0,cz:0,rad:1,H:PH[i]};for(let l=0;l<3;l++){const pk=pineMB(PH[i],7000+i*31,l).pack();(v.p||(v.p=[])).push(pk);v.m.push(H3.upload(gl,pk));if(l===0){v.cx=pk.cx;v.cy=pk.cy;v.cz=pk.cz;v.rad=pk.rad}}PV.push(v);NJW.pct=.58+.06*(i+1)/PH.length;yield}
  for(let i=0;i<TKEYS.length;i++)treeVar(gl,TKEYS[i]);
  NJW.pct=.66;yield;
  // floresta fechada: grade com sorteio; manchas mais densas
@@ -27564,12 +27602,13 @@ function* gen(gl){
  for(const c of CH){c.gm=c.g.count?H3.upload(gl,c.g.pack()):null;c.om=c.o.count?H3.upload(gl,c.o.pack()):null;if(c.om){c.om.src=null;c.om.lod=null}c.g=null;c.o=null;yield}
  for(let f=0;f<WFF;f++){const mb=new MB(900+f,{pk:true});mb.push().S(K,K,K);wfSheet(mb,f);mb.pop();WFM.push(H3.upload(gl,mb.pack()))}   // quadros da cachoeira
  {const PR=H3.fld&&H3.fld.props;if(PR){const y=floorW(STW.x,STW.z)-.2;STM={ped:PR.pedestalMB().build(gl),star:PR.starMB().build(gl),y,mt:M4.trs(new Float32Array(16),STW.x,y,STW.z,0,PI/8,0,1,1,1),a:0}}}   // estátua da estrela (mesmos modelos do Mundo 1)
+ NJG=H3.instGroups(gl,OBJ,520,o=>o.kind==='pine'?PV[o.v]:TV[o.v],o=>o.kind==='pine'?'p':'t');for(const v of PV)v.p=null;for(const k in TV)TV[k].p=null;   // os pacotes só servem para juntar
  NJW.pct=1;NJW.ready=true;NJW.rev++;grassClear()}
 function step(ms){const gl=H3.gl();if(!gl)return false;if(NJW.ready)return true;if(!building)building=gen(gl);const t0=performance.now();
  while(performance.now()-t0<ms){const s=building.next();if(s.done){building=null;return true}}return NJW.ready}
 function freeAll(){const gl=H3.gl();if(gl&&!gl.isContextLost()){const del=m=>{if(m)try{gl.deleteBuffer(m.vbo)}catch(e){}};
-  for(const c of CH){del(c.gm);del(c.om)}for(const m of WFM)del(m);WFM=[];if(STM){del(STM.ped);del(STM.star)}STM=null;for(const v of PV)for(const m of v.m)del(m);for(const k in TV)for(const m of TV[k].m)del(m)}
- grassClear();CH=[];OBJ=[];PV=[];TV={};NJW.ready=false;building=null;NJW.pct=0}
+  for(const c of CH){del(c.gm);del(c.om)}for(const m of WFM)del(m);WFM=[];if(STM){del(STM.ped);del(STM.star)}STM=null;for(const v of PV)for(const m of v.m)del(m);for(const k in TV)for(const m of TV[k].m)del(m);H3.instFree(gl,NJG)}
+ grassClear();CH=[];OBJ=[];PV=[];TV={};NJG=[];NJW.ready=false;building=null;NJW.pct=0}
 NJW.stats=()=>{let g=0,o=0,n=0;for(const c of CH){if(c.gm)g+=c.gm.n;if(c.om)o+=c.om.n}return{g:g/3|0,o:o/3|0,obj:OBJ.length}};
 
 // ---------- capim baixo nas partes de chão de floresta (pedaços de 64 x 64 em volta da câmera) ----------
@@ -27605,16 +27644,18 @@ function draw(t,dyn){H3.skyDraw();const F=H3.S.foc||H3.S.cam;
  for(const c of CH){const d=hypot(c.cx-F.x,c.cz-F.z);if(d>FAR+CS*K)continue;
   if(c.gm&&H3.vis(c.gm.cx,c.gm.cy,c.gm.cz,c.gm.rad))H3.mesh(c.gm,null,LIGHTS,dyn,{});
   if(c.om&&H3.vis(c.om.cx,c.om.cy,c.om.cz,c.om.rad))H3.mesh(c.om,null,LIGHTS,dyn,{})}
- for(const o of OBJ){const pine=o.kind==='pine',far=pine?FARP:FART,dx=o.wx-F.x,dz=o.wz-F.z,d2=dx*dx+dz*dz;if(d2>(far+o.rad)*(far+o.rad))continue;if(!H3.vis(o.wx,o.wy,o.wz,o.rad))continue;
-  const d=sqrt(d2),fd=H3.farFade(d,far+o.rad),v=pine?PV[o.v]:TV[o.v];if(!v)continue;
-  H3.lodDraw(v.m,d,pine?LODP:LODT,o.m,LIGHTS,dyn,{di:fd,tint:o.tint,tr:.55,rad:o.rad,cx:o.wx,cy:o.wy,cz:o.wz})}
+ for(const g of NJG){const pine=g.key==='p',far=pine?FARP:FART,E=pine?LODP:LODT,gx=g.cx-F.x,gz=g.cz-F.z,dc=sqrt(gx*gx+gz*gz),dn=dc-g.R;if(dn>far)continue;
+  if(dn>E[0]-40){if(!H3.vis(g.cx,g.cy,g.cz,g.rad))continue;H3.mesh(dc<E[1]?g.m1:g.m2,null,LIGHTS,dyn,{di:H3.farFade(dc,far+g.R*.5),rad:g.rad,cx:g.cx,cy:g.cy,cz:g.cz});continue}   // pedaço todo longe: 1 chamada
+  for(const o of g.objs){const dx=o.wx-F.x,dz=o.wz-F.z,d2=dx*dx+dz*dz;if(d2>(far+o.rad)*(far+o.rad))continue;if(!H3.vis(o.wx,o.wy,o.wz,o.rad))continue;
+   const d=sqrt(d2),fd=H3.farFade(d,far+o.rad),v=pine?PV[o.v]:TV[o.v];if(!v)continue;
+   H3.lodDraw(v.m,d,E,o.m,LIGHTS,dyn,{di:fd,tint:o.tint,tr:.55,rad:o.rad,cx:o.wx,cy:o.wy,cz:o.wz})}}
  if(STM&&hypot(STW.x-F.x,STW.z-F.z)<1600){const s=t/1000,near=1-sm(30,90,hypot(STW.x-F.x,STW.z-F.z));
   if(H3.vis(STW.x,STM.y+10,STW.z,20))H3.mesh(STM.ped,STM.mt,LIGHTS,dyn,{rad:20,cx:STW.x,cy:STM.y+10,cz:STW.z});
   STM.a+=.018+.035*near;M4.trs(STMT,STW.x,STM.y+25.5+sin(s*1.6)*1.1,STW.z,0,STM.a,0,1,1,1);
   if(H3.vis(STW.x,STM.y+25,STW.z,14))H3.mesh(STM.star,STMT,LIGHTS,dyn,{eg:1.15+.35*near+.15*sin(s*3),rad:12,cx:STW.x,cy:STM.y+25,cz:STW.z})}
  grassDraw()}
 function shadow(t,F){for(const c of CH)if(c.om&&H3.shVis(c.om.cx,c.om.cy,c.om.cz,c.om.rad))H3.shMesh(c.om,null,false);
- for(const o of OBJ){if(!H3.shVis(o.wx,o.wy,o.wz,o.rad))continue;const v=o.kind==='pine'?PV[o.v]:TV[o.v];if(v)H3.shMesh(v.m[1]||v.m[0],o.m,true)}}
+ for(const g of NJG)if(H3.shVis(g.cx,g.cy,g.cz,g.rad))H3.shMesh(g.m1,null,true)}   // sombras das árvores: o pedaço junto (mesma malha de detalhe 1 que cada árvore usava)
 // cachoeira (riscos que descem), névoa da base, brilho das lanternas e do portal, raios de sol
 function sprites(t){const T=H3.tex;if(!T)return;const s=t/1000,F=H3.S.foc||H3.S.cam;if(!F)return;
  if(STM&&hypot(STW.x-F.x,STW.z-F.z)<1200){const near=1-sm(30,90,hypot(STW.x-F.x,STW.z-F.z)),sy=STM.y,yy=sy+25.5+sin(s*1.6)*1.1,k=.5+.2*sin(s*3)+.3*near;   // brilho, feixe e anéis da estrela
