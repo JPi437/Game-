@@ -432,7 +432,7 @@ body.mnOpen .mi b{transform:none}
 .ncap{display:flex;align-items:center;gap:6px}.nplus{width:30px;height:30px;border-radius:8px;border:2px solid #ffffff40;background:linear-gradient(#4a4e5c,#2e3140);color:#fff;font:inherit;font-size:18px;line-height:1;cursor:pointer;box-shadow:0 2px 0 #000}
 .nplus.dis{opacity:.45}
 .nteam{display:flex;gap:4px;flex:1;justify-content:center}.nteam i{width:28px;height:28px;border-radius:7px;border:2px solid var(--c,#ffffff30);background:#000a;display:flex;align-items:center;justify-content:center;cursor:pointer;font-style:normal;font-size:12px;color:#fff6}
-.nteam i canvas{width:22px;height:22px;image-rendering:pixelated}
+.nteam i canvas{width:22px;height:22px;image-rendering:pixelated}.nteam i img{width:100%;height:100%;object-fit:cover;object-position:50% 15%;border-radius:5px}
 .undet{flex:1}.undet .utg{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:4px}.undet .utg span{font-size:10.5px;padding:2px 8px;border-radius:20px;background:#000a;border:1px solid #ffffff30}
 .undet .ukind{font-size:12px;text-shadow:0 1px 0 #000}.undet h3{color:#fff!important;font-size:19px!important;margin:0 0 4px!important}
 .urow{display:flex;gap:8px;flex:0 0 auto;height:clamp(96px,30vh,190px)}.undet{overflow-y:auto}
@@ -447,6 +447,10 @@ body.mnOpen .mi b{transform:none}
 .nbb{flex:1;padding:9px 6px;border-radius:9px;border:2px solid #ffffff40;color:#fff;font:inherit;font-size:13.5px;cursor:pointer;text-shadow:0 1px 0 #000;box-shadow:0 3px 0 #000}
 .nbb.red{background:linear-gradient(#ff5d5d,#c41c1c)}.nbb.pur{background:linear-gradient(#a970ff,#6a2fd6)}.nbb.gold{background:linear-gradient(#ffd84a,#d79a00);color:#2a1a00;text-shadow:none}
 .nbb.main{flex:1.6;background:linear-gradient(#4fe06a,#1f9c3a)}.nbb.main.off{background:linear-gradient(#ff5d5d,#c41c1c)}.nbb.dis{opacity:.5}
+.ung img.u3d{position:absolute;left:0;top:0;width:100%;height:100%;object-fit:cover;object-position:50% 20%;z-index:1;display:none;filter:drop-shadow(0 3px 3px #000a)}
+.ung.has3d img.u3d{display:block}.ung.has3d canvas{display:none}
+#unLive{position:absolute;inset:0;width:100%;height:100%;aspect-ratio:auto;animation:none;filter:drop-shadow(0 8px 6px #000b);opacity:0;transition:opacity .25s;z-index:1}#unLive.on{opacity:1}#unLive.on~.uxp{z-index:2}
+.ubig:has(#unLive.on) #unBig{visibility:hidden}
 @media (max-height:460px){#invM #grid{grid-template-columns:repeat(auto-fill,minmax(80px,1fr))}.nbb{padding:7px 4px;font-size:12px}.ust b{font-size:12.5px}.uside{grid-template-columns:repeat(2,32px);grid-auto-rows:32px}.uside .nbtn.sq{width:32px;height:32px;font-size:13px}}
 </style>
 <div class="modal" id="invM"><div class="box nmx nun"><div class="nhd"><div class="nrib"><span class="nic">⭐</span><b>Lutadores</b></div><label class="nsr"><input id="unQ" type="text" placeholder="Pesquisar..." autocomplete="off" maxlength="30"></label><button class="nfl" id="unSort">⇅ <span>Raridade</span></button></div><div class="nbd"><div class="ngr ungr"><div class="ngrid" id="grid"></div><div class="nfoot"><span class="ncap"><button class="nplus" id="buySlot" title="+10 vagas (1000 moedas)">+</button><b id="invCnt"></b></span><span class="nteam" id="unTeam"></span><span>Equipe <b id="eqCnt"></b></span></div></div><div class="ndet undet" id="unDet"></div></div><div class="nbar2"><button class="nbb red" id="unAll">Desequipar Todos</button><button class="nbb pur" id="eqBest">Equipar Melhor</button><button class="nbb gold" id="massBtn">Venda em Massa</button><button class="nbb main" id="unEq">Equipar</button></div><button class="btn" id="invClose" style="display:none">Fechar</button></div></div>
@@ -26051,7 +26055,7 @@ const _t=tick;tick=function(){_t();if(world!==1)return;const e=drac();if(!e||e.d
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261112061121;
+const GAME_BUILD=20261112061901;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
@@ -31587,11 +31591,12 @@ renderInv=function(){invInfo();const key={rar:(a,b)=>b.rar-a.rar||b.lvl-a.lvl,lv
  const list=chars.slice().filter(k=>!q||k.name.toLowerCase().includes(q)).sort((a,b)=>(equipped.includes(b.id)-equipped.includes(a.id))||key(a,b));
  if(!chars.some(c=>c.id===unSel))unSel=equipped[0]||(list[0]&&list[0].id)||null;
  $('grid').innerHTML=list.length?list.map(k=>{const on=equipped.includes(k.id),pa=PAS[k.pas],gr=grade(k);
-  return `<div class="ung${k.rar===4?' myth':''}${k.sh?' shn':''}${k.id===unSel?' on':''}" data-id="${k.id}" style="--c:${rarCol(k.rar)}"><span class="ulv">Nv ${k.lvl}</span>${on?'<span class="uck">✔</span>':''}${gr&&gr.best>=7?`<span class="ugs" style="color:${gcol(gr.G,gr.best)}">${gr.G.GN[gr.best]}</span>`:''}<canvas class="sp" data-r="${k.rar}" width="12" height="12"></canvas>${k.lk?'<span class="ulk">🔒</span>':''}${pa?`<span class="upa" style="--pc:${pcol(pa.r)}"></span>`:''}<span class="unm">${k.sh?'✦ ':''}${escH(k.name)}</span></div>`}).join(''):`<div class="nemp">${chars.length?'Nenhum lutador encontrado.':'Vazio. Gire a roleta na estrela!'}</div>`;
- $('grid').querySelectorAll('.ung').forEach(el=>{const k=chars.find(c=>c.id==el.dataset.id);try{drawSp(el.querySelector('canvas'),k.rar,2,k.sh,k.name)}catch(e){}el.onclick=()=>unPick(k.id)});
+  return `<div class="ung${k.rar===4?' myth':''}${k.sh?' shn':''}${k.id===unSel?' on':''}" data-id="${k.id}" style="--c:${rarCol(k.rar)}"><span class="ulv">Nv ${k.lvl}</span>${on?'<span class="uck">✔</span>':''}${gr&&gr.best>=7?`<span class="ugs" style="color:${gcol(gr.G,gr.best)}">${gr.G.GN[gr.best]}</span>`:''}<canvas class="sp" data-r="${k.rar}" width="12" height="12"></canvas>${window.POR3&&POR3.has(k.name)?`<img class="u3d" data-n="${escH(k.name)}" alt="">`:''}${k.lk?'<span class="ulk">🔒</span>':''}${pa?`<span class="upa" style="--pc:${pcol(pa.r)}"></span>`:''}<span class="unm">${k.sh?'✦ ':''}${escH(k.name)}</span></div>`}).join(''):`<div class="nemp">${chars.length?'Nenhum lutador encontrado.':'Vazio. Gire a roleta na estrela!'}</div>`;
+ $('grid').querySelectorAll('.ung').forEach(el=>{const k=chars.find(c=>c.id==el.dataset.id);try{drawSp(el.querySelector('canvas'),k.rar,2,k.sh,k.name)}catch(e){}el.onclick=()=>unPick(k.id);
+  const im=el.querySelector('img.u3d');if(im&&window.POR3){const u=POR3.get(k.name);if(u){im.src=u;el.classList.add('has3d')}else POR3.want(k.name)}});   // retrato 3D (foto guardada) no lugar do pixel art
  // equipe no rodapé
- const n=maxEq();let t='';for(let i=0;i<n;i++){const k=chars.find(c=>c.id===equipped[i]);t+=k?`<i data-id="${k.id}" style="--c:${rarCol(k.rar)}"><canvas class="sp" data-r="${k.rar}" width="12" height="12"></canvas></i>`:'<i>+</i>'}
- $('unTeam').innerHTML=t;$('unTeam').querySelectorAll('i[data-id]').forEach(el=>{const k=chars.find(c=>c.id==el.dataset.id);try{drawSp(el.querySelector('canvas'),k.rar,2,k.sh,k.name)}catch(e){}el.onclick=()=>unPick(k.id)});
+ const n=maxEq();let t='';for(let i=0;i<n;i++){const k=chars.find(c=>c.id===equipped[i]);t+=k?`<i data-id="${k.id}" style="--c:${rarCol(k.rar)}">${window.POR3&&POR3.get(k.name)?`<img src="${POR3.get(k.name)}" alt="">`:`<canvas class="sp" data-r="${k.rar}" width="12" height="12"></canvas>`}</i>`:'<i>+</i>'}
+ $('unTeam').innerHTML=t;$('unTeam').querySelectorAll('i[data-id]').forEach(el=>{const k=chars.find(c=>c.id==el.dataset.id);try{const cv=el.querySelector('canvas');if(cv)drawSp(cv,k.rar,2,k.sh,k.name)}catch(e){}el.onclick=()=>unPick(k.id)});
  $('buySlot').classList.toggle('dis',coins<1000);
  det()};
 function det(){const D_=$('unDet'),b=$('unEq'),k=chars.find(c=>c.id===unSel);
@@ -31601,12 +31606,13 @@ function det(){const D_=$('unDet'),b=$('unEq'),k=chars.find(c=>c.id===unSel);
  const ef=p?[p.as?'+'+Math.round(p.as*100)+'% vel. de ataque':'',p.dm?'+'+Math.round(p.dm*100)+'% de dano':'',p.gold?'+'+Math.round(p.gold*100)+'% de ouro':''].filter(Boolean).join(' · '):'';
  D_.innerHTML=`<div class="utg"><span style="color:${col}">${RAR[k.rar]}</span>${k.sh?'<span style="color:#9ff">✦ Shiny</span>':''}${on?'<span style="color:#7cfc9a">Na equipe</span>':''}${k.lk?'<span>🔒 Bloqueado</span>':''}</div>
   <div class="ukind" style="color:${col}">Lutador ${RAR[k.rar]}</div><h3>${k.sh?'✦ ':''}${escH(k.name)}</h3>
-  <div class="urow"><div class="ubig" style="--c:${k.rar===4?'#b388ff':col}"><canvas class="sp" id="unBig" data-r="${k.rar}" width="12" height="12"></canvas><div class="uxp"><i style="width:${pct}%"></i></div></div>
+  <div class="urow"><div class="ubig" style="--c:${k.rar===4?'#b388ff':col}"><canvas class="sp" id="unBig" data-r="${k.rar}" width="12" height="12"></canvas>${window.POR3&&POR3.has(k.name)?'<canvas id="unLive" width="240" height="300"></canvas>':''}<div class="uxp"><i style="width:${pct}%"></i></div></div>
    <div class="uside"><button class="nbtn sq${k.lk?' on':''}" id="unLk" title="Bloquear (não vende nem sacrifica)">${k.lk?'🔒':'🔓'}</button><button class="nbtn sq" id="unSt" title="Máquina de Status">📊</button><button class="nbtn sq${mx?' dis':''}" id="unFd" title="Alimentar">🍖</button><button class="nbtn sq${on||k.lk?' dis':''}" id="unSl" title="Vender (+${SELL[k.rar]} moedas)">💰</button></div></div>
   <div class="ust"><div>Dano<b>${fmtN(dmgOf(k))}</b></div><div>Nível<b>${k.lvl}${mx?' MAX':'/'+capOf(k)}</b></div><div>XP<b>${mx?'—':pct+'%'}</b></div></div>
   ${gr?`<div class="ugr">${gr.G.SN.map((x,i)=>`<span style="color:${x[1]}">${x[0]}<br><b style="color:${gcol(gr.G,+gr.g[i])}">${gr.G.GN[+gr.g[i]]}</b></span>`).join('')}</div>`:''}
   ${p?`<div class="upas"><b style="color:${pcol(p.r)}">${p.n}</b> · passiva ${RAR[p.r]}<br>${ef}</div>`:''}`;
  try{drawSp($('unBig'),k.rar,2,k.sh,k.name)}catch(e){}
+ if($('unLive')&&window.POR3)POR3.live($('unLive'),k.name);   // modelo 3D girando
  const tip=m=>{try{toast(m)}catch(e){}};
  $('unLk').onclick=()=>{k.lk=k.lk?0:1;if(!k.lk)delete k.lk;save();renderInv()};
  $('unSt').onclick=()=>{if(window.openStatM){$('invM').style.display='none';openStatM(k.id)}};
@@ -31617,6 +31623,62 @@ $('unEq').onclick=()=>{const id=unSel;if(id==null)return;if(equipped.includes(id
  else if(equipped.length>=maxEq()){try{toast('Máximo de '+maxEq()+' na equipe')}catch(e){}return}else equipped.push(id);save();renderInv()};
 $('unSort').onclick=()=>{const i=SORTS.findIndex(x=>x[0]===invSort);invSort=SORTS[(i+1)%SORTS.length][0];renderInv()};
 $('unQ').oninput=e=>{unQ=e.target.value;renderInv()};
+})();
+</script>
+<script>
+// ===================== retratos 3D dos lutadores (tela de Lutadores) =====================
+// Os mesmos modelos 3D do jogo, desenhados numa "salinha" fora do mundo (framebuffer próprio, câmera própria, sem névoa) e copiados para imagem:
+//  · as cartas da grade usam uma foto do busto (feita uma vez por personagem e guardada no aparelho, em mp_por3:<nome>);
+//  · o detalhe mostra o corpo inteiro girando devagar, em tempo real, enquanto a tela está aberta.
+// Personagens sem modelo 3D continuam com o retrato em pixel art.
+(function(){
+'use strict';
+const H3=window.H3;if(!H3||!H3.M4)return;const M4=H3.M4;
+const RT={fb:null,tex:null,rb:null,w:0,h:0};
+const kind=nm=>nm==='Naruto'?'nar':nm==='Guts'?'guts':nm==='Springtrap'?'spr':(window.CH3_DATA&&(nm in CH3_DATA))?'ch3':null;
+const ready=nm=>{const k=kind(nm);try{if(k==='ch3'){if(!window.CH3||CH3.fail)return false;if(!CH3.has(nm))return false;return CH3.on(nm)}if(k==='nar')return !!(window.NAR3&&NAR3.on());if(k==='guts')return !!(window.GUTS3&&GUTS3.on());if(k==='spr')return !!(window.SPR3&&SPR3.on())}catch(e){}return false};
+const heightOf=nm=>{const m=window.CH3_META&&CH3_META[nm];return m&&m.h?m.h*28/0.9489:30};
+function rt(gl,w,h){if(RT.fb&&RT.w===w&&RT.h===h)return;try{if(RT.fb){gl.deleteFramebuffer(RT.fb);gl.deleteTexture(RT.tex);gl.deleteRenderbuffer(RT.rb)}}catch(e){}
+ RT.tex=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,RT.tex);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,w,h,0,gl.RGBA,gl.UNSIGNED_BYTE,null);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+ RT.rb=gl.createRenderbuffer();gl.bindRenderbuffer(gl.RENDERBUFFER,RT.rb);gl.renderbufferStorage(gl.RENDERBUFFER,gl.DEPTH_COMPONENT16,w,h);
+ RT.fb=gl.createFramebuffer();gl.bindFramebuffer(gl.FRAMEBUFFER,RT.fb);gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,RT.tex,0);gl.framebufferRenderbuffer(gl.FRAMEBUFFER,gl.DEPTH_ATTACHMENT,gl.RENDERBUFFER,RT.rb);
+ RT.w=w;RT.h=h;gl.bindFramebuffer(gl.FRAMEBUFFER,null)}
+const PM=new Float32Array(16),VM=new Float32Array(16),VPm=new Float32Array(16),Q={},LTF=(x,y,z,o)=>{o[0]=1.08;o[1]=1.05;o[2]=1.02};
+// desenha o personagem e copia para o canvas de saída (2D). bust = só busto (cartas) · yaw = giro do modelo
+function shot(nm,out,bust,yaw){const gl=H3.gl&&H3.gl();if(!gl||gl.isContextLost()||!ready(nm))return false;const w=out.width,h=out.height,k=kind(nm),H=heightOf(nm);
+ rt(gl,w,h);const fov=.52,y0=bust?H*.42:-H*.04,y1=bust?H*1.04:H*1.06,cy=(y0+y1)/2,half=(y1-y0)/2,dist=half/Math.tan(fov/2)*1.05;
+ M4.persp(PM,fov,w/h,4,dist*4);M4.view(VM,0,cy+(bust?H*.04:H*.05),dist,0,bust?-.06:-.05);M4.mul(VPm,PM,VM);
+ const of=H3.gl_frame,oc=H3.cam,ofg=H3.fogv,osh=H3.inSh,vp=gl.getParameter(gl.VIEWPORT);
+ H3.gl_frame=()=>({VP:VPm,VM,PM});H3.cam=()=>({p:[0,cy,dist],r:[1,0,0],u:[0,1,0]});H3.fogv=()=>new Float32Array([0,0,0,0]);H3.inSh=true;
+ let ok=false;try{gl.bindFramebuffer(gl.FRAMEBUFFER,RT.fb);gl.viewport(0,0,w,h);gl.disable(gl.SCISSOR_TEST);gl.disable(gl.BLEND);gl.enable(gl.DEPTH_TEST);gl.depthMask(true);gl.depthFunc(gl.LEQUAL);gl.colorMask(true,true,true,true);
+  gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+  const q=Q[nm]||(Q[nm]={id:nm.length*977}),A={m:{nm,k:'F'},q,k:'F',x:0,y:0,z:0,yaw:yaw||0,mv:0,noBlob:true,gq:{},ch3:k==='ch3',nar:k==='nar',guts:k==='guts',spr:k==='spr'};
+  const L=[A],t=performance.now();
+  if(k==='ch3')CH3.draw(L,LTF,null,t);else if(k==='nar')NAR3.draw(L,LTF,null,t);else if(k==='guts')GUTS3.draw(L,LTF,null,t);else if(k==='spr')SPR3.draw(L,LTF,null,t);
+  const px=shot.px&&shot.px.length===w*h*4?shot.px:(shot.px=new Uint8Array(w*h*4));gl.readPixels(0,0,w,h,gl.RGBA,gl.UNSIGNED_BYTE,px);
+  const x=out.getContext('2d'),id=x.createImageData(w,h),d=id.data,row=w*4;for(let j=0;j<h;j++)d.set(px.subarray((h-1-j)*row,(h-j)*row),j*row);x.putImageData(id,0,0);ok=true}
+ catch(e){console.warn('retrato 3D',nm,e)}
+ finally{H3.gl_frame=of;H3.cam=oc;H3.fogv=ofg;H3.inSh=osh;try{gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.viewport(vp[0],vp[1],vp[2],vp[3])}catch(e){}}
+ return ok}
+// ---------- fotos das cartas (feitas aos poucos, uma por quadro, e guardadas no aparelho) ----------
+const CACHE={},PEND=new Map(),KEY=n=>'mp_por3:'+n;
+const get=nm=>{if(CACHE[nm])return CACHE[nm];try{const v=localStorage.getItem(KEY(nm));if(v){CACHE[nm]=v;return v}}catch(e){}return null};
+let busy=false;
+function pump(){busy=false;if(!PEND.size)return;const now=performance.now();
+ for(const[nm,o]of PEND){if(CACHE[nm]){PEND.delete(nm);continue}
+  if(!ready(nm)){if(now-o.t0>20000)PEND.delete(nm);continue}
+  const c=document.createElement('canvas');c.width=132;c.height=148;
+  if(shot(nm,c,true,0)){let url='';try{url=c.toDataURL('image/webp',.86)}catch(e){}if(!url||url.length<200)try{url=c.toDataURL()}catch(e){}
+   if(url){CACHE[nm]=url;try{localStorage.setItem(KEY(nm),url)}catch(e){}document.querySelectorAll('img.u3d[data-n="'+CSS.escape(nm)+'"]').forEach(im=>{im.src=url;im.parentNode.classList.add('has3d')})}}
+  PEND.delete(nm);break}
+ if(PEND.size){busy=true;requestAnimationFrame(()=>setTimeout(pump,30))}}
+window.POR3={get,want(nm){if(!kind(nm)||CACHE[nm]||PEND.has(nm))return;try{if(kind(nm)==='ch3')void CH3_DATA[nm]}catch(e){}PEND.set(nm,{t0:performance.now()});if(!busy){busy=true;requestAnimationFrame(pump)}},has:nm=>!!kind(nm),shot,ready};
+// ---------- detalhe: corpo inteiro girando ----------
+let live=null;
+window.POR3.live=(cv,nm)=>{live={cv,nm,yaw:-.5,t:0};if(!live.raf)loop()};
+function loop(){if(!live)return;const L=live;const m=document.getElementById('invM');if(!L.cv.isConnected||!m||m.style.display!=='flex'){live=null;return}
+ const now=performance.now();if(now-L.t>33){L.t=now;L.yaw+=.025;if(ready(L.nm)){if(shot(L.nm,L.cv,false,L.yaw))L.cv.classList.add('on')}else{try{if(kind(L.nm)==='ch3')void CH3_DATA[L.nm]}catch(e){}}}
+ requestAnimationFrame(loop)}
 })();
 </script>
 </body></html>
