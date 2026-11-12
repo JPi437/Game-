@@ -451,6 +451,7 @@ body.mnOpen .mi b{transform:none}
 .ung.has3d img.u3d{display:block}.ung.has3d canvas{display:none}
 #unLive{position:absolute;inset:0;width:100%;height:100%;aspect-ratio:auto;animation:none;filter:drop-shadow(0 8px 6px #000b);opacity:0;transition:opacity .25s;z-index:1}#unLive.on{opacity:1}#unLive.on~.uxp{z-index:2}
 .ubig:has(#unLive.on) #unBig{visibility:hidden}
+.ubig img.u3d{position:absolute;left:50%;top:0;height:100%;width:auto;max-width:100%;transform:translateX(-50%);object-fit:contain;display:none;z-index:1;filter:drop-shadow(0 6px 6px #000b)}.ubig.has3d img.u3d{display:block}.ubig.has3d #unBig{visibility:hidden}
 @media (max-height:460px){#invM #grid{grid-template-columns:repeat(auto-fill,minmax(80px,1fr))}.nbb{padding:7px 4px;font-size:12px}.ust b{font-size:12.5px}.uside{grid-template-columns:repeat(2,32px);grid-auto-rows:32px}.uside .nbtn.sq{width:32px;height:32px;font-size:13px}}
 </style>
 <div class="modal" id="invM"><div class="box nmx nun"><div class="nhd"><div class="nrib"><span class="nic">⭐</span><b>Lutadores</b></div><label class="nsr"><input id="unQ" type="text" placeholder="Pesquisar..." autocomplete="off" maxlength="30"></label><button class="nfl" id="unSort">⇅ <span>Raridade</span></button></div><div class="nbd"><div class="ngr ungr"><div class="ngrid" id="grid"></div><div class="nfoot"><span class="ncap"><button class="nplus" id="buySlot" title="+10 vagas (1000 moedas)">+</button><b id="invCnt"></b></span><span class="nteam" id="unTeam"></span><span>Equipe <b id="eqCnt"></b></span></div></div><div class="ndet undet" id="unDet"></div></div><div class="nbar2"><button class="nbb red" id="unAll">Desequipar Todos</button><button class="nbb pur" id="eqBest">Equipar Melhor</button><button class="nbb gold" id="massBtn">Venda em Massa</button><button class="nbb main" id="unEq">Equipar</button></div><button class="btn" id="invClose" style="display:none">Fechar</button></div></div>
@@ -26055,7 +26056,7 @@ const _t=tick;tick=function(){_t();if(world!==1)return;const e=drac();if(!e||e.d
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261112061901;
+const GAME_BUILD=20261112062440;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
@@ -31606,13 +31607,13 @@ function det(){const D_=$('unDet'),b=$('unEq'),k=chars.find(c=>c.id===unSel);
  const ef=p?[p.as?'+'+Math.round(p.as*100)+'% vel. de ataque':'',p.dm?'+'+Math.round(p.dm*100)+'% de dano':'',p.gold?'+'+Math.round(p.gold*100)+'% de ouro':''].filter(Boolean).join(' · '):'';
  D_.innerHTML=`<div class="utg"><span style="color:${col}">${RAR[k.rar]}</span>${k.sh?'<span style="color:#9ff">✦ Shiny</span>':''}${on?'<span style="color:#7cfc9a">Na equipe</span>':''}${k.lk?'<span>🔒 Bloqueado</span>':''}</div>
   <div class="ukind" style="color:${col}">Lutador ${RAR[k.rar]}</div><h3>${k.sh?'✦ ':''}${escH(k.name)}</h3>
-  <div class="urow"><div class="ubig" style="--c:${k.rar===4?'#b388ff':col}"><canvas class="sp" id="unBig" data-r="${k.rar}" width="12" height="12"></canvas>${window.POR3&&POR3.has(k.name)?'<canvas id="unLive" width="240" height="300"></canvas>':''}<div class="uxp"><i style="width:${pct}%"></i></div></div>
+  <div class="urow"><div class="ubig" style="--c:${k.rar===4?'#b388ff':col}"><canvas class="sp" id="unBig" data-r="${k.rar}" width="12" height="12"></canvas>${window.POR3&&POR3.has(k.name)?`<img class="u3d" id="unPh" data-n="${escH(k.name)}" alt="">`:''}<div class="uxp"><i style="width:${pct}%"></i></div></div>
    <div class="uside"><button class="nbtn sq${k.lk?' on':''}" id="unLk" title="Bloquear (não vende nem sacrifica)">${k.lk?'🔒':'🔓'}</button><button class="nbtn sq" id="unSt" title="Máquina de Status">📊</button><button class="nbtn sq${mx?' dis':''}" id="unFd" title="Alimentar">🍖</button><button class="nbtn sq${on||k.lk?' dis':''}" id="unSl" title="Vender (+${SELL[k.rar]} moedas)">💰</button></div></div>
   <div class="ust"><div>Dano<b>${fmtN(dmgOf(k))}</b></div><div>Nível<b>${k.lvl}${mx?' MAX':'/'+capOf(k)}</b></div><div>XP<b>${mx?'—':pct+'%'}</b></div></div>
   ${gr?`<div class="ugr">${gr.G.SN.map((x,i)=>`<span style="color:${x[1]}">${x[0]}<br><b style="color:${gcol(gr.G,+gr.g[i])}">${gr.G.GN[+gr.g[i]]}</b></span>`).join('')}</div>`:''}
   ${p?`<div class="upas"><b style="color:${pcol(p.r)}">${p.n}</b> · passiva ${RAR[p.r]}<br>${ef}</div>`:''}`;
  try{drawSp($('unBig'),k.rar,2,k.sh,k.name)}catch(e){}
- if($('unLive')&&window.POR3)POR3.live($('unLive'),k.name);   // modelo 3D girando
+ {const im=$('unPh');if(im&&window.POR3){const u=POR3.get(k.name);if(u){im.src=u;im.parentNode.classList.add('has3d')}else POR3.want(k.name)}}   // foto 3D do busto (a mesma da carta)
  const tip=m=>{try{toast(m)}catch(e){}};
  $('unLk').onclick=()=>{k.lk=k.lk?0:1;if(!k.lk)delete k.lk;save();renderInv()};
  $('unSt').onclick=()=>{if(window.openStatM){$('invM').style.display='none';openStatM(k.id)}};
@@ -31661,15 +31662,15 @@ function shot(nm,out,bust,yaw){const gl=H3.gl&&H3.gl();if(!gl||gl.isContextLost(
  finally{H3.gl_frame=of;H3.cam=oc;H3.fogv=ofg;H3.inSh=osh;try{gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.viewport(vp[0],vp[1],vp[2],vp[3])}catch(e){}}
  return ok}
 // ---------- fotos das cartas (feitas aos poucos, uma por quadro, e guardadas no aparelho) ----------
-const CACHE={},PEND=new Map(),KEY=n=>'mp_por3:'+n;
+const CACHE={},PEND=new Map(),KEY=n=>'mp_por4:'+n;
 const get=nm=>{if(CACHE[nm])return CACHE[nm];try{const v=localStorage.getItem(KEY(nm));if(v){CACHE[nm]=v;return v}}catch(e){}return null};
 let busy=false;
 function pump(){busy=false;if(!PEND.size)return;const now=performance.now();
  for(const[nm,o]of PEND){if(CACHE[nm]){PEND.delete(nm);continue}
   if(!ready(nm)){if(now-o.t0>20000)PEND.delete(nm);continue}
-  const c=document.createElement('canvas');c.width=132;c.height=148;
+  const c=document.createElement('canvas');c.width=216;c.height=240;
   if(shot(nm,c,true,0)){let url='';try{url=c.toDataURL('image/webp',.86)}catch(e){}if(!url||url.length<200)try{url=c.toDataURL()}catch(e){}
-   if(url){CACHE[nm]=url;try{localStorage.setItem(KEY(nm),url)}catch(e){}document.querySelectorAll('img.u3d[data-n="'+CSS.escape(nm)+'"]').forEach(im=>{im.src=url;im.parentNode.classList.add('has3d')})}}
+   if(url){CACHE[nm]=url;try{for(let i=localStorage.length-1;i>=0;i--){const kk=localStorage.key(i);if(kk&&kk.startsWith('mp_por3:'))localStorage.removeItem(kk)}localStorage.setItem(KEY(nm),url)}catch(e){}document.querySelectorAll('img.u3d[data-n="'+CSS.escape(nm)+'"]').forEach(im=>{im.src=url;im.parentNode.classList.add('has3d')})}}
   PEND.delete(nm);break}
  if(PEND.size){busy=true;requestAnimationFrame(()=>setTimeout(pump,30))}}
 window.POR3={get,want(nm){if(!kind(nm)||CACHE[nm]||PEND.has(nm))return;try{if(kind(nm)==='ch3')void CH3_DATA[nm]}catch(e){}PEND.set(nm,{t0:performance.now()});if(!busy){busy=true;requestAnimationFrame(pump)}},has:nm=>!!kind(nm),shot,ready};
