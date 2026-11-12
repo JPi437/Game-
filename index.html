@@ -25759,7 +25759,7 @@ const _t=tick;tick=function(){_t();if(world!==1)return;const e=drac();if(!e||e.d
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261111200027;
+const GAME_BUILD=20261111234349;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
@@ -28376,8 +28376,8 @@ function townP(r,w,d){return{w,d,nf:r()<.45?3:2,wc:TW3[(r()*TW3.length)|0],tc:TT
 // Vigas, janelas e venezianas são placas (uma face) coladas na parede: o mesmo visual com bem menos triângulos.
 const panZ=(mb,x,y,z,w,h,col,e,sd)=>qh(mb,[x-w/2,y,z],[x+w/2,y,z],[x+w/2,y+h,z],[x-w/2,y+h,z],col,e||0,[0,0,sd]);
 const panX=(mb,x,y,z,d,h,col,e,sd)=>qh(mb,[x,y,z-d/2],[x,y,z+d/2],[x,y+h,z+d/2],[x,y+h,z-d/2],col,e||0,[sd,0,0]);
-function townHouse(mb,x,z,yaw,P){const{w,d,nf,tc}=P,y=floorY(x,z),FH=14,h=nf*FH,nb=max(3,round(w/10));
- mb.push().T(x,y-1.5,z).RY(yaw);
+function townHouse(mb,x,z,yaw,P){const{w,d,nf,tc}=P,sc=P.sc||1,y=floorY(x,z),FH=14,h=nf*FH,nb=max(3,round(w/10));
+ mb.push().T(x,y-1.5,z).RY(yaw);if(sc!==1)mb.S(sc,sc,sc);   // sc: a casa inteira em escala (Último Porto usa casas maiores)
  mb.box(w+2,3.5,d+2,'#8f8a80',0,true);
  mb.push().T(0,2,0).box(w,h,d,P.wc,0,true).pop();
  if(P.stone)mb.push().T(0,2,0).box(w+.5,FH-.6,d+.5,'#cfc6b4',0,true).pop();
@@ -28400,8 +28400,8 @@ function townHouse(mb,x,z,yaw,P){const{w,d,nf,tc}=P,y=floorY(x,z),FH=14,h=nf*FH,
  for(const sx of[-1,1]){const x0=sx*(w/2+.2);th(mb,[x0,yE,-d/2],[x0,yE,d/2],[x0,yR-1,0],P.wc,0,[sx,0,0]);panX(mb,x0+sx*.15,yE,0,1.2,yR-yE-1,tc,0,sx);panX(mb,x0+sx*.15,yE+2,0,d*.8,1,tc,0,sx)}
  if(P.chim)mb.push().T(w*.28*P.chim,yE+d*.2,-d*.12).box(5,d*.42,5,'#9a6a5a',0,true).push().T(0,d*.42,0).box(6,1.4,6,'#6d4a3e',0,true).pop().pop();
  mb.pop();
- if(P.chim){const c=cos(yaw),sn=sin(yaw),lx=w*.28*P.chim,lz=-d*.12;CHIM.push([(x+lx*c+lz*sn)*K,(y+yE+d*.62+1)*K,(z-lx*sn+lz*c)*K])}
- orect(x,z,w/2+1.5,d/2+1.5,yaw);return{w,d}}
+ if(P.chim){const c=cos(yaw),sn=sin(yaw),lx=w*.28*P.chim*sc,lz=-d*.12*sc;CHIM.push([(x+lx*c+lz*sn)*K,(y-1.5+(yE+d*.62+1)*sc)*K,(z-lx*sn+lz*c)*K])}
+ orect(x,z,w*sc/2+1.5,d*sc/2+1.5,yaw);return{w:w*sc,d:d*sc}}
 // prefeitura com pórtico de colunas e torre do relógio
 function townHall(mb,x,z,yaw){const y=floorY(x,z),W=96,D=50,H=30,WC='#efe3c6',TR='#d6c8a4',RF='#4f6a8a';mb.push().T(x,y-1.5,z).RY(yaw);
  mb.box(W+4,4,D+4,'#a9a397',0,true);mb.push().T(0,3,0).box(W,H,D,WC,0,true).pop();
@@ -28831,6 +28831,7 @@ function pagoda5(mb){const y0=PH5,BX=95;mb.push().T(PX5,0,PZ5);
 // ============================================================ ilha 6: construções (projeto; desenho original) ============================================================
 Object.assign(FONT,{I:'11111001000010000100001000010011111',L:'10000100001000010000100001000011111',P:'11110100011000111110100001000010000'});
 const TW6=['#f4ecdc','#efe3c8','#e9dccb','#f2e6d4','#dfe6ee','#f0d9c4','#e8e0f0'],TR6=['#3f6fae','#2f5f9a','#4a7fbf','#d0703a','#c8642e','#3f8a5a','#2f7f86'],WD6='#6b4428',WD6b='#8a6440';
+const SC6=1.6;   // as casas do Último Porto são 1,6x maiores que as da ilha 3 (altura de verdade perto dos personagens)
 function townP6(r,w,d){const wc=TW6[(r()*TW6.length)|0];return{w,d,nf:r()<.5?3:2,wc,tc:dk(wc,.84),rc:TR6[(r()*TR6.length)|0],sh:['#2f5f9a','#3f8a5a','#a8432f','#2f7f86'][(r()*4)|0],chim:r()<.6?(r()<.5?-1:1):0,shop:r()<.4,awn:['#c0392b','#2c6fb0','#3f8f4a','#e0a030'][(r()*4)|0],stone:r()<.25,fl:r()<.6}}
 // palácio do governo: bloco branco de 2 andares, alas nas pontas, pórtico de 6 colunas com frontão, telhado azul e escadaria; de frente para +z
 function palace6(mb,x,z){const y=T6H,W=250,D=84,H=46,WC='#f6f2ea',TR='#d9d2c2',RF='#2f5f9a',RF2='#28507f';mb.push().T(x,y-1.5,z);
@@ -29142,14 +29143,17 @@ function water(mb,cx,cz){const x0=cx*CS,z0=cz*CS,x1=x0+CS,z1=z0+CS,y=WL*K,mx=x0+
  for(let z=z0;z<z1;z+=ws)for(let x=x0;x<x1;x+=ws){const WS=ws;if(z>WALLZ+40||z+WS<WALLN-40)continue;const a=[x,z],b=[x+WS,z],c=[x+WS,z+WS],d=[x,z+WS];if(min(baseH(x,z),baseH(x+WS,z),baseH(x+WS,z+WS),baseH(x,z+WS))>WL+1)continue;
   const q=(P)=>[P[0]*K,y,P[1]*K],col=P=>waterCol(P[0],P[1]);const sw0=mb.sw;mb.sw=15;mb.wt(q(a),q(d),q(c),col(a),col(d),col(c),.06);mb.wt(q(a),q(c),q(b),col(a),col(c),col(b),.06);mb.sw=sw0}}   // sw 15 = água: reflexo do céu, ondas e brilho do sol no shader
 // espuma da beira (quadros: a faixa branca sai da areia e se desfaz no mar)
-const FOAMF=6;let FOAM=[];const SRK=new Map();   // a linha da praia de cada ilha é a mesma nos 6 quadros da espuma: calcula uma vez só
-function foamMB(f){if(f===0)SRK.clear();const mb=new MB(700+f,{pk:true}),ph=f/FOAMF,y=(WL+.25)*K;for(const I of ISL){if(!I.on||I.ship)continue;const n=I===I1?160:220;
+// Movimento liso: entre um quadro e o próximo a faixa continua andando para o mar por uma escala em volta do centro da ilha
+// (cada ilha é uma malha separada), então não há mais "pulos" de quadro em quadro.
+const FOAMF=16,FOAMT=4.8,FOAMO=20;let FOAM=[];const SRK=new Map(),FOAMM=new Float32Array(16);   // a linha da praia de cada ilha é a mesma em todos os quadros: calcula uma vez só
+function foamMB(f){if(f===0)SRK.clear();const out=[],ph=f/FOAMF,y=(WL+.25)*K;for(const I of ISL){if(!I.on||I.ship)continue;const n=I===I1?160:220,mb=new MB(700+f*31+out.length,{pk:true});
  const shore=a=>{let lo=I.fr?I.fr[0]:.7,hi=I.fr?I.fr[1]:1.2;for(let k=0;k<22;k++){const m=(lo+hi)/2,r=I.R*shapeK(I,a)*m;if(baseH(I.x+cos(a)*r,I.z+sin(a)*r)>WL)lo=m;else hi=m}return I.R*shapeK(I,a)*lo};
  let SR=SRK.get(I);if(!SR){SR=[];for(let i=0;i<=n;i++)SR.push(shore(i/n*TAU));SRK.set(I,SR)}
- for(const band of[0,.5]){const u=(ph+band)%1,off0=-2+u*20,w=4+u*5,wc=waterCol(I.x+I.R*1.05,I.z),col=mixc([250,252,252],wc,u*.9);
+ for(const band of[0,.5]){const u=(ph+band)%1,off0=-2+u*FOAMO,w=4+u*5,wc=waterCol(I.x+I.R*1.05,I.z),col=mixc([250,252,252],wc,u*.9);
   for(let i=0;i<n;i++){const a0=i/n*TAU,a1=(i+1)/n*TAU,r0=SR[i],r1=SR[i+1];const P=(a,r)=>[(I.x+cos(a)*r)*K,y+band*.05,(I.z+sin(a)*r)*K];
-   const pa=P(a0,r0+off0),pb=P(a1,r1+off0),pc=P(a1,r1+off0+w),pd=P(a0,r0+off0+w);mb.wt(pa,pd,pc,col,col,col,.25);mb.wt(pa,pc,pb,col,col,col,.25)}}}
- return mb}
+   const pa=P(a0,r0+off0),pb=P(a1,r1+off0),pc=P(a1,r1+off0+w),pd=P(a0,r0+off0+w);mb.wt(pa,pd,pc,col,col,col,.25);mb.wt(pa,pc,pb,col,col,col,.25)}}
+ out.push({mb,I,R:SR.reduce((a,b)=>a+b,0)/SR.length})}
+ return out}
 
 // ---------- portal (unidades do mundo / Mundo 1) ----------
 function portalMB(){const mb=new MB(781);mb.jit=.03;
@@ -29486,8 +29490,8 @@ function* gen(gl){
   // casas nos quarteirões, de frente para as ruas
   const BL=[[-450,-236,-410,-292],[-450,-236,-262,-140],[-450,-236,-112,12],[-450,-236,40,160],[-450,-236,190,322],
             [236,450,-410,-292],[236,450,-262,-140],[236,450,96,210],[236,450,238,322],[-210,210,-415,-300],[-212,-64,190,322],[64,212,190,322]];
-  for(const[x0,x1,z0,z1]of BL){const half=(z1-z0)/2;for(const side of[0,1]){let cx=x0;while(x1-cx>=28){const w=min(30+r6()*14,x1-cx),d=min(24+r6()*8,half-2),x=C6.x+cx+w/2,z=C6.z+(side?z1-d/2:z0+d/2);cx+=w+3;
-     if(resv(x,z,w/2,d/2)||islD(I6,x,z)>.8||islD(I6,x+w/2,z+d/2)>.82||islD(I6,x-w/2,z-d/2)>.82)continue;townHouse(O(x,z),x,z,side?0:PI,townP6(r6,w,d))}}}
+  for(const[x0,x1,z0,z1]of BL){const half=(z1-z0)/2;for(const side of[0,1]){let cx=x0;while(x1-cx>=44){const w=min(48+r6()*20,x1-cx),d=min(40+r6()*12,half-2),x=C6.x+cx+w/2,z=C6.z+(side?z1-d/2:z0+d/2);cx+=w+3;
+     if(resv(x,z,w/2,d/2)||islD(I6,x,z)>.8||islD(I6,x+w/2,z+d/2)>.82||islD(I6,x-w/2,z-d/2)>.82)continue;townHouse(O(x,z),x,z,side?0:PI,Object.assign(townP6(r6,w/SC6,d/SC6),{sc:SC6}))}}}
   OCW.pct=.97;yield;
   // o pátio: lajes em anéis em volta da plataforma, chafariz, barracas, bancos, postes e árvores em canteiros
   {const PC=[[178,170,156],[160,152,138],[190,182,168]];for(let x=PLZ6.x-PLZ6.hw;x<PLZ6.x+PLZ6.hw;x+=10)for(let z=PLZ6.z-PLZ6.hd;z<PLZ6.z+PLZ6.hd;z+=10){const cx=x+5,cz=z+5;
@@ -29569,7 +29573,7 @@ function* gen(gl){
  CBM={seg:Array.from({length:SKN},(_,k)=>H3.upload(gl,skSegMB(k).pack())),head:H3.upload(gl,skHeadMB().pack()),jaw:H3.upload(gl,skJawMB().pack())};   // o Rei do Mar
 GULLM=[H3.upload(gl,gullMB(1).pack()),H3.upload(gl,gullMB(0).pack())];
  for(let i=0;i<10;i++)GULLS.push({cx:(i<6?PORT.x+(r()-.5)*300:I1.x+(r()-.5)*600)*K,cz:(i<6?PSH+60+(r()-.5)*200:I1.z+(r()-.5)*600)*K,R:(60+r()*90)*K,y:(70+r()*60)*K,sp:(.25+r()*.2)*(r()<.5?-1:1),ph:r()*TAU,m:new Float32Array(16)});
- for(let f=0;f<FOAMF;f++){FOAM.push(H3.upload(gl,foamMB(f).pack()));OCW.pct=.66+.1*f/FOAMF;yield}
+ for(let f=0;f<FOAMF;f++){FOAM.push(foamMB(f).map(o=>({m:H3.upload(gl,o.mb.pack()),cx:o.I.x*K,cz:o.I.z*K,R:(o.R+8)*K})));OCW.pct=.66+.1*f/FOAMF;yield}
  {const rc=rng(77);for(let i=0;i<44;i++){const mb=new MB(9100+i,{pk:true}),lo=new MB(9100+i,{pk:true}),n=7+((rc()*5)|0),L=220+rc()*240,W=110;for(let k=0;k<n;k++){const u=k/(n-1)-.5,R2=(1-abs(u)*1.1)*(60+rc()*40)+26;const yy=(1-abs(u)*1.4)*R2*.35;
      const ax=u*L+(rc()-.5)*40,az=(rc()-.5)*W*.7,bz=(rc()-.5)*W*.5;
      mb.push().T(ax,yy,az).S(1,.6,.9).sph(R2,6,12,[255,250,244],.22).pop();mb.push().T(u*L*.9,yy-R2*.32,bz).S(1.1,.28,.95).sph(R2*.9,4,10,[196,204,222],.18).pop();   // nuvem com volume: topo claro pegando sol, base acinzentada
@@ -29584,7 +29588,7 @@ function step(ms){const gl=H3.gl();if(!gl)return false;if(OCW.ready)return true;
  const ao0=H3.aoOn;H3.aoOn=!!(window.GFX2&&GFX2.on);   // sombra nos cantos (ver H3.aoBake) enquanto as malhas são montadas
  try{while(performance.now()-t0<ms){const s=building.next();if(s.done){building=null;return true}}}finally{H3.aoOn=ao0}return OCW.ready}
 function freeAll(){const gl=H3.gl();if(gl&&!gl.isContextLost()){const del=m=>{if(m)try{gl.deleteBuffer(m.vbo)}catch(e){}};
-  for(const c of CH){del(c.gm);del(c.om)}for(const m of FOAM)del(m);if(OSTM){del(OSTM.ped);del(OSTM.star)}OSTM=null;for(const w of WALLM)del(w.m);for(const c of CLW)del(c.m);del(SEAO);SEAO=null;if(CBM){for(const m of CBM.seg)del(m);del(CBM.head);del(CBM.jaw)}CBM=null;del(RMS);for(const m of RMSF)del(m);WALLM=[];CLW=[];RMS=null;RMSF=[];del(SAILS);del(WHEEL);WHEEL=null;del(BOAT);del(BOATP);if(GULLM)for(const m of GULLM)del(m);GULLM=null;for(const c of CLOUD)del(c.m);for(const k in TV)for(const m of TV[k].m)del(m)}
+  for(const c of CH){del(c.gm);del(c.om)}for(const F of FOAM)for(const o of F)del(o.m);if(OSTM){del(OSTM.ped);del(OSTM.star)}OSTM=null;for(const w of WALLM)del(w.m);for(const c of CLW)del(c.m);del(SEAO);SEAO=null;if(CBM){for(const m of CBM.seg)del(m);del(CBM.head);del(CBM.jaw)}CBM=null;del(RMS);for(const m of RMSF)del(m);WALLM=[];CLW=[];RMS=null;RMSF=[];del(SAILS);del(WHEEL);WHEEL=null;del(BOAT);del(BOATP);if(GULLM)for(const m of GULLM)del(m);GULLM=null;for(const c of CLOUD)del(c.m);for(const k in TV)for(const m of TV[k].m)del(m)}
  grassClear();try{const g=H3.gl();if(g&&!g.isContextLost())for(const c of CLOUD)for(const m of[c.m,c.m2])if(m)g.deleteBuffer(m.vbo)}catch(e){}CH=[];OBJ=[];TV={};FOAM=[];CLOUD=[];SAILS=null;BOAT=null;BOATP=null;OCW.ready=false;building=null;OCW.pct=0}
 OCW.chunks=()=>CH;
 OCW.map={baseH,gcol:(x,z)=>gcol(x,z),waterCol,blockedD,ISL,WALLZ,WALLN,RMX,RMW,MW,MH,PIERS,EXE,C6,Q6Z,CBW0,CBD0,CBW1,CBD1,paredaoZ,paredaoZN,spurH,spurN};   // para gerar a imagem do mapa
@@ -29637,7 +29641,8 @@ function draw(t,dyn){H3.skyDraw();const F=H3.S.foc||H3.S.cam,s=t/1000;boatTick(t
   if(c.gm&&H3.vis(c.gm.cx,c.gm.cy,c.gm.cz,c.gm.rad))H3.mesh(c.gm,null,LIGHTS,dyn,{});
   if(c.om&&H3.vis(c.om.cx,c.om.cy,c.om.cz,c.om.rad))H3.mesh(c.om,null,LIGHTS,dyn,{})}
  if(SEAO)H3.mesh(SEAO,null,LIGHTS,dyn,{});   // o mar de fora das bordas
- if(FOAM.length){const m=FOAM[floor(s*5)%FOAM.length];if(H3.vis(m.cx,m.cy,m.cz,m.rad))H3.mesh(m,null,null,dyn,{})}
+ if(FOAM.length){const q=(s/FOAMT%1)*FOAMF,f=floor(q)%FOAMF,dd=(q-floor(q))*FOAMO/FOAMF*K;   // quadro atual + o quanto a faixa já andou dentro dele
+  for(const o of FOAM[f]){const m=o.m;if(!H3.vis(m.cx,m.cy,m.cz,m.rad+dd))continue;const k=1+dd/o.R;H3.M4.trs(FOAMM,(1-k)*o.cx,0,(1-k)*o.cz,0,0,0,k,1,k);H3.mesh(m,FOAMM,null,dyn,{})}}
  for(const o of OBJ){const dx=o.wx-F.x,dz=o.wz-F.z,d2=dx*dx+dz*dz;if(d2>(FART+o.rad)**2)continue;if(!H3.vis(o.wx,o.wy,o.wz,o.rad))continue;const d=sqrt(d2),v=TV[o.v];if(!v)continue;
   H3.lodDraw(v.m,d,LODT,o.m,LIGHTS,dyn,{di:H3.farFade(d,FART+o.rad),tint:o.tint,tr:.55,rad:o.rad,cx:o.wx,cy:o.wy,cz:o.wz})}
  if(SAILS)for(const w of MILL){if(hypot(w.x-F.x,w.z-F.z)>2400)continue;mYZ(w.m,w.x,w.y,w.z,w.yaw,w.ph+s*w.sp);if(H3.vis(w.x,w.y,w.z,110))H3.mesh(SAILS,w.m,LIGHTS,dyn,{rad:110,cx:w.x,cy:w.y,cz:w.z})}
