@@ -413,12 +413,43 @@ body.mnOpen .mi b{transform:none}
 <button class="btn ic" id="invBtn" data-l="Inventário">Inventário</button><button class="btn ic" id="upBtn" data-l="Upgrades">Upgrades</button>
 <button class="btn ic" id="mountBtn" data-l="Montarias">Montarias</button><button class="btn" id="talkBtn">Falar</button><div id="quest"></div><button class="btn" id="punchBtn">Soco</button><button class="btn" id="pasBtn">Passivas</button>
 
-<div class="modal" id="invM"><div class="box invbox">
-<div class="invhead"><span class="ttl">Seus Lutadores</span><span class="tools"><button class="sb on" data-s="rar" title="Raridade">★</button><button class="sb" data-s="lvl" title="Nível">Nv</button><button class="sb" data-s="name" title="Nome">A</button><button class="sb" data-s="dmg" title="Dano">Dano</button></span></div>
-<div class="invstats"><span>Inventário: <b id="invCnt"></b></span><span>Equipado: <b id="eqCnt"></b></span></div>
-<div id="grid"></div>
-<div class="invbtns"><button class="btn" id="unAll" style="background:linear-gradient(#ff4d8d,#c2185b)">Desequipar Tudo</button><button class="btn" id="eqBest" style="background:linear-gradient(#35a7ff,#1459c9)">Equipar Melhor</button><button class="btn" id="massBtn" style="background:linear-gradient(#9c3fd0,#5e1b8a)">Em massa</button><button class="btn" id="buySlot" style="background:linear-gradient(#e0a800,#a8780a)">+10 slots (1000 moedas)</button></div>
-<button class="btn" id="invClose" style="display:none">Fechar</button></div></div>
+<style>
+/* ===================== Lutadores (inspirado na tela de unidades): grade de retratos + detalhe ao lado + barra de ações ===================== */
+.nun{--t1:#ffcf3a;--t2:#e08a00;--t3:#3a2600}
+#invM #grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:7px;align-content:start;grid-auto-rows:auto;overflow-y:auto;flex:1;padding:2px}
+.ung{position:relative;height:0;padding-bottom:calc(112% - 6px);border-radius:10px;border:3px solid color-mix(in srgb,var(--c) 60%,#fff);cursor:pointer;overflow:hidden;
+ background:radial-gradient(circle at 50% 38%,color-mix(in srgb,var(--c) 75%,#fff) 0,color-mix(in srgb,var(--c) 75%,#000) 72%);box-shadow:0 0 0 2px #000,inset 0 0 18px #0007}
+.ung::after{content:'';position:absolute;inset:0;background:repeating-radial-gradient(circle at 70% 25%,#ffffff12 0 7px,transparent 7px 16px);pointer-events:none}
+.ung.myth{background:conic-gradient(from 0deg,#ff5f6d,#ffc371,#7cfc9a,#47c9ff,#b388ff,#ff5f6d);border-color:#fff}
+.ung.on{outline:3px solid #fff;outline-offset:-1px}
+.ung canvas{position:absolute;left:50%;top:46%;transform:translate(-50%,-50%);width:66%;height:auto;aspect-ratio:1;image-rendering:pixelated;filter:drop-shadow(0 3px 2px #000a);z-index:1}
+.ung .ulv{position:absolute;left:4px;top:2px;font-size:11px;text-shadow:0 1px 0 #000,0 0 3px #000;z-index:2}
+.ung .uck{position:absolute;right:3px;top:0;font-size:15px;color:#7cfc9a;text-shadow:0 1px 0 #000,0 0 3px #000;z-index:2}
+.ung .ulk{position:absolute;left:4px;bottom:20px;font-size:12px;z-index:2}.ung .upa{position:absolute;right:4px;bottom:20px;width:14px;height:14px;border-radius:50%;background:var(--pc);box-shadow:0 0 0 2px #000;z-index:2}
+.ung .ugs{position:absolute;right:4px;top:18px;font-size:11px;font-weight:900;text-shadow:0 1px 0 #000,0 0 3px #000;z-index:2}
+.ung .unm{position:absolute;left:2px;right:2px;bottom:3px;text-align:center;font-size:10.5px;line-height:1.05;text-shadow:0 1px 0 #000,0 0 3px #000,0 0 3px #000;z-index:2}
+.ung.shn canvas{filter:drop-shadow(0 0 4px #9ff) drop-shadow(0 3px 2px #000a)}
+.ncap{display:flex;align-items:center;gap:6px}.nplus{width:30px;height:30px;border-radius:8px;border:2px solid #ffffff40;background:linear-gradient(#4a4e5c,#2e3140);color:#fff;font:inherit;font-size:18px;line-height:1;cursor:pointer;box-shadow:0 2px 0 #000}
+.nplus.dis{opacity:.45}
+.nteam{display:flex;gap:4px;flex:1;justify-content:center}.nteam i{width:28px;height:28px;border-radius:7px;border:2px solid var(--c,#ffffff30);background:#000a;display:flex;align-items:center;justify-content:center;cursor:pointer;font-style:normal;font-size:12px;color:#fff6}
+.nteam i canvas{width:22px;height:22px;image-rendering:pixelated}
+.undet{flex:1}.undet .utg{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:4px}.undet .utg span{font-size:10.5px;padding:2px 8px;border-radius:20px;background:#000a;border:1px solid #ffffff30}
+.undet .ukind{font-size:12px;text-shadow:0 1px 0 #000}.undet h3{color:#fff!important;font-size:19px!important;margin:0 0 4px!important}
+.urow{display:flex;gap:8px;flex:0 0 auto;height:clamp(96px,30vh,190px)}.undet{overflow-y:auto}
+.ubig{position:relative;flex:1;min-height:0;border-radius:10px;border:2px solid #ffffff20;display:flex;align-items:center;justify-content:center;overflow:hidden;background:radial-gradient(circle at 50% 55%,color-mix(in srgb,var(--c) 55%,#000),#100810 78%)}
+.ubig canvas{width:min(120px,70%);height:auto;aspect-ratio:1;image-rendering:pixelated;filter:drop-shadow(0 8px 6px #000b);animation:nfl 3.4s ease-in-out infinite}
+.ubig .uxp{position:absolute;left:8px;right:8px;bottom:6px;height:8px;border-radius:5px;background:#0009;overflow:hidden}.ubig .uxp i{display:block;height:100%;background:linear-gradient(90deg,#7c4dff,#c77dff)}
+.uside{display:grid;grid-template-columns:repeat(2,38px);grid-auto-rows:38px;gap:5px;align-content:start}.uside .nbtn.sq{width:38px;height:38px;padding:0;font-size:15px}.uside .nbtn.dis{opacity:.4}
+.ust{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:6px}.ust div{background:#000a;border:2px solid #ffffff1a;border-radius:8px;padding:4px 6px;font-size:10.5px;color:#b9bccb;text-align:center}.ust b{display:block;font-size:14px;color:#fff}
+.ugr{display:flex;gap:5px;margin-top:5px}.ugr span{flex:1;background:#000a;border:2px solid #ffffff1a;border-radius:8px;padding:3px 4px;font-size:10px;text-align:center}.ugr b{font-size:13px}
+.upas{margin-top:5px;background:#000a;border:2px solid #ffffff1a;border-radius:8px;padding:5px 8px;font-size:11px;color:#d6d8e4}
+.nbar2{display:flex;gap:7px;padding:0 10px 10px;flex:0 0 auto}
+.nbb{flex:1;padding:9px 6px;border-radius:9px;border:2px solid #ffffff40;color:#fff;font:inherit;font-size:13.5px;cursor:pointer;text-shadow:0 1px 0 #000;box-shadow:0 3px 0 #000}
+.nbb.red{background:linear-gradient(#ff5d5d,#c41c1c)}.nbb.pur{background:linear-gradient(#a970ff,#6a2fd6)}.nbb.gold{background:linear-gradient(#ffd84a,#d79a00);color:#2a1a00;text-shadow:none}
+.nbb.main{flex:1.6;background:linear-gradient(#4fe06a,#1f9c3a)}.nbb.main.off{background:linear-gradient(#ff5d5d,#c41c1c)}.nbb.dis{opacity:.5}
+@media (max-height:460px){#invM #grid{grid-template-columns:repeat(auto-fill,minmax(80px,1fr))}.nbb{padding:7px 4px;font-size:12px}.ust b{font-size:12.5px}.uside{grid-template-columns:repeat(2,32px);grid-auto-rows:32px}.uside .nbtn.sq{width:32px;height:32px;font-size:13px}}
+</style>
+<div class="modal" id="invM"><div class="box nmx nun"><div class="nhd"><div class="nrib"><span class="nic">⭐</span><b>Lutadores</b></div><label class="nsr"><input id="unQ" type="text" placeholder="Pesquisar..." autocomplete="off" maxlength="30"></label><button class="nfl" id="unSort">⇅ <span>Raridade</span></button></div><div class="nbd"><div class="ngr ungr"><div class="ngrid" id="grid"></div><div class="nfoot"><span class="ncap"><button class="nplus" id="buySlot" title="+10 vagas (1000 moedas)">+</button><b id="invCnt"></b></span><span class="nteam" id="unTeam"></span><span>Equipe <b id="eqCnt"></b></span></div></div><div class="ndet undet" id="unDet"></div></div><div class="nbar2"><button class="nbb red" id="unAll">Desequipar Todos</button><button class="nbb pur" id="eqBest">Equipar Melhor</button><button class="nbb gold" id="massBtn">Venda em Massa</button><button class="nbb main" id="unEq">Equipar</button></div><button class="btn" id="invClose" style="display:none">Fechar</button></div></div>
 <div class="modal" id="popM"><div class="pop"><div class="pbox pmain" id="popMain"></div><div class="pbox ppas" id="popPas" style="display:none"></div></div></div>
 <div class="modal" id="detM" style="z-index:6"><div class="box" style="max-width:340px"><div class="row"><canvas class="sp big" id="detC" width="12" height="12"></canvas><div id="detT" style="text-align:left;font-size:14px;line-height:1.5"></div></div><div id="detMsg" style="font-size:12px;color:#ffb74d;min-height:16px;margin:6px 0"></div><div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center"><button class="btn" id="eqBtn"></button><button class="btn" id="feedBtn" style="background:#2e7d32">Alimentar</button><button class="btn" id="sellBtn" style="background:#b8860b"></button><button class="btn" id="detClose" style="background:#555">Voltar</button></div></div></div>
 <div class="modal" id="spinM"><div class="box rbx"><h2 id="spinT">Roleta da Estrela</h2>
@@ -14083,7 +14114,7 @@ const DEF='555';
 function roll(w){let r=Math.random()*w.reduce((a,b)=>a+b,0);for(let i=0;i<w.length;i++){r-=w[i];if(r<0)return i}return 5}
 window.gsRoll=()=>''+roll(GW)+roll(GW)+roll(GW);
 const gsOf=k=>k&&typeof k.gs==='string'&&/^[0-9]{3}$/.test(k.gs)?k.gs:DEF;
-window.gsOf=gsOf;
+window.gsOf=gsOf;window.GSI={GN,SN,get GC(){try{return GC}catch(e){return null}}};
 window.gsM=(k,i)=>GM[+gsOf(k)[i]]||1;
 const pct=i=>{const v=Math.round((GM[i]-1)*100);return(v>0?'+':'')+v+'%'};
 const ST_=()=>window.GST?GST():{},tok=()=>ST_().tk|0;
@@ -26020,7 +26051,7 @@ const _t=tick;tick=function(){_t();if(world!==1)return;const e=drac();if(!e||e.d
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261112054912;
+const GAME_BUILD=20261112061121;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
@@ -31537,6 +31568,55 @@ function ui(){const sec=document.getElementById('g3Sec');if(!sec||document.getEl
  const pre=document.getElementById('g3Pre');if(pre&&pre.nextSibling)sec.insertBefore(r,pre.nextSibling);else sec.appendChild(r);sync()}
 const iv=setInterval(()=>{ui();if(document.getElementById('perfRow'))clearInterval(iv)},1000);
 if(on)set(true);
+})();
+</script>
+<script>
+// ===================== Lutadores: tela nova (grade de retratos + detalhe ao lado + barra de ações) =====================
+// Substitui a grade antiga e o popup: tocar num lutador mostra tudo dele à direita (retrato grande, dano, nível, XP, notas da Máquina de Status,
+// passiva) com os botões de bloquear, Máquina de Status, alimentar e vender; embaixo, equipar/desequipar, Desequipar Todos, Equipar Melhor e Venda em Massa.
+// A equipe (quem está equipado) aparece no rodapé da grade. O popup antigo (openDet) continua existindo para quem ainda o chama.
+(function(){
+let unSel=null,unQ='';const SORTS=[['rar','Raridade'],['lvl','Nível'],['name','Nome'],['dmg','Dano']];
+const rarCol=r=>COL[r]||'#ff4fd8';
+const grade=k=>{try{const g=window.gsOf?gsOf(k):null,G=window.GSI;if(!g||!G)return null;return{g,G,best:Math.max(+g[0],+g[1],+g[2])}}catch(e){return null}};
+const gcol=(G,i)=>{try{const c=G.GC;return Array.isArray(c)?c[i]:'#fff'}catch(e){return '#fff'}};
+function unPick(id){unSel=id;renderInv()}
+renderInv=function(){invInfo();const key={rar:(a,b)=>b.rar-a.rar||b.lvl-a.lvl,lvl:(a,b)=>b.lvl-a.lvl||b.rar-a.rar,name:(a,b)=>a.name.localeCompare(b.name)||b.rar-a.rar,dmg:(a,b)=>dmgOf(b)-dmgOf(a)}[invSort]||((a,b)=>b.rar-a.rar);
+ $('unSort').querySelector('span').textContent=(SORTS.find(x=>x[0]===invSort)||SORTS[0])[1];
+ const q=String(unQ).trim().toLowerCase();
+ const list=chars.slice().filter(k=>!q||k.name.toLowerCase().includes(q)).sort((a,b)=>(equipped.includes(b.id)-equipped.includes(a.id))||key(a,b));
+ if(!chars.some(c=>c.id===unSel))unSel=equipped[0]||(list[0]&&list[0].id)||null;
+ $('grid').innerHTML=list.length?list.map(k=>{const on=equipped.includes(k.id),pa=PAS[k.pas],gr=grade(k);
+  return `<div class="ung${k.rar===4?' myth':''}${k.sh?' shn':''}${k.id===unSel?' on':''}" data-id="${k.id}" style="--c:${rarCol(k.rar)}"><span class="ulv">Nv ${k.lvl}</span>${on?'<span class="uck">✔</span>':''}${gr&&gr.best>=7?`<span class="ugs" style="color:${gcol(gr.G,gr.best)}">${gr.G.GN[gr.best]}</span>`:''}<canvas class="sp" data-r="${k.rar}" width="12" height="12"></canvas>${k.lk?'<span class="ulk">🔒</span>':''}${pa?`<span class="upa" style="--pc:${pcol(pa.r)}"></span>`:''}<span class="unm">${k.sh?'✦ ':''}${escH(k.name)}</span></div>`}).join(''):`<div class="nemp">${chars.length?'Nenhum lutador encontrado.':'Vazio. Gire a roleta na estrela!'}</div>`;
+ $('grid').querySelectorAll('.ung').forEach(el=>{const k=chars.find(c=>c.id==el.dataset.id);try{drawSp(el.querySelector('canvas'),k.rar,2,k.sh,k.name)}catch(e){}el.onclick=()=>unPick(k.id)});
+ // equipe no rodapé
+ const n=maxEq();let t='';for(let i=0;i<n;i++){const k=chars.find(c=>c.id===equipped[i]);t+=k?`<i data-id="${k.id}" style="--c:${rarCol(k.rar)}"><canvas class="sp" data-r="${k.rar}" width="12" height="12"></canvas></i>`:'<i>+</i>'}
+ $('unTeam').innerHTML=t;$('unTeam').querySelectorAll('i[data-id]').forEach(el=>{const k=chars.find(c=>c.id==el.dataset.id);try{drawSp(el.querySelector('canvas'),k.rar,2,k.sh,k.name)}catch(e){}el.onclick=()=>unPick(k.id)});
+ $('buySlot').classList.toggle('dis',coins<1000);
+ det()};
+function det(){const D_=$('unDet'),b=$('unEq'),k=chars.find(c=>c.id===unSel);
+ if(!k){D_.innerHTML='<div class="nemp">Escolha um lutador</div>';b.textContent='Equipar';b.classList.add('dis');return}
+ const on=equipped.includes(k.id),mx=k.lvl>=capOf(k),pct=mx?100:Math.min(100,Math.round(k.xp/need(k.lvl)*100)),p=PAS[k.pas],col=rarCol(k.rar),gr=grade(k);
+ b.classList.remove('dis');b.classList.toggle('off',on);b.textContent=on?'Desequipar':'Equipar';
+ const ef=p?[p.as?'+'+Math.round(p.as*100)+'% vel. de ataque':'',p.dm?'+'+Math.round(p.dm*100)+'% de dano':'',p.gold?'+'+Math.round(p.gold*100)+'% de ouro':''].filter(Boolean).join(' · '):'';
+ D_.innerHTML=`<div class="utg"><span style="color:${col}">${RAR[k.rar]}</span>${k.sh?'<span style="color:#9ff">✦ Shiny</span>':''}${on?'<span style="color:#7cfc9a">Na equipe</span>':''}${k.lk?'<span>🔒 Bloqueado</span>':''}</div>
+  <div class="ukind" style="color:${col}">Lutador ${RAR[k.rar]}</div><h3>${k.sh?'✦ ':''}${escH(k.name)}</h3>
+  <div class="urow"><div class="ubig" style="--c:${k.rar===4?'#b388ff':col}"><canvas class="sp" id="unBig" data-r="${k.rar}" width="12" height="12"></canvas><div class="uxp"><i style="width:${pct}%"></i></div></div>
+   <div class="uside"><button class="nbtn sq${k.lk?' on':''}" id="unLk" title="Bloquear (não vende nem sacrifica)">${k.lk?'🔒':'🔓'}</button><button class="nbtn sq" id="unSt" title="Máquina de Status">📊</button><button class="nbtn sq${mx?' dis':''}" id="unFd" title="Alimentar">🍖</button><button class="nbtn sq${on||k.lk?' dis':''}" id="unSl" title="Vender (+${SELL[k.rar]} moedas)">💰</button></div></div>
+  <div class="ust"><div>Dano<b>${fmtN(dmgOf(k))}</b></div><div>Nível<b>${k.lvl}${mx?' MAX':'/'+capOf(k)}</b></div><div>XP<b>${mx?'—':pct+'%'}</b></div></div>
+  ${gr?`<div class="ugr">${gr.G.SN.map((x,i)=>`<span style="color:${x[1]}">${x[0]}<br><b style="color:${gcol(gr.G,+gr.g[i])}">${gr.G.GN[+gr.g[i]]}</b></span>`).join('')}</div>`:''}
+  ${p?`<div class="upas"><b style="color:${pcol(p.r)}">${p.n}</b> · passiva ${RAR[p.r]}<br>${ef}</div>`:''}`;
+ try{drawSp($('unBig'),k.rar,2,k.sh,k.name)}catch(e){}
+ const tip=m=>{try{toast(m)}catch(e){}};
+ $('unLk').onclick=()=>{k.lk=k.lk?0:1;if(!k.lk)delete k.lk;save();renderInv()};
+ $('unSt').onclick=()=>{if(window.openStatM){$('invM').style.display='none';openStatM(k.id)}};
+ $('unFd').onclick=()=>{if(k.lvl>=capOf(k)){tip('Nível máximo');return}curId=k.id;sel_clear();renderFeed();$('feedM').style.display='flex'};
+ $('unSl').onclick=()=>{if(equipped.includes(k.id)){tip('Desequipe antes de vender');return}if(k.lk){tip('Lutador bloqueado: desbloqueie para vender');return}coins+=SELL[k.rar];chars=chars.filter(c=>c.id!==k.id);unSel=null;save();updHud();tip('Vendido: +'+SELL[k.rar]+' moedas');renderInv()}}
+function sel_clear(){try{sel=new Set()}catch(e){}}
+$('unEq').onclick=()=>{const id=unSel;if(id==null)return;if(equipped.includes(id)){equipped=equipped.filter(x=>x!==id);delete fpos[id]}
+ else if(equipped.length>=maxEq()){try{toast('Máximo de '+maxEq()+' na equipe')}catch(e){}return}else equipped.push(id);save();renderInv()};
+$('unSort').onclick=()=>{const i=SORTS.findIndex(x=>x[0]===invSort);invSort=SORTS[(i+1)%SORTS.length][0];renderInv()};
+$('unQ').oninput=e=>{unQ=e.target.value;renderInv()};
 })();
 </script>
 </body></html>
