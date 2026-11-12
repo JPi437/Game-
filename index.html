@@ -1278,9 +1278,89 @@ const pct_=x=>Math.round(x*100);
 <div id="bfs"></div><div id="bnr"></div>
 <button class="btn" id="qMt"></button><button class="btn" id="rkBtn">Rank de Dano</button>
 <div id="wbH"><div class="nm">VELDORA · Dragão da Tempestade</div><div class="bar"><i class="tr" id="wbTr"></i><i class="fl" id="wbFl"></i><em class="tx" id="wbTx"></em></div><div class="sub"><span id="wbSub"></span><button id="wbRk">Rank</button></div></div>
-<div class="modal" id="itM"><div class="box invbox gm"><div class="invhead"><div class="ttlw"><h2 class="ttl">Inventário</h2></div><label class="gsr"><input id="itQ" type="text" placeholder="Buscar item..." autocomplete="off" maxlength="30"></label></div><div class="gstats"><span>Itens: <b id="itCnt"></b></span><span class="act" id="itAct"></span></div><div class="gbody"><div class="ggrid fi" id="itGrid"></div><div id="itDet"></div></div><button class="btn" id="itClose" style="display:none">Fechar</button></div></div>
+<style>
+/* ===================== janelas novas: Missões e Itens (cartas grandes, faixa de título inclinada, cor por aba) ===================== */
+.nmx{position:relative;--t1:#27c8f0;--t2:#0b86c8;--t3:#002b40;width:min(96vw,980px)!important;max-width:none!important;height:min(92vh,560px);padding:0!important;display:flex;flex-direction:column;overflow:hidden!important;
+ background:linear-gradient(160deg,#141a2e,#0b0f1d 60%)!important;border:3px solid var(--t2)!important;border-radius:16px!important;box-shadow:0 0 0 2px #000,0 10px 40px #000a,inset 0 0 40px #0006!important;text-align:left;color:#fff;font-weight:800}
+.nmx>.xb{position:absolute;right:8px;top:8px;width:38px;height:38px;border-radius:50%!important;background:radial-gradient(circle at 35% 30%,#ff6b6b,#d01c1c 70%)!important;border:3px solid #fff!important;box-shadow:0 0 0 2px #000,0 3px 0 #7a0000!important;font-size:18px!important;padding:0!important;z-index:5;color:#fff!important}
+.nhd{display:flex;align-items:center;gap:8px;padding:8px 54px 6px 0;flex:0 0 auto}
+.nrib{position:relative;display:flex;align-items:center;gap:8px;padding:6px 34px 6px 14px;margin-left:-3px;background:linear-gradient(90deg,var(--t2),var(--t1));clip-path:polygon(0 0,100% 0,calc(100% - 22px) 100%,0 100%);min-width:150px;
+ font-size:22px;letter-spacing:.3px;text-shadow:0 2px 0 #000,0 0 6px #0008;-webkit-text-stroke:1px #0006}
+.nrib .nic{font-size:22px;filter:drop-shadow(0 2px 0 #0008)}
+.nsr{flex:1;min-width:60px}.nsr input{width:100%;box-sizing:border-box;background:#05070fcc;border:2px solid #ffffff22;border-radius:9px;color:#fff;padding:8px 12px;font:inherit;font-size:13px;outline:none}
+.nsr input:focus{border-color:var(--t1)}
+.nfl{background:linear-gradient(#3a3f52,#24283a);border:2px solid #ffffff30;border-radius:9px;color:#fff;font:inherit;font-size:13px;padding:7px 12px;cursor:pointer;white-space:nowrap;box-shadow:0 2px 0 #000}
+.nfl.on{border-color:var(--t1);color:var(--t1)}.nfl.nach{padding:7px 16px}
+.ntabs{display:flex;gap:6px;padding:0 10px 6px;flex:0 0 auto}
+.ntabs button{flex:1;padding:8px 4px;border-radius:9px;border:2px solid #ffffff25;background:linear-gradient(#4a4e5c,#2e3140);color:#fff;font:inherit;font-size:14px;cursor:pointer;text-shadow:0 1px 0 #000;box-shadow:0 2px 0 #000}
+.ntabs button.on{background:linear-gradient(var(--t1),var(--t2));border-color:#fff8;box-shadow:0 0 0 2px #000,0 0 14px var(--t1)}
+.nbd{flex:1;min-height:0;display:flex;gap:10px;padding:0 10px 10px}
+.nemp{opacity:.65;text-align:center;padding:24px 8px;font-size:13px;font-weight:700;width:100%}
+/* ---- missões ---- */
+.nlist{flex:1.25;min-width:0;overflow-y:auto;display:flex;flex-direction:column;gap:7px;padding:2px 4px 2px 2px}
+.nmc{position:relative;flex:0 0 auto;padding:8px 40px 8px 14px;border-radius:10px;background:linear-gradient(100deg,#0c1020,#151b30);border:2px solid #ffffff14;cursor:pointer;overflow:hidden}
+.nmc::before{content:'';position:absolute;left:0;top:0;bottom:0;width:5px;background:#ffffff30}
+.nmc.d::before{background:#27c8f0}.nmc.w::before{background:#b25cff}
+.nmc.on{border-color:var(--t1);background:linear-gradient(100deg,color-mix(in srgb,var(--t3) 70%,#0c1020),#151b30);box-shadow:0 0 12px color-mix(in srgb,var(--t1) 40%,transparent)}
+.nmc .nk{display:flex;align-items:center;gap:8px;margin-bottom:2px}
+.nty{font-size:11.5px;color:#27c8f0}.nmc.w .nty,.nty.w{color:#c58bff}.nty.d{color:#27c8f0}
+.ntm{font-size:10.5px;background:#000a;border:1px solid #ffffff25;border-radius:20px;padding:1px 8px;color:#e8e8f0}
+.nmc b{display:block;font-size:15px;color:#ffcf3a;text-shadow:0 1px 0 #000}.nmc small{font-size:11px;color:#c9cbd6;font-weight:700}
+.nmc.ok b{color:#7dff8a}.nmc.done{opacity:.55}
+.npin{position:absolute;right:8px;top:8px;background:none;border:0;font-size:14px;opacity:.35;cursor:pointer;filter:grayscale(1)}.npin.on{opacity:1;filter:none}
+.nbadge{position:absolute;right:10px;bottom:8px;width:18px;height:18px;border-radius:50%;background:#ff3b3b;color:#fff;font-style:normal;font-size:12px;text-align:center;line-height:18px;box-shadow:0 0 0 2px #000}
+.ndet{flex:1;min-width:0;border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;overflow-y:auto;
+ background:linear-gradient(150deg,color-mix(in srgb,var(--t3) 85%,#000),#0b0f1d);border:2px solid #ffffff14}
+.ndet h3{margin:2px 0 4px;font-size:21px;line-height:1.1;color:#ffcf3a;text-shadow:0 2px 0 #000}
+.ndet .ntm{align-self:flex-start}.ndet p{font-size:12.5px;color:#d6d8e4;margin:8px 0;font-weight:700}
+.npg{background:#000a;border:2px solid #ffffff1a;border-radius:9px;padding:7px 10px;font-size:11.5px;display:grid;grid-template-columns:1fr auto;gap:4px}
+.npg b{color:#fff}.nbar{grid-column:1/3;height:9px;border-radius:6px;background:#ffffff18;overflow:hidden}.nbar i{display:block;height:100%;background:linear-gradient(90deg,var(--t2),var(--t1))}
+.nrws{margin-top:auto;padding-top:8px}.nrwt{font-size:11px;color:#b9bccb;margin-bottom:4px}
+.nrwl{display:flex;gap:7px;flex-wrap:wrap}
+.nrw{position:relative;width:72px;height:72px;border-radius:9px;border:2px solid #fff6;background:radial-gradient(circle at 50% 35%,color-mix(in srgb,var(--c) 70%,#fff),color-mix(in srgb,var(--c) 60%,#000) 75%);box-shadow:0 0 0 2px #000;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.nrw .ni{width:38px;height:38px;display:flex;align-items:center;justify-content:center}.nrw .ni svg{width:36px;height:36px}.nrw canvas{width:24px;height:32px;image-rendering:pixelated}
+.nrw i{position:absolute;left:4px;top:2px;font-style:normal;font-size:11px;text-shadow:0 1px 0 #000,0 0 3px #000}
+.nrw span{font-size:9.5px;line-height:1;text-align:center;text-shadow:0 1px 0 #000,0 0 3px #000;padding:0 2px}
+.nact{display:flex;gap:7px;margin-top:9px}
+.nbtn{flex:1;padding:10px;border-radius:10px;border:2px solid #ffffff30;background:linear-gradient(#3b3f4f,#262a38);color:#a9acba;font:inherit;font-size:15px;cursor:pointer;box-shadow:0 3px 0 #000}
+.nbtn.go{background:linear-gradient(#4fe06a,#1f9c3a);color:#fff;border-color:#c8ffd2;text-shadow:0 1px 0 #000;animation:ngo 1.6s ease-in-out infinite}
+@keyframes ngo{50%{box-shadow:0 3px 0 #000,0 0 16px #4fe06a}}
+.nbtn.sq{flex:0 0 46px;padding:8px 0;font-size:16px;color:#fff}.nbtn.sq.on{border-color:#ffcf3a;color:#ffcf3a}
+/* ---- itens ---- */
+.nit{--t1:#2fb3ff;--t2:#1265c9;--t3:#06223f}
+.ncat{flex:0 0 150px;display:flex;flex-direction:column;gap:6px;overflow-y:auto}
+.ncat button{display:flex;align-items:center;gap:8px;padding:10px 10px;border-radius:9px;border:2px solid #ffffff1c;background:linear-gradient(#262a38,#1a1d28);color:#fff;font:inherit;font-size:13.5px;cursor:pointer;text-align:left;box-shadow:0 2px 0 #000}
+.ncat button.on{background:linear-gradient(var(--t1),var(--t2));border-color:#fff9;box-shadow:0 0 0 2px #000,0 0 12px var(--t1)}
+.ngr{flex:1.35;min-width:0;display:flex;flex-direction:column;background:#05070f;border-radius:12px;border:2px solid #ffffff12;padding:6px}
+.ngrid{flex:1;overflow-y:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:7px;align-content:start;padding:2px}
+.ncd{position:relative;height:0;padding-bottom:calc(100% - 6px);border-radius:10px;border:3px solid color-mix(in srgb,var(--c) 55%,#fff);cursor:pointer;overflow:hidden;
+ background:radial-gradient(circle at 50% 40%,color-mix(in srgb,var(--c) 75%,#fff) 0,color-mix(in srgb,var(--c) 80%,#000) 70%,color-mix(in srgb,var(--c) 45%,#000));box-shadow:0 0 0 2px #000,inset 0 0 16px #0006}
+.ncd::after{content:'';position:absolute;inset:0;background:repeating-radial-gradient(circle at 30% 30%,#ffffff10 0 6px,transparent 6px 14px);pointer-events:none}
+.ncd.sup{border-color:#ffd23f;box-shadow:0 0 0 2px #000,0 0 10px #ffd23f88,inset 0 0 16px #0006}
+.ncd.on{outline:3px solid #fff;outline-offset:-1px;transform:translateY(-1px)}
+.ncd canvas{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);width:36px;height:48px;image-rendering:pixelated;filter:drop-shadow(0 3px 2px #0009)}
+.ncd .nq{position:absolute;left:4px;top:2px;font-style:normal;font-size:12px;text-shadow:0 1px 0 #000,0 0 3px #000;z-index:1}
+.ncd .nfv{position:absolute;right:4px;top:1px;font-style:normal;font-size:12px;color:#ffe14d;text-shadow:0 1px 0 #000;z-index:1}
+.ncd span{position:absolute;left:2px;right:2px;bottom:3px;text-align:center;font-size:10.5px;line-height:1.05;text-shadow:0 1px 0 #000,0 0 3px #000,0 0 3px #000;z-index:1}
+.ncd.live{animation:nlv 2s ease-in-out infinite}@keyframes nlv{50%{box-shadow:0 0 0 2px #000,0 0 14px var(--c)}}
+.nfoot{display:flex;gap:10px;justify-content:space-between;align-items:center;font-size:11px;color:#b9bccb;padding:5px 4px 0;flex-wrap:wrap}.nfoot .act{display:flex;gap:4px;align-items:center;flex-wrap:wrap}
+.nit .ndet{flex:1.05;flex-direction:row;gap:8px;padding:8px}
+.nsd{display:flex;flex-direction:column;gap:6px}.nsd .nbtn.sq{flex:0 0 auto;width:42px;height:42px}
+.nmain{flex:1;min-width:0;display:flex;flex-direction:column;overflow-y:auto}
+.nkind{font-size:12px;text-shadow:0 1px 0 #000}.nit .ndet h3{color:#fff;font-size:19px;margin:0 0 6px}
+.nbig{position:relative;flex:1 0 100px;min-height:100px;border-radius:10px;border:2px solid #ffffff20;display:flex;align-items:center;justify-content:center;
+ background:radial-gradient(circle at 50% 55%,color-mix(in srgb,var(--c) 60%,#000),#120a14 75%)}
+.nbig canvas{width:60px;height:80px;image-rendering:pixelated;filter:drop-shadow(0 6px 4px #000a);animation:nfl 3s ease-in-out infinite}@keyframes nfl{50%{transform:translateY(-6px) rotate(-3deg)}}
+.nlive{position:absolute;bottom:6px;left:50%;transform:translateX(-50%);background:#000b;border-radius:20px;padding:2px 10px;font-size:11px;color:#7cfc9a;white-space:nowrap}
+.nown{display:flex;justify-content:space-between;background:#000a;border:2px solid #ffffff1a;border-radius:8px;padding:5px 10px;margin:7px 0 5px;font-size:12.5px}
+.ndesc{background:#000a;border:2px solid #ffffff1a;border-radius:8px;padding:6px 10px;font-size:11.5px;color:#d6d8e4;font-weight:700;line-height:1.3}
+.nit .nbtn{flex:0 0 auto;margin-top:7px}
+@media (max-height:460px){.nmx{height:94vh}.nbig{flex:0 0 84px;min-height:84px}.nbig canvas{width:45px;height:60px}.nit .ndet h3{font-size:16px}.nrib{font-size:18px;min-width:120px}.ntabs button{padding:6px 4px;font-size:12.5px}.nmc{padding:6px 36px 6px 12px}.nmc b{font-size:13.5px}.ndet h3{font-size:17px}.nrw{width:60px;height:60px}.ncat{flex-basis:120px}.ncat button{padding:7px 8px;font-size:12px}.ngrid{grid-template-columns:repeat(auto-fill,minmax(78px,1fr))}}
+@media (max-width:640px){.ncat{flex-basis:46px}.ncat button{font-size:0;justify-content:center;padding:8px 0}.ncat button span{font-size:18px}.nit .nsd{display:none}}
+</style>
+<div class="modal" id="itM"><div class="box nmx nit"><div class="nhd"><div class="nrib"><span class="nic">🎒</span><b>Itens</b></div><label class="nsr"><input id="itQ" type="text" placeholder="Pesquisar..." autocomplete="off" maxlength="30"></label><button class="nfl" id="itSort">⇅ <span>Padrão</span></button></div><div class="nbd"><div class="ncat" id="itCat"></div><div class="ngr"><div class="ngrid" id="itGrid"></div><div class="nfoot"><span>Itens: <b id="itCnt"></b></span><span class="act" id="itAct"></span></div></div><div class="ndet" id="itDet"></div></div><button class="btn" id="itClose" style="display:none">Fechar</button></div></div>
 <div class="modal" id="shM"><div class="box v6box"><h2>Loja</h2><div class="tabs"><button class="tb on" data-t="pot">Poções</button><button class="tb" data-t="up">Upgrades</button></div><div id="shPot"></div><div id="shUp" style="display:none"></div><button class="btn" id="shClose" style="display:none">Fechar</button></div></div>
-<div class="modal" id="msM"><div class="box v6box"><h2>Missões</h2><div id="msBody"></div><button class="btn" id="msClose" style="display:none">Fechar</button></div></div>
+<div class="modal" id="msM"><div class="box nmx nms"><div class="nhd"><div class="nrib"><span class="nic">📜</span><b>Missões</b></div><label class="nsr"><input id="msQ" type="text" placeholder="Pesquisar..." autocomplete="off" maxlength="30"></label><button class="nfl" id="msFl" title="Esconder as resgatadas">⚙</button><button class="nfl nach" id="msAch">Conquistas</button></div><div class="ntabs" id="msTabs"><button data-t="all">Todos</button><button data-t="d">Diário</button><button data-t="w">Semanal</button></div><div class="nbd"><div class="nlist" id="msBody"></div><div class="ndet" id="msDet"></div></div><button class="btn" id="msClose" style="display:none">Fechar</button></div></div>
 <div class="modal" id="acM"><div class="box v6box"><h2>Conquistas</h2><div id="acInfo" style="text-align:center;font-size:12px;opacity:.85;margin-bottom:6px"></div><div class="achg" id="acBody"></div><button class="btn" id="acClose" style="display:none">Fechar</button></div></div>
 <div class="modal" id="pfM" style="z-index:9"><div class="box v6box pf"><div id="pfBody"></div><button class="btn" id="pfClose" style="display:none">Fechar</button></div></div>
 <div class="modal" id="rkM"><div class="box v6box"><h2>Rank do Boss Mundial</h2><div class="tabs"><button class="tb on" data-c="0">Hoje</button><button class="tb" data-c="1">Anterior</button></div><div class="tabs"><button class="tb on" data-o="d">Dano total</button><button class="tb" data-o="p">DPS da equipe</button></div><div id="rkInfo"></div><div id="rkL"></div><button class="btn" id="rkClose" style="display:none">Fechar</button></div></div>
@@ -1659,11 +1739,41 @@ function grant(rw){const out=[];if(rw.gb)out.push('+'+Math.round(rw.gb*100)+'% d
 const rwTxt=rw=>[rw.gb?'+'+Math.round(rw.gb*100)+'% de ouro para sempre':'',rw.sp?'+1 estrela por giro na roleta (para sempre)':'',rw.eq?'+1 personagem equipado (para sempre)':'',rw.c?nf(rw.c)+' moedas':'',rw.e?rw.e+' essência':'',rw.i?(rw.n>1?rw.n+'x ':'')+IT[rw.i].n+' ('+durTxt(IT[rw.i].d)+')':''].filter(Boolean).join(' + ');
 function claim(tp,i){msCheck();const L=tp==='d'?MSD:MSW,p=tp==='d'?ms.dp:ms.wp,c=tp==='d'?ms.dc:ms.wc,m=L[i];if(!m||c[i]||p[i]<m.g)return;
  c[i]=1;st.mis++;toast('Missão concluída! +'+grant(m.rw));sWin(2);renderMis();mnUi();achCheck();save()}
-function renderMis(){msCheck();const t=sNow(),nd=(dayKey(t)+1)*DAY+BRT,nw=((weekKey(t)+1)*7-3)*DAY+BRT;
- const row=(m,p,c,tp,i)=>{const ok=p>=m.g;return `<div class="mr${c?' cl':ok?' ok':''}"><div class="mi2">${GI.svg('mis')}</div><div class="mt"><b>${m.n}</b><div class="pb"><i style="width:${Math.min(100,p/m.g*100)}%"></i><span>${nf(Math.min(p,m.g))} / ${nf(m.g)}</span></div></div><div class="mrw"><span>${rwTxt(m.rw)}</span><button class="btn cb${ok&&!c?'':' dis'}" data-t="${tp}" data-i="${i}">${c?'Feito':'Resgatar'}</button></div></div>`};
- $('msBody').innerHTML=`<div class="sh">Missões diárias <small>renovam em ${ft(nd-t)}</small></div>`+MSD.map((m,i)=>row(m,ms.dp[i],ms.dc[i],'d',i)).join('')+
-  `<div class="sh">Missões semanais <small>renovam em ${fdur(nw-t)}</small></div>`+MSW.map((m,i)=>row(m,ms.wp[i],ms.wc[i],'w',i)).join('');
- $('msBody').querySelectorAll('.cb').forEach(b=>b.onclick=()=>claim(b.dataset.t,+b.dataset.i))}
+// tela de missões: abas Todos / Diário / Semanal (a cor da janela muda com a aba), lista à esquerda, detalhe à direita com recompensas e o botão
+let msTab='all',msSel=null,msQ='',msHide=false,msPin={};try{msPin=JSON.parse(localStorage.getItem('mp_mpin')||'{}')||{}}catch(e){}
+const MSTH={all:['#ffcf3a','#e09a00','#3a2a00'],d:['#27c8f0','#0b86c8','#002b40'],w:['#b25cff','#7a1fd6','#22003d']};
+const rwTiles=rw=>{const T=[],coin='<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#ffc928" stroke="#9c6a00" stroke-width="2"/><circle cx="12" cy="12" r="6" fill="none" stroke="#fff3" stroke-width="2"/></svg>',
+  star='<svg viewBox="0 0 24 24"><path d="M12 2l3 6.6 7.2.8-5.4 4.9 1.5 7.1L12 17.8 5.7 21.4l1.5-7.1L1.8 9.4 9 8.6z" fill="#ffe14d" stroke="#a87400" stroke-width="1.4"/></svg>',
+  ess='<svg viewBox="0 0 24 24"><path d="M12 2l6 9-6 11-6-11z" fill="#c77dff" stroke="#5a1d99" stroke-width="1.6"/></svg>';
+ if(rw.c)T.push(['#ffcf3a',coin,nf(rw.c)+'x','Ouro']);if(rw.e)T.push(['#c77dff',ess,rw.e+'x','Essência']);
+ if(rw.i)T.push([IT[rw.i].c,'<canvas data-pot="'+rw.i+'"></canvas>',(rw.n||1)+'x',IT[rw.i].n]);
+ if(rw.gb)T.push(['#ffcf3a',star,'+'+Math.round(rw.gb*100)+'%','Ouro p/ sempre']);if(rw.sp)T.push(['#7cf',star,'+1','Estrela por giro']);if(rw.eq)T.push(['#7cfc9a',star,'+1','Equipado']);
+ return T.map(([c,ic,n,lb])=>`<div class="nrw" style="--c:${c}"><i>${n}</i><div class="ni">${ic}</div><span>${lb}</span></div>`).join('')};
+function renderMis(){msCheck();const t=sNow(),nd=(dayKey(t)+1)*DAY+BRT,nw=((weekKey(t)+1)*7-3)*DAY+BRT,box=$('msM').querySelector('.box'),th=MSTH[msTab];
+ box.style.setProperty('--t1',th[0]);box.style.setProperty('--t2',th[1]);box.style.setProperty('--t3',th[2]);
+ $('msTabs').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.t===msTab));$('msFl').classList.toggle('on',msHide);
+ const L=[];if(msTab!=='w')MSD.forEach((m,i)=>L.push({tp:'d',i,m,p:ms.dp[i],c:ms.dc[i],rem:nd-t}));if(msTab!=='d')MSW.forEach((m,i)=>L.push({tp:'w',i,m,p:ms.wp[i],c:ms.wc[i],rem:nw-t}));
+ const q=nz(msQ.trim());let V=L.filter(o=>(!q||nz(o.m.n).includes(q))&&!(msHide&&o.c));
+ const rank=o=>(msPin[o.tp+o.i]?0:4)+(o.c?2:o.p>=o.m.g?-1:0);V.sort((a,b)=>rank(a)-rank(b));
+ if(!V.some(o=>o.tp+o.i===msSel))msSel=V.length?V[0].tp+V[0].i:null;
+ const tm=r=>{const s_=Math.max(0,Math.floor(r/1000)),d=Math.floor(s_/86400),h=Math.floor(s_%86400/3600),mi=Math.floor(s_%3600/60);return d?d+'d, '+h+'h':h+'h, '+mi+'m'};
+ const kind=o=>o.tp==='d'?'Missão Diária':'Missão Semanal';
+ $('msBody').innerHTML=V.length?V.map(o=>{const k=o.tp+o.i,ok=o.p>=o.m.g;return `<div class="nmc ${o.tp}${k===msSel?' on':''}${o.c?' done':ok?' ok':''}" data-k="${k}"><div class="nk"><span class="nty">${kind(o)}</span><span class="ntm">⏱ ${tm(o.rem)}</span></div><b>${esc(o.m.n)}</b><small>${o.c?'Resgatada':ok?'Pronta para resgatar!':nf(Math.min(o.p,o.m.g))+' / '+nf(o.m.g)}</small><button class="npin${msPin[k]?' on':''}" data-k="${k}" title="Fixar no topo">📌</button>${ok&&!o.c?'<i class="nbadge">!</i>':''}</div>`}).join(''):'<div class="nemp">Nenhuma missão encontrada.</div>';
+ $('msBody').querySelectorAll('.nmc').forEach(el=>el.onclick=e=>{if(e.target.closest('.npin'))return;msSel=el.dataset.k;renderMis()});
+ $('msBody').querySelectorAll('.npin').forEach(b=>b.onclick=e=>{e.stopPropagation();const k=b.dataset.k;if(msPin[k])delete msPin[k];else msPin[k]=1;try{localStorage.setItem('mp_mpin',JSON.stringify(msPin))}catch(x){}renderMis()});
+ const o=V.find(x=>x.tp+x.i===msSel),D_=$('msDet');if(!o){D_.innerHTML='<div class="nemp">Escolha uma missão</div>';return}
+ const ok=o.p>=o.m.g,pc=Math.floor(Math.min(1,o.p/o.m.g)*100),k=o.tp+o.i;
+ D_.innerHTML=`<div class="nty ${o.tp}">${kind(o)}</div><h3>${esc(o.m.n)}</h3><span class="ntm">⏱ ${o.tp==='d'?'renova em ':'renova em '}${tm(o.rem)}</span><p>${esc(o.m.n)} para completar a missão ${o.tp==='d'?'de hoje':'desta semana'}.</p>
+  <div class="npg"><span>• ${esc(o.m.n)}</span><b>${nf(Math.min(o.p,o.m.g))}/${nf(o.m.g)} (${pc}%)</b><div class="nbar"><i style="width:${pc}%"></i></div></div>
+  <div class="nrws"><div class="nrwt">Recompensas</div><div class="nrwl">${rwTiles(o.m.rw)}</div></div>
+  <div class="nact"><button class="nbtn${ok&&!o.c?' go':''}" id="msClaim">${o.c?'Resgatada':ok?'Resgatar':'Incompleto'}</button><button class="nbtn sq${msPin[k]?' on':''}" id="msPinB" title="Fixar no topo">📌</button></div>`;
+ D_.querySelectorAll('canvas[data-pot]').forEach(c=>potIco(c,c.dataset.pot));
+ $('msClaim').onclick=()=>{if(ok&&!o.c)claim(o.tp,o.i)};
+ $('msPinB').onclick=()=>{if(msPin[k])delete msPin[k];else msPin[k]=1;try{localStorage.setItem('mp_mpin',JSON.stringify(msPin))}catch(x){}renderMis()}}
+$('msTabs').querySelectorAll('button').forEach(b=>b.onclick=()=>{msTab=b.dataset.t;msSel=null;renderMis()});
+$('msQ').oninput=e=>{msQ=e.target.value;renderMis()};
+$('msFl').onclick=()=>{msHide=!msHide;toast(msHide?'Escondendo as missões resgatadas':'Mostrando todas as missões');renderMis()};
+$('msAch').onclick=()=>{renderAch();show('acM')};
 
 // ===================== conquistas =====================
 const ACH=[
@@ -1751,13 +1861,30 @@ let itSel=null,itQ='';
 function openItems(){itSel=null;renderItems();show('itM')}
 function actHtml(){const ids=IORD.filter(id=>buffs[id]>0);return ids.length?'<b style="font-size:12px;margin-right:4px">Ativas:</b>'+ids.map(id=>`<span style="--c:${IT[id].c}">${IT[id].n} · ${ft(buffs[id])}</span>`).join(''):''}
 const kf=n=>{const f=v=>v.toFixed(1).replace(/\.0$/,'').replace('.',',');return n>=1e6?f(n/1e6)+'M':n>=1e3?f(n/1e3)+'K':''+n},nz=t=>String(t).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-function renderItems(){const ids=IORD.filter(id=>items[id]>0);if(itSel&&!(items[itSel]>0))itSel=null;$('itAct').innerHTML=actHtml();$('itCnt').textContent=ids.length+(ids.length===1?' tipo':' tipos');
- const q=nz(itQ.trim()),list=q?ids.filter(id=>nz(IT[id].n).includes(q)):ids;
- const G=$('itGrid');G.innerHTML=list.length?list.map(id=>`<div class="it fc${itSel===id?' on':''}" data-id="${id}" style="--c:${IT[id].c}"><div class="pic"><canvas></canvas><span class="cnt">x${kf(items[id])}</span></div><div class="nm">${IT[id].n}</div></div>`).join(''):`<div class="emp">${ids.length?'Nenhum item encontrado.':'Seu inventário está vazio.<br>Compre poções na Loja ou ganhe nas Missões!'}</div>`;
+// inventário: categorias à esquerda, grade de cartas no meio (quantidade no canto, nome embaixo, cor do item), detalhe à direita com o item grande
+let itCat='all',itSort=0,itFav={};try{itFav=JSON.parse(localStorage.getItem('mp_ifav')||'{}')||{}}catch(e){}
+const ITCAT=[['all','Itens','🎒'],['pot','Poções','🧪'],['sup','Super poções','✨'],['key','Chaves','🗝️'],['on','Ativos','⏳']],ITSORT=['Padrão','Quantidade','Nome'];
+const itIn=(id,c)=>{const it=IT[id];if(c==='all')return true;if(c==='key')return !!it.key;if(c==='sup')return !!it.sup;if(c==='pot')return !it.key&&!it.sup;if(c==='on')return buffs[id]>0;return true};
+const itKind=it=>it.key?'Item de Acesso':it.sup?'Poção Superior':it.k==='x'?'Poção de Experiência':'Poção';
+function renderItems(){const ids=IORD.filter(id=>items[id]>0||(itCat==='on'&&buffs[id]>0));if(itSel&&!ids.includes(itSel))itSel=null;$('itAct').innerHTML=actHtml();$('itCnt').textContent=IORD.filter(id=>items[id]>0).length+' tipos';
+ $('itCat').innerHTML=ITCAT.map(([k,n,ic])=>`<button class="${k===itCat?'on':''}" data-c="${k}"><span>${ic}</span>${n}</button>`).join('');
+ $('itCat').querySelectorAll('button').forEach(b=>b.onclick=()=>{itCat=b.dataset.c;itSel=null;renderItems()});
+ $('itSort').querySelector('span').textContent=ITSORT[itSort];
+ const q=nz(itQ.trim());let list=ids.filter(id=>itIn(id,itCat)&&(!q||nz(IT[id].n).includes(q)));
+ list.sort((a,b)=>(itFav[b]?1:0)-(itFav[a]?1:0)||(itSort===1?(items[b]||0)-(items[a]||0):itSort===2?IT[a].n.localeCompare(IT[b].n):IORD.indexOf(a)-IORD.indexOf(b)));
+ if(!itSel&&list.length)itSel=list[0];
+ const G=$('itGrid');G.innerHTML=list.length?list.map(id=>`<div class="ncd fc${itSel===id?' on':''}${IT[id].sup?' sup':''}${buffs[id]>0?' live':''}" data-id="${id}" style="--c:${IT[id].c}"><i class="nq">${kf(items[id]||0)}x</i>${itFav[id]?'<i class="nfv">★</i>':''}<canvas></canvas><span>${IT[id].n}</span></div>`).join(''):`<div class="nemp">${ids.length?'Nenhum item aqui.':'Seu inventário está vazio.<br>Compre poções na Loja ou ganhe nas Missões!'}</div>`;
  G.querySelectorAll('.fc').forEach(el=>{potIco(el.querySelector('canvas'),el.dataset.id);el.onclick=()=>{itSel=el.dataset.id;renderItems()}});
- const d=$('itDet');if(!itSel){d.innerHTML=ids.length?'<div class="hint">Toque em um item para ver e usar</div>':'';return}
- const it=IT[itSel],on=buffs[itSel]>0;if(it.key){d.innerHTML=`<div class="dt"><canvas id="itDc"></canvas><div><b style="color:${it.c};font-size:14px">${it.n}</b><br>${it.t}<br><span style="opacity:.75">Cada entrada na Raid gasta 1 chave. Cai de qualquer boss (5% de chance; a Poção de Drop aumenta).</span></div></div>`;potIco($('itDc'),itSel);return}d.innerHTML=`<div class="dt"><canvas id="itDc"></canvas><div><b style="color:${it.c};font-size:14px">${it.n}</b><br>${it.t}<br>Duração: ${durTxt(it.d)}${on?'<br><span style="color:#7CFC9A">Ativa agora: usar soma mais '+durTxt(it.d)+'</span>':''}</div><button class="btn" id="itUse">Usar</button></div>`;
- potIco($('itDc'),itSel);$('itUse').onclick=()=>useItem(itSel)}
+ const d=$('itDet');if(!itSel){d.innerHTML='<div class="nemp">Toque em um item para ver e usar</div>';return}
+ const it=IT[itSel],on=buffs[itSel]>0,own=items[itSel]||0;
+ d.innerHTML=`<div class="nsd"><button class="nbtn sq${itFav[itSel]?' on':''}" id="itFavB" title="Favorito (fica no começo)">★</button></div><div class="nmain"><div class="nkind" style="color:${it.c}">${itKind(it)}</div><h3>${it.n}</h3>
+  <div class="nbig" style="--c:${it.c}"><canvas id="itDc"></canvas>${on?'<span class="nlive">ativa · '+durTxt(buffs[itSel])+'</span>':''}</div>
+  <div class="nown"><span>Possuído</span><b>${kf(own)}x</b></div>
+  <div class="ndesc">${it.t}${it.key?'<br>Cada entrada na Raid gasta 1 chave. Cai de qualquer boss (5% de chance; a Poção de Drop aumenta).':'<br>Duração: '+durTxt(it.d)+(on?'. Usar de novo soma mais '+durTxt(it.d)+'.':'')}</div>
+  <button class="nbtn${!it.key&&own>0?' go':''}" id="itUse">${it.key?'Usada na Raid':own>0?'Usar Item':'Sem unidades'}</button></div>`;
+ potIco($('itDc'),itSel);$('itUse').onclick=()=>{if(!it.key&&own>0)useItem(itSel)};
+ $('itFavB').onclick=()=>{if(itFav[itSel])delete itFav[itSel];else itFav[itSel]=1;try{localStorage.setItem('mp_ifav',JSON.stringify(itFav))}catch(x){}renderItems()}}
+$('itSort').onclick=()=>{itSort=(itSort+1)%ITSORT.length;renderItems()};
 $('itQ').oninput=e=>{itQ=e.target.value;renderItems()};
 
 // ===================== loja =====================
@@ -25893,7 +26020,7 @@ const _t=tick;tick=function(){_t();if(world!==1)return;const e=drac();if(!e||e.d
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261112051029;
+const GAME_BUILD=20261112054912;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
