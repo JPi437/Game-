@@ -8396,6 +8396,8 @@ tick=function(){
 function floorAt(x,z){return SC.floorY(x,z)}
 // chão embaixo do JOGADOR: cenas com piso em camadas (SC.floorL) usam a altura dos pés dele (S.pfy) para saber se está em cima ou embaixo
 function floorP(x,z){return SC.floorL?SC.floorL(x,z,S.pfy):SC.floorY(x,z)}
+// o mesmo para os outros personagens (equipe, outros jogadores, NPCs): cada um lembra a altura onde estava (q._fy); quem ainda não tem usa a do jogador
+function floorQ(q,x,z){if(!SC.floorL)return floorAt(x,z);const y=SC.floorL(x,z,q._fy!==undefined&&q._fyS===SC?q._fy:S.pfy);q._fy=y;q._fyS=SC;return y}
 // ---------- zoom: pinça com dois dedos (celular) e rodinha do mouse (PC) ----------
 // 3ª pessoa: aproxima/afasta a câmera (0,45x a 2,2x) · 1ª pessoa: fecha/abre a lente (zoom de luneta, até 2,5x). Fica salvo no aparelho.
 S.zoom=1;S.zoom1=1;try{const z=JSON.parse(localStorage.getItem('mp_zoom')||'null');if(z){S.zoom=clp(+z[0]||1,.45,2.2);S.zoom1=clp(+z[1]||1,1,2.5)}}catch(e){}
@@ -8474,7 +8476,7 @@ function npcLook(m){if(m.nm==='NPC')return world===1?NPCLK.bruxa:world===0?NPCLK
 function remJump(q){const o={h:+q.hh||0,air:0,v:0};if(!q.jt)return o;const n=(Date.now()+(window.MP&&MP.off||0)-q.jt)/16.67;if(n<0||n>60)return o;
  const v0=3.45,g=.19,h=v0*n-g*n*(n+1)/2;if(h>0){o.air=h;o.v=v0-g*n}return o}
 function prep(m){const q=m.q;if(!q||q.x===undefined)return null;
- const x=q.x+8-SC.OX,z=(q.y+14-SC.OY)*SC.K,dk=m.dk||'dir',d0=q[dk],A={m,q,k:m.k,x,z,y:floorAt(x,z),h3d:m.nm===NM3||m.nm==='Herobrine',m3:!!(window.HM3&&m.k&&m.k.charAt(0)==='E'&&HM3.own(q)),dk,px:q.x,py:q.y,d0};
+ const x=q.x+8-SC.OX,z=(q.y+14-SC.OY)*SC.K,dk=m.dk||'dir',d0=q[dk],A={m,q,k:m.k,x,z,y:floorQ(q,x,z),h3d:m.nm===NM3||m.nm==='Herobrine',m3:!!(window.HM3&&m.k&&m.k.charAt(0)==='E'&&HM3.own(q)),dk,px:q.x,py:q.y,d0};
  let fx0,fz0;const kind=m.k.charAt(0);
  if(kind==='P'){fx0=sin(S.yaw);fz0=-cos(S.yaw);A.y=floorP(x,z)+S.jh;A.jh=S.jair;A.jv=S.jv}
  else if((kind==='F'&&fight)||(kind==='R'&&q.rfe)){const dx=SC.fx-x,dz=SC.fz-z,l=hypot(dx,dz)||1;fx0=dx/l;fz0=dz/l}
@@ -25800,7 +25802,7 @@ const _t=tick;tick=function(){_t();if(world!==1)return;const e=drac();if(!e||e.d
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261112005926;
+const GAME_BUILD=20261112013016;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
@@ -28133,8 +28135,8 @@ const BSC=1.7,DECK=5.2;                                // tamanho do barco e alt
 function floorD(x,z,nx){if(onPier(x,z))return PIER.y+.6;const s=structF(x,z,nx);if(s>-99)return s;const h=baseH(x,z);if(h<WL-2.5)return WL+DECK;return h}
 // chão em camadas: quem está bem abaixo do deck / da escada da plataforma de execução (passando por baixo dela) pisa no chão de baixo, não lá em cima
 // o corrimão da escada da plataforma só bloqueia lá em cima: quem passa por baixo da escada atravessa a linha dele (menos nos pilares)
-const underRail=(x,z)=>{const X=x/K,Z=z/K;if(!(X>EXE.s0+4&&X<EXE.s1&&abs(abs(Z-EXE.z)-(EXE.sw+1.5))<=3.4))return false;const ys=lerp(T6H+EXE.h,T6H,(X-EXE.s0)/(EXE.s1-EXE.s0)),pf=H3.S&&H3.S.pfy;if(pf===undefined||pf>(ys-12)*K)return false;
- for(let i=1;i<4;i++)if(abs(X-lerp(EXE.s0,EXE.s1,i/4))<3.5)return false;return true};
+const underRail=(x,z,cam)=>{const X=x/K,Z=z/K;if(!(X>EXE.s0+4&&X<EXE.s1&&abs(abs(Z-EXE.z)-(EXE.sw+1.5))<=3.4))return false;const ys=lerp(T6H+EXE.h,T6H,(X-EXE.s0)/(EXE.s1-EXE.s0)),pf=H3.S&&H3.S.pfy;if(pf===undefined||pf>(ys-12)*K)return false;
+ if(!cam)for(let i=1;i<4;i++)if(abs(X-lerp(EXE.s0,EXE.s1,i/4))<3.5)return false;return true};   // a câmera ignora os pilares finos (senão dá zoom ao passar por eles)
 const floorWL=(x,z,y)=>{if(y===undefined)return floorD(x/K,z/K)*K;const e=exeF(x/K,z/K);return(e>-99&&y<(e-5)*K)?floorD(x/K,z/K,1)*K:floorD(x/K,z/K)*K};
 const isBoat=(x,z)=>!onPier(x,z)&&structF(x,z)<-99&&baseH(x,z)<WL-2.5;
 let LOCAL=false;
@@ -29791,7 +29793,7 @@ SCN.ocean={id:'ocean',K:1,OX:0,OY:0,eye:25,camD:92,p3:-.18,pl:[[-.95,.85],[-1.0,
   if(isBoat(o.ox/K,o.oz/K)||isBoat(o.x/K,o.z/K)){const k=BOOST*(1-.7*calm01(o.ox/K));o.x=o.ox+(o.x-o.ox)*k;o.z=o.oz+(o.z-o.oz)*k}   // no Calm Belt o vento some: o barco vai parando
   const ok=(x,z)=>!blocked(x,z)||underRail(x,z);if(ok(o.x,o.z))return;if(ok(o.x,o.oz)){o.z=o.oz;return}if(ok(o.ox,o.z)){o.x=o.ox;return}o.x=o.ox;o.z=o.oz},
  bound:(x,z)=>x>8&&z>8&&x<WW-8&&z<WH-8,free:(x,z)=>!blocked(x,z)||underRail(x,z),
- camOk:pz=>(x,z)=>x>8&&z>8&&x<WW-8&&z<WH-8,camSolid:(x,z)=>blocked(x,z),
+ camOk:pz=>(x,z)=>x>8&&z>8&&x<WW-8&&z<WH-8,camSolid:(x,z)=>blocked(x,z)&&!underRail(x,z,1),
  camY:(cy,cz,cx)=>{if(cx===undefined)cx=WW/2;const pf=H3.S&&H3.S.pfy,g=floorWL(cx,cz,pf);let y=max(cy,g+6);const e=exeF(cx/K,cz/K);if(pf!==undefined&&e>-99&&pf<(e-5)*K)y=max(g+3,min(y,(e-4)*K));return y},   // embaixo da escada / do deck a câmera fica embaixo também
  enter(){shKey='';ENV4=0;FOGK=-1;CB.st=0;CB.inW=false;LAND=null;cbWarn(false);cbFade(0);if(typeof P!=='undefined'&&P&&OCW.ready)grassStep({x:P.x+8,z:P.y+14},60,120);PB.lx=P.x+8;PB.lz=P.y+14},leave(){grassClear();shKey='';if(CB.st===1&&CB.cam)H3.S.dbg=null;CB.st=0;CB.inW=false;cbWarn(false);cbFade(0);try{H3.shadowCfg({D:0})}catch(e){}try{if(H3.gfx&&H3.gfx.apply)H3.gfx.apply()}catch(e){}},clear(){},
  boss:()=>null,isTgt:e=>!!e,tgt:e=>e?[e.x+8,floorW(e.x+8,e.y+14)+16,e.y+14,30,floorW(e.x+8,e.y+14)]:null,bossPlan:()=>null,
