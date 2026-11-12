@@ -26056,7 +26056,7 @@ const _t=tick;tick=function(){_t();if(world!==1)return;const e=drac();if(!e||e.d
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261112065822;
+const GAME_BUILD=20261112094425;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
@@ -31636,9 +31636,9 @@ $('unQ').oninput=e=>{unQ=e.target.value;renderInv()};
 'use strict';
 const H3=window.H3;if(!H3||!H3.M4)return;const M4=H3.M4;
 const RT={fb:null,tex:null,rb:null,w:0,h:0};
-const kind=nm=>nm==='Naruto'?'nar':nm==='Guts'?'guts':nm==='Springtrap'?null:(window.CH3_DATA&&(nm in CH3_DATA))?'ch3':null;
-const ready=nm=>{const k=kind(nm);try{if(k==='ch3'){if(!window.CH3||CH3.fail)return false;if(!CH3.has(nm))return false;return CH3.on(nm)}if(k==='nar')return !!(window.NAR3&&NAR3.on());if(k==='guts')return !!(window.GUTS3&&GUTS3.on());if(k==='spr')return !!(window.SPR3&&SPR3.on())}catch(e){}return false};
-const heightOf=nm=>{const m=window.CH3_META&&CH3_META[nm];return m&&m.h?m.h*28/0.9489:30};
+const kind=nm=>nm==='Naruto'?'nar':nm==='Guts'?'guts':nm==='Springtrap'?'spr':nm==='Herobrine'?'hb':(window.CH3_DATA&&(nm in CH3_DATA))?'ch3':null;
+const ready=nm=>{const k=kind(nm);try{if(k==='ch3'){if(!window.CH3||CH3.fail)return false;if(!CH3.has(nm))return false;return CH3.on(nm)}if(k==='nar')return !!(window.NAR3&&NAR3.on());if(k==='guts')return !!(window.GUTS3&&GUTS3.on());if(k==='spr')return !!(window.SPR3&&SPR3.on());if(k==='hb')return !!(H3.models&&H3.models.init&&!(window.HERO3&&0))}catch(e){}return false};
+const heightOf=nm=>{const k=kind(nm),I=k==='spr'?window.SPR3:k==='guts'?window.GUTS3:k==='nar'?window.NAR3:null;if(I&&I.info&&I.info.height>5)return I.info.height;const m=window.CH3_META&&CH3_META[nm];return m&&m.h?m.h*28/0.9489:30};
 function rt(gl,w,h){if(RT.fb&&RT.w===w&&RT.h===h)return;try{if(RT.fb){gl.deleteFramebuffer(RT.fb);gl.deleteTexture(RT.tex);gl.deleteRenderbuffer(RT.rb)}}catch(e){}
  RT.tex=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,RT.tex);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,w,h,0,gl.RGBA,gl.UNSIGNED_BYTE,null);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
  RT.rb=gl.createRenderbuffer();gl.bindRenderbuffer(gl.RENDERBUFFER,RT.rb);gl.renderbufferStorage(gl.RENDERBUFFER,gl.DEPTH_COMPONENT16,w,h);
@@ -31656,6 +31656,10 @@ function shot(nm,out,bust,yaw){const gl=H3.gl&&H3.gl();if(!gl||gl.isContextLost(
   const q=Q[nm]||(Q[nm]={id:nm.length*977}),A={m:{nm,k:'F'},q,k:'F',x:0,y:0,z:0,yaw:yaw||0,mv:0,noBlob:true,gq:{},ch3:k==='ch3',nar:k==='nar',guts:k==='guts',spr:k==='spr'};
   const L=[A],t=performance.now();
   if(k==='ch3')CH3.draw(L,LTF,null,t);else if(k==='nar')NAR3.draw(L,LTF,null,t);else if(k==='guts')GUTS3.draw(L,LTF,null,t);else if(k==='spr')SPR3.draw(L,LTF,null,t);
+  else if(k==='hb'){const MD=H3.models;if(!MD.ready)MD.init();const uP=gl.useProgram;
+   // o Herobrine usa o desenho comum do motor (H3.mesh): a câmera do retrato entra em cada programa usado
+   gl.useProgram=function(p){uP.call(gl,p);if(!p)return;const l=gl.getUniformLocation(p,'uVP');if(l)gl.uniformMatrix4fv(l,false,VPm);const f=gl.getUniformLocation(p,'uFog');if(f)gl.uniform4f(f,0,0,0,0);const c=gl.getUniformLocation(p,'uCam');if(c)gl.uniform3f(c,0,cy,dist)};
+   try{MD.drawHero({x:0,y:0,z:0,yaw:yaw||0,t,mv:0},[],[])}finally{gl.useProgram=uP}}
   const px=shot.px&&shot.px.length===w*h*4?shot.px:(shot.px=new Uint8Array(w*h*4));gl.readPixels(0,0,w,h,gl.RGBA,gl.UNSIGNED_BYTE,px);
   const x=out.getContext('2d'),id=x.createImageData(w,h),d=id.data,row=w*4;for(let j=0;j<h;j++)d.set(px.subarray((h-1-j)*row,(h-j)*row),j*row);x.putImageData(id,0,0);ok=true}
  catch(e){console.warn('retrato 3D',nm,e)}
@@ -31674,15 +31678,15 @@ function bust(nm){const F=document.createElement('canvas');F.width=360;F.height=
  const bx=med(yt+bh*.3,yt+bh*.55);let cx=bx==null?(x0+x1)/2:bx;
  // cabeça: pixels perto do centro no topo
  {const r=bh*.12,xs=[];for(let y=Math.round(yt);y<Math.round(yt+bh*.14);y++)for(let x=Math.max(0,Math.round(cx-r));x<=Math.min(W-1,Math.round(cx+r));x++)if(d[(y*W+x)*4+3]>20)xs.push(x);if(xs.length>8){xs.sort((p,q)=>p-q);cx=cx*.4+xs[xs.length>>1]*.6}}
- const ch=Math.max(20,bh*.44),cw=ch*.9,top=Math.max(0,yt-ch*.06);
- const o=document.createElement('canvas');o.width=216;o.height=240;o.getContext('2d').drawImage(F,cx-cw/2,top,cw,ch,0,0,216,240);return o}
+ const hb=kind(nm)==='hb',ch=Math.max(20,bh*(hb?.62:.44)),cw=ch*.9,top=Math.max(0,yt-ch*.06);
+ const o=document.createElement('canvas');o.width=216;o.height=240;const g=o.getContext('2d');if(hb)g.filter='brightness(1.45) saturate(1.1)';g.drawImage(F,cx-cw/2,top,cw,ch,0,0,216,240);return o}
 // ---------- fotos das cartas (feitas aos poucos, uma por quadro, e guardadas no aparelho) ----------
 const CACHE={},PEND=new Map(),KEY=n=>'mp_por5:'+n;
 const get=nm=>{if(CACHE[nm])return CACHE[nm];try{const v=localStorage.getItem(KEY(nm));if(v){CACHE[nm]=v;return v}}catch(e){}return null};
 let busy=false;
 function pump(){busy=false;if(!PEND.size)return;const now=performance.now();
  for(const[nm,o]of PEND){if(CACHE[nm]){PEND.delete(nm);continue}
-  if(!ready(nm)){if(now-o.t0>20000)PEND.delete(nm);continue}
+  if(!ready(nm)){if(now-o.t0>60000)PEND.delete(nm);continue}
   const c=bust(nm);
   if(c){let url='';try{url=c.toDataURL('image/webp',.86)}catch(e){}if(!url||url.length<200)try{url=c.toDataURL()}catch(e){}
    if(url){CACHE[nm]=url;try{for(let i=localStorage.length-1;i>=0;i--){const kk=localStorage.key(i);if(kk&&(kk.startsWith('mp_por3:')||kk.startsWith('mp_por4:')))localStorage.removeItem(kk)}localStorage.setItem(KEY(nm),url)}catch(e){}document.querySelectorAll('img.u3d[data-n="'+CSS.escape(nm)+'"]').forEach(im=>{im.src=url;im.parentNode.classList.add('has3d')})}}
