@@ -8421,14 +8421,14 @@ S.foc={x,y:gy,z};zoomTick();return{x,y:gy+SC.eye+bob+jh-land,z,yaw:S.yaw,pitch:S
  let cx=x-fx0*d,cy=ty-fy0*d,cz=z-fz0*d;
  // nada sólido entre o personagem e a câmera: anda do personagem até o ponto ideal (com uma folguinha dos lados) e para antes do primeiro obstáculo.
  // Chega perto na hora (nunca atravessa) e volta para longe devagar (sem tranco).
- if(SC.camSolid||SC.camOk){const ok0=SC.camOk?SC.camOk(z):null,sd=SC.camSolid,okP=(px,pz)=>(!ok0||ok0(px,pz))&&!(sd&&sd(px,pz)),
-   okR=(px,pz)=>okP(px,pz)&&okP(px+3,pz)&&okP(px-3,pz)&&okP(px,pz+3)&&okP(px,pz-3),N=28;
+ if(SC.camSolid||SC.camOk){const ok0=SC.camOk?SC.camOk(z):null,sd=SC.camSolid,okP=(px,pz,py)=>(!ok0||ok0(px,pz))&&!(sd&&sd(px,pz,py)),
+   okR=(px,pz,py)=>okP(px,pz,py)&&okP(px+3,pz,py)&&okP(px-3,pz,py)&&okP(px,pz+3,py)&&okP(px,pz-3,py),N=28;   // py: altura do raio naquele ponto (cenas com coisas por cima: passa por baixo delas)
   // ignora o que está colado no personagem (ele está em cima / pulando por cima disso) e coisas finas e baixas que o raio passa por cima
   // (cerca, mureta, arbusto): antes a câmera vinha parar dentro da cabeça do boneco a cada pulo perto delas
   const near=(S.jair>0||S.jv!==0||!okP(x,z))?min(.5,18/max(1,d)):0,feetY=gy+S.jh;let t=1,run=0,r0=0;
   for(let i=1;i<=N;i++){const u=i/N;if(u<near)continue;const px=x+(cx-x)*u,pz=z+(cz-z)*u;
-   if(okR(px,pz)){run=0;continue}
-   if(!run)r0=i;run++;const ry=ty+(cy-ty)*u,gh=floorAt(px,pz);
+   const ry=ty+(cy-ty)*u;if(okR(px,pz,ry)){run=0;continue}
+   if(!run)r0=i;run++;const gh=floorAt(px,pz);
    if(run*d/N<=20&&ry>max(gh,feetY)+20&&i<N)continue;   // fininho e o raio passa bem acima do chão dele: segue
    t=max(0,(r0-1.6)/N);break}
   const now=performance.now(),dt=min(.1,(now-(S.camTT||now))/1000);S.camTT=now;
@@ -25802,7 +25802,7 @@ const _t=tick;tick=function(){_t();if(world!==1)return;const e=drac();if(!e||e.d
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261112013016;
+const GAME_BUILD=20261112014511;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
@@ -28137,6 +28137,11 @@ function floorD(x,z,nx){if(onPier(x,z))return PIER.y+.6;const s=structF(x,z,nx);
 // o corrimão da escada da plataforma só bloqueia lá em cima: quem passa por baixo da escada atravessa a linha dele (menos nos pilares)
 const underRail=(x,z,cam)=>{const X=x/K,Z=z/K;if(!(X>EXE.s0+4&&X<EXE.s1&&abs(abs(Z-EXE.z)-(EXE.sw+1.5))<=3.4))return false;const ys=lerp(T6H+EXE.h,T6H,(X-EXE.s0)/(EXE.s1-EXE.s0)),pf=H3.S&&H3.S.pfy;if(pf===undefined||pf>(ys-12)*K)return false;
  if(!cam)for(let i=1;i<4;i++)if(abs(X-lerp(EXE.s0,EXE.s1,i/4))<3.5)return false;return true};   // a câmera ignora os pilares finos (senão dá zoom ao passar por eles)
+// para a câmera: o raio que passa por baixo da escada / do deck (abaixo do piso deles) não bate nos corrimões nem nos pilares finos
+const underExe=(x,z,y)=>{if(y===undefined)return false;const X=x/K,Z=z/K,P_=EXE;let top=-999;
+ if(X>P_.s0-2&&X<P_.s1+2&&abs(Z-P_.z)<=P_.sw+5)top=lerp(T6H+P_.h,T6H,clp((X-P_.s0)/(P_.s1-P_.s0),0,1));
+ else if(abs(X-P_.x)<=P_.hw+5&&abs(Z-P_.z)<=P_.hw+5)top=T6H+P_.h;
+ return top>-99&&y<(top-2)*K};
 const floorWL=(x,z,y)=>{if(y===undefined)return floorD(x/K,z/K)*K;const e=exeF(x/K,z/K);return(e>-99&&y<(e-5)*K)?floorD(x/K,z/K,1)*K:floorD(x/K,z/K)*K};
 const isBoat=(x,z)=>!onPier(x,z)&&structF(x,z)<-99&&baseH(x,z)<WL-2.5;
 let LOCAL=false;
@@ -29793,7 +29798,7 @@ SCN.ocean={id:'ocean',K:1,OX:0,OY:0,eye:25,camD:92,p3:-.18,pl:[[-.95,.85],[-1.0,
   if(isBoat(o.ox/K,o.oz/K)||isBoat(o.x/K,o.z/K)){const k=BOOST*(1-.7*calm01(o.ox/K));o.x=o.ox+(o.x-o.ox)*k;o.z=o.oz+(o.z-o.oz)*k}   // no Calm Belt o vento some: o barco vai parando
   const ok=(x,z)=>!blocked(x,z)||underRail(x,z);if(ok(o.x,o.z))return;if(ok(o.x,o.oz)){o.z=o.oz;return}if(ok(o.ox,o.z)){o.x=o.ox;return}o.x=o.ox;o.z=o.oz},
  bound:(x,z)=>x>8&&z>8&&x<WW-8&&z<WH-8,free:(x,z)=>!blocked(x,z)||underRail(x,z),
- camOk:pz=>(x,z)=>x>8&&z>8&&x<WW-8&&z<WH-8,camSolid:(x,z)=>blocked(x,z)&&!underRail(x,z,1),
+ camOk:pz=>(x,z)=>x>8&&z>8&&x<WW-8&&z<WH-8,camSolid:(x,z,y)=>blocked(x,z)&&!underRail(x,z,1)&&!underExe(x,z,y),
  camY:(cy,cz,cx)=>{if(cx===undefined)cx=WW/2;const pf=H3.S&&H3.S.pfy,g=floorWL(cx,cz,pf);let y=max(cy,g+6);const e=exeF(cx/K,cz/K);if(pf!==undefined&&e>-99&&pf<(e-5)*K)y=max(g+3,min(y,(e-4)*K));return y},   // embaixo da escada / do deck a câmera fica embaixo também
  enter(){shKey='';ENV4=0;FOGK=-1;CB.st=0;CB.inW=false;LAND=null;cbWarn(false);cbFade(0);if(typeof P!=='undefined'&&P&&OCW.ready)grassStep({x:P.x+8,z:P.y+14},60,120);PB.lx=P.x+8;PB.lz=P.y+14},leave(){grassClear();shKey='';if(CB.st===1&&CB.cam)H3.S.dbg=null;CB.st=0;CB.inW=false;cbWarn(false);cbFade(0);try{H3.shadowCfg({D:0})}catch(e){}try{if(H3.gfx&&H3.gfx.apply)H3.gfx.apply()}catch(e){}},clear(){},
  boss:()=>null,isTgt:e=>!!e,tgt:e=>e?[e.x+8,floorW(e.x+8,e.y+14)+16,e.y+14,30,floorW(e.x+8,e.y+14)]:null,bossPlan:()=>null,
