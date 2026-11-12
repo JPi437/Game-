@@ -26056,7 +26056,7 @@ const _t=tick;tick=function(){_t();if(world!==1)return;const e=drac();if(!e||e.d
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261112102808;
+const GAME_BUILD=20261112104419;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
@@ -26198,7 +26198,7 @@ const WDEF=[
 {const _r0=renderW;renderW=function(){_r0();const L=$('wList');if(!L)return;
  for(const[n,ok,txt,lk,go]of[[4,!!ups.db,'Cidade do Oeste e deserto','Libere o portal no Mundo 1',()=>window.DBW&&DBW.travel&&DBW.travel()],
    [5,!!ups.nj,'Floresta de pinheiros gigantes','Entre pelo portal no Mundo 2',()=>window.NJW&&NJW.travel&&NJW.travel()],
-   [6,!!ups.oc,'Ilhas e navios pelo mar','Entre pelo portal no Mundo 2',()=>window.OCW&&OCW.travel&&OCW.travel()]]){
+   [6,!!ups.oc,'Ilhas e navios pelo mar','Entre pelo portal no Mundo 3',()=>window.OCW&&OCW.travel&&OCW.travel()]]){
   const b=document.createElement('button');b.className='btn wb'+(ok?'':' dis');b.dataset.n=n;b.innerHTML='Mundo<br><small style="font-size:11px">'+(ok?txt:lk)+'</small>';
   b.onclick=()=>{if(!ok){try{toast(lk)}catch(e){}return}$('wM').style.display='none';lock=false;go()};L.appendChild(b)}}}
 const _rw=renderW;
@@ -26257,7 +26257,7 @@ const M1P={x:352,z:584};                              // portal no Mundo 1
 const STW={x:820,z:2240};                             // (mundo) estátua da estrela (roleta dos personagens de Dragon Ball) — WCFG[4].s aponta para cá
 let STM=null;
 const DBW=window.DBW={WID,K,MW:WW,MH:WH,ready:false,pct:0,M1P,SPAWN,BACK,rev:0};
-DBW.P3={x:300,z:2060};DBW.P4={x:300,z:2420};   // (mundo) portais do Mundo 3 (ao norte do cruzamento da chegada) e do Mundo 4 (ao sul); quem desenha cada um é o módulo do mundo
+DBW.P3={x:300,z:2060};   // (mundo) portal do Mundo 3 (ao norte do cruzamento da chegada; o do Mundo 4 agora fica no Mundo 3); quem desenha cada um é o módulo do mundo
 
 // ---------- ruído ----------
 function h2(i,j,s){let h=(i*374761393+j*668265263+((s|0)*1442695041))|0;h=Math.imul(h^(h>>>13),1274126177);h^=h>>>16;return(h>>>0)/4294967296}
@@ -30078,15 +30078,15 @@ const map6=[];for(let y=0;y<TH;y++){map6[y]=new Array(TW).fill(0)}
 try{WD[WID]={map:map6,EN:[]};QS[WID]=QS[0]}catch(e){console.error('OCW mundo',e)}
 let cool=0;
 function toast_(m){try{if(typeof toast==='function')toast(m)}catch(e){}}
-OCW.go=function(){if(world!==4||Date.now()<cool)return;cool=Date.now()+4000;ups.oc=1;goWorld(WID);P.x=SPAWN.x-8;P.y=SPAWN.z-14;P.dir=0;try{save()}catch(e){}toast_('Mundo 4 · Ilha dos Moinhos')};
-OCW.back=function(){if(world!==WID||Date.now()<cool)return;cool=Date.now()+4000;const D=window.DBW;
- goWorld(4);if(D&&D.P4){P.x=D.P4.x-8;P.y=D.P4.z+(-70)-14}P.dir=0;try{save()}catch(e){}toast_('De volta ao Mundo 2 · Dragon Ball')};
+OCW.go=function(){if(world!==5||Date.now()<cool)return;cool=Date.now()+4000;ups.oc=1;goWorld(WID);P.x=SPAWN.x-8;P.y=SPAWN.z-14;P.dir=0;try{save()}catch(e){}toast_('Mundo 4 · Ilha dos Moinhos')};
+OCW.back=function(){if(world!==WID||Date.now()<cool)return;cool=Date.now()+4000;const D=window.NJW;
+ ups.nj=1;goWorld(5);if(D&&D.P4){P.x=D.P4.x-8;P.y=D.P4.z+(-70)-14}P.dir=0;try{save()}catch(e){}toast_('De volta ao Mundo 3 · Ninja')};
 // viagem rápida (menu Mundos): só para quem já entrou neste mundo pelo portal
 OCW.travel=function(){if(!ups.oc)return false;if(world===WID)return true;cool=Date.now()+4000;goWorld(WID);P.x=SPAWN.x-8;P.y=SPAWN.z-14;P.dir=0;try{save()}catch(e){}
  try{if(!H3.mode&&H3.setMode)H3.setMode(2)}catch(e){}guard3D();toast_('Mundo 4 · Arquipélago');return true};
 let lastIsl=-2;   // ilha onde o jogador está (-1 = no mar; -2 = acabou de entrar no mundo: não avisa)
 setInterval(()=>{try{if(typeof world==='undefined'||lock)return;const x=P.x+8,z=P.y+14;
- if(world===4&&window.DBW&&DBW.P4&&hypot(x-DBW.P4.x,z-DBW.P4.z)<16)OCW.go();else if(world===WID&&hypot(x-BACK.x,z-BACK.z)<16)OCW.back();
+ if(world===5&&window.NJW&&NJW.P4&&hypot(x-NJW.P4.x,z-NJW.P4.z)<16)OCW.go();else if(world===WID&&hypot(x-BACK.x,z-BACK.z)<16)OCW.back();
  if(world===WID&&OCW.ready){if(CB.st===0&&!isBoat(x/K,z/K))LAND={x:P.x,y:P.y};   // a última terra firme (é para onde o Rei do Mar devolve)
  let cur=-1;for(let k=0;k<ISL.length;k++){const I=ISL[k];if(I.on&&islD(I,x/K,z/K)<1.02){cur=k;break}}if(cur<0&&z/K>WALLZ-1300)cur=90;if(cur<0&&z/K<WALLN+700)cur=91;if(cur!==lastIsl){if(cur>=0&&lastIsl!==-2)toast_(cur===90?'O Paredão · Montanha Reversa':cur===91?'O Paredão · Montanha do Norte':ISL[cur].nm);lastIsl=cur}}else if(world!==WID)lastIsl=-2}catch(e){}},120);
 setTimeout(()=>{try{const sv=typeof SV!=='undefined'?SV:null;if(sv&&sv.w===WID){ups.oc=1;goWorld(WID);if(typeof sv.px==='number'&&!OCW.solid(sv.px+8,sv.py+14)&&sv.px<WW&&sv.py<WH&&!isBoat((sv.px+8)/K,(sv.py+14)/K)){P.x=sv.px;P.y=sv.py}else{P.x=SPAWN.x-8;P.y=SPAWN.z-14}guard3D()}}catch(e){}},0);
@@ -30098,8 +30098,8 @@ function guard3D(){const t0=Date.now();let tried=0;const iv=setInterval(()=>{try
 }catch(e){}},1500)}
 // ---------- o portal no Mundo 1 ----------
 const FLD=H3.fld;
-// ---------- o portal para cá fica no Mundo 2 (Dragon Ball), perto do cruzamento da chegada (antes ficava no Mundo 1) ----------
-{const SD=H3.scenes&&H3.scenes.db,DB=window.DBW;if(SD&&DB&&DB.P4){const PP=DB.P4;let pm=null,py=0;
+// ---------- o portal para cá fica no Mundo 3 (Ninja), a leste da chegada (antes ficava no Mundo 2 · Dragon Ball) ----------
+{const SD=H3.scenes&&H3.scenes.ninja,DB=window.NJW;if(DB)DB.P4={x:3500,z:3730};if(SD&&DB&&DB.P4){const PP=DB.P4;let pm=null,py=0;
  const mk=()=>{const gl=H3.gl();if(!gl)return;py=DB.floorY(PP.x,PP.z);const mb=new MB(780);mb.push().T(PP.x,py-.4,PP.z);mb.inst(portalMB(),mb.m);mb.pop();pm=H3.upload(gl,mb.pack())};
  const _d=SD.draw,_s=SD.sprites,_f=SD.frameFx,_sh=SD.shadow,_fr=SD.free;
  SD.draw=function(t,dyn){const r=_d.apply(this,arguments);try{if(!pm&&DB.ready)mk();if(pm&&H3.vis(pm.cx,pm.cy,pm.cz,pm.rad))H3.mesh(pm,null,SD.lights||null,dyn,{})}catch(e){}return r};
