@@ -4682,13 +4682,14 @@ setInterval(()=>{try{const t=Date.now();EN.forEach(e=>{if(e.dead||e.wb||e.hp>=e.
 // ===================== HUD novo: barras de ícones compactas nas laterais (sem nomes), que se ajustam à tela =====================
 (function(){
 const $h=id=>document.getElementById(id);
-const DL=['fig','inv','stat','shop','map','mis','ach'],DR=['chat','mus','mount','ev','cfg','adm'];
+const DL=['fig','inv','shop','map','mis'],   // Conquistas e Máquina de Status saíram do HUD (a máquina é um totem no mapa)
+DR=['chat','mus','mount','ev','cfg','adm'];
 const HC={vermelho:['Vermelho','#ef5350','#8e0000'],azul:['Azul','#42a5f5','#0d3c8c'],amarelo:['Amarelo','#ffd54f','#a87400'],verde:['Verde','#66bb6a','#1b5e20'],roxo:['Roxo','#ba68c8','#4a148c'],cinza:['Cinza','#a7b6bf','#37474f']};
 let HCK='azul';try{const v=localStorage.getItem('mp_hudc');if(HC[v])HCK=v}catch(e){}
 function hcApply(k){if(!HC[k])return;HCK=k;const B=document.body.style;B.setProperty('--hc1',HC[k][1]);B.setProperty('--hc2',HC[k][2]);try{localStorage.setItem('mp_hudc',k)}catch(e){}
  document.querySelectorAll('.hcSw button').forEach(b=>b.classList.toggle('on',b.dataset.k===k));const n=document.getElementById('hcNm');if(n)n.textContent=HC[k][0]}
 const css=document.createElement('style');css.textContent=`
-#mnTg,#mnBk,#mi_save,#mi_pz{display:none!important}
+#mnTg,#mnBk,#mi_save,#mi_pz,#mi_stat,#mi_ach{display:none!important}
 .dk{position:fixed;z-index:11;display:grid;grid-auto-flow:column;gap:6px;transition:top .2s}
 #dkL{left:calc(10px + env(safe-area-inset-left,0px))}
 #dkR{right:calc(10px + env(safe-area-inset-right,0px));top:calc(8px + env(safe-area-inset-top,0px));direction:rtl}
@@ -14217,7 +14218,7 @@ try{const _ct=closeTop;closeTop=function(){if(M.style.display==='flex'){if(pane)
 
 // ---------- botão no menu ----------
 {const mi=D.createElement('button');mi.className='mi';mi.id='mi_stat';mi.innerHTML='<b></b><span>Máquina de Status</span><i class="dot"></i>';
- mi.onclick=e=>{e.stopPropagation();if(window.mnCloseMod)mnCloseMod();setTimeout(()=>open(),30)};const col=$('mnL');if(col)col.appendChild(mi)}
+ mi.onclick=e=>{e.stopPropagation();if(window.mnCloseMod)mnCloseMod();setTimeout(()=>open(),30)};const col=$('mnL');if(col)col.appendChild(mi);window.SMOPEN=open}
 
 // ---------- no inventário: notas no cartão, cadeado e botões no popup do lutador ----------
 {const _ri=renderInv;renderInv=function(){const r=_ri.apply(this,arguments);try{$('grid').querySelectorAll('.it').forEach(el=>{const k=chars.find(c=>c.id==el.dataset.id);if(!k)return;const p=el.querySelector('.pic')||el;
@@ -14225,7 +14226,7 @@ try{const _ct=closeTop;closeTop=function(){if(M.style.display==='flex'){if(pane)
 {const _od=openDet;openDet=function(id){const r=_od.apply(this,arguments);try{const k=chars.find(c=>c.id===id);const box=$('popMain');if(!k||!box)return r;const g=gsOf(k);
   const row=`<div class="pstat" style="flex-wrap:wrap;gap:4px">${SN.map((s,i)=>`<span style="color:${s[1]}">${s[0]} <b style="color:${GC[+g[i]]}">${GN[+g[i]]}</b></span>`).join(' ')}</div>`;
   const cx=box.querySelector('#pCancel');cx.insertAdjacentHTML('beforebegin',row+`<button class="pbtn" id="pStat" style="background:linear-gradient(#b06bff,#6a1fd0)">Máquina de Status</button><button class="pbtn" id="pLock" style="background:linear-gradient(${k.lk?'#ffd23f,#c08a00':'#8a8a8a,#555'})">${k.lk?'🔒 Bloqueado (toque para liberar)':'🔓 Bloquear (não vende nem sacrifica)'}</button>`);
-  $('pStat').onclick=()=>{popClose();open(k.id)};
+  $('pStat').onclick=()=>{if(window.STATNEAR&&!STATNEAR()){try{toast('Vá até o totem da Máquina de Status (perto da estrela da roleta)')}catch(e){}return}popClose();open(k.id)};
   $('pLock').onclick=()=>{k.lk=k.lk?0:1;if(!k.lk)delete k.lk;save();openDet(id);renderInv()};
   if(k.lk){const s=$('pSell');if(s){s.classList.add('dis');s.onclick=()=>{$('popMsg').textContent='Lutador bloqueado: desbloqueie para vender'}}}}catch(e){console.error(e)}return r}}
 })();
@@ -26056,7 +26057,7 @@ const _t=tick;tick=function(){_t();if(world!==1)return;const e=drac();if(!e||e.d
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261112104419;
+const GAME_BUILD=20261112125454;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
@@ -31615,7 +31616,7 @@ function det(){const D_=$('unDet'),b=$('unEq'),k=chars.find(c=>c.id===unSel);
  {const im=$('unPh');if(im&&window.POR3){const u=POR3.get(k.name);if(u){im.src=u;im.parentNode.classList.add('has3d')}else POR3.want(k.name)}}   // foto 3D do busto (a mesma da carta)
  const tip=m=>{try{toast(m)}catch(e){}};
  $('unLk').onclick=()=>{k.lk=k.lk?0:1;if(!k.lk)delete k.lk;save();renderInv()};
- $('unSt').onclick=()=>{if(window.openStatM){$('invM').style.display='none';openStatM(k.id)}};
+ $('unSt').onclick=()=>{if(window.STATNEAR&&!STATNEAR()){try{toast('Vá até o totem da Máquina de Status (perto da estrela da roleta)')}catch(e){}return}if(window.openStatM){$('invM').style.display='none';openStatM(k.id)}};
  $('unFd').onclick=()=>{if(k.lvl>=capOf(k)){tip('Nível máximo');return}curId=k.id;sel_clear();renderFeed();$('feedM').style.display='flex'};
  $('unSl').onclick=()=>{if(equipped.includes(k.id)){tip('Desequipe antes de vender');return}if(k.lk){tip('Lutador bloqueado: desbloqueie para vender');return}coins+=SELL[k.rar];chars=chars.filter(c=>c.id!==k.id);unSel=null;save();updHud();tip('Vendido: +'+SELL[k.rar]+' moedas');renderInv()}}
 function sel_clear(){try{sel=new Set()}catch(e){}}
@@ -31698,6 +31699,78 @@ window.POR3.live=(cv,nm)=>{live={cv,nm,yaw:-.5,t:0};if(!live.raf)loop()};
 function loop(){if(!live)return;const L=live;const m=document.getElementById('invM');if(!L.cv.isConnected||!m||m.style.display!=='flex'){live=null;return}
  const now=performance.now();if(now-L.t>33){L.t=now;L.yaw+=.025;if(ready(L.nm)){if(shot(L.nm,L.cv,false,L.yaw))L.cv.classList.add('on')}else{try{if(kind(L.nm)==='ch3')void CH3_DATA[L.nm]}catch(e){}}}
  requestAnimationFrame(loop)}
+})();
+</script>
+<script>
+// ===================== Totem da Máquina de Status: fica no mapa ao lado da estrela da roleta (cada mundo 3D) =====================
+// Chegue perto e toque em "Status" (flutuando em cima do totem) para abrir a máquina. Não existe mais atalho no HUD.
+(function(){
+'use strict';
+const H3=window.H3;if(!H3||!H3.MB)return;
+const MB=H3.MB,PI=Math.PI,TAU=PI*2,sin=Math.sin,cos=Math.cos,hypot=Math.hypot,abs=Math.abs;
+const SCK={0:'field',1:'hal',4:'db',5:'ninja',6:'ocean'};
+const POS={};   // mundo -> {x,z,y}
+let pm=null,pmGl=null;
+function totemMB(){const mb=new MB(2077);mb.jit=.02;
+ mb.cyl(13,15,3,8,'#3c4150',0,{rot:PI/8});mb.push().T(0,3,0).cyl(10.5,12,2.2,8,'#5d6476',0,{rot:PI/8}).pop();
+ // coluna quadrada com quinas roxas
+ mb.push().T(0,5.2,0).box(13,30,13,'#2b2f3d',0,true).pop();
+ for(const sx of[-1,1])for(const sz of[-1,1])mb.push().T(sx*6.6,5.2,sz*6.6).box(2,31,2,'#8a63d8',.3,true).pop();
+ // telas com as três barras (Força, Velocidade, Habilidade) nos quatro lados
+ const B=[['#ff5a5a',.95],['#4fc3ff',.7],['#ffd54a',.85]];
+ for(let f=0;f<4;f++){mb.push().RY(f*PI/2);mb.push().T(0,9,6.55).box(10.6,22,.4,'#0b0e1c',.2,true).pop();
+  B.forEach(([c,k],i)=>{const y=12.5+i*6.2,w=8.6*k;mb.push().T(-4.3+w/2,y,6.85).box(w,3.2,.4,c,.95,true).pop()});mb.pop()}
+ // topo e gema
+ mb.push().T(0,35.2,0).box(17,2.4,13,'#4a5064',0,true).pop();
+ mb.push().T(0,37.6,0).cyl(4.2,2.6,2,8,'#7b5cc4',.3).pop();
+ mb.push().T(0,44,0).sph(4.6,3,8,'#c58bff',.95).pop();
+ for(let k=0;k<4;k++){const a=k/4*TAU+PI/4;mb.push().T(cos(a)*7,37.6,sin(a)*5.4).cyl(.9,0,3.6,4,'#c58bff',.8).pop()}
+ return mb}
+function sc(){const k=SCK[world];return k&&H3.scenes?H3.scenes[k]:null}
+function place(w,SC){if(POS[w])return POS[w];const c=typeof SX!=="undefined"?{s:[SX,SY]}:null;if(!c||!SC||!SC.floorY)return null;
+ const sx=c.s[0]*16+8,sz=c.s[1]*16+14;if(sx<0||sz<0)return null;const f0=SC.floorY(sx,sz);if(!isFinite(f0))return null;
+ const free=(x,z)=>{try{return SC.walkFree?SC.walkFree(x,z):true}catch(e){return true}};
+ for(const r of[72,90,110,130,56])for(let k=0;k<16;k++){const a=k/16*TAU+.35,x=sx+cos(a)*r,z=sz+sin(a)*r;let ok=true;
+  for(let j=0;j<12&&ok;j++){const b=j/12*TAU;for(const rr of[0,8,16,24])if(!free(x+cos(b)*rr,z+sin(b)*rr)){ok=false;break}}
+  if(!ok)continue;let f=SC.floorY(x,z);if(!isFinite(f)||abs(f-f0)>8)continue;
+  for(let j=0;j<8;j++){const b=j/8*TAU,g=SC.floorY(x+cos(b)*14,z+sin(b)*14);if(isFinite(g))f=Math.min(f,g)}
+  return POS[w]={x,z,y:f,yaw:Math.atan2(sx-x,sz-z)}}
+ return null}
+const built=SC=>{try{return SC.built?!!SC.built():true}catch(e){return true}};
+function cur(){if(typeof world==='undefined'||!H3.S||!H3.S.mode)return null;const SC=sc();if(!SC||H3.S.sc!==SC||!built(SC))return null;
+ if(world===0&&window.X&&X.inRoom&&X.inRoom())return null;return place(world,SC)}
+function mesh(){const gl=H3.gl();if(!gl)return null;if(pm&&pmGl===gl&&!gl.isContextLost())return pm;pm=H3.upload(gl,totemMB().pack());pmGl=gl;return pm}
+const TM=new Float32Array(16);function M(T){H3.M4.trs(TM,T.x,T.y-.3,T.z,0,T.yaw,0,1,1,1);return TM}
+const hooked=new Set();
+function hook(SC){if(!SC||hooked.has(SC))return;hooked.add(SC);
+ const _d=SC.draw,_s=SC.sprites,_sh=SC.shadow,_st=SC.step,_wf=SC.walkFree;
+ if(_d)SC.draw=function(t,dyn){const r=_d.apply(this,arguments);try{const T=cur();if(T&&H3.vis(T.x,T.y+22,T.z,30)){const m=mesh();if(m)H3.mesh(m,M(T),SC.lights||null,dyn,{})}}catch(e){}return r};
+ if(_s)SC.sprites=function(t){const r=_s.apply(this,arguments);try{const T=cur(),X3=H3.tex;if(T&&X3&&X3.glow){const k=.3+.08*sin(t/1000*3);H3.spr(X3.glow,T.x,T.y+44,T.z,22,22,null,[.75,.5,1,k],true,0,true)}}catch(e){}return r};
+ if(_sh)SC.shadow=function(t,F){const r=_sh.apply(this,arguments);try{const T=cur();if(T&&H3.shVis(T.x,T.y+22,T.z,30)){const m=mesh();if(m)H3.shMesh(m,M(T),false)}}catch(e){}return r};
+ if(_st)SC.step=function(o){const r=_st.apply(this,arguments);try{const T=cur();if(T&&hypot(o.x-T.x,o.z-T.z)<11&&hypot(o.ox-T.x,o.oz-T.z)>=hypot(o.x-T.x,o.z-T.z)){o.x=o.ox;o.z=o.oz}}catch(e){}return r};
+ if(_wf)SC.walkFree=function(x,z){const T=POS[world];if(T&&SC===sc()&&hypot(x-T.x,z-T.z)<11)return false;return _wf.apply(this,arguments)}}
+// botão flutuante
+const css=document.createElement('style');css.textContent=`
+#stBtn{position:fixed;left:0;top:0;z-index:6;transform:translate(-999px,-999px);opacity:0;scale:.55;pointer-events:none;transition:opacity .22s ease,scale .3s cubic-bezier(.3,1.6,.5,1);
+ padding:5px 12px;border-radius:999px;border:2px solid #ffffffd0;font:900 13px system-ui,sans-serif;color:#fff;white-space:nowrap;
+ background:linear-gradient(180deg,#ffffff38,#ffffff10),rgba(60,20,110,.66);box-shadow:0 3px 10px #0007;text-shadow:0 1px 2px #000}
+#stBtn::after{content:'';position:absolute;left:50%;bottom:-7px;margin-left:-6px;border:6px solid transparent;border-top-color:#ffffffd0;border-bottom:0}
+#stBtn.fbOn{opacity:1;scale:1;pointer-events:auto}#stBtn.fbOn:active{scale:.9}`;document.head.appendChild(css);
+const btn=document.createElement('button');btn.id='stBtn';btn.textContent='📊 Status';document.body.appendChild(btn);
+btn.onclick=e=>{e.stopPropagation();if(typeof lock!=='undefined'&&lock)return;if(window.SMOPEN)SMOPEN()};
+let near=false,lastK='';
+const BOB=[0,-1,-2,-3,-4,-3,-2,-1];
+function near_(){const T=cur();if(!T||typeof P==='undefined')return null;return hypot(P.x+8-T.x,P.y+14-T.z)<46?T:null}
+window.STATNEAR=()=>!!near_();window.STATPOS=()=>cur();
+{const _f=window.FBT;window.FBT=function(){const r=_f&&_f.apply(this,arguments);try{
+  const SC=sc();if(SC)hook(SC);
+  const T=(typeof lock==='undefined'||!lock)?near_():null;let on=false;
+  if(T&&H3.proj){const p=H3.proj(T.x,T.y+54,T.z),S=H3.S;if(p&&p[0]>-30&&p[0]<S.cssW+30&&p[1]>-30&&p[1]<S.cssH+30){on=true;const k=Math.round(p[0])+','+Math.round(p[1]+BOB[Math.floor(performance.now()/200)&7]);if(k!==lastK){lastK=k;const q=k.split(',');btn.style.transform='translate('+q[0]+'px,'+q[1]+'px) translate(-50%,-100%)'}}}
+  if(on!==near){near=on;btn.classList.toggle('fbOn',on)}}catch(e){}return r}}
+// tecla E abre a máquina quando estiver perto
+addEventListener('keydown',e=>{if((e.key==='e'||e.key==='E')&&!e.repeat&&near&&!(typeof lock!=='undefined'&&lock)){const sp=document.getElementById('spinBtn');if(sp&&sp.classList.contains('fbOn'))return;e.preventDefault();btn.click()}});
+// ao trocar de mundo/contexto: recalcula onde o totem fica
+setInterval(()=>{try{const SC=sc();if(SC)hook(SC);if(SC&&!built(SC))delete POS[world]}catch(e){}},1000);
 })();
 </script>
 </body></html>
