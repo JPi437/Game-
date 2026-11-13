@@ -3485,13 +3485,13 @@ function join(force){if(!MP.db||!MP.uid||MP.offline||MP.kicked)return;if(!force&
  MP.refs=[pr,cr];
  MP.me=MP.db.ref('players/'+w+'/'+MP.uid);MP.me.onDisconnect().remove();{const me=MP.me,cb=me.on('value',s=>{if(!s.exists()&&MP.me===me&&!MP.hidden&&MP.conn&&!MP.kicked){MP.last='';setTimeout(()=>send(true),300)}},()=>{});MP.refs.push({off:()=>me.off('value',cb)})}MP.last='';send(true);if(w==='w0'||w==='w1')shStart(w);else shStop();stat()}
 function payload(){const k=equipped.map(id=>chars.find(c=>c.id===id)).filter(Boolean).slice(0,4).map(c=>[c.rar,c.sh?1:0,String(c.name).slice(0,16)]);   // 16: 'Jeff the Killer' tem 15 letras
- return {n:MP.nick,x:Math.round(P.x),y:Math.round(P.y),d:P.dir|0,m:mounted?(mountEq==='vassoura'?2:1):0,k:JSON.stringify(window.LOOKX?k.concat([['L',LOOKX.code()]]):k),f:fight?EN.indexOf(fight):-1,s:window.V6S?V6S():0,j:window.H3&&H3.S&&H3.S.mode&&H3.S.jt&&Date.now()-H3.S.jt<3000+(MP.off||0)?Math.round(H3.S.jt):0,h:window.H3&&H3.S&&H3.S.mode?Math.round((H3.S.hs||0)*2)/2:0}}
+ return {n:MP.nick,x:Math.round(P.x),y:Math.round(P.y),d:P.dir|0,m:mounted?(mountEq==='vassoura'?2:1):0,k:JSON.stringify(window.LOOKX?k.concat([['L',LOOKX.code()]]):k),f:fight?EN.indexOf(fight):-1,s:window.V6S?V6S():0,j:window.H3&&H3.S&&H3.S.mode&&H3.S.jt&&Date.now()-H3.S.jt<3000+(MP.off||0)?Math.round(H3.S.jt):0,h:window.H3&&H3.S&&H3.S.mode?Math.round((H3.S.djH>=0?H3.S.djH:(H3.S.hs||0))*2)/2:0}}
 function send(force){if(!MP.me||!MP.conn||MP.hidden||MP.kicked)return;if(window.ADM&&(ADM.noOnline()||ADM.banLock))return;const p=payload(),key=JSON.stringify(p),t=Date.now();
  if(!force&&key===MP.last&&t-MP.lastT<20000)return;MP.last=key;MP.lastT=t;p.t=firebase.database.ServerValue.TIMESTAMP;
  MP.me.set(p).catch(e=>{MP.err=e.code||'erro';stat()})}
 function upsert(s){const v=s.val();if(!v||s.key===MP.uid)return;let r=MP.others[s.key];
  if(!r)r=MP.others[s.key]={x:+v.x||0,y:+v.y||0,fp:[],st:0};
- r.tx=+v.x||0;r.ty=+v.y||0;r.d=[0,1,2,3].includes(v.d)?v.d:2;r.m=v.m===1||v.m===2?v.m:0;r.n=cleanNick(v.n)||'?';r.t=v.t;r.f=Number.isInteger(v.f)?v.f:-1;r.s=(+v.s|0)&15;{const j=+v.j||0;if(j&&j!==r.jt)r.jt=j;r.hh=Math.max(0,Math.min(60,+v.h||0))}
+ r.tx=+v.x||0;r.ty=+v.y||0;r.d=[0,1,2,3].includes(v.d)?v.d:2;r.m=v.m===1||v.m===2?v.m:0;r.n=cleanNick(v.n)||'?';r.t=v.t;r.f=Number.isInteger(v.f)?v.f:-1;r.s=(+v.s|0)&15;{const j=+v.j||0,h=Math.max(0,Math.min(60,+v.h||0));if(j&&j!==r.jt){if(r.jt&&h>(r.hh||0)+2&&j-r.jt<2500){if(r.hb===undefined)r.hb=r.hh||0}else r.hb=undefined;r.jt=j}else if(r.hb!==undefined&&h<=r.hb+.5)r.hb=undefined;r.hh=h}
  let k=[];try{k=JSON.parse(v.k||'[]')}catch(e){}
  if(Array.isArray(k)&&typeof LKE!=='undefined'){const lk=k.find(c=>Array.isArray(c)&&c[0]==='L');if(lk){const o=LKE.unpack(String(lk[1]||''));if(o)r.lk=o}}r.__id=s.key;
  r.k=(Array.isArray(k)?k:[]).slice(0,4).filter(c=>Array.isArray(c)&&c[0]>=0&&c[0]<=4).map(c=>[c[0]|0,c[1]?1:0,String(c[2]||'').slice(0,16)]);stat()}
@@ -8540,8 +8540,17 @@ function mkBtn(){if(btn)return;css();btn=document.createElement('button');btn.cl
 // altura do apoio embaixo do jogador (acima do chão): pedra, arbusto, caixote... (SC.lowAt) — só conta se os pés já estão em cima dele
 function supportH(){if(!SC||!SC.lowAt)return 0;const x=P.x+8-SC.OX,z=(P.y+14-SC.OY)*SC.K,gy=floorP(x,z),L=SC.lowAt(x,z);return L&&gy+S.jh>=L.top-3?max(0,L.top-gy):0}
 S.hs=0;S.jair=0;
-function jump(){if(!S.mode||lock||(window.STUN&&STUN()))return;const hs=supportH();if(S.jv!==0||S.jh>hs+.6)return;
- S.jv=3.45;S.jh=hs+.01;S.jt=Date.now()+(window.MP&&MP.off||0);try{bp(520,.07,'triangle',.05,0,760)}catch(e){}}
+// DOUBLE JUMP: no ar (pulando ou caindo de uma borda) dá para pular mais uma vez; volta a valer quando encosta no chão
+const DJ_V=3.1;S.jn=0;S.djH=-1;
+function jump(){if(!S.mode||lock||(window.STUN&&STUN()))return;const hs=supportH();
+ if(S.jv!==0||S.jh>hs+.6){if(S.jn>=1||(typeof mounted!=='undefined'&&mounted))return;   // segundo pulo (montado não tem)
+  S.jn=1;S.jv=DJ_V;S.djH=min(58,max(0,S.jh));S.jt=Date.now()+(window.MP&&MP.off||0);S.djT=S.jt;S.jfall=0;
+  try{bp(700,.06,'triangle',.05,0,1150);bp(980,.05,'sine',.035,.05,1500)}catch(e){}
+  try{const FX=H3.fx;if(FX&&FX.emit){const x=P.x+8-SC.OX,z=(P.y+14-SC.OY)*SC.K,y=floorP(x,z)+S.jh;   // nuvenzinha em anel embaixo dos pés
+   for(let i=0;i<14;i++){const a=i/14*TAU,v=.55+rnd()*.25;FX.emit({x:x+cos(a)*3,y:y+1,z:z+sin(a)*3,vx:cos(a)*v,vy:-.05+rnd()*.08,vz:sin(a)*v,g:0,life:420+rnd()*200,s0:3.2,s1:7.5,c:[.95,.97,1],a:.6,add:false,tex:'glow',drag:.92})}
+   for(let i=0;i<6;i++){const a=rnd()*TAU;FX.emit({x,y:y+2,z,vx:cos(a)*.3,vy:-.25-rnd()*.2,vz:sin(a)*.3,g:0,life:300,s0:1.6,s1:.3,c:[1,1,1],a:.9,tex:'dot'})}}}catch(e){}
+  return}
+ S.jn=0;S.djH=-1;S.jv=3.45;S.jh=hs+.01;S.jt=Date.now()+(window.MP&&MP.off||0);try{bp(520,.07,'triangle',.05,0,760)}catch(e){}}
 function jumpTick(){gTrack();jumpPhys();if(S.lgy!==undefined)S.pfy=S.lgy+S.jh}
 function gTrack(){
  // o chão sumiu debaixo dos pés (saiu da beira de uma plataforma, de um morro, de um caixote): o boneco continua na mesma altura e CAI com gravidade,
@@ -8553,9 +8562,9 @@ function gTrack(){
   S.lgy=gy;S.lgx=x;S.lgz=z;S.lgS=SC;S.pfy=gy+S.jh}}
 function jumpPhys(){
  const hs=supportH();S.hs=hs;
- if(S.jv===0&&S.jh<=hs+.02){S.jh=hs;S.jair=0;S.jfall=0;return}                 // parado no chão ou em cima de uma pedra
+ if(S.jv===0&&S.jh<=hs+.02){S.jh=hs;S.jair=0;S.jfall=0;S.jn=0;S.djH=-1;return}                 // parado no chão ou em cima de uma pedra
  S.jv-=.19;S.jh+=S.jv;                                                // no ar (pulando ou caindo de uma borda)
- if(S.jh<=hs){const fall=-S.jv;S.jh=hs;S.jv=0;S.jfall=0;S.land=Date.now();S.landK=clp(fall/4,.5,2.2);if(fall>1.2)try{bp(140,.06,'square',.03,0,90)}catch(e){}}
+ if(S.jh<=hs){const fall=-S.jv;S.jh=hs;S.jv=0;S.jfall=0;S.jn=0;S.djH=-1;S.land=Date.now();S.landK=clp(fall/4,.5,2.2);if(fall>1.2)try{bp(140,.06,'square',.03,0,90)}catch(e){}}
  S.jair=max(0,S.jh-hs)}
 H3.jump=jump;H3.floorAt=(x,z)=>floorAt(x,z);H3.setMode=m=>setMode(m);H3.setModeQ=m=>{S.quiet=1;try{setMode(m)}finally{S.quiet=0}};
 function mkCanvases(){if(glc)return;const cv0=$$('c');
@@ -8822,12 +8831,15 @@ const NPCLK={lina:{g:'f',s:1,a:3,hc:1,t:'regata',tc:1,b:'saia',bc:1,f:'sapato',f
  elias:{g:'m',s:2,a:1,hc:6,t:'xadrez',tc:9,b:'calca',bc:10,f:'bota',fc:11,fa:3}};
 function npcLook(m){if(m.nm==='NPC')return world===1?NPCLK.bruxa:world===0?NPCLK.lina:null;if(m.nm==='Coveiro Elias')return NPCLK.elias;return null}
 // pulo dos outros jogadores: chega só a hora em que pularam (j) e a altura de onde estão em pé (h); o arco é calculado aqui, igual ao do jogador
-function remJump(q){const o={h:+q.hh||0,air:0,v:0};if(!q.jt)return o;const n=(Date.now()+(window.MP&&MP.off||0)-q.jt)/16.67;if(n<0||n>60)return o;
- const v0=3.45,g=.19,h=v0*n-g*n*(n+1)/2;if(h>0){o.air=h;o.v=v0-g*n}return o}
+function remJump(q){const o={h:+q.hh||0,air:0,v:0};if(!q.jt)return o;const dj=q.hb!==undefined,n=(Date.now()+(window.MP&&MP.off||0)-q.jt)/16.67;
+ if(n<0||n>(dj?130:60)){if(dj)o.air=q.hb-o.h;return o}
+ const v0=dj?3.1:3.45,g=.19,h=v0*n-g*n*(n+1)/2;
+ if(dj){const lo=q.hb-o.h;if(h>lo){o.air=h;o.v=v0-g*n}else{o.air=lo;o.v=0}return o}   // segundo pulo: sobe e cai até o chão de verdade (abaixo da altura de onde pulou)
+ if(h>0){o.air=h;o.v=v0-g*n}return o}
 function prep(m){const q=m.q;if(!q||q.x===undefined)return null;
  const x=q.x+8-SC.OX,z=(q.y+14-SC.OY)*SC.K,dk=m.dk||'dir',d0=q[dk],A={m,q,k:m.k,x,z,y:floorQ(q,x,z),h3d:m.nm===NM3||m.nm==='Herobrine',m3:!!(window.HM3&&m.k&&m.k.charAt(0)==='E'&&HM3.own(q)),dk,px:q.x,py:q.y,d0};
  let fx0,fz0;const kind=m.k.charAt(0);
- if(kind==='P'){fx0=sin(S.yaw);fz0=-cos(S.yaw);A.y=floorP(x,z)+S.jh;A.jh=S.jair;A.jv=S.jv}
+ if(kind==='P'){fx0=sin(S.yaw);fz0=-cos(S.yaw);A.y=floorP(x,z)+S.jh;A.jh=S.jair;A.jv=S.jv;A.dj=S.jn&&S.djT||0}
  else if((kind==='F'&&fight)||(kind==='R'&&q.rfe)){const dx=SC.fx-x,dz=SC.fz-z,l=hypot(dx,dz)||1;fx0=dx/l;fz0=dz/l}
  else if(kind==='F'||kind==='R'||kind==='B'){
   {// igual ao jogador (segue o joystick, não a câmera): olha para onde está andando; parado, continua virado para onde parou
@@ -8837,7 +8849,7 @@ function prep(m){const q=m.q;if(!q||q.x===undefined)return null;
    if(o.fy===null){if(kind==='F'){const hs=P&&P._hero;o.fy=hs&&isFinite(hs.yaw)?hs.yaw:atan2(sin(S.yaw),-cos(S.yaw))}else{const v=DV[d0|0]||DV[2];o.fy=atan2(v[0],v[1])}}
    fx0=sin(o.fy);fz0=cos(o.fy)}}
  else if(kind==='N'){const dx=P.x+8-x,dz=P.y+14-z,l=hypot(dx,dz)||1;fx0=dx/l;fz0=dz/l}
- if(kind==='B'){const J=remJump(q);A.y+=J.h+J.air;A.jh=J.air;A.jv=J.v}
+ if(kind==='B'){const J=remJump(q);A.y+=J.h+J.air;A.jh=q.hb!==undefined?J.h+J.air-q.hb:J.air;A.jv=J.v;A.dj=q.hb!==undefined?q.jt:0}
  if(fx0===undefined||kind==='P'){const v=DV[d0|0]||DV[2];fx0=v[0];fz0=v[1]}   // jogador e os outros (inimigos etc.): direção guardada no mapa (o jogador 3D vira pelo próprio movimento)
  A.fx=fx0;A.fz=fz0;A.yaw=atan2(fx0,fz0);
  A.guts=!!((kind==='F'||kind==='R')&&m.nm==='Guts'&&window.GUTS3&&GUTS3.on());
@@ -14943,11 +14955,14 @@ function place(A,s,dt){
  const mv=A.mv>.5||s.spd>14;
  // pulo (só o jogador pula; H3.S.jv = velocidade vertical, A.jh = altura): subindo → Jump_Start, no ar/caindo → Jump_Loop, chegando no chão → Jump_Land
  const air=(A.k==='P'||A.k.charAt(0)==='B')&&(A.jh||0)>.05,JS={jv:A.jv!==undefined?A.jv:(H3.S||{}).jv};
+ if(A.dj&&A.dj!==s.djK){s.djK=A.dj;s.djS=0;s.airT=0;if(s.cur==='Jump_Start')s.cur='Jump_Loop';   // segundo pulo: recomeça o impulso e gira
+  if(A.k!=='P')try{const FX=H3.fx;if(FX&&FX.emit)for(let i=0;i<12;i++){const a=i/12*TAU;FX.emit({x:A.x+Math.cos(a)*3,y:A.y+1,z:A.z+Math.sin(a)*3,vx:Math.cos(a)*.6,vy:0,vz:Math.sin(a)*.6,g:0,life:450,s0:3.2,s1:7.5,c:[.95,.97,1],a:.55,add:false,tex:'glow',drag:.92})}}catch(e){}}
+ if(!A.dj)s.djK=0;
  if(air){s.airT=s.air?s.airT+dt:0;s.landT=0;if((JS.jv>0&&s.airT<.5)||s.airT<.12)pick(s,'Jump_Start',.07);else pick(s,'Jump_Loop',.1)}
  else{if(s.air)s.landT=.5;if(s.landT>0){s.landT-=dt;if(mv&&s.landT<.4)pick(s,'Jog_Fwd_Loop',.12);else pick(s,mv?'Jog_Fwd_Loop':'Jump_Land',.08)}else pick(s,mv?'Jog_Fwd_Loop':'Idle_Loop',.16)}
  s.air=air;
  const rate=s.cur==='Jog_Fwd_Loop'?clp(s.spd/REF_RUN,.7,1.9):s.cur==='Jump_Land'?1.7:1;
- animate(s,dt,rate);bones(s.yaw,A.x,A.y,A.z)}
+ animate(s,dt,rate);let spin=0;if(s.djS!==undefined&&s.djS<.42){s.djS+=dt;const u=min(1,s.djS/.42);spin=u*u*(3-2*u)*TAU;if(u>=1)s.djS=9}bones(s.yaw+spin,A.x,A.y,A.z)}
 // avança o tempo da animação (com a mistura de 2 animações na troca) e deixa os quaternions em QQ e a translação do quadril em TT
 function animate(s,dt,rate){
  s.t+=dt*rate;if(s.bl<1){s.bl=min(1,s.bl+dt/s.bd);s.tp+=dt}
@@ -26196,7 +26211,7 @@ const _t=tick;tick=function(){_t();if(world!==1)return;const e=drac();if(!e||e.d
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261112234927;
+const GAME_BUILD=20261113041612;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
