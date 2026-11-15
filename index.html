@@ -324,6 +324,7 @@ body.mnOpen .mi b{transform:none}
 .tb.on{background:#ffd23f;color:#222;border-color:#ffd23f}
 .bal{text-align:center;font-size:13px;margin-bottom:2px}.bal b{color:#ffd23f}
 .shg{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:7px}
+.lpTb{color:#ffd23f}.lpC{position:relative}.lpIco{width:34px;height:34px;flex:none;display:grid;place-items:center;border-radius:9px;background:var(--c);color:#111}.lpIco .gi{width:22px;height:22px}.lpTag{position:absolute;top:-8px;right:8px;font-style:normal;font-size:9px;font-weight:900;background:var(--c);color:#111;padding:1px 6px;border-radius:6px}.lpB{min-width:86px}.lpVip{text-align:center;margin:6px 0;padding:6px;border:2px solid #ffd23f;border-radius:10px;color:#ffd23f;font-weight:800;font-size:13px}.lpVip .btn{margin-left:6px}.lpAv{text-align:center;font-size:12px;margin:6px 0;color:#cfd3ff}.lpAv.ok{color:#7dffa1}.lpAv.er{color:#ff8a8a}.lpRod{font-size:10px;opacity:.65;text-align:center;margin-top:10px}
 .sc{display:flex;align-items:center;gap:8px;background:linear-gradient(90deg,#0009,#0004);border:2px solid var(--c);border-radius:10px;padding:6px 8px}
 .sc canvas{width:24px;height:32px;image-rendering:pixelated;flex:0 0 auto}
 .sc .si{flex:1;font-size:11px;line-height:1.3;display:flex;flex-direction:column}
@@ -1395,7 +1396,7 @@ const pct_=x=>Math.round(x*100);
 @media (max-width:640px){.ncat{flex-basis:46px}.ncat button{font-size:0;justify-content:center;padding:8px 0}.ncat button span{font-size:18px}.nit .nsd{display:none}}
 </style>
 <div class="modal" id="itM"><div class="box nmx nit"><div class="nhd"><div class="nrib"><span class="nic">🎒</span><b>Itens</b></div><label class="nsr"><input id="itQ" type="text" placeholder="Pesquisar..." autocomplete="off" maxlength="30"></label><button class="nfl" id="itSort">⇅ <span>Padrão</span></button></div><div class="nbd"><div class="ncat" id="itCat"></div><div class="ngr"><div class="ngrid" id="itGrid"></div><div class="nfoot"><span>Itens: <b id="itCnt"></b></span><span class="act" id="itAct"></span></div></div><div class="ndet" id="itDet"></div></div><button class="btn" id="itClose" style="display:none">Fechar</button></div></div>
-<div class="modal" id="shM"><div class="box v6box"><h2>Loja</h2><div class="tabs"><button class="tb on" data-t="pot">Poções</button><button class="tb" data-t="up">Upgrades</button></div><div id="shPot"></div><div id="shUp" style="display:none"></div><button class="btn" id="shClose" style="display:none">Fechar</button></div></div>
+<div class="modal" id="shM"><div class="box v6box"><h2>Loja</h2><div class="tabs"><button class="tb on" data-t="pot">Poções</button><button class="tb" data-t="up">Upgrades</button><button class="tb lpTb" data-t="prem">Premium</button></div><div id="shPot"></div><div id="shUp" style="display:none"></div><div id="shPrem" style="display:none"></div><button class="btn" id="shClose" style="display:none">Fechar</button></div></div>
 <div class="modal" id="msM"><div class="box nmx nms"><div class="nhd"><div class="nrib"><span class="nic">📜</span><b>Missões</b></div><label class="nsr"><input id="msQ" type="text" placeholder="Pesquisar..." autocomplete="off" maxlength="30"></label><button class="nfl" id="msFl" title="Esconder as resgatadas">⚙</button><button class="nfl nach" id="msAch">Conquistas</button></div><div class="ntabs" id="msTabs"><button data-t="all">Todos</button><button data-t="d">Diário</button><button data-t="w">Semanal</button></div><div class="nbd"><div class="nlist" id="msBody"></div><div class="ndet" id="msDet"></div></div><button class="btn" id="msClose" style="display:none">Fechar</button></div></div>
 <div class="modal" id="acM"><div class="box v6box"><h2>Conquistas</h2><div id="acInfo" style="text-align:center;font-size:12px;opacity:.85;margin-bottom:6px"></div><div class="achg" id="acBody"></div><button class="btn" id="acClose" style="display:none">Fechar</button></div></div>
 <div class="modal" id="pfM" style="z-index:9"><div class="box v6box pf"><div id="pfBody"></div><button class="btn" id="pfClose" style="display:none">Fechar</button></div></div>
@@ -1926,7 +1927,8 @@ $('itQ').oninput=e=>{itQ=e.target.value;renderItems()};
 // ===================== loja =====================
 let shTab='pot';
 function openShop(){shTab='pot';renderShop();show('shM')}
-function renderShop(){D.querySelectorAll('#shM .tb').forEach(b=>b.classList.toggle('on',b.dataset.t===shTab));$('shPot').style.display=shTab==='pot'?'block':'none';$('shUp').style.display=shTab==='up'?'block':'none';
+function renderShop(){D.querySelectorAll('#shM .tb').forEach(b=>b.classList.toggle('on',b.dataset.t===shTab));$('shPot').style.display=shTab==='pot'?'block':'none';$('shUp').style.display=shTab==='up'?'block':'none';$('shPrem').style.display=shTab==='prem'?'block':'none';
+ if(shTab==='prem'){lpRender();return}
  if(shTab==='up'){renderUp();return}
  const sec=(t,ids)=>`<div class="sh">${t}</div><div class="shg">`+ids.map(id=>{const it=IT[id],own=items[id]||0;return `<div class="sc" style="--c:${it.c}"><canvas data-id="${id}"></canvas><div class="si"><b>${it.n}</b><span>${it.t}</span><span>${durTxt(it.d)}</span><span class="ow">No inventário: ${own}</span></div><button class="btn buy${coins>=it.p?'':' dis'}" data-id="${id}">${nf(it.p)} moedas</button></div>`}).join('')+'</div>';
  $('shPot').innerHTML=`<div class="bal">Seu ouro: <b>${nf(coins)} moedas</b> · as poções compradas vão para o Inventário</div>`+sec('Poções básicas · 1.000 moedas cada · 30 min',['f1','s1','d1','m1'])+sec('Poções avançadas · 2.500 moedas cada · 15 min',['f2','s2','d2','m2']);
@@ -1935,6 +1937,97 @@ function buy(id){const it=IT[id];if(!it||!it.p)return;if(coins<it.p){toast('Ouro
 D.querySelectorAll('#shM .tb').forEach(b=>b.onclick=()=>{shTab=b.dataset.t;renderShop()});
 $('shUp').appendChild($('upList'));
 {const _ru=renderUp;renderUp=function(){_ru();if($('shM').style.display==='flex'&&shTab==='pot')renderShop()}}
+
+// ===================== loja premium (compras da Play Store) =====================
+// Quem compra é o app Android (MPApp.pay*, Play Billing). O jogo manda a compra para o servidor (iapVerify, Firebase Functions),
+// que confere com o Google e entrega em /iap/grants/<uid> (moedas/essências) e /iap/vip/<uid> (VIP). Aqui o jogo pega a entrega,
+// soma no save e apaga do banco. Nada é entregue pelo próprio celular.
+// LP_CAT é só o que aparece na tela: o que cada pacote DÁ de verdade está no servidor (Mundo-pixel-app/servidor/functions/index.js).
+const LP_URL='https://us-central1-mundo-pixel-453cd.cloudfunctions.net/iapVerify';
+const LP_CAT=[
+ {id:'inicial',tipo:'inapp',n:'Pacote Inicial',d:'15.000 moedas + 10 essências · só 1 vez por conta',c:15000,e:10,cor:'#ff4fd8',tag:'OFERTA'},
+ {id:'moedas_p',tipo:'inapp',n:'Saco de Moedas',d:'5.000 moedas',c:5000,cor:'#3ea0ff'},
+ {id:'moedas_m',tipo:'inapp',n:'Baú de Moedas',d:'12.000 moedas',c:12000,cor:'#3ea0ff'},
+ {id:'moedas_g',tipo:'inapp',n:'Cofre de Moedas',d:'35.000 moedas',c:35000,cor:'#a259ff',tag:'POPULAR'},
+ {id:'moedas_x',tipo:'inapp',n:'Tesouro de Moedas',d:'80.000 moedas',c:80000,cor:'#ff9f1a',tag:'MELHOR VALOR'},
+ {id:'vip_mensal',tipo:'subs',n:'VIP Mensal',d:'+50% de ouro dos monstros · 1.000 moedas grátis por dia · renova todo mês (cancele quando quiser na Play Store)',cor:'#ffd23f'}];
+const LP_VIP_OURO=1.5,LP_VIP_DIA=1000;
+const LP={app:0,prod:{},busy:'',vip:0,unico:{},msg:'',ok:true,uid:null,refs:[],fila:{},indo:{},did:[],vipDia:''};
+{const s=ldSave('mp');if(s){if(Array.isArray(s.iapDone))LP.did=s.iapDone.filter(x=>typeof x==='string').slice(-300);if(typeof s.vipDia==='string')LP.vipDia=s.vipDia}}
+{const _xs=window.XS;window.XS=()=>Object.assign(_xs?_xs():{},{iapDone:LP.did.slice(-300),vipDia:LP.vipDia})}
+try{if(window.MPApp&&MPApp.caps){const c=JSON.parse(MPApp.caps()||'[]');LP.app=c.includes('billing')?2:1}}catch(e){}   // 2 = app com compras · 1 = app antigo
+const lpNow=()=>Date.now()+((window.MP&&MP.off)||0);
+const lpVip=()=>LP.vip>lpNow();
+window.LPvip=lpVip;
+const lpDb=()=>window.MP&&MP.db&&MP.uid&&!MP.offline?MP.db:null;
+const lpHoje=()=>{const d=new Date(lpNow()-3*3600e3);return d.getUTCFullYear()+'-'+(d.getUTCMonth()+1)+'-'+d.getUTCDate()};   // dia de Brasília
+async function lpConta(uid){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(uid));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
+function lpShow(){if($('shM')&&$('shM').style.display==='flex'&&shTab==='prem')lpRender()}
+function lpMsg(t,ok){LP.msg=t;LP.ok=ok!==false;lpShow()}
+
+// ---------- entregas do servidor (funcionam também no navegador: comprou no celular, recebe no PC) ----------
+function lpOuvir(){const uid=window.MP&&MP.uid,db=lpDb();if(uid===LP.uid&&(LP.refs.length||!db))return;
+ LP.refs.forEach(f=>{try{f()}catch(e){}});LP.refs=[];LP.uid=uid;LP.vip=0;LP.unico={};if(!uid||!db)return;
+ const on=(p,ev,fn)=>{const r=db.ref(p),cb=r.on(ev,fn,e=>{console.warn('loja premium',p,e&&e.code)});LP.refs.push(()=>r.off(ev,cb))};
+ on('iap/grants/'+uid,'child_added',s=>lpReceber(s));
+ on('iap/vip/'+uid,'value',s=>{const v=s.val();LP.vip=v&&+v.ate||0;lpShow()});
+ on('iap/unico/'+uid,'value',s=>{LP.unico=s.val()||{};lpShow()});
+ if(LP.app===2)try{MPApp.payPending()}catch(e){}}   // compras que ficaram no meio do caminho
+function lpReceber(s){const k=s.key,v=s.val()||{};
+ if(!LP.did.includes(k)){const c=Math.max(0,Math.min(1e7,+v.c||0)),e=Math.max(0,Math.min(1e4,+v.e||0));
+  coins+=c;ess+=e;lastCoins=coins;LP.did.push(k);if(LP.did.length>300)LP.did.splice(0,LP.did.length-300);updHud();save();try{upload(true)}catch(x){}
+  const it=LP_CAT.find(x=>x.id===v.p);toast('Compra recebida: '+(it?it.n:'pacote')+' (+'+nf(c)+' moedas'+(e?', +'+e+' essências':'')+')');
+  try{bp(660,.1,'triangle',.08);bp(990,.12,'triangle',.08,.08);bp(1320,.16,'triangle',.08,.16)}catch(x){}}
+ s.ref.remove().catch(()=>{});lpShow()}
+
+// ---------- conversa com o app ----------
+window.MPpay=function(ev,d){try{
+ if(ev==='produtos'){(d||[]).forEach(p=>{if(p&&p.id)LP.prod[p.id]=p});lpShow()}
+ else if(ev==='compra'){if(!d||!d.token)return;if(d.estado===2){lpMsg('Pagamento pendente: o pacote chega assim que o pagamento for aprovado.');return}LP.fila[d.token]=d;lpConferir(d)}
+ else if(ev==='fim'){const c=d&&d.codigo|0;LP.busy='';
+  if(c===1)lpMsg('Compra cancelada.',false);else if(c===7){lpMsg('Você já tem essa compra; conferindo...');try{MPApp.payPending()}catch(e){}}
+  else if(c!==0)lpMsg('Não deu para comprar agora (código '+c+'). Tente de novo.',false);else lpShow()}
+}catch(e){console.error('loja premium',e)}};
+async function lpConferir(d){if(LP.indo[d.token])return;const u=typeof firebase!=='undefined'&&firebase.auth&&firebase.auth().currentUser;if(!u||!window.MP||MP.uid!==u.uid)return;
+ LP.indo[d.token]=1;try{const tk=await u.getIdToken();
+  const r=await fetch(LP_URL,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+tk},body:JSON.stringify({productId:d.id,token:d.token})});
+  let j={};try{j=await r.json()}catch(e){}
+  if(r.ok&&j.ok){delete LP.fila[d.token];if(j.gastar)try{MPApp.payConsume(d.token)}catch(e){}
+   if(j.vip){LP.vip=j.vip;if(j.novo!==false)lpMsg('VIP ativo até '+new Date(j.vip).toLocaleDateString('pt-BR')+'!')}else if(j.novo)lpMsg('Compra confirmada! O pacote já está chegando.')}
+  else if(r.ok&&j.pendente){lpMsg('Pagamento pendente: o pacote chega assim que o pagamento for aprovado.')}
+  else if(r.status>=400&&r.status<500){delete LP.fila[d.token];lpMsg('Compra recusada: '+(j.erro||r.status),false)}
+  else lpMsg('O servidor não respondeu; tento de novo em instantes.',false)}
+ catch(e){lpMsg('Sem internet para confirmar a compra; tento de novo em instantes.',false)}
+ finally{delete LP.indo[d.token]}}
+setInterval(()=>{try{lpOuvir();for(const t in LP.fila)lpConferir(LP.fila[t])}catch(e){}},20000);
+setTimeout(()=>{try{lpOuvir()}catch(e){}},3000);
+{let w=0;const iv=setInterval(()=>{w++;try{if(window.MP&&MP.uid!==LP.uid)lpOuvir()}catch(e){}if(w>600)clearInterval(iv)},3000)}
+if(LP.app===2)try{MPApp.payProducts(JSON.stringify({inapp:LP_CAT.filter(p=>p.tipo==='inapp').map(p=>p.id),subs:LP_CAT.filter(p=>p.tipo==='subs').map(p=>p.id)}))}catch(e){}
+
+async function lpComprar(id){const it=LP_CAT.find(p=>p.id===id);if(!it||LP.busy)return;
+ if(LP.app!==2){lpMsg(LP.app===1?'Atualize o app AllStar na Play Store para comprar.':'As compras são feitas pelo app AllStar da Play Store.',false);return}
+ const u=typeof firebase!=='undefined'&&firebase.auth&&firebase.auth().currentUser;if(!u||!window.MP||MP.offline||MP.uid!==u.uid){lpMsg('Entre na sua conta (online) para comprar: a compra fica salva nela.',false);return}
+ if(it.id==='inicial'&&LP.unico.inicial){lpMsg('Você já comprou o Pacote Inicial.',false);return}
+ if(it.tipo==='subs'&&lpVip()){lpMsg('Seu VIP já está ativo.',false);return}
+ if(!LP.prod[id]){lpMsg('Esse pacote ainda não está disponível na Play Store.',false);try{MPApp.payProducts(JSON.stringify({inapp:LP_CAT.filter(p=>p.tipo==='inapp').map(p=>p.id),subs:['vip_mensal']}))}catch(e){}return}
+ LP.busy=id;LP.msg='';lpShow();try{MPApp.payBuy(id,await lpConta(u.uid))}catch(e){LP.busy='';lpMsg('Não deu para abrir a compra.',false)}}
+function lpVipDia(){if(!lpVip()){lpMsg('Só para quem tem VIP ativo.',false);return}const h=lpHoje();if(LP.vipDia===h){lpMsg('Você já pegou as moedas de hoje. Volte amanhã!',false);return}
+ LP.vipDia=h;coins+=LP_VIP_DIA;lastCoins=coins;updHud();save();toast('+'+nf(LP_VIP_DIA)+' moedas do VIP');try{bp(880,.08,'triangle',.08);bp(1320,.12,'triangle',.08,.07)}catch(e){}lpShow()}
+
+// ---------- VIP: +50% de ouro dos monstros ----------
+{const _gd=giveDrop;giveDrop=function(e){if(lpVip()&&e&&Array.isArray(e.coin)){const c0=e.coin;e.coin=[Math.round(c0[0]*LP_VIP_OURO),Math.round(c0[1]*LP_VIP_OURO)];try{return _gd.apply(this,arguments)}finally{e.coin=c0}}return _gd.apply(this,arguments)}}
+
+// ---------- tela ----------
+function lpRender(){const B=$('shPrem');if(!B)return;const logado=!!(window.MP&&MP.uid&&!MP.offline);
+ const vipTxt=lpVip()?'<div class="lpVip">VIP ativo até '+new Date(LP.vip).toLocaleDateString('pt-BR')+' · '+(LP.vipDia===lpHoje()?'moedas de hoje já pegas':'<button class="btn" id="lpDia">Pegar '+nf(LP_VIP_DIA)+' moedas de hoje</button>')+'</div>':'';
+ const aviso=LP.app===2?(logado?'':'Entre na sua conta (online) para comprar.'):(LP.app===1?'Atualize o app AllStar na Play Store para liberar as compras.':'As compras são feitas pelo app AllStar da Play Store. O que você compra lá também chega aqui.');
+ B.innerHTML=`<div class="bal">Seu ouro: <b>${nf(coins)} moedas</b> · ${nf(ess)} essências</div>${vipTxt}${aviso?'<div class="lpAv">'+aviso+'</div>':''}${LP.msg?'<div class="lpAv '+(LP.ok?'ok':'er')+'">'+esc(LP.msg)+'</div>':''}
+ <div class="sh">Pacotes</div><div class="shg">`+LP_CAT.map(it=>{const p=LP.prod[it.id],ja=(it.id==='inicial'&&LP.unico.inicial)||(it.tipo==='subs'&&lpVip()),pr=p&&p.preco?p.preco+(it.tipo==='subs'?'/mês':''):(LP.app===2?'...':'');
+  const lab=ja?(it.tipo==='subs'?'Ativo':'Comprado'):LP.busy===it.id?'Abrindo...':(pr||'No app');
+  return `<div class="sc lpC" style="--c:${it.cor}">${it.tag?'<i class="lpTag">'+it.tag+'</i>':''}<div class="lpIco">${GI.svg(it.tipo==='subs'?'medal':'shop')}</div><div class="si"><b>${it.n}</b><span>${it.d}</span></div><button class="btn buy lpB${ja||LP.app!==2?' dis':''}" data-id="${it.id}">${lab}</button></div>`}).join('')+`</div>
+ <div class="lpRod">Pagamento pela Google Play. As moedas ficam na sua conta do jogo. VIP: renovação mensal automática; cancele quando quiser em Play Store › Pagamentos e assinaturas.</div>`;
+ B.querySelectorAll('.lpB').forEach(b=>b.onclick=()=>lpComprar(b.dataset.id));const d=$('lpDia');if(d)d.onclick=lpVipDia}
+window.LPT={LP,receber:lpReceber,render:lpRender,vipDia:lpVipDia,comprar:lpComprar,abrir:()=>{openShop();shTab='prem';renderShop()}};   // testes / painel do ADM
 
 // ===================== perfil =====================
 function team(){return equipped.map(id=>chars.find(c=>c.id===id)).filter(Boolean).slice(0,4).map(c=>[c.rar,c.sh?1:0,String(c.name).slice(0,16),c.lvl|0])}
@@ -26211,7 +26304,7 @@ const _t=tick;tick=function(){_t();if(world!==1)return;const e=drac();if(!e||e.d
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261113041612;
+const GAME_BUILD=20261115221023;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
