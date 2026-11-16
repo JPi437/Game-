@@ -26336,7 +26336,7 @@ const _t=tick;tick=function(){_t();if(world!==1)return;const e=drac();if(!e||e.d
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261116142632;
+const GAME_BUILD=20261116142945;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
@@ -26478,8 +26478,8 @@ const WDEF=[
 // botões dos mundos só em 3D (viagem rápida): liberados depois de passar pelo portal uma vez
 {const _r0=renderW;renderW=function(){_r0();const L=$('wList');if(!L)return;
  for(const[n,ok,txt,lk,go]of[[4,!!ups.db,'Cidade do Oeste e deserto','Libere o portal no Mundo 1',()=>window.DBW&&DBW.travel&&DBW.travel()],
-   [5,!!ups.nj,'Floresta de pinheiros gigantes','Entre pelo portal no Mundo 2',()=>window.NJW&&NJW.travel&&NJW.travel()],
-   [6,!!ups.oc,'Ilhas e navios pelo mar','Entre pelo portal no Mundo 3',()=>window.OCW&&OCW.travel&&OCW.travel()]]){
+   [5,!!ups.nj,'Floresta de pinheiros gigantes','Portal no Mundo 2 (200.000 de ouro)',()=>window.NJW&&NJW.travel&&NJW.travel()],
+   [6,!!ups.oc,'Ilhas e navios pelo mar','Portal no Mundo 3 (500.000 de ouro)',()=>window.OCW&&OCW.travel&&OCW.travel()]]){
   const b=document.createElement('button');b.className='btn wb'+(ok?'':' dis');b.dataset.n=n;b.innerHTML='Mundo<br><small style="font-size:11px">'+(ok?txt:lk)+'</small>';
   b.onclick=()=>{if(!ok){try{toast(lk)}catch(e){}return}$('wM').style.display='none';lock=false;go()};L.appendChild(b)}}}
 const _rw=renderW;
@@ -28200,7 +28200,10 @@ try{WD[WID]={map:map5,EN:[]};QS[WID]=QS[0]}catch(e){console.error('NJW mundo',e)
 NJW.map=map5;
 let cool=0;
 function toast_(m){try{if(typeof toast==='function')toast(m)}catch(e){}}
-NJW.go=function(){if(world!==4||Date.now()<cool)return;cool=Date.now()+4000;ups.nj=1;
+NJW.go=function(){if(world!==4||Date.now()<cool)return;
+ if(!ups.nj){if(coins<200000){if(Date.now()>(NJW.warnT||0)){NJW.warnT=Date.now()+3000;toast_('O portal do Mundo 3 custa 200.000 de ouro (você tem '+Math.floor(coins).toLocaleString('pt-BR')+')')}return}   // paga uma vez e fica liberado
+  coins-=200000;ups.nj=1;try{updHud()}catch(e){}toast_('Portal do Mundo 3 liberado! (-200.000 de ouro)')}
+ cool=Date.now()+4000;
  goWorld(WID);P.x=SPAWN.x-8;P.y=SPAWN.z-14;P.dir=0;try{save()}catch(e){}toast_('Mundo 3 · Floresta dos Pinheiros')};
 NJW.back=function(){if(world!==WID||Date.now()<cool)return;cool=Date.now()+4000;const D=window.DBW;
  goWorld(4);if(D&&D.P3){P.x=D.P3.x-8;P.y=D.P3.z+(70)-14}P.dir=0;try{save()}catch(e){}toast_('De volta ao Mundo 2 · Dragon Ball')};
@@ -30359,7 +30362,10 @@ const map6=[];for(let y=0;y<TH;y++){map6[y]=new Array(TW).fill(0)}
 try{WD[WID]={map:map6,EN:[]};QS[WID]=QS[0]}catch(e){console.error('OCW mundo',e)}
 let cool=0;
 function toast_(m){try{if(typeof toast==='function')toast(m)}catch(e){}}
-OCW.go=function(){if(world!==5||Date.now()<cool)return;cool=Date.now()+4000;ups.oc=1;goWorld(WID);P.x=SPAWN.x-8;P.y=SPAWN.z-14;P.dir=0;try{save()}catch(e){}toast_('Mundo 4 · Ilha dos Moinhos')};
+OCW.go=function(){if(world!==5||Date.now()<cool)return;
+ if(!ups.oc){if(coins<500000){if(Date.now()>(OCW.warnT||0)){OCW.warnT=Date.now()+3000;toast_('O portal do Mundo 4 custa 500.000 de ouro (você tem '+Math.floor(coins).toLocaleString('pt-BR')+')')}return}   // paga uma vez e fica liberado
+  coins-=500000;ups.oc=1;try{updHud()}catch(e){}toast_('Portal do Mundo 4 liberado! (-500.000 de ouro)')}
+ cool=Date.now()+4000;goWorld(WID);P.x=SPAWN.x-8;P.y=SPAWN.z-14;P.dir=0;try{save()}catch(e){}toast_('Mundo 4 · Ilha dos Moinhos')};
 OCW.back=function(){if(world!==WID||Date.now()<cool)return;cool=Date.now()+4000;const D=window.NJW;
  ups.nj=1;goWorld(5);if(D&&D.P4){P.x=D.P4.x-8;P.y=D.P4.z+(-70)-14}P.dir=0;try{save()}catch(e){}toast_('De volta ao Mundo 3 · Ninja')};
 // viagem rápida (menu Mundos): só para quem já entrou neste mundo pelo portal
