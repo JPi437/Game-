@@ -3591,15 +3591,17 @@ function join(force){if(!MP.db||!MP.uid||MP.offline||MP.kicked)return;if(!force&
  MP.refs=[pr,cr];
  MP.me=MP.db.ref('players/'+w+'/'+MP.uid);MP.me.onDisconnect().remove();{const me=MP.me,cb=me.on('value',s=>{if(!s.exists()&&MP.me===me&&!MP.hidden&&MP.conn&&!MP.kicked){MP.last='';setTimeout(()=>send(true),300)}},()=>{});MP.refs.push({off:()=>me.off('value',cb)})}MP.last='';send(true);if(w==='w0'||w==='w1')shStart(w);else shStop();stat()}
 function payload(){const k=equipped.map(id=>chars.find(c=>c.id===id)).filter(Boolean).slice(0,4).map(c=>[c.rar,c.sh?1:0,String(c.name).slice(0,16)]);   // 16: 'Jeff the Killer' tem 15 letras
- return {n:MP.nick,x:Math.round(P.x),y:Math.round(P.y),d:P.dir|0,m:mounted?(mountEq==='vassoura'?2:1):0,k:JSON.stringify(window.LOOKX?k.concat([['L',LOOKX.code()]]):k),f:fight?EN.indexOf(fight):-1,s:window.V6S?V6S():0,j:window.H3&&H3.S&&H3.S.mode&&H3.S.jt&&Date.now()-H3.S.jt<3000+(MP.off||0)?Math.round(H3.S.jt):0,h:window.H3&&H3.S&&H3.S.mode?Math.round((H3.S.djH>=0?H3.S.djH:(H3.S.hs||0))*2)/2:0}}
+ return {n:MP.nick,x:Math.round(P.x),y:Math.round(P.y),d:P.dir|0,m:mounted?(mountEq==='vassoura'?2:1):0,k:(()=>{const a=window.LOOKX?k.concat([['L',LOOKX.code()]]):k,s0=JSON.stringify(a);let tg=null;try{tg=window.TAGX&&TAGX.net()}catch(e){}if(!tg)return s0;const s1=JSON.stringify(a.concat([tg]));return s1.length<=490?s1:s0})(),f:fight?EN.indexOf(fight):-1,s:window.V6S?V6S():0,j:window.H3&&H3.S&&H3.S.mode&&H3.S.jt&&Date.now()-H3.S.jt<3000+(MP.off||0)?Math.round(H3.S.jt):0,h:window.H3&&H3.S&&H3.S.mode?Math.round((H3.S.djH>=0?H3.S.djH:(H3.S.hs||0))*2)/2:0}}
 function send(force){if(!MP.me||!MP.conn||MP.hidden||MP.kicked)return;if(window.ADM&&(ADM.noOnline()||ADM.banLock))return;const p=payload(),key=JSON.stringify(p),t=Date.now();
  if(!force&&key===MP.last&&t-MP.lastT<20000)return;MP.last=key;MP.lastT=t;p.t=firebase.database.ServerValue.TIMESTAMP;
  MP.me.set(p).catch(e=>{MP.err=e.code||'erro';stat()})}
+window.MPsend=f=>send(f);
 function upsert(s){const v=s.val();if(!v||s.key===MP.uid)return;let r=MP.others[s.key];
  if(!r)r=MP.others[s.key]={x:+v.x||0,y:+v.y||0,fp:[],st:0};
  r.tx=+v.x||0;r.ty=+v.y||0;r.d=[0,1,2,3].includes(v.d)?v.d:2;r.m=v.m===1||v.m===2?v.m:0;r.n=cleanNick(v.n)||'?';r.t=v.t;r.f=Number.isInteger(v.f)?v.f:-1;r.s=(+v.s|0)&15;{const j=+v.j||0,h=Math.max(0,Math.min(60,+v.h||0));if(j&&j!==r.jt){if(r.jt&&h>(r.hh||0)+2&&j-r.jt<2500){if(r.hb===undefined)r.hb=r.hh||0}else r.hb=undefined;r.jt=j}else if(r.hb!==undefined&&h<=r.hb+.5)r.hb=undefined;r.hh=h}
  let k=[];try{k=JSON.parse(v.k||'[]')}catch(e){}
  if(Array.isArray(k)&&typeof LKE!=='undefined'){const lk=k.find(c=>Array.isArray(c)&&c[0]==='L');if(lk){const o=LKE.unpack(String(lk[1]||''));if(o)r.lk=o}}r.__id=s.key;
+ {const tg=Array.isArray(k)?k.find(c=>Array.isArray(c)&&c[0]==='T'):null;r.tg=tg&&window.TAGX?TAGX.check(tg[1],s.key,r.n):'';r.au=tg&&window.TAGX?TAGX.checkA(tg[2]):''}   // tag e aura
  r.k=(Array.isArray(k)?k:[]).slice(0,4).filter(c=>Array.isArray(c)&&c[0]>=0&&c[0]<=4).map(c=>[c[0]|0,c[1]?1:0,String(c[2]||'').slice(0,16)]);stat()}
 setInterval(()=>{if(MP.uid&&!MP.hidden){if(MP.w!==(world|0))join(true);else send(false)}},150);
 document.addEventListener('visibilitychange',()=>{if(!MP.db)return;
@@ -9149,6 +9151,7 @@ function overlay(t,C){
   const vh=e.vh||16*(e.s||1),p=proj(A.x,A.m3&&window.HM3?HM3.top(e):A.y+(vh+(e.t===2?9:6))*bs,A.z);if(!p||p[2]<1||p[2]>230)continue;HL.push([p,e,vh])}
  HL.sort((a,b)=>b[0][2]-a[0][2]);for(const[p,e,vh]of HL){
   if(window.HPBAR3)HPBAR3(x,p,e,sc*clp(130/p[2],.75,1.25),t)}}
+ if(window.OVL3)try{OVL3(x,t,C,sc,proj)}catch(e){if(!H3.ovlErr){H3.ovlErr=1;console.error('tags',e)}}   // nome e tag dos jogadores
  if(SC.overlayExtra)SC.overlayExtra(x,t,C,sc)}
 H3.proj=proj;
 // botões flutuantes (Roletar, Passiva, Conversar, portal...) no 3D: presos ao ponto do mundo 3D de cada coisa (a cena diz onde, SC.fbPos)
@@ -26317,7 +26320,7 @@ const _t=tick;tick=function(){_t();if(world!==1)return;const e=drac();if(!e||e.d
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261116060000;
+const GAME_BUILD=20261116060908;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
@@ -32300,6 +32303,107 @@ function ui(){const box=document.getElementById('g3xSec');if(!box)return false;i
 {let k=0;const iv=setInterval(()=>{k++;let ok=false;try{ok=ui()}catch(e){console.error('Gráfico realista tela',e)}if(ok||k>240)clearInterval(iv)},500)}
 const dnOf=sc=>{const p=isOn(sc)?profOf(sc):null;return!!(p&&!p.horror&&!p.inn)};
 H3.gfx5={IDS:PROF,PROF,HOR,INT,INTS,tick,V,set:setReal,prof:profOf,dn:dnOf,st:ST};
+})();
+</script>
+<script>
+// ===================== Tags e auras do jogador =====================
+// Tag = título colorido em cima do nome. Aura = efeito em volta do personagem (modo 3D). Os outros jogadores veem as duas.
+// Vai junto da lista de lutadores que o jogo já manda online (campo k, item ['T', tag, aura]) — sem campo novo no banco;
+// apps antigos ignoram esse item. Escolha em Configurações › "Tags e auras".
+//  · BETA (+ aura Chamas Douradas): toda conta criada até BETA_ATE (data de criação da conta no login do Firebase; não se perde no reset)
+//  · ADM: a conta do administrador · MOD: moderadores (lista MODS) · VIP: quem tem o VIP mensal ativo
+(function(){
+'use strict';
+const BETA_ATE=Date.parse('2026-11-17T03:00:00Z');        // fim do dia 16/11/2026 (Brasília): contas criadas até aqui são do Beta
+const MODS=['wnauak'];                                       // nicks dos moderadores (minúsculas)
+const TAGS={
+ a:{id:'a',n:'ADM',c:'#ff3b3b',t:'#fff',d:'Administrador do AllStar'},
+ m:{id:'m',n:'MOD',c:'#2ec4ff',t:'#00202e',d:'Moderador do AllStar'},
+ v:{id:'v',n:'VIP',c:'#ffb300',t:'#2a1a00',d:'Quem tem o VIP mensal ativo (Loja › Premium)'},
+ b:{id:'b',n:'BETA',c:'#ffd23f',t:'#2a1a00',d:'Quem jogou o AllStar no Beta, antes do reset'}};
+const ORDEM=['a','m','v','b'];
+const AURAS={b:{id:'b',n:'Chamas Douradas',d:'Exclusiva de quem jogou o Beta'}};
+const LS='mp_tag';
+const X={sel:null,beta:false,uidB:null};
+try{const v=JSON.parse(localStorage.getItem(LS)||'null');if(v&&typeof v==='object')X.sel={t:String(v.t||''),a:String(v.a||'')}}catch(e){}
+const nick=()=>String(window.MP&&MP.nick||'').trim().toLowerCase();
+const isAdm=()=>{try{return !!(window.ADM&&ADM.isAdm&&ADM.isAdm())}catch(e){return false}};
+function betaChk(){try{const u=typeof firebase!=='undefined'&&firebase.auth&&firebase.auth().currentUser;if(!u){X.beta=false;X.uidB=null;return}
+ if(X.uidB===u.uid)return;X.uidB=u.uid;const c=Date.parse(u.metadata&&u.metadata.creationTime||'');X.beta=!!(c&&c<BETA_ATE)}catch(e){}}
+function tem(id){if(id==='a')return isAdm();if(id==='m')return isAdm()||MODS.includes(nick());if(id==='v')return !!(window.LPvip&&LPvip());if(id==='b'){betaChk();return X.beta}return false}
+function temA(id){if(id==='b'){betaChk();return X.beta}return false}
+// o que está equipado (se nunca escolheu: a melhor tag que tiver e a aura do Beta)
+function cur(){const s=X.sel;let t,a;
+ if(s){t=s.t&&tem(s.t)?s.t:'';a=s.a&&temA(s.a)?s.a:''}
+ else{t=ORDEM.find(tem)||'';a=temA('b')?'b':''}
+ return{t,a}}
+function salvar(t,a){X.sel={t,a};try{localStorage.setItem(LS,JSON.stringify(X.sel))}catch(e){}try{if(window.MP&&MP.me&&window.MPsend)MPsend(true)}catch(e){}}
+
+// ---------- rede ----------
+function net(){const c=cur();return c.t||c.a?['T',c.t,c.a]:null}
+// o que chega de outro jogador: ADM só se for mesmo a conta do ADM; MOD só se o nick estiver na lista
+function check(t,uid,n){t=String(t||'');if(!TAGS[t])return'';if(t==='a')return window.ADMUID&&uid===window.ADMUID?'a':'';if(t==='m')return(window.ADMUID&&uid===window.ADMUID)||MODS.includes(String(n||'').toLowerCase())?'m':'';return t}
+function checkA(a){a=String(a||'');return AURAS[a]?a:''}
+
+// ---------- desenho: nome + tag em cima da cabeça (modo 3D) ----------
+function pill(x,tg,cx,cy,fs){const T=TAGS[tg];if(!T)return;x.font='900 '+fs.toFixed(1)+'px "Courier New",monospace';const w=x.measureText(T.n).width+fs*.9,h=fs*1.25,rx=cx-w/2,ry=cy-h/2,r=h*.38;
+ x.beginPath();x.moveTo(rx+r,ry);x.arcTo(rx+w,ry,rx+w,ry+h,r);x.arcTo(rx+w,ry+h,rx,ry+h,r);x.arcTo(rx,ry+h,rx,ry,r);x.arcTo(rx,ry,rx+w,ry,r);x.closePath();
+ x.fillStyle=T.c;x.shadowColor=T.c;x.shadowBlur=fs*.7;x.fill();x.shadowBlur=0;x.lineWidth=max(1.5,fs*.14);x.strokeStyle='#000';x.stroke();x.fillStyle=T.t;x.fillText(T.n,cx,cy+fs*.05)}
+const max=Math.max,min=Math.min,hypot=Math.hypot;
+window.OVL3=function(x,t,C,sc,proj){const L=window.H3C&&H3C.list;if(!L||!window.H3||!H3.S)return;const S=H3.S,me=cur();
+ x.textAlign='center';x.textBaseline='middle';x.lineJoin='round';
+ for(const A of L){if(typeof A.k!=='string')continue;const k0=A.k.charAt(0);let tg='',nm='';
+  if(A.k==='P'){if(S.mode!==2||!me.t)continue;tg=me.t}
+  else if(k0==='B'){const r=A.q;if(!r)continue;tg=r.tg||'';nm=r.n||''}else continue;
+  const p=proj(A.x,A.y+(A.h3d?35:31),A.z);if(!p||p[2]<2||p[2]>300)continue;
+  const k=clp(110/p[2],.55,1.25),al=p[2]>240?(300-p[2])/60:1;x.globalAlpha=al;let y=p[1];
+  if(nm){const fs=8.5*sc*k;x.font='900 '+fs.toFixed(1)+'px "Courier New",monospace';x.lineWidth=max(2,fs*.26);x.strokeStyle='#000';x.strokeText(nm,p[0],y);x.fillStyle='#fff';x.fillText(nm,p[0],y);y-=fs*1.35}
+  if(tg)pill(x,tg,p[0],y,7*sc*k)}
+ x.globalAlpha=1};
+const clp=(v,a,b)=>v<a?a:v>b?b:v;
+
+// ---------- aura: chamas douradas (modo 3D) ----------
+const rnd=Math.random,TAU=Math.PI*2;
+const FOGO=[[1,.92,.45],[1,.78,.22],[1,.62,.12],[1,.86,.3]];
+function auraTick(dtMs){const L=window.H3C&&H3C.list,FX=window.H3&&H3.fx;if(!L||!FX||!FX.emit||!H3.S||!H3.S.mode||!H3.cam)return;
+ const cam=H3.cam().p,me=cur();let n=0;
+ for(const A of L){if(typeof A.k!=='string')continue;let au='';
+  if(A.k==='P'){if(H3.S.mode!==2)continue;au=me.a}else if(A.k.charAt(0)==='B'){au=A.q&&A.q.au||''}else continue;
+  if(au!=='b')continue;const d=hypot(A.x-cam[0],A.y-cam[1],A.z-cam[2]);if(d>260)continue;if(++n>8)break;
+  const H=A.h3d?34:30,far=d>140?.5:1,cnt=dtMs*.025*far;   // ~25 labaredas por segundo perto, metade longe   // ~50 chamas por segundo perto, metade longe
+  for(let i=0;i<cnt||(i===0&&rnd()<cnt);i++){const a=rnd()*TAU,r=6.5+rnd()*3,h=rnd()*H*.8,c=FOGO[(rnd()*4)|0],u=1-h/H;   // labaredas (fogo animado do atlas de efeitos) em volta do corpo
+   FX.emit({x:A.x+Math.cos(a)*r,y:A.y+h,z:A.z+Math.sin(a)*r,vx:-Math.cos(a)*.06,vy:.3+rnd()*.35,vz:-Math.sin(a)*.06,g:-.003,life:(480+rnd()*360)*(X.lifeK||1),s0:8+u*6,s1:4,c,a:.9,add:true,fb:'@fire',drag:.97})}
+  if(rnd()<dtMs*.012*far){const a=rnd()*TAU;FX.emit({x:A.x+Math.cos(a)*8,y:A.y+rnd()*H*.8,z:A.z+Math.sin(a)*8,vx:(rnd()-.5)*.25,vy:.6+rnd()*.5,vz:(rnd()-.5)*.25,g:0,life:500*(X.lifeK||1),s0:1.6,s1:.3,c:[1,.97,.7],a:1,add:true,tex:'dot'})}   // faíscas
+  if(rnd()<dtMs*.02)FX.emit({x:A.x,y:A.y+.6,z:A.z,vx:0,vy:0,vz:0,g:0,life:260*(X.lifeK||1),s0:24,s1:27,c:[1,.72,.18],a:.5,add:true,cell:8,flat:1,hold:.5})}}
+let lastT=0;
+function hook(){const FX=window.H3&&H3.fx;if(!FX||!FX.draw||FX.__tg)return !!(FX&&FX.__tg);const _d=FX.draw;FX.__tg=1;
+ FX.draw=function(){const now=performance.now(),dt=min(60,lastT?now-lastT:16);lastT=now;try{if(!H3.inSh)auraTick(dt)}catch(e){if(!X.err){X.err=1;console.error('aura',e)}}return _d.apply(this,arguments)};return true}
+{let k=0;const iv=setInterval(()=>{k++;if(hook()||k>240)clearInterval(iv)},500)}
+
+// ---------- tela: Configurações › Tags e auras ----------
+const st=document.createElement('style');st.textContent=`#tgM .box{max-width:440px;width:100%}#tgM h2{text-align:center;margin:2px 0 8px}
+.tgS{font-weight:900;margin:10px 2px 6px;color:#ffd23f}.tgG{display:flex;flex-wrap:wrap;gap:6px}
+.tgB{flex:1 1 120px;min-width:0;padding:8px 6px;border-radius:10px;border:2px solid #ffffff30;background:#00000040;color:#fff;cursor:pointer;text-align:center;font-weight:900;font-size:12px}
+.tgB.on{border-color:#ffd23f;box-shadow:0 0 0 2px #000,0 0 12px #ffd23f88}.tgB.lk{opacity:.42;cursor:default}
+.tgB i{display:inline-block;font-style:normal;padding:1px 7px;border-radius:7px;border:2px solid #000;margin-bottom:3px}
+.tgB small{display:block;font-weight:700;font-size:10px;opacity:.75;margin-top:2px}.tgD{font-size:11px;opacity:.7;text-align:center;margin-top:10px}`;document.head.appendChild(st);
+const M=document.createElement('div');M.className='modal';M.id='tgM';M.innerHTML='<div class="box"><button class="btn xb" id="tgX">✕</button><h2>Tags e auras</h2><div id="tgBody"></div></div>';document.body.appendChild(M);
+M.querySelector('#tgX').onclick=()=>{M.style.display='none'};M.addEventListener('click',e=>{if(e.target===M)M.style.display='none'});
+function render(){const c=cur(),B=document.getElementById('tgBody');
+ const bt=(on,lk,html,sub,attr)=>`<button class="tgB${on?' on':''}${lk?' lk':''}" ${attr}>${html}<small>${sub}</small></button>`;
+ B.innerHTML='<div class="tgS">Tag em cima do nome</div><div class="tgG">'+bt(!c.t,0,'Nenhuma','sem tag','data-t=""')+
+  ORDEM.map(id=>{const T=TAGS[id],ok=tem(id);return bt(c.t===id,!ok,`<i style="background:${T.c};color:${T.t}">${T.n}</i>`,ok?T.d:'Bloqueada: '+T.d,ok?'data-t="'+id+'"':'')}).join('')+'</div>'+
+  '<div class="tgS">Aura</div><div class="tgG">'+bt(!c.a,0,'Nenhuma','sem aura','data-a=""')+
+  Object.values(AURAS).map(A=>{const ok=temA(A.id);return bt(c.a===A.id,!ok,'🔥 '+A.n,ok?A.d:'Bloqueada: '+A.d,ok?'data-a="'+A.id+'"':'')}).join('')+'</div>'+
+  '<div class="tgD">A tag e a aura aparecem para todos no modo 3D. A aura aparece em 3ª pessoa.</div>';
+ B.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{const c2=cur();salvar(b.dataset.t,c2.a);render()});
+ B.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>{const c2=cur();salvar(c2.t,b.dataset.a);render()})}
+function abrir(){render();M.style.display='flex'}
+function botao(){const L=document.getElementById('cfgLook');if(!L)return false;if(document.getElementById('cfgTag'))return true;
+ const b=document.createElement('button');b.className='btn';b.id='cfgTag';b.style.cssText='display:block;width:100%;margin:-4px 0 10px;background:#b8860b;font-weight:900';b.textContent='🏷️ Tags e auras';
+ b.onclick=()=>{const C=document.getElementById('cfgM');if(C)C.style.display='none';abrir()};L.after(b);return true}
+{let k=0;const iv=setInterval(()=>{k++;if(botao()||k>240)clearInterval(iv)},500)}
+window.TAGX={TAGS,AURAS,cur,net,check,checkA,abrir,tem,temA,X,BETA_ATE,_tick:auraTick};
 })();
 </script>
 </body></html>
