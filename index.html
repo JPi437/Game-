@@ -538,6 +538,16 @@ function sanSave(o){
   if(v===null||['number','string','boolean'].includes(typeof v)){if(typeof v!=='string'||v.length<=4000)s[k]=v}
   else if(typeof v==='object'){try{if(JSON.stringify(v).length<=120000)s[k]=v}catch(e){}}}
  return s}
+// ===================== RESET GERAL (fim do Beta) =====================
+// Cada aparelho zera o progresso UMA vez, ao abrir o jogo com este RESET_ID: moedas, abóboras, essências, personagens, níveis, missões,
+// conquistas, itens, mundos/portões e o visual do personagem. Ficam: conta/nick, configurações (gráfico, som...) e a tag/aura do Beta
+// (que vem da data de criação da conta). O save da nuvem antigo (sem este RESET_ID) é ignorado e sobrescrito; o visual da nuvem também.
+// Uma cópia do save antigo fica no aparelho em 'mp_prereset' (só por segurança). Para um próximo reset, troque o RESET_ID.
+const RESET_ID='r1-20261116';window.RESET_ID=RESET_ID;
+try{if(localStorage.getItem('mp_rst')!==RESET_ID){const old=localStorage.getItem('mp');if(old&&!localStorage.getItem('mp_prereset'))localStorage.setItem('mp_prereset',old);
+ ['mp','mp_bak','mp_prev','mp_got','mp_seen','mp_look','mp_trp','mp_trd','mp_ifav','mp_synced','mp_rlT'].forEach(k=>localStorage.removeItem(k));
+ for(let i=localStorage.length-1;i>=0;i--){const k=localStorage.key(i);if(k&&/^mp_look/.test(k))localStorage.removeItem(k)}
+ localStorage.setItem('mp_rst',RESET_ID)}}catch(e){}
 const ldSave=k=>{try{return sanSave(JSON.parse(localStorage.getItem(k)||'null'))}catch(e){return null}};let SV=null;
 try{const s=ldSave('mp')||ldSave('mp_bak');SV=s;if(s){isNew=false;chars=s.chars;equipped=Array.isArray(s.equipped)?s.equipped:(s.equipped?[s.equipped]:[]);nid=s.nid;coins=s.coins||0;ups=Object.assign(ups,s.ups||{});chars.forEach(k=>{k.lvl=k.lvl||1;k.xp=k.xp||0});qsOld=s.qs||qsOld;qs=Object.assign(qs,s.qs0||{});mounts=s.mounts||[];mountEq=s.mountEq||null;pity=s.pity||0;ess=s.ess||0;pk=s.pk||0;ppity=s.ppity||0;qs1=Object.assign(qs1,s.qs1||{});aset=Object.assign(aset,s.aset||{})}}catch(e){}
 const saveData=()=>{let px=null,py=null;try{px=P.x;py=P.y;if(window.LICH&&LICH.in&&LICH.ret){px=LICH.ret.x;py=LICH.ret.y}}catch(e){}return Object.assign({v:2,t:Date.now(),chars,equipped,nid,coins,ups,qs:qsOld,qs0:QS[0],qs1:QS[1],mounts,mountEq,pity,ess,pk,ppity,aset,w:world,px,py,hm:2},window.XS?XS():{})};
@@ -1967,7 +1977,7 @@ const LP_CAT=[
 const LP_VIP_OURO=1.5,LP_VIP_DIA=1000;
 const LP={app:0,prod:{},busy:'',vip:0,unico:{},msg:'',ok:true,uid:null,refs:[],fila:{},indo:{},did:[],vipDia:''};
 {const s=ldSave('mp');if(s){if(Array.isArray(s.iapDone))LP.did=s.iapDone.filter(x=>typeof x==='string').slice(-300);if(typeof s.vipDia==='string')LP.vipDia=s.vipDia}}
-{const _xs=window.XS;window.XS=()=>Object.assign(_xs?_xs():{},{iapDone:LP.did.slice(-300),vipDia:LP.vipDia})}
+{const _xs=window.XS;window.XS=()=>Object.assign(_xs?_xs():{},{iapDone:LP.did.slice(-300),vipDia:LP.vipDia,rst:window.RESET_ID})}
 try{if(window.MPApp&&MPApp.caps){const c=JSON.parse(MPApp.caps()||'[]');LP.app=c.includes('billing')?2:1}}catch(e){}   // 2 = app com compras · 1 = app antigo
 const lpNow=()=>Date.now()+((window.MP&&MP.off)||0);
 const lpVip=()=>LP.vip>lpNow();
@@ -3660,6 +3670,7 @@ function reloadWith(str,wipe){if(wipe){LS.del('mp_look');LS.del('mp_got');LS.del
 async function cloudSync(){if(!MP.uid||MP.offline||SV.busy||!MP.db)return;SV.busy=true;const uid=MP.uid;
  try{const snap=await MP.db.ref('saves/'+uid).once('value');if(uid!==MP.uid)return;const c=snap.val(),own=LS.get('mp_owner')||'';
   let cd=null;if(c&&typeof c.d==='string'){try{cd=JSON.parse(c.d)}catch(e){}}
+  if(cd&&cd.rst!==RESET_ID)cd=null;   // save de antes do reset geral: ignora (vai ser sobrescrito pelo novo)
   if(cd&&Array.isArray(cd.chars)&&cd.chars.length){
    if(own!==uid){LS.set('mp_owner',uid);LS.set('mp_synced',String(c.t||0));toast('Carregando seu progresso da conta...');reloadWith(c.d,1);return}
    if((c.t||0)>(+LS.get('mp_synced')||0)+1000){LS.set('mp_synced',String(c.t||0));toast('Progresso mais novo encontrado em outro aparelho...');reloadWith(c.d);return}
@@ -4263,6 +4274,7 @@ window.LOOKX=X;
 {const _xs=window.XS;window.XS=()=>Object.assign(_xs?_xs():{},{look:X.cur,lookOwn:X.own,lookT:X.t})}
 // itens de loja: ficam com cadeado até a pessoa ganhar/comprar (X.give)
 const item=(cat,id)=>E.STY[cat].find(a=>a[0]===id),locked=(cat,id)=>{const it=item(cat,id);return !!(it&&it[2]&&it[2].loja&&!X.own.includes(cat+':'+id))};
+X.give3=k=>{if(!X.own.includes(k))X.own.push(k);stamp();keep();try{save()}catch(e){}return true};X.has3=k=>X.own.includes(k);
 X.give=(cat,id)=>{if(!item(cat,id))return false;const k=cat+':'+id;if(!X.own.includes(k))X.own.push(k);stamp();keep();try{save()}catch(e){}return true};
 X.has=(cat,id)=>!locked(cat,id);
 // ---- folhas de sprite prontas (cache) ----
@@ -4297,7 +4309,7 @@ const LOOKSEQ=[[0,12],[0,12],[0,0],[0,13],[0,13],[0,0],[2,0],[2,0],[0,0],[3,0],[
 // ---- online: publico o meu visual e leio o dos outros (nó looks/<uid>) ----
 let pubLast='';
 X.code=()=>E.pack(X.cur);
-X.pub=force=>{if(!MP||!MP.uid||MP.offline||!MP.db)return;const s=JSON.stringify(Object.assign(E.norm(X.cur),{lt:X.t}));if(!force&&s===pubLast)return;pubLast=s;MP.db.ref('looks/'+MP.uid).set(s).catch(()=>{pubLast=''})};
+X.pub=force=>{if(!MP||!MP.uid||MP.offline||!MP.db)return;const s=JSON.stringify(Object.assign(E.norm(X.cur),{lt:X.t,rs:window.RESET_ID}));if(!force&&s===pubLast)return;pubLast=s;MP.db.ref('looks/'+MP.uid).set(s).catch(()=>{pubLast=''})};
 setInterval(()=>{if(!MP||!MP.db)return;const ids=MP.others||{};
  for(const id in ids)if(!X.subs[id]){const ref=MP.db.ref('looks/'+id),cb=s=>{const v=s.val();let o=null;if(typeof v==='string'&&v.length<400){try{o=E.norm(JSON.parse(v))}catch(e){}}X.remote[id]=o;const r=MP.others[id];if(r&&o)r.lk=o};
   ref.on('value',cb,()=>{});X.subs[id]={ref,cb}}
@@ -4307,9 +4319,10 @@ setInterval(()=>{if(!MP||!MP.db)return;const ids=MP.others||{};
 // chamado depois que o save da nuvem foi conferido: se a conta acabou de ser criada, abre a criação
 // Antes de publicar o meu visual, confiro o que a nuvem tem: se lá estiver um mais novo (salvo em outro aparelho, ou
 // o save da nuvem chegou atrasado), eu uso o da nuvem em vez de apagá-lo.
+setInterval(()=>{try{if((X.cur.w|0)===2&&!X.own.includes('w3:frm')&&!isAdm()){X.cur.w=0;stamp();keep();X.pub(true)}}catch(e){}},3000);   // máscara do Freddy só para quem venceu a noite 5
 X.ready=async uid=>{const nk=String(MP.nick||'').toLowerCase(),nw=!!(nk&&LSg('look_new')===nk);
  if(!nw&&MP&&MP.db&&uid){try{const v=(await MP.db.ref('looks/'+uid).once('value')).val();
-  if(uid===MP.uid&&typeof v==='string'&&v.length<400){const o=JSON.parse(v);if(o&&+o.lt>X.t){X.cur=E.norm(o);X.t=+o.lt;keep();try{save()}catch(e){}}}}catch(e){}}
+  if(uid===MP.uid&&typeof v==='string'&&v.length<400){const o=JSON.parse(v);if(o&&o.rs===window.RESET_ID&&+o.lt>X.t){X.cur=E.norm(o);X.t=+o.lt;keep();try{save()}catch(e){}}}}catch(e){}}
  X.pub(true);if(nw&&$('lkM').style.display!=='flex')open(true)};
 
 // =================== TELA DE CRIAÇÃO ===================
@@ -4393,15 +4406,16 @@ function render(){
   ok:{t:'Acessório de costas',f:'k',o:[[0,'Nenhum','none'],[1,'Capa do Lich','cape'],[2,'Capa de mago','capm']],n:'A capa do Lich balança, voa para trás quando você corre e deixa um rastro de fogo verde. A capa de mago é um sobretudo comprido por cima da roupa.'},
   oa:{t:'Cabelo',f:'a',o:[[0,'Nenhum','none'],[1,'Feminino curto','h1'],[2,'Feminino médio','h2'],[3,'Masculino cacheado','h3'],[4,'Masculino liso','h4']],col:'hc',n:'Escolha a cor do cabelo embaixo.'},
   ofa:{t:'Rosto',f:'fa',o:[[0,'Padrão','fc0'],[1,'Assustado','fc1'],[2,'Fofo','fc2'],[3,'Zoeiro','fc3'],[4,'Confiante','fc4'],[5,'Olhar brilhante','fc5'],[6,'Dentuço','fc6'],[7,'Sério','fc7']],n:'O rosto fica por baixo do cabelo e do chapéu.'},
-  ow:{t:'Chapéu',f:'w',o:[[0,'Nenhum','none'],[2,'Máscara do Freddy','frm']],n:'A máscara do Freddy cobre a cabeça inteira (o cabelo fica escondido por baixo).'}};
+  ow:{t:'Chapéu',f:'w',o:[[0,'Nenhum','none'],[2,'Máscara do Freddy','frm',{own:'w3:frm',premio:'Vença a noite 5 da Pizzaria do Pixel'}]],n:'A máscara do Freddy cobre a cabeça inteira (o cabelo fica escondido por baixo). Prêmio de quem vence as 5 noites da Pizzaria do Pixel.'}};
  if(tab==='og'){const st=$('lkSty'),op=[['m','Personagem normal','none'],['tv','TV (exclusivo do ADM)','adm']],on=v=>(v==='tv')===(L.g==='tv');
   $('lkL1').style.display=st.style.display='';$('lkL1').textContent='Modelo do personagem';$('lkL2').style.display=$('lkCol').style.display='none';
   st.innerHTML=op.map(a=>`<button class="lkIt${on(a[0])?' on':''}" data-v="${a[0]}">${CL3[a[2]]?'<img src="'+CL3[a[2]]+'" style="width:100%;max-width:96px;height:84px;object-fit:contain;display:block;margin:0 auto">':''}${a[1]}</button>`).join('')+'<div class="lkSep">Modelo 3D exclusivo da conta ADM: cabeça de TV, terno, gravata e tênis, já vem pronto (sem roupas, cabelo ou chapéu). Só o ADM pode usar, e todos os jogadores veem você com ele. Aparece no personagem 3D e no Star Kart.</div>';
   st.querySelectorAll('.lkIt').forEach(e=>e.onclick=()=>{const v=e.dataset.v;if(v==='tv'){if(L.g!=='tv')gPrev=L.g;L.g='tv'}else if(L.g==='tv')L.g=gPrev&&gPrev!=='tv'?gPrev:'m';t0=Date.now();render()});return}
  if(OPTS[tab]){const P=OPTS[tab],st=$('lkSty'),get=()=>P.m?(L.m?-1:(L.o&P.m)):(L[P.f]|0);
   $('lkL1').style.display=st.style.display='';$('lkL1').textContent=P.t;
-  st.innerHTML=P.o.map(a=>`<button class="lkIt${get()===a[0]?' on':''}" data-v="${a[0]}">${CL3[a[2]]?'<img src="'+CL3[a[2]]+'" style="width:100%;max-width:96px;height:84px;object-fit:contain;display:block;margin:0 auto">':''}${a[1]}</button>`).join('')+'<div class="lkSep">'+P.n+' Aparece no personagem 3D.</div>';
-  st.querySelectorAll('.lkIt').forEach(e=>e.onclick=()=>{const v=+e.dataset.v;if(P.m){L.o=(L.o&~P.m)|v;L.m=0}else L[P.f]=v;t0=Date.now();render()});
+  const lk3=a=>!!(a[3]&&a[3].own&&!X.own.includes(a[3].own)&&!isAdm());   // prêmio ainda não conquistado
+  st.innerHTML=P.o.map(a=>`<button class="lkIt${get()===a[0]?' on':''}${lk3(a)?' lk':''}" data-v="${a[0]}">${CL3[a[2]]?'<img src="'+CL3[a[2]]+'" style="width:100%;max-width:96px;height:84px;object-fit:contain;display:block;margin:0 auto">':''}${a[1]}${lk3(a)?'<span class="lkLock">'+GI.svg('lock')+'</span><span class="lkShop">'+a[3].premio+'</span>':''}</button>`).join('')+'<div class="lkSep">'+P.n+' Aparece no personagem 3D.</div>';
+  st.querySelectorAll('.lkIt').forEach(e=>e.onclick=()=>{const v=+e.dataset.v,it=P.o.find(a=>a[0]===v);if(it&&lk3(it)){toast(it[1]+': '+it[3].premio.toLowerCase()+' (menu) para ganhar!');return}if(P.m){L.o=(L.o&~P.m)|v;L.m=0}else L[P.f]=v;t0=Date.now();render()});
   const showCol=!!(P.col&&get());$('lkL2').textContent='Cor';$('lkL2').style.display=$('lkCol').style.display=showCol?'':'none';
   if(showCol){$('lkCol').innerHTML=PALS[P.col].map((c,i)=>`<button class="lkC${L[P.col]===i?' on':''}" data-i="${i}" style="background:${c}" aria-label="Cor ${i+1}"></button>`).join('');
    $('lkCol').querySelectorAll('.lkC').forEach(b=>b.onclick=()=>{L[P.col]=+b.dataset.i;t0=Date.now();render()})}
@@ -18010,7 +18024,7 @@ SCN.raid={id:'raid',K:1,OX:0,OY:0,eye:25,camD:84,p3:-.14,pl:[[-.95,.9],[-1.0,.45
 //     Croco  — crocodilo do Teatro dos Fantoches: sai de trás da cortina aos poucos SE NINGUÉM OLHAR as câmeras, depois corre até a porta esquerda e bate nela;
 //     Mola   — palhaço de mola dos bastidores: só anda no escuro (com as luzes apagadas), nas câmeras só se veem os olhos; na porta, segure a luz dele para espantá-lo;
 //  · se a bateria acaba tudo apaga, toca uma caixinha de música… e o Lata vem buscar você (a não ser que dê 6 AM antes);
-//  · vencer a noite 5 dá o cosmético exclusivo "Quepe de segurança" (LOOKX.give).
+//  · vencer a noite 5 dá os cosméticos exclusivos "Máscara do Freddy" (3D, LOOKX.give3('w3:frm')) e "Quepe de segurança" (LOOKX.give).
 // Tudo é desenhado por código numa tela de 400 x 225 ampliada sem suavização; os sons também são feitos por código (WebAudio). Abre pelo ícone de pizza no menu.
 (function(){
 'use strict';
@@ -18343,7 +18357,7 @@ function poutTick(dt){const p=S.pout;
 function jump(who){if(S.mode!=='play')return;S.mode='jump';S.jw=who;S.jt=0;S.cam=false;loopSet(false,false,false);musicStop();if(!(who==='sapo'&&smp('fjs',1)))SND.scream();try{navigator.vibrate&&navigator.vibrate([300,80,300])}catch(e){}}
 function winNight(){S.mode='win';S.wt=0;loopSet(false,false,false);musicStop();SND.chime();
  const p=prog();if(S.night>=p.u&&S.night<5)p.u=S.night+1;p.w=max(p.w,S.night);progSet(p);
- if(S.night===5){S.reward=true;try{if(window.LOOKX&&LOOKX.give('c','quepe'))toastS('Você ganhou o Quepe de segurança! Use em Visual → Chapéu.')}catch(e){}}}
+ if(S.night===5){S.reward=true;try{const q=window.LOOKX&&LOOKX.give('c','quepe'),m=window.LOOKX&&LOOKX.give3&&LOOKX.give3('w3:frm');if(q||m)toastS('Você ganhou a Máscara do Freddy e o Quepe de segurança! Use em Visual → Chapéu.')}catch(e){}}}
 
 // ============================================================ desenho ============================================================
 let NZ=null;
@@ -18429,7 +18443,7 @@ function drawMenu(t){R('#05030a',0,0,W,H);staticFx(.06);
   L.forEach((s,i)=>txt(s,40,64+i*15,i===3?'#ff8a7a':'#fff',7));btn(150,198,100,16,'Voltar');return}
  btn(130,62,140,20,'Continuar · Noite '+p.u);btn(130,88,140,20,'Nova partida');btn(130,114,140,20,'Como jogar');btn(130,140,140,20,'Sair','#aaa');
  const has=window.LOOKX&&LOOKX.has&&LOOKX.has('c','quepe');
- txt(has?'✓ Quepe de segurança conquistado':'Vença a noite 5 para ganhar o Quepe de segurança',W/2,170,has?'#7fff8f':'#ccc',7,'center');
+ txt(has?'✓ Máscara do Freddy e Quepe conquistados':'Vença a noite 5: Máscara do Freddy + Quepe',W/2,170,has?'#7fff8f':'#ccc',7,'center');
  if(p.w)txt('Melhor: noite '+p.w+' vencida',W/2,182,'#aaa',7,'center')}
 function drawIntro(t){R('#000',0,0,W,H);const a=min(1,max(0,S.introT-250)/300),b=S.introT>2400?1-(S.introT-2400)/500:1;X.globalAlpha=max(0,a*b);
  t2('12:00 AM',W/2,86,'#fff',16,'center');t2(S.night===6?'6ª Noite':'Noite '+S.night,W/2,110,'#fff',12,'center');X.globalAlpha=1}
@@ -18908,7 +18922,7 @@ function menuOverlay(t){R('#000',0,0,W,H);
  for(const[l,y,sz]of it){t2(l,44,y,'#fff',sz,'left');X.font='bold '+sz+'px '+F;UI.push({x:40,y:y-2,w:X.measureText(l).width+12,h:sz+6,label:l});if(S.msel===l)t2('>>',18,y,'#fff',sz,'left')}
  t2('Noite '+p.u,46,115,'#fff',8,'left');
  for(const[l,x]of[['Como jogar',18],['Sair',96]]){t2(l,x,205,'#bbb',8,'left');X.font='bold 8px '+F;UI.push({x:x-3,y:201,w:X.measureText(l).width+6,h:16,label:l})}
- const has=window.LOOKX&&LOOKX.has&&LOOKX.has('c','quepe');t2(has?'✓ Quepe de segurança':'Vença a noite 5: Quepe de segurança',18,188,has?'#7fff8f':'#999',6.5,'left','s')}
+ const has=window.LOOKX&&LOOKX.has&&LOOKX.has('c','quepe');t2(has?'✓ Máscara do Freddy + Quepe':'Vença a noite 5: Máscara do Freddy + Quepe',18,188,has?'#7fff8f':'#999',6.5,'left','s')}
 
 // ============================================================ laço ============================================================
 function frame(now){if(!open_)return;raf=requestAnimationFrame(frame);
@@ -26322,7 +26336,7 @@ const _t=tick;tick=function(){_t();if(world!==1)return;const e=drac();if(!e||e.d
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261116141618;
+const GAME_BUILD=20261116142632;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
