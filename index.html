@@ -561,7 +561,7 @@ const pcol=r=>COL[r]||'#f0f',pct=x=>Math.round(x*100);
 const pdesc=p=>[p.as?'+'+pct(p.as)+'% vel. de ataque':'',p.dm?'+'+pct(p.dm)+'% dano':'',p.gold?'+'+pct(p.gold)+'% ouro':''].filter(Boolean).join(' · ');
 const pname=key=>{const p=PAS[key];return `<b style="color:${pcol(p.r)}">${p.n}</b>`};
 const asOf=k=>(PAS[k.pas]||{}).as||0;
-const goldMul=()=>1+(window.XS&&XS().ach.dex0?.1:0)+equipped.reduce((a,id)=>{const k=chars.find(c=>c.id===id);return a+((k&&PAS[k.pas]&&PAS[k.pas].gold)||0)},0);
+const goldMul=()=>1+(window.achGB?achGB():(window.XS&&XS().ach.dex0?.1:0))+equipped.reduce((a,id)=>{const k=chars.find(c=>c.id===id);return a+((k&&PAS[k.pas]&&PAS[k.pas].gold)||0)},0);
 const pasTxt=k=>PAS[k.pas]?`<br>${pname(k.pas)}<br><span style="font-size:11px;opacity:.8">${pdesc(PAS[k.pas])}</span>`:'<br>Sem passiva';
 const HSET=new Set(HNAMES.flat().concat(['Shaco','Bendy']));   // personagens do Halloween: 50% mais fortes que os do mundo normal
 const DBSET=new Set(DBNAMES.flat()),NJSET=new Set(NJNAMES.flat()),OPSET=new Set(OPNAMES.flat()),capOf=k=>k&&(DBSET.has(k.name)||NJSET.has(k.name)||OPSET.has(k.name))?25:20;   // Dragon Ball, ninjas e piratas: nível máximo 25 (os outros 20)
@@ -1840,11 +1840,21 @@ const ACH=[
  {id:'rd15',n:'Desbravador da Dungeon',d:'Limpe a sala 15 da primeira dungeon',s:'rb',g:15,rw:{eq:1}},
  {id:'rd25',n:'Aventureiro da Dungeon',d:'Limpe a sala 25 da primeira dungeon',s:'rb',g:25,rw:{sp:1}},
  {id:'rd50',n:'Conquistador da Dungeon',d:'Limpe a sala 50 da primeira dungeon (a última)',s:'rb',g:50,rw:{eq:1}},
- {id:'dex0',n:'Colecionador da Floresta',d:'Libere todos os personagens do primeiro mundo',s:'dex0',g:NAMES.flat().length,rw:{gb:.1}}];
-// personagens do primeiro mundo já liberados (ficam marcados mesmo depois de vender): ach['dx:Nome'] = 1
+ {id:'dex0',n:'Colecionador da Floresta',d:'Libere todos os personagens do primeiro mundo',s:'dex0',g:NAMES.flat().length,rw:{gb:.1}},
+ {id:'dex1',n:'Colecionador do Halloween',d:'Libere todos os personagens do Halloween',s:'dex1',g:HNAMES.flat().length,rw:{gb:.1}},
+ {id:'dex4',n:'Colecionador do Dragon Ball',d:'Libere todos os personagens do Mundo 2 (Dragon Ball)',s:'dex4',g:DBNAMES.flat().length,rw:{gb:.1}},
+ {id:'dex5',n:'Colecionador Ninja',d:'Libere todos os personagens do Mundo 3 (Floresta dos Pinheiros)',s:'dex5',g:NJNAMES.flat().length,rw:{gb:.1}},
+ {id:'dex6',n:'Colecionador Pirata',d:'Libere todos os personagens do Mundo 4 (Arquipélago)',s:'dex6',g:OPNAMES.flat().length,rw:{gb:.1}},
+ {id:'dexA',n:'Colecionador Supremo',d:'Libere todos os personagens de todos os mundos',s:'dexA',g:0,rw:{gb:.2}}];
+// personagens de cada mundo (dex0 = Mundo 1, dex1 = Halloween, dex4/5/6 = Mundos 2/3/4) e de todos (dexA)
+const DXP={dex0:NAMES,dex1:HNAMES,dex4:DBNAMES,dex5:NJNAMES,dex6:OPNAMES},DXALL=[...new Set(Object.values(DXP).map(p=>p.flat()).flat())];
+ACH.find(a=>a.id==='dexA').g=DXALL.length;
+const dxHas=n=>!!(ach['dx:'+n]||(typeof GOT!=='undefined'&&GOT[n]));
+window.achGB=()=>ACH.reduce((t,a)=>t+(a.rw.gb&&ach[a.id]?a.rw.gb:0),0);
+// personagens já liberados (ficam marcados mesmo depois de vender): ach['dx:Nome'] = 1
 window.dexUp=()=>dexUp();window.achCheck=()=>achCheck();
-function dexUp(){let n=0;for(const k of chars){if(k&&k.name&&NAMES.some(r=>r.includes(k.name))&&!ach['dx:'+k.name]){ach['dx:'+k.name]=1;n++}}return n}
-const stv=s=>s==='dex0'?NAMES.flat().filter(n=>ach['dx:'+n]).length:s==='maxlv'?chars.reduce((a,k)=>Math.max(a,k.lvl||1),0):num(st[s]);
+function dexUp(){let n=0;for(const k of chars){if(k&&k.name&&DXALL.includes(k.name)&&!ach['dx:'+k.name]){ach['dx:'+k.name]=1;n++}}return n}
+const stv=s=>s==='dexA'?DXALL.filter(dxHas).length:DXP[s]?DXP[s].flat().filter(dxHas).length:s==='maxlv'?chars.reduce((a,k)=>Math.max(a,k.lvl||1),0):num(st[s]);
 let achOk=false;
 function achCheck(){if(!achOk)return;let nw=0;if(dexUp())save();ACH.forEach(a=>{if(ach[a.id]||stv(a.s)<a.g)return;ach[a.id]=Date.now();nw++;qToast('Conquista: '+a.n+' (+'+grant(a.rw)+')');if(window.MP&&MP.pfDirty)MP.pfDirty()});
  if(nw){sWin(3);save();if($('acM').style.display==='flex')renderAch()}}
@@ -26307,7 +26317,7 @@ const _t=tick;tick=function(){_t();if(world!==1)return;const e=drac();if(!e||e.d
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261116054000;
+const GAME_BUILD=20261116060000;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
@@ -31642,6 +31652,73 @@ function tickQ(){const h=here();
  wasHere=h;const now=Date.now();if(now-uiT>300){uiT=now;ui(false)}}
 {const _t=tick;tick=function(){try{tickQ()}catch(e){if(!window.NJQerr){window.NJQerr=1;console.error('NJQ',e)}}return _t.apply(this,arguments)}}
 window.NJQ={QL,get:()=>NQ,set:(s,n)=>{NQ.s=s;NQ.n=n||0;ui(true)},kill:njqKill};
+})();
+// ===================== MUNDO 4 (ARQUIPÉLAGO / PIRATAS): MISSÕES =====================
+// Corrente de 14 missões, ilha por ilha na ordem da viagem de barco: Alvida (ilha 1), marinheiros, Marinheiros 2 e Morgan (ilha 2),
+// Mohji, Cabaji e Buggy (ilha 3), homens-peixe, Kuroobi e Arlong (ilha 5), Sham, Buchi, Jango e o chefe final Kuro (ilha 6).
+// Cada uma começa sozinha quando a anterior acaba (sem NPC: o Mundo 4 é só 3D). O progresso aparece no alto da tela enquanto você está no Mundo 4.
+// Recompensa = ~2,5x as moedas que os inimigos da missão dão (a mesma proporção das missões do Mundo 2); o Kuro (chefe final) segue a tabela planejada.
+(function(){
+'use strict';
+const clp=(v,a,b)=>v<a?a:v>b?b:v;
+const WID=window.OCW&&OCW.WID||6;
+// k = o que conta (opk dos inimigos) · g = quantos · rw = moedas · e = essências
+const QL=[
+ {k:'alv',g:1,n:'Derrote a Alvida (Vila dos Moinhos)',rw:12500,e:3},
+ {k:'mar',g:15,n:'Derrote 15 marinheiros (Forte Naval)',rw:3400},
+ {k:'mr2',g:2,n:'Derrote 2 Marinheiros 2 (base da marinha)',rw:8500},
+ {k:'mor',g:1,n:'Derrote o Morgan',rw:21000,e:6},
+ {k:'moh',g:15,n:'Derrote 15 Mohjis (Cidade do Porto)',rw:5300},
+ {k:'cab',g:2,n:'Derrote 2 Cabajis',rw:12500},
+ {k:'bug',g:1,n:'Derrote o Buggy',rw:34000,e:10},
+ {k:'pei',g:15,n:'Derrote 15 homens-peixe (Templo da Maré)',rw:8100},
+ {k:'kob',g:2,n:'Derrote 2 Kuroobis',rw:21000},
+ {k:'arl',g:1,n:'Derrote o Arlong',rw:52500,e:14},
+ {k:'sha',g:10,n:'Derrote 10 Shams (Último Porto)',rw:7600},
+ {k:'buc',g:8,n:'Derrote 8 Buchis',rw:8900},
+ {k:'jan',g:2,n:'Derrote 2 Jangos',rw:31000},
+ {k:'kur',g:1,n:'Derrote o Kuro',rw:167300,e:42}];
+const D0=()=>({s:0,n:0});
+let OQ=D0();
+try{const o=typeof SV!=='undefined'&&SV&&SV.opq;if(o&&typeof o==='object'){OQ.s=clp(o.s|0,0,QL.length);OQ.n=clp(o.n|0,0,1e6)}}catch(e){}
+{const _xs=window.XS;window.XS=()=>Object.assign(_xs?_xs():{},{opq:OQ})}
+const keep=()=>{try{save()}catch(e){}};
+const nfm=v=>{try{return nf(v)}catch(e){return v.toLocaleString('pt-BR')}};
+const here=()=>typeof world!=='undefined'&&world===WID;
+const kindOf=e=>!e||!e.opm?null:e.opk||null;
+function float(s,c){try{fx.push({x:P.x-10,y:P.y-22,t:Date.now(),s,c})}catch(e){}}
+function rwTx(q){return nfm(q.rw)+' moedas'+(q.e?' + '+q.e+' essências':'')}
+function finish(){const q=QL[OQ.s];if(!q)return;
+ try{coins+=q.rw;if(q.e)ess+=q.e;if(typeof lastCoins!=='undefined')lastCoins=coins;updHud()}catch(e){}
+ OQ.s++;OQ.n=0;keep();
+ try{if(typeof sWin==='function')sWin(2)}catch(e){}
+ const nx=QL[OQ.s];
+ try{toast('Missão concluída! +'+rwTx(q)+(nx?' · Próxima: '+nx.n:' · Todas as missões do Mundo 4 concluídas!'))}catch(e){}
+ float('+'+nfm(q.rw)+' moedas','#ffd23f');ui(true)}
+// mortes contam (local e luta compartilhada: as duas passam pelo questKill)
+{const _qk=questKill;questKill=function(e){const r=_qk.apply(this,arguments);try{opqKill(e)}catch(x){}return r}}
+function opqKill(e){if(!here())return;const q=QL[OQ.s];if(!q||kindOf(e)!==q.k)return;OQ.n=Math.min(q.g,OQ.n+1);keep();
+ if(OQ.n>=q.g)finish();else ui(true)}
+// ---------- painel no alto da tela ----------
+const st=document.createElement('style');
+st.textContent='#opQ{position:fixed;left:50%;transform:translateX(-50%);top:calc(40px + env(safe-area-inset-top,0px));text-align:center;background:#000b;color:#fff;border:2px solid #29b6f6;border-radius:999px;padding:3px 12px;font-size:12px;z-index:3;display:none;max-width:70vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}'
+ +'#opQ b{color:#81d4fa}#opQ i{font-style:normal;color:#ffd23f;font-weight:bold}#opQ.up{animation:opQp .5s}@keyframes opQp{0%{transform:translateX(-50%) scale(1.15)}100%{transform:translateX(-50%) scale(1)}}';
+document.head.appendChild(st);
+const el=document.createElement('div');el.id='opQ';document.body.appendChild(el);
+let last='';
+function ui(pop){const q=QL[OQ.s];let h='';
+ if(q)h='<b>Missão '+(OQ.s+1)+'/'+QL.length+':</b> '+q.n+' <i>'+OQ.n+'/'+q.g+'</i>';
+ const show=!!h&&here()&&!(typeof lock!=='undefined'&&lock)&&!bossNear();
+ if(h!==last){last=h;el.innerHTML=h;if(pop){el.classList.remove('up');void el.offsetWidth;el.classList.add('up')}}
+ el.style.display=show?'block':'none'}
+// perto do boss a barra de vida dele fica no alto da tela: a missão some para não ficar por cima
+function bossNear(){try{return WD[WID].EN.some(b=>b.opm&&b.t===2&&!b.dead&&(fight===b||Math.hypot(P.x-b.x,P.y-b.y)<450))}catch(e){return false}}
+let uiT=0,wasHere=false;
+function tickQ(){const h=here();
+ if(h&&!wasHere){const q=QL[OQ.s];if(q)setTimeout(()=>{try{if(here())qToast('Missão '+(OQ.s+1)+' do Mundo 4: '+q.n+' (recompensa: '+rwTx(q)+')')}catch(e){}},1500)}
+ wasHere=h;const now=Date.now();if(now-uiT>300){uiT=now;ui(false)}}
+{const _t=tick;tick=function(){try{tickQ()}catch(e){if(!window.OPQerr){window.OPQerr=1;console.error('OPQ',e)}}return _t.apply(this,arguments)}}
+window.OPQ={QL,get:()=>OQ,set:(s,n)=>{OQ.s=s;OQ.n=n||0;ui(true)},kill:opqKill};
 })();
 // ===================== HALLOWEEN: QUESTS DO COVEIRO ELIAS (cidade abandonada) =====================
 // Elias dá uma corrente de missões: matar inimigos, caçar tesouro (cavar) e enigmas que levam às chaves das 3 criptas.
