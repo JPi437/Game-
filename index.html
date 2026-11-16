@@ -626,10 +626,10 @@ const solid=(px,py)=>{if(world===3)return window.RAID?RAID.solid(px,py):true;if(
 const hit=(x,y)=>solid(x+3,y+8)||solid(x+12,y+8)||solid(x+3,y+15)||solid(x+12,y+15)||eBlock(x,y);
 // Mundo 1 (floresta): 0 goblin · 1 ciclope · 2 boss (Demônio da Torre) · 3 cavaleiro das chamas (mini boss). O desenho deles está em js/13-monsters.js (e.mon).
 // s e vh = altura do sprite (a barra de vida e os números de dano ficam acima da cabeça) · r = raio que bloqueia o jogador · orb = distância dos lutadores · eng = distância do botão Lutar
-const TY=[{s:1.6,vh:25,mon:'goblin',max:800,coin:[4,6],r:9,orb:20,eng:38,rsp:10000},
- {s:4.1,vh:66,mon:'cyclops',max:6000,coin:[12,18],r:16,orb:36,eng:50,fy:.6,fcy:6,rsp:10000},
- {s:3,max:50000,coin:[80,120],r:12,orb:54,eng:80,fy:.5,fcy:30,rsp:20000,dm:1},
- {s:4.25,vh:68,mon:'knight',mb:1,max:15000,coin:[35,55],r:15,orb:34,eng:48,fy:.6,fcy:6,rsp:10000}];
+const TY=[{s:1.6,vh:25,mon:'goblin',max:800,coin:[30,50],r:9,orb:20,eng:38,rsp:10000},
+ {s:4.1,vh:66,mon:'cyclops',max:6000,coin:[80,130],r:16,orb:36,eng:50,fy:.6,fcy:6,rsp:10000},
+ {s:3,max:50000,coin:[500,750],r:12,orb:54,eng:80,fy:.5,fcy:30,rsp:20000,dm:1},
+ {s:4.25,vh:68,mon:'knight',mb:1,max:15000,coin:[150,200],r:15,orb:34,eng:48,fy:.6,fcy:6,rsp:10000}];
 let EN=[
  // goblins pela floresta (os primeiros ficam logo ao sul da ponte, perto da Lina)
  [30,35],[24,38],[21,34],[37,34],[28,42],[35,45],[15,28],[46,25],[11,39],[23,47],[48,39],[58,23],[42,13],[57,29],[14,8],[62,19],[75,33],[45,52],
@@ -13778,7 +13778,7 @@ const SKP=[];for(let i=0;i<BO.NSK;i++){const a=PI/2+(i+.5)*TAU/BO.NSK,r=i%2?106:
 const LE={lich:null,sk:[]};
 function enList(){return typeof WD!=='undefined'&&WD[1]&&WD[1].EN?WD[1].EN:null}
 function mkEN(){const L=enList();if(!L||(LE.lich&&L.indexOf(LE.lich)>=0))return;
- LE.lich={x:OX-8,y:OY-14,t:2,s:1,vh:90,max:BO.MAX,hp:BO.MAX,dh:BO.MAX,coin:[1500,2500],r:0,orb:86,eng:0,rsp:BO.RESP,dead:true,back:Infinity,lk:'lich',m3:1,fly:1,fxt:-400};L.push(LE.lich);LE.sk=[];
+ LE.lich={x:OX-8,y:OY-14,t:2,s:1,vh:90,max:BO.MAX,hp:BO.MAX,dh:BO.MAX,coin:[1562,1953],r:0,orb:86,eng:0,rsp:BO.RESP,dead:true,back:Infinity,lk:'lich',m3:1,fly:1,fxt:-400};L.push(LE.lich);LE.sk=[];
  for(let i=0;i<BO.NSK;i++){const p=SKP[i],e={x:p[0]-8+OX,y:p[1]-14+OY,t:1,s:1.2,vh:30,max:BO.SKHP,hp:BO.SKHP,dh:BO.SKHP,coin:[40,70],r:0,orb:26,eng:44,rsp:BO.RESP,dead:true,back:Infinity,lk:'sk',si:i,m3:1,fly:1,fxt:-30};LE.sk.push(e);L.push(e)}}
 mkEN();
 let hintT=0;const hint=m=>{const n=Date.now();if(n-hintT<4000)return;hintT=n;try{if(typeof toast==='function')toast(m)}catch(e){}};
@@ -26344,7 +26344,7 @@ const _t=tick;tick=function(){_t();if(world!==1)return;const e=drac();if(!e||e.d
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261116153710;
+const GAME_BUILD=20261116153711;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
@@ -27390,12 +27390,12 @@ const angd=(a,b)=>{let d=(b-a)%TAU;if(d>PI)d-=TAU;if(d<-PI)d+=TAU;return d};
 const DBE3=window.DBE3={on:false,list:[]};
 // tipos: H = altura no mundo · n = quantos · área (c = cidade, d = deserto) · atk = golpe especial
 const TYP={
- faz:{nm:'Inimigo Fazendeiro',H:31,n:26,ar:'c',wd:60,t:0,s:2,vh:34,max:60000,coin:[25,40],r:10,orb:26,eng:45,rsp:12000,atk:null},
- sai:{nm:'Inimigo Saibaman',H:28,n:22,ar:'c',wd:70,t:0,s:2,vh:31,max:150000,coin:[50,80],r:10,orb:26,eng:45,rsp:12000,atk:'ki'},
- rad:{nm:'Inimigo Raditz',H:35,n:3,ar:'c',wd:40,t:1,mb:1,s:2.4,vh:40,max:1500000,coin:[700,1000],r:12,orb:30,eng:55,rsp:45000,atk:'sunday'},
- nap:{nm:'Inimigo Nappa',H:39,n:5,ar:'d',wd:50,t:1,s:2.6,vh:43,max:1000000,coin:[300,450],r:13,orb:32,eng:55,rsp:25000,atk:'bomber'},
- veg:{nm:'Inimigo Vegeta',H:31,n:2,ar:'d',wd:40,t:1,mb:1,s:2.2,vh:36,max:5000000,coin:[2000,3000],r:12,orb:32,eng:60,rsp:90000,atk:'galick'},
- oza:{nm:'Inimigo Ozaru',H:240,n:1,ar:'d',wd:0,t:2,s:13,vh:252,max:20000000,coin:[10000,15000],r:69,orb:120,eng:140,rsp:300000,atk:'ozaru',big:1}};
+ faz:{nm:'Inimigo Fazendeiro',H:31,n:26,ar:'c',wd:60,t:0,s:2,vh:34,max:60000,coin:[1000,1250],r:10,orb:26,eng:45,rsp:12000,atk:null},
+ sai:{nm:'Inimigo Saibaman',H:28,n:22,ar:'c',wd:70,t:0,s:2,vh:31,max:150000,coin:[1250,1562],r:10,orb:26,eng:45,rsp:12000,atk:'ki'},
+ rad:{nm:'Inimigo Raditz',H:35,n:3,ar:'c',wd:40,t:1,mb:1,s:2.4,vh:40,max:1500000,coin:[2441,3052],r:12,orb:30,eng:55,rsp:45000,atk:'sunday'},
+ nap:{nm:'Inimigo Nappa',H:39,n:5,ar:'d',wd:50,t:1,s:2.6,vh:43,max:1000000,coin:[1953,2441],r:13,orb:32,eng:55,rsp:25000,atk:'bomber'},
+ veg:{nm:'Inimigo Vegeta',H:31,n:2,ar:'d',wd:40,t:1,mb:1,s:2.2,vh:36,max:5000000,coin:[3052,3815],r:12,orb:32,eng:60,rsp:90000,atk:'galick'},
+ oza:{nm:'Inimigo Ozaru',H:240,n:1,ar:'d',wd:0,t:2,s:13,vh:252,max:20000000,coin:[3815,4768],r:69,orb:120,eng:140,rsp:300000,atk:'ozaru',big:1}};
 // ---------- lugares (iguais para todos: sorteio com semente fixa; quando o mapa fica pronto, quem caiu em cima de algo vai para o lugar livre mais perto) ----------
 function rng(s){s=s>>>0;return()=>{s=(s+0x6D2B79F5)>>>0;let t=s;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296}}
 const AVOID=[[600,2240,380],[820,2240,140],[300,2060,160],[300,2420,160],[300,2240,200],[1520,3280,300]];   // chegada, estátua, portais, arena
@@ -28267,13 +28267,13 @@ const clp=(v,a,b)=>v<a?a:v>b?b:v,lerp=(a,b,t)=>a+(b-a)*t,sm=v=>{v=clp(v,0,1);ret
 const NJE3=window.NJE3={on:false,list:[]};
 // tipos: H = altura no mundo · n = quantos · ar = área · atk = golpe especial
 const TYP={
- nj1:{nm:'Inimigo Ninja',H:30,n:14,ar:'p',wd:60,t:0,s:2,vh:33,max:100000,coin:[42,67],r:10,orb:26,eng:45,rsp:12000,atk:null},
- nj2:{nm:'Inimigo Ninja 2',H:30,n:12,ar:'p',wd:60,t:0,s:2,vh:33,max:100000,coin:[42,67],r:10,orb:26,eng:45,rsp:12000,atk:null},
- shu:{nm:'Inimigo Ninja Shuriken',H:30,n:16,ar:'s',wd:70,t:0,s:2,vh:33,max:250000,coin:[84,134],r:10,orb:26,eng:45,rsp:12000,atk:'shu'},
- som:{nm:'Inimigo Ninja do Som',H:31,n:10,ar:'f',wd:60,t:1,s:2.2,vh:35,max:1670000,coin:[500,750],r:11,orb:28,eng:55,rsp:25000,atk:'som'},
- zab:{nm:'Inimigo Zabuza',H:37,n:3,ar:'t',wd:40,t:1,mb:1,s:2.6,vh:41,max:2500000,coin:[1170,1670],r:13,orb:32,eng:60,rsp:45000,atk:'agua'},
- cob:{nm:'Inimigo Cobra',H:35,n:2,ar:'h',wd:40,t:1,mb:1,s:2.4,vh:39,max:8350000,coin:[3340,5000],r:12,orb:32,eng:60,rsp:90000,atk:'cobra'},
- mal:{nm:'Inimigo Marca da Maldicao',H:71,n:1,ar:'w',wd:0,t:2,s:5,vh:76,max:33400000,coin:[16700,25000],r:24,orb:50,eng:80,rsp:300000,atk:'maldicao',big:1}};
+ nj1:{nm:'Inimigo Ninja',H:30,n:14,ar:'p',wd:60,t:0,s:2,vh:33,max:100000,coin:[4768,5960],r:10,orb:26,eng:45,rsp:12000,atk:null},
+ nj2:{nm:'Inimigo Ninja 2',H:30,n:12,ar:'p',wd:60,t:0,s:2,vh:33,max:100000,coin:[5960,7451],r:10,orb:26,eng:45,rsp:12000,atk:null},
+ shu:{nm:'Inimigo Ninja Shuriken',H:30,n:16,ar:'s',wd:70,t:0,s:2,vh:33,max:250000,coin:[7451,9313],r:10,orb:26,eng:45,rsp:12000,atk:'shu'},
+ som:{nm:'Inimigo Ninja do Som',H:31,n:10,ar:'f',wd:60,t:1,s:2.2,vh:35,max:1670000,coin:[9313,11642],r:11,orb:28,eng:55,rsp:25000,atk:'som'},
+ zab:{nm:'Inimigo Zabuza',H:37,n:3,ar:'t',wd:40,t:1,mb:1,s:2.6,vh:41,max:2500000,coin:[11642,14552],r:13,orb:32,eng:60,rsp:45000,atk:'agua'},
+ cob:{nm:'Inimigo Cobra',H:35,n:2,ar:'h',wd:40,t:1,mb:1,s:2.4,vh:39,max:8350000,coin:[14552,18190],r:12,orb:32,eng:60,rsp:90000,atk:'cobra'},
+ mal:{nm:'Inimigo Marca da Maldicao',H:71,n:1,ar:'w',wd:0,t:2,s:5,vh:76,max:33400000,coin:[18190,22737],r:24,orb:50,eng:80,rsp:300000,atk:'maldicao',big:1}};
 for(const k in TYP){const D=window.CH3_META&&CH3_META[TYP[k].nm]||CD[TYP[k].nm];if(D&&D.h)TYP[k].H=Math.round(D.h*28/0.9489)}   // altura de verdade do modelo
 // ---------- lugares (sorteio com semente fixa; quando o mapa fica pronto, quem caiu em cima de algo vai para o lugar livre mais perto) ----------
 function rng(s){s=s>>>0;return()=>{s=(s+0x6D2B79F5)>>>0;let t=s;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296}}
@@ -30430,20 +30430,20 @@ function scaled(D,k){const o=Object.assign({},D);o.h=D.h*k;o.min=D.min.map(v=>v*
 for(const[nm,src,k]of[['Inimigo Morgan','Morgan',2],['Inimigo Buggy','Buggy',1],['Inimigo Arlong','Arlong',1]])if(window.CH3_DERIVE){if(!(nm in CD)&&(src in CD))CH3_DERIVE(nm,src,d=>scaled(d,k),CH3_META[src]&&CH3_META[src].h*k)}else if(!CD[nm]&&CD[src])CD[nm]=scaled(CD[src],k);   // a cópia em escala é feita quando o modelo original chega
 // tipos: n = quantos · ar = onde · wd = raio do passeio · t: 0 normal, 1 forte, 2 chefe · mb = mini/semi-chefe
 const TYP={
- alv:{nm:'Inimigo Alvida',n:1,ar:'alv',wd:30,t:2,s:3,max:6000000,coin:[4000,6000],r:16,orb:36,eng:70,rsp:300000,big:1},
- mar:{nm:'Inimigo Marinheiro',n:16,ar:'i2',wd:60,t:0,s:2,max:170000,coin:[70,110],r:10,orb:26,eng:45,rsp:12000},
- mr2:{nm:'Inimigo Marinheiro 2',n:2,ar:'base',wd:40,t:1,mb:1,s:2.4,max:2800000,coin:[1400,2000],r:12,orb:30,eng:55,rsp:45000},
- mor:{nm:'Inimigo Morgan',n:1,ar:'mor',wd:0,t:2,s:5,max:14000000,coin:[7000,10000],r:24,orb:50,eng:85,rsp:300000,big:1},
- moh:{nm:'Inimigo Mohji',n:16,ar:'i3',wd:60,t:0,s:2,max:280000,coin:[110,170],r:10,orb:26,eng:45,rsp:12000},
- cab:{nm:'Inimigo Cabaji',n:2,ar:'cais',wd:40,t:1,mb:1,s:2.4,max:4200000,coin:[2000,3000],r:12,orb:30,eng:55,rsp:45000},
- bug:{nm:'Inimigo Buggy',n:1,ar:'navio',wd:0,t:2,s:3,max:22000000,coin:[11000,16000],r:14,orb:36,eng:70,rsp:300000,big:1},
- pei:{nm:'Inimigo Homem-Peixe',n:16,ar:'i5',wd:60,t:0,s:2,max:420000,coin:[170,260],r:10,orb:26,eng:45,rsp:12000},
- kob:{nm:'Inimigo Kuroobi',n:2,ar:'templo',wd:40,t:1,mb:1,s:2.6,max:7000000,coin:[3300,5000],r:13,orb:32,eng:60,rsp:45000},
- arl:{nm:'Inimigo Arlong',n:1,ar:'arl',wd:0,t:2,s:3.2,max:35000000,coin:[17000,25000],r:16,orb:38,eng:75,rsp:300000,big:1},
- sha:{nm:'Inimigo Sham',n:12,ar:'i6',wd:60,t:0,s:2,max:600000,coin:[240,370],r:10,orb:26,eng:45,rsp:12000},
- buc:{nm:'Inimigo Buchi',n:10,ar:'i6',wd:50,t:0,s:2.4,max:900000,coin:[350,540],r:13,orb:30,eng:50,rsp:15000},
- jan:{nm:'Inimigo Jango',n:2,ar:'praca',wd:40,t:1,mb:1,s:2.4,max:10000000,coin:[5000,7500],r:12,orb:30,eng:55,rsp:45000},
- kur:{nm:'Inimigo Kuro',n:1,ar:'kur',wd:0,t:2,s:3,max:56000000,coin:[27000,40000],r:14,orb:36,eng:70,rsp:300000,big:1}};
+ alv:{nm:'Inimigo Alvida',n:1,ar:'alv',wd:30,t:2,s:3,max:6000000,coin:[108420,135525],r:16,orb:36,eng:70,rsp:300000,big:1},
+ mar:{nm:'Inimigo Marinheiro',n:16,ar:'i2',wd:60,t:0,s:2,max:170000,coin:[22737,28422],r:10,orb:26,eng:45,rsp:12000},
+ mr2:{nm:'Inimigo Marinheiro 2',n:2,ar:'base',wd:40,t:1,mb:1,s:2.4,max:2800000,coin:[69389,86736],r:12,orb:30,eng:55,rsp:45000},
+ mor:{nm:'Inimigo Morgan',n:1,ar:'mor',wd:0,t:2,s:5,max:14000000,coin:[211758,264698],r:24,orb:50,eng:85,rsp:300000,big:1},
+ moh:{nm:'Inimigo Mohji',n:16,ar:'i3',wd:60,t:0,s:2,max:280000,coin:[28422,35527],r:10,orb:26,eng:45,rsp:12000},
+ cab:{nm:'Inimigo Cabaji',n:2,ar:'cais',wd:40,t:1,mb:1,s:2.4,max:4200000,coin:[86736,108420],r:12,orb:30,eng:55,rsp:45000},
+ bug:{nm:'Inimigo Buggy',n:1,ar:'navio',wd:0,t:2,s:3,max:22000000,coin:[264698,330872],r:14,orb:36,eng:70,rsp:300000,big:1},
+ pei:{nm:'Inimigo Homem-Peixe',n:16,ar:'i5',wd:60,t:0,s:2,max:420000,coin:[35527,44409],r:10,orb:26,eng:45,rsp:12000},
+ kob:{nm:'Inimigo Kuroobi',n:2,ar:'templo',wd:40,t:1,mb:1,s:2.6,max:7000000,coin:[135525,169407],r:13,orb:32,eng:60,rsp:45000},
+ arl:{nm:'Inimigo Arlong',n:1,ar:'arl',wd:0,t:2,s:3.2,max:35000000,coin:[330872,413590],r:16,orb:38,eng:75,rsp:300000,big:1},
+ sha:{nm:'Inimigo Sham',n:12,ar:'i6',wd:60,t:0,s:2,max:600000,coin:[44409,55511],r:10,orb:26,eng:45,rsp:12000},
+ buc:{nm:'Inimigo Buchi',n:10,ar:'i6',wd:50,t:0,s:2.4,max:900000,coin:[55511,69389],r:13,orb:30,eng:50,rsp:15000},
+ jan:{nm:'Inimigo Jango',n:2,ar:'praca',wd:40,t:1,mb:1,s:2.4,max:10000000,coin:[169407,211758],r:12,orb:30,eng:55,rsp:45000},
+ kur:{nm:'Inimigo Kuro',n:1,ar:'kur',wd:0,t:2,s:3,max:56000000,coin:[413590,516988],r:14,orb:36,eng:70,rsp:300000,big:1}};
 for(const k in TYP){const T=TYP[k],D=window.CH3_META&&CH3_META[T.nm]||CD[T.nm];T.H=Math.round((D&&D.h||1.1)*28/0.9489);T.vh=T.H+3;if(!D)T.n=0}
 // ---------- lugares (projeto; sorteio com semente fixa; quando o mapa fica pronto, quem caiu em cima de algo vai para o lugar livre mais perto) ----------
 function rng(s){s=s>>>0;return()=>{s=(s+0x6D2B79F5)>>>0;let t=s;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296}}
