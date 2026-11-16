@@ -662,7 +662,7 @@ function mythRedraw(){const t=performance.now();if(t-mythT>500){mythT=t;mythL=[.
 function render(){cam.x=Math.max(0,Math.min(W*T-VW,P.x+8-VW/2));cam.y=Math.max(0,Math.min(H*T-VH,P.y+8-VH/2));if(window.CAMF)CAMF();   // cam = recorte do mapa em volta do jogador (usado para saber o que está perto)
  mapStep();
  drawActors(frame);if(window.V6F)V6F(frame);
- near=Math.hypot(P.x+8-(SX*T+8),P.y+8-(SY*T+8))<30;
+ near=Math.hypot(P.x+8-(SX*T+8),P.y+8-(SY*T+8))<(near?36:30);
  spinBtn.style.display=near&&!lock?'block':'none';spinBtn.classList.toggle('dis',have()<spinCost());uiFight();
  if((frame&3)===0)mythRedraw();
  if(window.FBT)FBT()}
@@ -858,7 +858,7 @@ $('upClose').onclick=()=>{$('upM').style.display='none';lock=false};
 updHud();
 // roleta
 let spinning=false;
-spinBtn.onclick=()=>{if(have()<spinCost())return;spinUi();$('reels').innerHTML='';$('slotName').textContent='Boa sorte!';$('spinM').style.display='flex';lock=true;jr()};
+spinBtn.onclick=()=>{if(have()<spinCost()){try{toast('Para roletar você precisa de '+spinCost().toLocaleString('pt-BR')+(world===1?' abóboras':' moedas')+' (você tem '+Math.floor(have()).toLocaleString('pt-BR')+')')}catch(e){}return}spinUi();$('reels').innerHTML='';$('slotName').textContent='Boa sorte!';$('spinM').style.display='flex';lock=true;jr()};
 $('spinClose').onclick=()=>{autoOn=false;if(spinning)return;$('spinM').style.display='none';lock=false};
 [['invM','invClose'],['upM','upClose'],['mtM','mtClose'],['spinM','spinClose'],['feedM','feedBack'],['detM','detClose'],['pasM','pasClose'],['wM','wClose'],['massM','massClose']].forEach(([m,c])=>{const b=document.createElement('button');b.className='btn xb';b.textContent='✕';b.onclick=()=>$(c).click();const bx=$(m).querySelector('.box');bx.insertBefore(b,bx.firstChild)});
 function mythFx(names){const o=document.createElement('div');o.id='myth';let p='';for(let i=0;i<60;i++){const a=Math.random()*6.283,d=120+Math.random()*320;p+=`<i style="--dx:${Math.cos(a)*d}px;--dy:${Math.sin(a)*d}px;background:hsl(${Math.random()*360},95%,60%);animation-delay:${Math.random()*.4}s"></i>`}
@@ -9171,13 +9171,19 @@ function overlay(t,C){
  if(SC.overlayExtra)SC.overlayExtra(x,t,C,sc)}
 H3.proj=proj;
 // botões flutuantes (Roletar, Passiva, Conversar, portal...) no 3D: presos ao ponto do mundo 3D de cada coisa (a cena diz onde, SC.fbPos)
-{const _fbt=window.FBT,FBI=['spinBtn','pasBtn','talkBtn','gateBtn','rkBtn'],FBS3={},FBB3=[0,-1,-2,-3,-4,-3,-2,-1];
+{const _fbt=window.FBT,FBI=['spinBtn','pasBtn','talkBtn','gateBtn','rkBtn'],FBS3={},FBP={},FBB3=[0,-1,-2,-3,-4,-3,-2,-1];
  window.FBT=function(){if(!S.mode||!SC||!SC.fbPos)return _fbt&&_fbt();
   try{const bob=FBB3[Math.floor(performance.now()/200)&7];
    for(const id of FBI){const el=$$(id);if(!el)continue;const dsp=el.style.display,want=dsp!=='none'&&dsp!=='';let p=null;
     if(want){const w=SC.fbPos(id);if(w)p=proj(w[0],w[1],w[2])}
-    // perto da coisa (estrela alta, máquina...) o ponto sai por cima da tela: o botão fica preso na borda em vez de sumir
-    if(want){const W=S.cssW,H=S.cssH;if(!p||!(p[2]>0))p=[W/2,H*.62];else p=[Math.min(W-70,Math.max(70,p[0])),Math.min(H-50,Math.max(70,p[1]))]}
+    // perto da coisa (estrela alta, máquina...) o ponto pode sair da tela ou ficar atrás da câmera: aí o botão vai para cima da cabeça
+    // do jogador; e ele sempre desliza da posição anterior até a nova (nada de pular de um lugar para outro de um quadro para o outro)
+    if(want){const W=S.cssW,H=S.cssH;
+     if(!p||!(p[2]>1)||p[0]<-40||p[0]>W+40||p[1]<-40||p[1]>H+40){p=null;const L=window.H3C&&H3C.list,A=L&&L.find(a=>a.k==='P');if(A){const q=proj(A.x,A.y+(A.h3d?44:40),A.z);if(q&&q[2]>1)p=q}}
+     if(!p)p=FBP[id]?[FBP[id][0],FBP[id][1]]:[W/2,H*.4];
+     p=[Math.min(W-70,Math.max(70,p[0])),Math.min(H-50,Math.max(70,p[1]))];
+     const o=FBP[id];if(o&&el.classList.contains('fbOn')){o[0]+=(p[0]-o[0])*.3;o[1]+=(p[1]-o[1])*.3;p=[o[0],o[1]]}else FBP[id]=[p[0],p[1]]}
+    else FBP[id]=null;
     const on=!!(want&&p);
     if(on){const k=round(p[0])+','+round(p[1]);if(FBS3[id]!==k){FBS3[id]=k;el.style.transform='translate('+round(p[0])+'px,'+round(p[1])+'px) translate(-50%,-100%)'}if(el._bob!==bob){el._bob=bob;el.style.translate='0 '+bob+'px'}}
     el.classList.toggle('fbOn',on)}}catch(e){}};
@@ -26338,7 +26344,7 @@ const _t=tick;tick=function(){_t();if(world!==1)return;const e=drac();if(!e||e.d
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261116151153;
+const GAME_BUILD=20261116153710;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
