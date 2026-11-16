@@ -7944,6 +7944,8 @@ H3.makeTex=function(){
  tex.glow=mk(64,64,(x,w,h)=>{const g=x.createRadialGradient(32,32,0,32,32,32);g.addColorStop(0,'rgba(255,255,255,1)');g.addColorStop(.25,'rgba(255,255,255,.55)');g.addColorStop(.6,'rgba(255,255,255,.14)');g.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=g;x.fillRect(0,0,w,h)},true);
  tex.ring=mk(128,128,(x,w,h)=>{const g=x.createRadialGradient(64,64,40,64,64,63);g.addColorStop(0,'rgba(255,255,255,0)');g.addColorStop(.55,'rgba(255,255,255,.95)');g.addColorStop(.75,'rgba(255,255,255,.35)');g.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=g;x.fillRect(0,0,w,h)},true);
  tex.beam=mk(32,8,(x,w,h)=>{const g=x.createLinearGradient(0,0,w,0);g.addColorStop(0,'rgba(255,255,255,0)');g.addColorStop(.3,'rgba(255,255,255,.55)');g.addColorStop(.5,'rgba(255,255,255,1)');g.addColorStop(.7,'rgba(255,255,255,.55)');g.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=g;x.fillRect(0,0,w,h)},true);
+ // raio do Haki do Rei: miolo preto com a borda vermelha bem marcada (atravessando a largura da faixa)
+ tex.haki=mk(32,8,(x,w,h)=>{const g=x.createLinearGradient(0,0,w,0);[[0,'rgba(255,20,10,0)'],[.12,'rgba(255,25,15,.25)'],[.2,'rgba(255,45,25,1)'],[.27,'rgba(150,0,0,1)'],[.31,'rgba(0,0,0,1)'],[.69,'rgba(0,0,0,1)'],[.73,'rgba(150,0,0,1)'],[.8,'rgba(255,45,25,1)'],[.88,'rgba(255,25,15,.25)'],[1,'rgba(255,20,10,0)']].forEach(([p,c])=>g.addColorStop(p,c));x.fillStyle=g;x.fillRect(0,0,w,h)},true);
  tex.dot=mk(8,8,(x)=>{x.fillStyle='#fff';x.fillRect(1,1,6,6);x.fillStyle='rgba(255,255,255,.5)';x.fillRect(0,1,1,6);x.fillRect(7,1,1,6);x.fillRect(1,0,6,1);x.fillRect(1,7,6,1)},false);
  // sombra: mancha escura e redonda (alpha)
  tex.blob=mk(64,64,(x,w,h)=>{const g=x.createRadialGradient(32,32,0,32,32,32);g.addColorStop(0,'rgba(0,0,0,.72)');g.addColorStop(.55,'rgba(0,0,0,.5)');g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.fillRect(0,0,w,h)},true);
@@ -26320,7 +26322,7 @@ const _t=tick;tick=function(){_t();if(world!==1)return;const e=drac();if(!e||e.d
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261116121350;
+const GAME_BUILD=20261116141618;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
@@ -32310,7 +32312,7 @@ H3.gfx5={IDS:PROF,PROF,HOR,INT,INTS,tick,V,set:setReal,prof:profOf,dn:dnOf,st:ST
 // Tag = título colorido em cima do nome. Aura = efeito em volta do personagem (modo 3D). Os outros jogadores veem as duas.
 // Vai junto da lista de lutadores que o jogo já manda online (campo k, item ['T', tag, aura]) — sem campo novo no banco;
 // apps antigos ignoram esse item. Escolha em Configurações › "Tags e auras".
-//  · BETA (+ aura Chamas Douradas): toda conta criada até BETA_ATE (data de criação da conta no login do Firebase; não se perde no reset)
+//  · BETA (+ aura Haki do Rei): toda conta criada até BETA_ATE (data de criação da conta no login do Firebase; não se perde no reset)
 //  · ADM: a conta do administrador · MOD: moderadores (lista MODS) · VIP: quem tem o VIP mensal ativo
 (function(){
 'use strict';
@@ -32322,7 +32324,7 @@ const TAGS={
  v:{id:'v',n:'VIP',c:'#ffb300',t:'#2a1a00',d:'Quem tem o VIP mensal ativo (Loja › Premium)'},
  b:{id:'b',n:'BETA',c:'#ffd23f',t:'#2a1a00',d:'Quem jogou o AllStar no Beta, antes do reset'}};
 const ORDEM=['a','m','v','b'];
-const AURAS={b:{id:'b',n:'Chamas Douradas',d:'Exclusiva de quem jogou o Beta'}};
+const AURAS={b:{id:'b',n:'Haki do Rei',d:'Exclusiva de quem jogou o Beta'}};
 const LS='mp_tag';
 const X={sel:null,beta:false,uidB:null};
 try{const v=JSON.parse(localStorage.getItem(LS)||'null');if(v&&typeof v==='object')X.sel={t:String(v.t||''),a:String(v.a||'')}}catch(e){}
@@ -32362,30 +32364,54 @@ window.OVL3=function(x,t,C,sc,proj){const L=window.H3C&&H3C.list;if(!L||!window.
  x.globalAlpha=1};
 const clp=(v,a,b)=>v<a?a:v>b?b:v;
 
-// ---------- aura: Chamas Douradas (modo 3D) ----------
-// mesmo jeito do manto da Kurama (Naruto 1 Cauda): brilho em camadas + línguas de energia (faixas) que sobem dos pés e se fecham
-// em cima da cabeça, como a aura de transformação dos animes, + faíscas subindo. É desenhada a cada quadro (não acumula partículas).
+// ---------- aura: Haki do Rei (modo 3D) ----------
+// Raios negros com a borda vermelha saindo do corpo: estalam em volta do jogador, descem e batem no chão (faíscas, marca vermelha
+// no chão e, de tempos em tempos, uma onda de choque). Cada raio vive ~0,1–0,2 s e nasce de novo noutro lugar, então pisca como
+// eletricidade. Os raios ficam presos ao corpo (andam junto). Desenhado a cada quadro com faixas (H3.strip): uma vermelha larga
+// somada à cena (a borda que brilha) e uma preta fina por cima (o miolo negro).
 const rnd=Math.random,TAU=Math.PI*2,sin=Math.sin,cos=Math.cos;
-const OURO=[1,.74,.12],CLARO=[1,.93,.55];
+const VERM=[1,.06,.03],VERM2=[1,.22,.08];
+const HK={};   // raios de cada personagem (por A.k)
 function brilho(T,x,y,z,s,c,a){H3.spr(T,x,y,z,s,s,null,[c[0],c[1],c[2],a],true,0,true)}
-function auraUm(A,t,d,FX,T,dtMs,lifeK){const x=A.x,y=A.y,z=A.z,H=A.h3d?34:30,pul=.5+.5*sin(t/95),lo=d>150;
- brilho(T.glow,x,y+H*.5,z,H*1.15+5*pul,OURO,.2+.06*pul);brilho(T.glow,x,y+H*.45,z,H*.75,CLARO,.13);   // brilho em volta do corpo
- brilho(T.glow,x,y+.8,z,H*1.1,OURO,.12+.05*pul);                                                         // reflexo no chão
- if(T.beam){const n=lo?8:16;
-  for(let i=0;i<n;i++){const a=i/n*TAU+t/520+sin(t/260+i)*.22,rr=6.4+1.1*sin(t/110+i*1.9),ox=cos(a)*rr,oz=sin(a)*rr,ph=(t/230+i*.37)%1,fl=sin(Math.PI*ph),
-    h=H*.92+5*fl+2.5*sin(t/80+i*2.3),w=3+.8*sin(t/70+i),al=.2+.16*fl,mx=x+ox*1.2,mz=z+oz*1.2,my=y+h*.45;
-   // formato de gota: sai dos pés, abre na altura do corpo e fecha numa ponta acima da cabeça
-   H3.strip(T.beam,x+ox*.85,y+.5,z+oz*.85,mx,my,mz,w*1.15,[OURO[0],OURO[1],OURO[2],al],true);
-   H3.strip(T.beam,mx,my,mz,x+ox*.15,y+h,z+oz*.15,w*.8,[OURO[0],OURO[1],OURO[2],al*.9],true);
-   if(i%2===0&&!lo)H3.strip(T.beam,x+ox*.9,y+h*.3,z+oz*.9,x+ox*.35,y+h*.85,z+oz*.35,1.3,[CLARO[0],CLARO[1],CLARO[2],.3*fl+.05],true)}}   // fio claro por dentro
- if(!lo&&FX&&FX.emit&&rnd()<dtMs*.02){const a=rnd()*TAU,r=5+rnd()*4;   // faíscas subindo
-  FX.emit({x:x+cos(a)*r,y:y+rnd()*H*.7,z:z+sin(a)*r,vx:0,vy:.55+rnd()*.45,vz:0,g:-.004,life:520*lifeK,s0:1.4,s1:.2,c:[1,.95,.65],a:1,add:true,tex:'dot',drag:.97})}}
+// raio em zigue-zague de a até b (pontos relativos ao pé do personagem), com galhos
+function raio(a,b,seg,amp,galho){const P=[a];for(let i=1;i<seg;i++){const u=i/seg,j=amp*(1-Math.abs(u-.5)*1.2);P.push([a[0]+(b[0]-a[0])*u+(rnd()-.5)*2*j,a[1]+(b[1]-a[1])*u+(rnd()-.5)*1.4*j,a[2]+(b[2]-a[2])*u+(rnd()-.5)*2*j])}P.push(b);
+ const L=[P];if(galho){const k=1+((rnd()*(seg-2))|0),o=P[k],d=Math.hypot(b[0]-a[0],b[1]-a[1],b[2]-a[2])*.45,an=rnd()*TAU;
+  L.push(raio(o,[o[0]+cos(an)*d*.6,Math.max(.3,o[1]-d*(.3+rnd()*.5)),o[2]+sin(an)*d*.6],3,amp*.5,false)[0])}
+ return L}
+function novo(H,t,lk){const an=rnd()*TAU,h0=H*(.2+rnd()*.75),r0=6+rnd()*1.5,a=[cos(an)*r0,h0,sin(an)*r0],tipo=rnd();let b,chao=false;   // nasce na superfície do corpo
+ if(tipo<.55){const r1=11+rnd()*10,a2=an+(rnd()-.5)*1.2;b=[cos(a2)*r1,.25,sin(a2)*r1];chao=true}               // desce e bate no chão
+ else if(tipo<.85){const a2=an+(rnd()<.5?1:-1)*(.9+rnd()*1.2),r1=7+rnd()*3;b=[cos(a2)*r1,H*(.1+rnd()*.85),sin(a2)*r1]}   // estala em volta do corpo
+ else{const a2=an+(rnd()-.5)*.8,r1=8+rnd()*5;b=[cos(a2)*r1,H*(1+rnd()*.35),sin(a2)*r1]}                       // sobe acima da cabeça
+ const len=Math.hypot(b[0]-a[0],b[1]-a[1],b[2]-a[2]);
+ return{L:raio(a,b,chao?10:8,len*.22,rnd()<.7),t0:t,vida:(90+rnd()*130)*lk,chao,b,w:.6+rnd()*.5}}
+function auraUm(A,t,d,FX,T,dtMs,lifeK){const x=A.x,y=A.y,z=A.z,H=A.h3d?34:30,lo=d>150,pul=.5+.5*sin(t/120);
+ let S=HK[A.k];if(!S)S=HK[A.k]={R:[],prox:0,onda:t+800+rnd()*1500,seen:t};S.seen=t;
+ // brilho escuro-avermelhado em volta e marca no chão
+ brilho(T.glow,x,y+H*.5,z,H*1.25,VERM,.1+.05*pul);brilho(T.glow,x,y+H*.5,z,H*.7,[.25,0,0],.1);
+ H3.flat(T.glow,x,y+.35,z,H*1.3,H*1.3,null,[VERM[0],VERM[1],VERM[2],.16+.08*pul],true);
+ // nascer raios novos
+ const max=lo?2:5;if(S.prox<t-600)S.prox=t-600;while(t>=S.prox&&S.R.length<max){const r=novo(H,t,lifeK);S.R.push(r);S.prox+=(lo?70:28)+rnd()*(lo?90:45);
+  if(r.chao&&!lo&&FX&&FX.emit){const p=r.b;for(let i=0;i<4;i++){const an=rnd()*TAU,v=.35+rnd()*.5;FX.emit({x:x+p[0],y:y+.6,z:z+p[2],vx:cos(an)*v,vy:.3+rnd()*.5,vz:sin(an)*v,g:.03,life:280*lifeK,s0:1.3,s1:.2,c:[1,.18+rnd()*.25,.06],a:1,add:true,tex:'dot',drag:.95})}}}
+ // desenhar
+ const W=lo?1.6:1;
+ for(let i=S.R.length-1;i>=0;i--){const r=S.R[i],u=(t-r.t0)/r.vida;if(u>=1){S.R.splice(i,1);continue}
+  const f=1-u*u,fl=f*(.7+.3*rnd());   // raio: aparece de uma vez e some piscando
+  for(const P of r.L)for(let k=0;k<P.length-1;k++){const p0=P[k],p1=P[k+1],e=.12,w=r.w*W*(P===r.L[0]?1:.65),   // cada pedaço passa um pouco do ponto, para o raio ficar contínuo nas dobras
+    a=[p0[0]-(p1[0]-p0[0])*e,p0[1]-(p1[1]-p0[1])*e,p0[2]-(p1[2]-p0[2])*e],b=[p1[0]+(p1[0]-p0[0])*e,p1[1]+(p1[1]-p0[1])*e,p1[2]+(p1[2]-p0[2])*e];
+   H3.strip(T.beam,x+a[0],y+a[1],z+a[2],x+b[0],y+b[1],z+b[2],4.2*w,[1,.04,.02,.32*fl],true);   // brilho vermelho em volta
+   H3.strip(T.haki||T.beam,x+a[0],y+a[1],z+a[2],x+b[0],y+b[1],z+b[2],3*w,T.haki?[1,1,1,fl]:[.02,0,0,fl],false)}   // o raio: miolo preto, borda vermelha
+  if(r.chao)H3.flat(T.glow,x+r.b[0],y+.4,z+r.b[2],7,7,null,[1,.12,.04,.6*fl],true)}                            // onde o raio bate no chão
+ // onda de choque no chão de tempos em tempos
+ if(t>=S.onda){S.onda=t+1800+rnd()*1800;S.ondaT=t}
+ if(S.ondaT&&t-S.ondaT<520){const u=(t-S.ondaT)/520,e=1-(1-u)*(1-u),R=6+e*34,tx=T.ring||T.glow;
+  H3.flat(tx,x,y+.45,z,R*2,R*2,null,[1,.08,.03,.55*(1-u)],true);if(T.ring)H3.flat(T.ring,x,y+.5,z,R*1.4,R*1.4,null,[.06,0,0,.5*(1-u)],false)}}
 function auraTick(dtMs){const L=window.H3C&&H3C.list,FX=window.H3&&H3.fx,T=window.H3&&H3.tex;if(!L||!T||!T.glow||!H3.S||!H3.S.mode||!H3.cam||!H3.spr)return;
  const cam=H3.cam().p,me=cur(),t=performance.now();let n=0;
  for(const A of L){if(typeof A.k!=='string')continue;let au='';
   if(A.k==='P'){if(H3.S.mode!==2)continue;au=me.a}else if(A.k.charAt(0)==='B'){au=A.q&&A.q.au||''}else continue;
   if(au!=='b')continue;const d=hypot(A.x-cam[0],A.y-cam[1],A.z-cam[2]);if(d>260)continue;if(++n>10)break;
-  auraUm(A,t,d,FX,T,dtMs,X.lifeK||1)}}
+  auraUm(A,t,d,FX,T,dtMs,X.lifeK||1)}
+ for(const k in HK)if(t-HK[k].seen>3000)delete HK[k]}
 let lastT=0;
 function hook(){const FX=window.H3&&H3.fx;if(!FX||!FX.draw||FX.__tg)return !!(FX&&FX.__tg);const _d=FX.draw;FX.__tg=1;
  FX.draw=function(){const now=performance.now(),dt=min(60,lastT?now-lastT:16);lastT=now;try{if(!H3.inSh)auraTick(dt)}catch(e){if(!X.err){X.err=1;console.error('aura',e)}}return _d.apply(this,arguments)};return true}
@@ -32405,7 +32431,7 @@ function render(){const c=cur(),B=document.getElementById('tgBody');
  B.innerHTML='<div class="tgS">Tag em cima do nome</div><div class="tgG">'+bt(!c.t,0,'Nenhuma','sem tag','data-t=""')+
   ORDEM.map(id=>{const T=TAGS[id],ok=tem(id);return bt(c.t===id,!ok,`<i style="background:${T.c};color:${T.t}">${T.n}</i>`,ok?T.d:'Bloqueada: '+T.d,ok?'data-t="'+id+'"':'')}).join('')+'</div>'+
   '<div class="tgS">Aura</div><div class="tgG">'+bt(!c.a,0,'Nenhuma','sem aura','data-a=""')+
-  Object.values(AURAS).map(A=>{const ok=temA(A.id);return bt(c.a===A.id,!ok,'🔥 '+A.n,ok?A.d:'Bloqueada: '+A.d,ok?'data-a="'+A.id+'"':'')}).join('')+'</div>'+
+  Object.values(AURAS).map(A=>{const ok=temA(A.id);return bt(c.a===A.id,!ok,'⚡ '+A.n,ok?A.d:'Bloqueada: '+A.d,ok?'data-a="'+A.id+'"':'')}).join('')+'</div>'+
   '<div class="tgD">A tag e a aura aparecem para todos no modo 3D. A aura aparece em 3ª pessoa.</div>';
  B.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{const c2=cur();salvar(b.dataset.t,c2.a);render()});
  B.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>{const c2=cur();salvar(c2.t,b.dataset.a);render()})}
