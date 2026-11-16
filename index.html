@@ -9176,7 +9176,9 @@ H3.proj=proj;
   try{const bob=FBB3[Math.floor(performance.now()/200)&7];
    for(const id of FBI){const el=$$(id);if(!el)continue;const dsp=el.style.display,want=dsp!=='none'&&dsp!=='';let p=null;
     if(want){const w=SC.fbPos(id);if(w)p=proj(w[0],w[1],w[2])}
-    const on=!!(p&&p[0]>-30&&p[0]<S.cssW+30&&p[1]>-30&&p[1]<S.cssH+30);
+    // perto da coisa (estrela alta, máquina...) o ponto sai por cima da tela: o botão fica preso na borda em vez de sumir
+    if(want){const W=S.cssW,H=S.cssH;if(!p||!(p[2]>0))p=[W/2,H*.62];else p=[Math.min(W-70,Math.max(70,p[0])),Math.min(H-50,Math.max(70,p[1]))]}
+    const on=!!(want&&p);
     if(on){const k=round(p[0])+','+round(p[1]);if(FBS3[id]!==k){FBS3[id]=k;el.style.transform='translate('+round(p[0])+'px,'+round(p[1])+'px) translate(-50%,-100%)'}if(el._bob!==bob){el._bob=bob;el.style.translate='0 '+bob+'px'}}
     el.classList.toggle('fbOn',on)}}catch(e){}};
  H3.fbReset=()=>{for(const id of FBI){const el=$$(id);if(el)el.style.transform='';FBS3[id]=null}}}
@@ -26336,7 +26338,7 @@ const _t=tick;tick=function(){_t();if(world!==1)return;const e=drac();if(!e||e.d
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261116142945;
+const GAME_BUILD=20261116151153;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
