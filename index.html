@@ -26307,7 +26307,7 @@ const _t=tick;tick=function(){_t();if(world!==1)return;const e=drac();if(!e||e.d
 // · Ao abrir: se o site tem uma versão mais nova, o jogo não deixa entrar — mostra "Atualizando..." e reinicia sozinho já na versão nova.
 // · Jogando: se sair uma versão nova, aparece o aviso "o jogo vai reiniciar em 1 minuto" e depois ele reinicia sozinho (sem fechar o app).
 // No app (APK novo) quem baixa é o Android (ponte MPApp); no APK antigo o Android baixa ao abrir/voltar e avisa por toast; no navegador basta recarregar.
-const GAME_BUILD=20261116052000;
+const GAME_BUILD=20261116053000;
 (function(){
 if(!GAME_BUILD)return;
 const SITE='https://jpi437.github.io/Game-/',APK=location.host==='appassets.androidplatform.net',B=window.MPApp||null;
@@ -26469,8 +26469,8 @@ renderW=function(){
   if(w.pool){const list=[];w.pool().forEach((ns,r)=>ns.forEach(nm=>list.push([nm,r])));
    const mine=list.filter(x=>got.has(x[0])).length;tot+=list.length;have+=mine;
    cnt=`<span class="wpill">${mine}/${list.length}</span>`;
-   grid='<div class="wgrid">'+list.map(([nm,r])=>{const ok=got.has(nm);
-    return `<div class="it fc${ok?'':' lock'}" style="--c:${RC(r)}" title="${nm} · ${RAR[r]}"><div class="pic"><canvas class="sp" width="12" height="12" data-nm="${nm}" data-r="${r}" data-s="${shiny.has(nm)?1:0}"></canvas>${shiny.has(nm)?'<span class="lv" style="color:#80deea">✦</span>':''}</div><div class="nm">${nm}</div></div>`}).join('')+'</div>'}
+   grid='<div class="wgrid">'+list.map(([nm,r])=>{const ok=got.has(nm),seen=ok||!!(typeof GOT!=='undefined'&&GOT[nm]),vn=seen?nm:'???';
+    return `<div class="it fc${ok?'':' lock'}" style="--c:${RC(r)}" title="${vn} · ${RAR[r]}"><div class="pic"><canvas class="sp" width="12" height="12" data-nm="${nm}" data-r="${r}" data-s="${shiny.has(nm)?1:0}"></canvas>${shiny.has(nm)?'<span class="lv" style="color:#80deea">✦</span>':''}</div><div class="nm">${vn}</div></div>`}).join('')+'</div>'}
   return `<div class="wsec${here?' here':''}${dis?' dis':''}" data-n="${w.n}" style="--c:${w.c};--c2:${w.c2}"><div class="whead"><div class="wname">${w.name}<small>${sub}</small></div>${cnt}${here?'<span class="wpill hr">AQUI</span>':`<span class="wgo">${dis?'Bloqueado':'Ir'}</span>`}</div>${grid}</div>`}).join('');
  L.innerHTML=html;
  $('wCnt').textContent=have+'/'+tot;
